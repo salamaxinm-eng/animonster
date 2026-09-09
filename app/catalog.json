@@ -1,0 +1,230 @@
+[
+  {
+    "id": 16498,
+    "name": "Shingeki no Kyojin",
+    "russian": "Атака титанов",
+    "image": {
+      "original": "/system/animes/original/16498.jpg?1711973439",
+      "preview": "/system/animes/preview/16498.jpg?1711973439",
+      "x96": "/system/animes/x96/16498.jpg?1711973439",
+      "x48": "/system/animes/x48/16498.jpg?1711973439"
+    },
+    "url": "/animes/16498-shingeki-no-kyojin",
+    "kind": "tv",
+    "score": "8.58",
+    "status": "released",
+    "episodes": 25,
+    "episodes_aired": 25,
+    "aired_on": "2013-04-07",
+    "released_on": "2013-09-29"
+  },
+  {
+    "id": 1535,
+    "name": "Death Note",
+    "russian": "Тетрадь смерти",
+    "image": {
+      "original": "/assets/globals/missing_original.jpg?1711947446",
+      "preview": "/assets/globals/missing_preview.jpg?1711947446",
+      "x96": "/assets/globals/missing_x96.jpg?1711947446",
+      "x48": "/assets/globals/missing_x48.jpg?1711947446"
+    },
+    "url": "/animes/1535-death-note",
+    "kind": "tv",
+    "score": "8.62",
+    "status": "released",
+    "episodes": 37,
+    "episodes_aired": 0,
+    "aired_on": "2006-10-04",
+    "released_on": "2007-06-27"
+  },
+  {
+    "id": 5114,
+    "name": "Fullmetal Alchemist: Brotherhood",
+    "russian": "Стальной алхимик: Братство",
+    "image": {
+      "original": "/system/animes/original/5114.jpg?1711949773",
+      "preview": "/system/animes/preview/5114.jpg?1711949773",
+      "x96": "/system/animes/x96/5114.jpg?1711949773",
+      "x48": "/system/animes/x48/5114.jpg?1711949773"
+    },
+    "url": "/animes/z5114-fullmetal-alchemist-brotherhood",
+    "kind": "tv",
+    "score": "9.11",
+    "status": "released",
+    "episodes": 64,
+    "episodes_aired": 0,
+    "aired_on": "2009-04-05",
+    "released_on": "2010-07-04"
+  },
+  {
+    "id": 30276,
+    "name": "One Punch Man",
+    "russian": "Ванпанчмен",
+    "image": {
+      "original": "/system/animes/original/30276.jpg?1711967568",
+      "preview": "/system/animes/preview/30276.jpg?1711967568",
+      "x96": "/system/animes/x96/30276.jpg?1711967568",
+      "x48": "/system/animes/x48/30276.jpg?1711967568"
+    },
+    "url": "/animes/z30276-one-punch-man",
+    "kind": "tv",
+    "score": "8.47",
+    "status": "released",
+    "episodes": 12,
+    "episodes_aired": 12,
+    "aired_on": "2015-10-05",
+    "released_on": "2015-12-21"
+  },
+  {
+    "id": 38000,
+    "name": "Kimetsu no Yaiba",
+    "russian": "Клинок, рассекающий демонов",
+    "image": {
+      "original": "/system/animes/original/38000.jpg?1711958556",
+      "preview": "/system/animes/preview/38000.jpg?1711958556",
+      "x96": "/system/animes/x96/38000.jpg?1711958556",
+      "x48": "/system/animes/x48/38000.jpg?1711958556"
+    },
+    "url": "/animes/z38000-kimetsu-no-yaiba",
+    "kind": "tv",
+    "score": "8.4",
+    "status": "released",
+    "episodes": 26,
+    "episodes_aired": 26,
+    "aired_on": "2019-04-06",
+    "released_on": "2019-09-28"
+  },
+  {
+    "id": 31964,
+    "name": "Boku no Hero Academia",
+    "russian": "Моя геройская академия",
+    "image": {
+      "original": "/system/animes/original/31964.jpg?1711944324",
+      "preview": "/system/animes/preview/31964.jpg?1711944324",
+      "x96": "/system/animes/x96/31964.jpg?1711944324",
+      "x48": "/system/animes/x48/31964.jpg?1711944324"
+    },
+    "url": "/animes/31964-boku-no-hero-academia",
+    "kind": "tv",
+    "score": "7.82",
+    "status": "released",
+    "episodes": 13,
+    "episodes_aired": 13,
+    "aired_on": "2016-04-03",
+    "released_on": "2016-06-26"
+  },
+  {
+    "id": 11757,
+    "name": "Sword Art Online",
+    "russian": "Мастера Меча Онлайн",
+    "image": {
+      "original": "/system/animes/original/11757.jpg?1711975853",
+      "preview": "/system/animes/preview/11757.jpg?1711975853",
+      "x96": "/system/animes/x96/11757.jpg?1711975853",
+      "x48": "/system/animes/x48/11757.jpg?1711975853"
+    },
+    "url": "/animes/z11757-sword-art-online",
+    "kind": "tv",
+    "score": "7.23",
+    "status": "released",
+    "episodes": 25,
+    "episodes_aired": 25,
+    "aired_on": "2012-07-08",
+    "released_on": "2012-12-23"
+  },
+  {
+    "id": 11061,
+    "name": "Hunter x Hunter (2011)",
+    "russian": "Охотник х Охотник (2011)",
+    "image": {
+      "original": "/system/animes/original/11061.jpg?1711954447",
+      "preview": "/system/animes/preview/11061.jpg?1711954447",
+      "x96": "/system/animes/x96/11061.jpg?1711954447",
+      "x48": "/system/animes/x48/11061.jpg?1711954447"
+    },
+    "url": "/animes/z11061-hunter-x-hunter-2011",
+    "kind": "tv",
+    "score": "9.03",
+    "status": "released",
+    "episodes": 148,
+    "episodes_aired": 148,
+    "aired_on": "2011-10-02",
+    "released_on": "2014-09-24"
+  },
+  {
+    "id": 20,
+    "name": "Naruto",
+    "russian": "Наруто",
+    "image": {
+      "original": "/system/animes/original/20.jpg?1711965679",
+      "preview": "/system/animes/preview/20.jpg?1711965679",
+      "x96": "/system/animes/x96/20.jpg?1711965679",
+      "x48": "/system/animes/x48/20.jpg?1711965679"
+    },
+    "url": "/animes/z20-naruto",
+    "kind": "tv",
+    "score": "8.02",
+    "status": "released",
+    "episodes": 220,
+    "episodes_aired": 0,
+    "aired_on": "2002-10-03",
+    "released_on": "2007-02-08"
+  },
+  {
+    "id": 22319,
+    "name": "Tokyo Ghoul",
+    "russian": "Токийский гуль",
+    "image": {
+      "original": "/system/animes/original/22319.jpg?1711978006",
+      "preview": "/system/animes/preview/22319.jpg?1711978006",
+      "x96": "/system/animes/x96/22319.jpg?1711978006",
+      "x48": "/system/animes/x48/22319.jpg?1711978006"
+    },
+    "url": "/animes/22319-tokyo-ghoul",
+    "kind": "tv",
+    "score": "7.79",
+    "status": "released",
+    "episodes": 12,
+    "episodes_aired": 12,
+    "aired_on": "2014-07-04",
+    "released_on": "2014-09-19"
+  },
+  {
+    "id": 40748,
+    "name": "Jujutsu Kaisen",
+    "russian": "Магическая битва",
+    "image": {
+      "original": "/system/animes/original/40748.jpg?1711956606",
+      "preview": "/system/animes/preview/40748.jpg?1711956606",
+      "x96": "/system/animes/x96/40748.jpg?1711956606",
+      "x48": "/system/animes/x48/40748.jpg?1711956606"
+    },
+    "url": "/animes/40748-jujutsu-kaisen",
+    "kind": "tv",
+    "score": "8.5",
+    "status": "released",
+    "episodes": 24,
+    "episodes_aired": 24,
+    "aired_on": "2020-10-03",
+    "released_on": "2021-03-27"
+  },
+  {
+    "id": 32281,
+    "name": "Kimi no Na wa.",
+    "russian": "Твоё имя",
+    "image": {
+      "original": "/system/animes/original/32281.jpg?1711958651",
+      "preview": "/system/animes/preview/32281.jpg?1711958651",
+      "x96": "/system/animes/x96/32281.jpg?1711958651",
+      "x48": "/system/animes/x48/32281.jpg?1711958651"
+    },
+    "url": "/animes/32281-kimi-no-na-wa",
+    "kind": "movie",
+    "score": "8.82",
+    "status": "released",
+    "episodes": 1,
+    "episodes_aired": 1,
+    "aired_on": "2016-08-26",
+    "released_on": null
+  }
+]
