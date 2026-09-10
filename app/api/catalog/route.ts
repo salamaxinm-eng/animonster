@@ -1,5 +1,52 @@
-export async function GET(request:Request){
- const url=new URL(request.url);const q=url.searchParams.get('q')?.slice(0,100)||'';const kind=url.searchParams.get('kind')==='movie'?'movie':'';
- const params=new URLSearchParams({limit:'24',order:'popularity',censored:'true'});if(q)params.set('search',q);if(kind)params.set('kind',kind);
- try{const response=await fetch('https://shikimori.one/api/animes?'+params,{headers:{'User-Agent':'AniMonster/1.0'},signal:AbortSignal.timeout(10000)});if(!response.ok)throw Error();return Response.json(await response.json(),{headers:{'Cache-Control':'public, max-age=300'}});}catch{return Response.json({error:'Каталог временно недоступен'},{status:502});}
+import { genreList, rememberAnime } from '@/lib/server/library';
+import { liberty, normalize, available, findRelease } from '@/lib/server/anime';
+export async function GET(request: Request) {
+  try {
+    const p = new URL(request.url).searchParams,
+      id = Number(p.get('anime_id'));
+    if (id) {
+      if (!Number.isInteger(id) || id < 1 || id > 999999999)
+        return Response.json({ error: 'Некорректный тайтл' }, { status: 400 });
+      const release = await findRelease(id);
+      return Response.json(
+        release && available(release) ? [normalize(release)] : [],
+      );
+    }
+    const query = new URLSearchParams({
+      limit: '24',
+      page: String(
+        Math.max(1, Math.min(10000, Math.floor(Number(p.get('page')) || 1))),
+      ),
+      'f[sorting]': 'RATING_DESC',
+    });
+    if (p.get('q')) query.set('f[search]', p.get('q')!.slice(0, 100));
+    if (p.get('kind') === 'movie') query.set('f[types]', 'MOVIE');
+    if (p.get('genre')) {
+      const genres = await genreList();
+      const genre = genres.find(
+        (g) => g.name.toLowerCase() === p.get('genre')!.toLowerCase(),
+      );
+      if (!genre)
+        return Response.json([], {
+          headers: { 'X-Total-Count': '0', 'X-Total-Pages': '1' },
+        });
+      query.set('f[genres]', String(genre.id));
+    }
+    const data = await liberty('/anime/catalog/releases?' + query);
+    const items=data.data.filter(available).map(normalize);
+    await rememberAnime(items);
+    const pagination = data.meta.pagination;
+    return Response.json(items, {
+      headers: {
+        'Cache-Control': 'public, max-age=60',
+        'X-Total-Count': String(pagination.total),
+        'X-Total-Pages': String(pagination.total_pages),
+      },
+    });
+  } catch {
+    return Response.json(
+      { error: 'Источник каталога временно недоступен' },
+      { status: 502 },
+    );
+  }
 }

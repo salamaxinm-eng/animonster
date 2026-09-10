@@ -1,0 +1,1922 @@
+.account-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.account-link {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  max-width: 190px;
+}
+.account-link > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-nav .user-avatar {
+  width: 31px;
+  height: 31px;
+}
+.plus-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #c1a3ff;
+}
+.vk-mini,
+.vk-button {
+  background: #0077ff;
+  color: white;
+  border-radius: 8px;
+  padding: 11px 17px;
+  font-size: 14px;
+  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.header {
+  gap: 28px;
+}
+.header nav {
+  gap: 22px;
+}
+.header .random {
+  display: none;
+}
+.header .account-nav {
+  margin-left: auto;
+}
+.user-avatar {
+  width: 42px;
+  height: 42px;
+  display: inline-block;
+  flex-shrink: 0;
+  border: 2px solid #b4ed50;
+  border-radius: 50%;
+  overflow: hidden;
+  padding: 3px;
+  background: #121820;
+}
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  object-position: 77% 40%;
+}
+.user-avatar.large {
+  width: 112px;
+  height: 112px;
+  border-width: 3px;
+  padding: 5px;
+  box-shadow: 0 0 0 7px #0b0e13;
+}
+.anime-pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #ede1ff;
+  padding: 3px 8px 3px 3px;
+  max-width: 100%;
+  background: linear-gradient(100deg, #322443, #1c2836);
+  border: 1px solid #75569790;
+  border-radius: 20px;
+  vertical-align: middle;
+  line-height: 1.3;
+  white-space: normal;
+}
+.anime-pin img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.social-site {
+  max-width: 1440px;
+  margin: auto;
+  padding: 0 5% 70px;
+  --profile-accent: #b4ed50;
+}
+.community-header {
+  display: flex;
+  align-items: center;
+  gap: 35px;
+  height: 94px;
+}
+.community-header .account-nav {
+  margin-left: auto;
+}
+.back-catalog {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #a0acba;
+}
+.preview-note {
+  font-size: 12px;
+  padding: 10px 16px;
+  color: #a4b69c;
+  background: #b4ed5009;
+  border: 1px solid #b4ed501d;
+  border-radius: 8px;
+  margin-bottom: 18px;
+}
+.profile-cover {
+  height: 225px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #18202b;
+}
+.profile-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 70% 37%;
+}
+.profile-cover > div {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #09151bc9, transparent),
+    linear-gradient(0deg, #0b0e1399, transparent);
+}
+.profile-cover > span {
+  position: absolute;
+  top: 25px;
+  left: 30px;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #c9dddf99;
+}
+.theme-sakura img {
+  filter: hue-rotate(115deg);
+}
+.theme-mage img {
+  filter: hue-rotate(65deg);
+}
+.theme-cyber img {
+  filter: saturate(1.5);
+}
+.profile-identity {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  padding: 0 30px;
+  margin-top: -36px;
+  min-height: 145px;
+}
+.profile-name {
+  padding-top: 36px;
+  min-width: 0;
+}
+.profile-name h1 {
+  font-size: 30px;
+  font-weight: 750;
+  letter-spacing: -1px;
+  margin: 5px 0;
+}
+.profile-name p {
+  font-size: 12px;
+  color: #8190a0;
+}
+.profile-name .anime-pin {
+  margin-top: -12px;
+}
+.profile-identity > .outline-button {
+  margin-left: auto;
+  margin-top: 45px;
+}
+.outline-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-radius: 8px;
+  border: 1px solid #303b47;
+  background: #171d26;
+  color: #c6d0dc;
+  font-size: 14px;
+}
+.profile-layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 30px;
+  margin-top: 23px;
+}
+.profile-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.social-panel {
+  background: #131821;
+  border: 1px solid #252e3a;
+  border-radius: 11px;
+  padding: 23px;
+  margin-bottom: 20px;
+}
+.social-panel h3 {
+  font-size: 16px;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+.social-panel p {
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #abb5c3;
+}
+.profile-sidebar .social-panel {
+  margin-bottom: 0;
+}
+.profile-link {
+  display: block;
+  font-size: 12px;
+  color: var(--profile-accent);
+  margin-top: 20px;
+}
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px 15px;
+}
+.profile-stats button {
+  text-align: left;
+}
+.profile-stats strong {
+  display: block;
+  font-size: 25px;
+  font-weight: 700;
+}
+.profile-stats span {
+  font-size: 12px;
+  color: #8996a7;
+}
+.plus-promo {
+  display: block;
+  border: 1px solid #72578955;
+  background: linear-gradient(130deg, #292038, #161e29);
+  padding: 25px;
+  border-radius: 11px;
+}
+.plus-promo > svg {
+  color: #c7a6ff;
+  margin-bottom: 15px;
+}
+.plus-promo h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+.plus-promo p {
+  font-size: 13px;
+  color: #a69cb8;
+  line-height: 1.6;
+}
+.plus-promo strong {
+  font-size: 28px;
+  display: block;
+  margin-top: 16px;
+}
+.plus-promo strong span {
+  font-size: 13px;
+  color: #a69cb8;
+  font-weight: 400;
+}
+.plus-promo-link {
+  font-size: 12px;
+  color: #c7a6ff;
+  display: block;
+  margin-top: 20px;
+}
+.social-tabs {
+  background: transparent !important;
+  border-bottom: 1px solid #2c3440;
+  border-radius: 0 !important;
+  height: 48px !important;
+  padding: 0 !important;
+  gap: 17px;
+  width: 100% !important;
+  justify-content: flex-start !important;
+  margin-bottom: 24px;
+}
+.social-tabs button {
+  flex: 0 0 auto !important;
+  background: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  font-size: 14px;
+  padding: 14px 2px !important;
+}
+.social-tabs button[data-active] {
+  color: var(--profile-accent) !important;
+  border-bottom: 2px solid var(--profile-accent) !important;
+}
+.panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+.panel-title h3 {
+  margin: 0;
+}
+.panel-title > span,
+.panel-title > button {
+  font-size: 12px;
+  color: #8e9eaf;
+}
+.favorite-posters {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 13px;
+}
+.favorite-posters img {
+  width: 100%;
+  aspect-ratio: 2/2.7;
+  object-fit: cover;
+  border-radius: 7px;
+}
+.favorite-posters span {
+  font-size: 11px;
+  display: block;
+  margin-top: 8px;
+  line-height: 1.5;
+}
+.muted {
+  color: #8291a3 !important;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.social-empty,
+.profile-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 55px 25px;
+  text-align: center;
+}
+.profile-loading h1 {
+  font-size: 32px;
+  font-weight: 700;
+}
+.profile-loading p {
+  color: #94a2b3;
+  max-width: 500px;
+  line-height: 1.7;
+}
+.profile-loading {
+  min-height: 65vh;
+}
+.collection-entry {
+  display: flex;
+  gap: 18px;
+  padding: 17px 0;
+  border-bottom: 1px solid #29313a;
+}
+.collection-entry:last-child {
+  border: 0;
+}
+.collection-entry > a {
+  width: 62px;
+  flex-shrink: 0;
+}
+.collection-entry img {
+  width: 62px;
+  height: 85px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.collection-entry-info {
+  flex: 1;
+  min-width: 0;
+}
+.collection-entry-info > a {
+  font-size: 16px;
+  font-weight: 650;
+  display: block;
+  margin-bottom: 12px;
+}
+.entry-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.entry-controls button {
+  font-size: 12px;
+  color: #8c9aac;
+}
+.favorite-toggle.on {
+  color: #e7cf74;
+}
+.profile-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.profile-editor h3 {
+  margin-bottom: 0;
+}
+.profile-editor > label {
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.profile-editor input,
+.profile-editor textarea,
+.edit-comment {
+  border: 1px solid #34404e;
+  background: #0e141c;
+  padding: 12px 14px;
+  border-radius: 7px;
+  outline: none;
+  width: 100%;
+  color: #e5eaf2;
+}
+.profile-editor textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.profile-editor small {
+  font-size: 12px;
+  color: #8190a2;
+}
+.profile-editor legend {
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+.avatar-options,
+.theme-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.avatar-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 12px;
+  color: #97a5b6;
+}
+.avatar-options button.selected {
+  border-color: var(--profile-accent);
+  background: #ffffff05;
+}
+.theme-options button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1b2531;
+  border: 1px solid #2c3948;
+  border-radius: 7px;
+  padding: 12px;
+  font-size: 13px;
+}
+.theme-options button.selected {
+  border-color: var(--swatch);
+}
+.theme-options button > span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--swatch);
+}
+.privacy-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+  padding: 20px 0;
+  border-top: 1px solid #29313a;
+}
+.privacy-settings label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+.profile-editor .primary {
+  align-self: flex-start;
+}
+.text-link {
+  font-size: 14px;
+  color: #c1a3ff;
+}
+.blocked-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+.blocked-row button {
+  color: #c1a3ff;
+  font-size: 12px;
+}
+.notification {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  padding: 20px 12px;
+  border-bottom: 1px solid #29313a;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.notification.unread {
+  background: #b4ed5008;
+  border-left: 2px solid #b4ed50;
+}
+.notification svg {
+  flex-shrink: 0;
+  color: #a0abbd;
+}
+.report-card {
+  border-top: 1px solid #29313a;
+  padding: 20px 0;
+}
+.report-card div {
+  display: flex;
+  gap: 20px;
+  margin-top: 15px;
+  font-size: 13px;
+  color: #bea2ec;
+}
+.discussion {
+  background: #111720;
+  border: 1px solid #273140;
+  border-radius: 10px;
+  padding: 23px;
+}
+.discussion-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.discussion h3 {
+  font-size: 17px;
+  font-weight: 700;
+}
+.discussion h3 > span {
+  font-size: 13px;
+  margin-left: 7px;
+  color: #8492a2;
+}
+.comment-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 100px;
+  padding: 14px;
+  border: 1px solid #303d4d;
+  border-radius: 7px;
+  background: #0c121a;
+  color: #e2e7ef;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.comment-form-bottom {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0 24px;
+}
+.comment-form-bottom label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  color: #9cabbc;
+}
+.comment-form-bottom > span {
+  margin-left: auto;
+  font-size: 11px;
+  color: #6f7f92;
+}
+.comment-form-bottom .primary {
+  padding: 10px 13px;
+  font-size: 12px;
+}
+.comment-login,
+.discussion-empty {
+  padding: 22px 0;
+  color: #8c9db0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.comment-login button {
+  color: #94bffc;
+}
+.comment {
+  display: flex;
+  gap: 13px;
+  padding: 23px 0;
+  border-top: 1px solid #252f3b;
+}
+.comment.is-reply {
+  margin-left: 18px;
+}
+.comment-content {
+  flex: 1;
+  min-width: 0;
+}
+.comment-content > .anime-pin {
+  margin-bottom: 7px;
+}
+.comment-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.comment-meta a {
+  font-size: 14px;
+  font-weight: 650;
+}
+.comment-meta time,
+.comment-meta > span {
+  font-size: 11px;
+  color: #748397;
+}
+.comment-body {
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 10px 0;
+}
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.comment-actions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #7f91a6;
+}
+.comment-actions .liked {
+  color: #e594b7;
+}
+.pinned-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--profile-accent) !important;
+}
+.reply-context {
+  font-size: 12px;
+  color: #72849b;
+  margin: 8px 0;
+}
+.spoiler {
+  border: 1px solid #3d354b;
+  background: #28203355;
+  border-radius: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+.spoiler summary {
+  padding: 12px;
+  cursor: pointer;
+  color: #b5a2d0;
+}
+.spoiler p {
+  padding: 0 12px 12px;
+  font-size: 14px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.reply-to {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #c2a6ec;
+  margin-bottom: 10px;
+}
+.error-msg {
+  color: #ffacac;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 10px 0;
+}
+.success-msg {
+  color: #b4ed50;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.collection-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.collection-control .primary {
+  padding: 10px 15px;
+}
+.setup-note {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #a49caf;
+  margin-top: 16px;
+  max-width: 420px;
+}
+.sign-dialog {
+  padding: 30px !important;
+  gap: 20px !important;
+}
+.sign-dialog [data-slot='dialog-title'] {
+  font-size: 23px;
+  line-height: 1.3;
+}
+.sign-dialog [data-slot='dialog-description'] {
+  line-height: 1.8;
+}
+.pins-page {
+  padding: 35px 0 0;
+}
+.pins-intro {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 70px;
+  align-items: center;
+}
+.pins-intro h1 {
+  font-size: clamp(35px, 4vw, 55px);
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -2px;
+  margin: 22px 0;
+}
+.pins-intro h1 em {
+  font-style: normal;
+  color: #c1a3ff;
+}
+.pins-intro > div > p {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #95a4b7;
+}
+.subscription-price {
+  font-size: 44px;
+  font-weight: 750;
+  margin: 23px 0 6px;
+}
+.subscription-price > span {
+  font-size: 16px;
+  font-weight: 400;
+  color: #8291a5;
+}
+.pins-intro p.billing-note {
+  font-size: 12px;
+  max-width: 360px;
+  margin-bottom: 25px;
+}
+.pin-preview-card {
+  padding: 32px;
+  border: 1px solid #55436f;
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 95% 5%, #4e316a44, transparent 70%), #141c28;
+}
+.preview-comment {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  padding: 35px 0;
+}
+.preview-comment > div {
+  min-width: 0;
+}
+.preview-comment strong {
+  display: block;
+  font-size: 24px;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.preview-comment p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #96a3b6;
+}
+.preview-features {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 25px 0;
+  border-top: 1px solid #344153;
+}
+.preview-features span {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 14px;
+  color: #bdc7d5;
+}
+.preview-features svg {
+  color: #c1a3ff;
+}
+.pin-preview-card > p {
+  font-size: 12px !important;
+}
+.pins-catalog {
+  margin-top: 60px;
+}
+.pins-catalog h2 {
+  font-size: 27px;
+  font-weight: 700;
+}
+.pin-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 17px;
+  margin-top: 25px;
+}
+.pin-card {
+  background: #141c28;
+  border: 1px solid #2c3747;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.pin-card.selected {
+  border-color: #c1a3ff;
+  background: #241e32;
+}
+.pin-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: radial-gradient(ellipse, #8166984d, transparent);
+}
+.pin-art img {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #bba1db;
+  box-shadow:
+    0 0 0 5px #66506b33,
+    0 10px 25px #0009;
+}
+.pin-art > svg {
+  position: absolute;
+  right: 0;
+  top: 0;
+  color: #b99bcf;
+}
+.pin-card > span:last-child {
+  font-size: 12px;
+  color: #9a8eaa;
+}
+.pin-card > .anime-pin {
+  font-size: 10px;
+  min-height: 31px;
+  text-align: left;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+@media (max-width: 1100px) {
+  .header nav {
+    gap: 15px;
+  }
+  .header .brand {
+    font-size: 22px;
+  }
+  .header .account-link > span:last-child {
+    display: none;
+  }
+  .pins-intro {
+    gap: 30px;
+  }
+  .pin-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .profile-layout {
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 20px;
+  }
+  .profile-identity {
+    padding: 0 15px;
+    gap: 18px;
+  }
+  .profile-identity > .outline-button {
+    font-size: 12px;
+    padding: 10px;
+  }
+  .social-panel,
+  .discussion {
+    padding: 18px;
+  }
+}
+@media (max-width: 760px) {
+  .social-site {
+    padding: 0 4% 40px;
+  }
+  .community-header {
+    height: auto;
+    min-height: 100px;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding: 17px 0;
+  }
+  .community-header .brand {
+    font-size: 22px;
+  }
+  .community-header .back-catalog {
+    order: 3;
+  }
+  .community-header .account-nav {
+    gap: 12px;
+  }
+  .community-header .account-link > span:last-child {
+    display: none;
+  }
+  .header .account-nav {
+    order: 2;
+  }
+  .header nav {
+    order: 3;
+  }
+  .header .brand svg {
+    width: 24px;
+  }
+  .header .brand {
+    font-size: 21px;
+  }
+  .header .plus-link {
+    font-size: 12px;
+  }
+  .header .vk-mini {
+    font-size: 12px;
+    padding: 9px 10px;
+  }
+  .profile-cover {
+    height: 180px;
+  }
+  .profile-identity {
+    flex-wrap: wrap;
+    margin-top: -35px;
+    gap: 18px;
+  }
+  .profile-identity > .user-avatar {
+    width: 85px;
+    height: 85px;
+  }
+  .profile-name {
+    padding-top: 26px;
+  }
+  .profile-name h1 {
+    font-size: 24px;
+  }
+  .profile-identity > .outline-button {
+    margin: 0 0 0 103px;
+  }
+  .profile-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .profile-sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+  .profile-sidebar .plus-promo {
+    display: none;
+  }
+  .profile-sidebar h3 {
+    font-size: 14px;
+  }
+  .profile-sidebar .social-panel p {
+    font-size: 12px;
+  }
+  .profile-stats {
+    gap: 13px;
+  }
+  .profile-stats strong {
+    font-size: 20px;
+  }
+  .profile-stats span {
+    font-size: 10px;
+  }
+  .social-tabs {
+    overflow-x: auto;
+    gap: 15px;
+  }
+  .social-tabs button {
+    font-size: 13px;
+  }
+  .favorite-posters {
+    gap: 9px;
+  }
+  .favorite-posters span {
+    font-size: 10px;
+  }
+  .discussion-heading {
+    flex-wrap: wrap;
+  }
+  .comment-form-bottom {
+    flex-wrap: wrap;
+  }
+  .comment-meta {
+    gap: 7px;
+  }
+  .comment-actions {
+    gap: 13px;
+  }
+  .pins-page {
+    padding-top: 15px;
+  }
+  .pins-intro {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .pins-intro h1 {
+    font-size: 40px;
+  }
+  .pin-preview-card {
+    padding: 23px;
+  }
+  .pin-grid {
+    gap: 10px;
+  }
+  .pin-card {
+    padding: 9px;
+  }
+  .pin-art img {
+    width: 62px;
+    height: 62px;
+  }
+  .pin-card .anime-pin {
+    font-size: 9px;
+  }
+  .pin-card .anime-pin img {
+    width: 18px;
+    height: 18px;
+  }
+  .pins-catalog .panel-title {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .pin-art > svg {
+    width: 14px;
+  }
+  .preview-note {
+    font-size: 11px;
+  }
+  .profile-link {
+    font-size: 10px;
+  }
+}
+@media (max-width: 420px) {
+  .account-nav .plus-link {
+    display: none;
+  }
+  .pin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .profile-sidebar {
+    grid-template-columns: 1fr;
+  }
+  .profile-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .profile-identity .user-avatar {
+    width: 70px;
+    height: 70px;
+  }
+  .profile-name h1 {
+    font-size: 21px;
+  }
+  .profile-name p {
+    font-size: 10px;
+  }
+  .profile-identity > .outline-button {
+    margin-left: 0;
+  }
+  .social-tabs {
+    gap: 12px;
+  }
+  .social-tabs button {
+    font-size: 12px;
+  }
+  .entry-controls {
+    gap: 8px;
+  }
+  .preview-comment .user-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  .preview-comment {
+    gap: 16px;
+  }
+}
+.popular-hero {
+  border-radius: 14px;
+  overflow: hidden;
+}
+.popular-hero .hero {
+  border-radius: 14px;
+  height: 490px;
+  min-height: 490px;
+}
+.anime-hero > img.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
+  filter: blur(28px) saturate(0.85);
+  transform: scale(1.1);
+  opacity: 0.6;
+}
+.anime-hero > img.hero-feature-poster {
+  position: absolute;
+  left: auto;
+  right: 0;
+  top: 0;
+  width: 55%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  mask-image: linear-gradient(90deg, transparent, #000 20%);
+}
+.anime-hero .hero-shade {
+  background:
+    linear-gradient(
+      90deg,
+      #0a1319fa 5%,
+      #0a1319dd 35%,
+      #0a13196b 64%,
+      #0a131917
+    ),
+    linear-gradient(0deg, #090e16 1%, transparent 50%);
+}
+.anime-hero .hero-copy {
+  padding: 43px 5% 75px;
+  max-width: 760px;
+  z-index: 2;
+}
+.anime-hero h1 {
+  font-size: clamp(33px, 3.8vw, 57px);
+  line-height: 1.12;
+  max-width: 650px;
+  letter-spacing: -1.8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 25px 0 18px;
+}
+.anime-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: #b8c5cd;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+.anime-meta strong {
+  color: #b4ed50;
+}
+.anime-hero p.hero-description {
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 520px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 23px;
+}
+.hero-controls {
+  position: absolute;
+  bottom: 21px;
+  left: 5%;
+  right: 3%;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  z-index: 5;
+  color: #a2b3c2;
+}
+.hero-dots {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: auto;
+}
+.hero-dots button {
+  width: 20px;
+  height: 5px;
+  padding: 0;
+  border-radius: 20px;
+  background: #586873;
+  transition:
+    width 0.3s,
+    background 0.3s;
+}
+.hero-dots button.active {
+  width: 48px;
+  background: #b4ed50;
+}
+.hero-controls > button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  background: #14222fc9;
+  border: 1px solid #52617155;
+  border-radius: 6px;
+  color: #d3dde8;
+}
+.hero-controls > span {
+  font-size: 12px;
+  margin-right: 9px;
+}
+.episode-view video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #05070a;
+}
+.episode-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 15px;
+}
+.episode-toolbar > [data-slot='native-select-wrapper']:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.episode-toolbar select {
+  height: 39px;
+  font-size: 14px;
+}
+.episode-toolbar > button {
+  padding: 8px;
+  background: #212d3d;
+  border-radius: 6px;
+}
+.playback-error {
+  font-size: 13px;
+  color: #f0b6b6;
+  padding: 15px;
+  background: #53252540;
+  border-radius: 7px;
+  margin-top: 10px;
+}
+.playback-error button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: #dce7f6;
+}
+.source-note {
+  font-size: 12px;
+  color: #7d8da2;
+  margin: 12px 0;
+}
+.playback-unavailable {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+}
+.pin-art img {
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  object-fit: contain;
+  width: 100px;
+  height: 100px;
+  image-rendering: pixelated;
+}
+.anime-pin img {
+  border-radius: 0 !important;
+  object-fit: contain;
+  image-rendering: pixelated;
+  width: 26px;
+  height: 26px;
+}
+.pin-card .anime-pin {
+  font-size: 11px;
+}
+.pin-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.pin-art {
+  background: radial-gradient(ellipse, #9d7ed82a, transparent);
+}
+@media (max-width: 760px) {
+  .popular-hero .hero {
+    height: 445px;
+    min-height: 445px;
+  }
+  .anime-hero .hero-copy {
+    padding: 33px 6% 70px;
+  }
+  .anime-hero h1 {
+    font-size: 33px;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    max-width: 90%;
+    margin: 19px 0 15px;
+  }
+  .anime-hero .eyebrow {
+    font-size: 9px;
+  }
+  .anime-hero p.hero-description {
+    font-size: 13px;
+    -webkit-line-clamp: 3;
+    max-width: 85%;
+  }
+  .anime-meta {
+    font-size: 12px;
+    gap: 9px;
+  }
+  .anime-hero > img.hero-feature-poster {
+    width: 75%;
+    opacity: 0.68;
+  }
+  .anime-hero .hero-shade {
+    background:
+      linear-gradient(90deg, #0a1319e8, #0a1319b3 50%, #0a131929),
+      linear-gradient(0deg, #090e16, transparent 60%);
+  }
+  .hero-controls {
+    gap: 8px;
+  }
+  .hero-controls > span {
+    font-size: 10px;
+  }
+  .pin-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .pin-art img {
+    width: 85px;
+    height: 85px;
+  }
+  .episode-toolbar {
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .episode-toolbar > [data-slot='native-select-wrapper']:first-child {
+    flex-basis: 100%;
+  }
+  .episode-toolbar select {
+    font-size: 12px;
+  }
+  .hero-dots button {
+    width: 12px;
+  }
+  .hero-dots button.active {
+    width: 28px;
+  }
+}
+@media (max-width: 440px) {
+  .pin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .anime-hero h1 {
+    font-size: 29px;
+  }
+  .anime-meta > span:last-child {
+    display: none;
+  }
+  .popular-hero .hero {
+    height: 425px;
+    min-height: 425px;
+  }
+}
+.anime-pin {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  display: inline-flex;
+  height: 34px;
+  min-height: 0 !important;
+}
+.anime-pin img {
+  height: 34px;
+  width: 34px;
+  filter: drop-shadow(0 2px 4px #0005);
+}
+.profile-name .anime-pin {
+  height: 40px;
+}
+.profile-name .anime-pin img {
+  width: 40px;
+  height: 40px;
+}
+.pin-name {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+  min-height: 39px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+.pin-subject {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #93879f;
+}
+.pin-card {
+  gap: 11px;
+}
+.pin-card > span:last-child {
+  margin-top: auto;
+  padding-top: 8px;
+}
+.preview-comment .anime-pin {
+  height: 46px;
+}
+.preview-comment .anime-pin img {
+  height: 46px;
+  width: 46px;
+}
+
+.catalog-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin: 36px 0;
+}
+.catalog-pagination button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.email-form {
+  display: grid;
+  gap: 16px;
+}
+.email-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+  color: #c5cfdb;
+}
+.email-form input {
+  background: #111923;
+  border-color: #39424e;
+  color: #fff;
+}
+.email-form small {
+  color: #8b98a8;
+}
+.subscription-nav {
+  font-size: 12px;
+  padding: 9px 12px;
+  border: 1px solid #b4ed5044;
+  border-radius: 8px;
+  color: #b4ed50;
+  white-space: nowrap;
+}
+.title-page {
+  max-width: 1320px;
+  margin: auto;
+  padding: 35px 5% 90px;
+}
+.title-page > h1 {
+  font-size: clamp(30px, 4vw, 50px);
+  line-height: 1.12;
+  letter-spacing: -1.5px;
+  margin: 22px 0 36px;
+}
+.title-intro {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 40px;
+  margin: 30px 0 45px;
+}
+.title-poster {
+  width: 100%;
+  border-radius: 14px;
+  aspect-ratio: 2/3;
+  object-fit: cover;
+}
+.title-intro h1 {
+  font-size: clamp(28px, 3.8vw, 48px);
+  line-height: 1.14;
+  letter-spacing: -1px;
+  margin: 15px 0;
+}
+.title-description {
+  white-space: pre-line;
+  line-height: 1.8;
+  color: #bec8d6;
+  font-size: 15px;
+  margin: 23px 0;
+}
+.genre-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+.genre-links a {
+  padding: 6px 12px;
+  border: 1px solid #b4ed5033;
+  background: #b4ed500b;
+  border-radius: 20px;
+  font-size: 12px;
+  color: #d5e8b2;
+}
+.genre-links a:hover {
+  border-color: #b4ed50;
+}
+.title-playback {
+  margin: 35px 0;
+}
+.title-playback h2 {
+  font-size: 23px;
+  margin-bottom: 18px;
+}
+.title-playback .player {
+  aspect-ratio: 16/9;
+  height: auto;
+  background: #040608;
+  min-height: 0;
+}
+.title-playback video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.recommend-section {
+  margin: 42px 0;
+}
+.recommend-section h2 {
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+.anime-slider {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 180px;
+  gap: 22px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 20px 0;
+  scrollbar-color: #b4ed5066 #101722;
+}
+.anime-slider .card {
+  scroll-snap-align: start;
+}
+.card-title > a {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.journey {
+  margin: 24px 0;
+}
+.journey-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  background: linear-gradient(110deg, #172218, #131a24);
+  border: 1px solid #b4ed5025;
+  border-radius: 14px;
+  padding: 25px;
+  margin-bottom: 16px;
+}
+.journey-stats > div {
+  min-width: 0;
+}
+.journey-stats span {
+  display: block;
+  letter-spacing: 1.5px;
+  font-size: 10px;
+  color: #a3b1bd;
+}
+.journey-stats strong {
+  display: block;
+  font-size: 38px;
+  margin: 8px 0;
+  color: #dff6af;
+}
+.journey-stats small {
+  font-size: 11px;
+  color: #a3b1bd;
+}
+.journey-stats [data-slot='progress'] {
+  margin: 8px 0;
+  height: 5px;
+}
+.journey details {
+  margin: 12px 0;
+}
+.journey summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 22px;
+}
+.achievement {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #ffffff0d;
+  border-radius: 10px;
+  background: #0c121b;
+  color: #83919f;
+}
+.achievement strong {
+  font-size: 12px;
+  min-height: 32px;
+}
+.achievement small {
+  font-size: 11px;
+}
+.achievement.unlocked {
+  border-color: #b4ed5044;
+  color: #c7e4a0;
+  background: #b4ed5007;
+}
+.achievement [data-slot='progress'] {
+  height: 4px;
+}
+.history-list {
+  display: grid;
+  margin-top: 20px;
+}
+.history-list a {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px;
+  padding: 16px 0;
+  border-top: 1px solid #ffffff0d;
+}
+.history-list small {
+  grid-column: 1/-1;
+  color: #8e9cae;
+}
+.history-list span {
+  color: #b4ed50;
+  font-size: 13px;
+}
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin: 30px 0;
+}
+.dashboard-cards strong {
+  display: block;
+  font-size: 48px;
+  color: #b4ed50;
+  margin-top: 16px;
+}
+.dashboard-cards span {
+  color: #a2afbe;
+  font-size: 13px;
+}
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+.admin-table th,
+.admin-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #ffffff12;
+}
+.vote-score {
+  font-size: 11px;
+  color: #8492a4;
+}
+.title-page .muted {
+  line-height: 1.7;
+}
+.title-page > .social-panel {
+  margin: 30px 0;
+}
+@media (max-width: 1050px) {
+  .account-nav {
+    gap: 10px;
+  }
+  .subscription-nav {
+    font-size: 11px;
+  }
+  .title-intro {
+    grid-template-columns: 190px 1fr;
+    gap: 25px;
+  }
+  .achievement-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .social-header {
+    flex-wrap: wrap;
+    gap: 15px;
+    height: auto;
+  }
+  .account-nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .title-intro {
+    grid-template-columns: 110px 1fr;
+    gap: 18px;
+  }
+  .title-intro h1 {
+    font-size: 27px;
+  }
+  .title-intro .title-description,
+  .title-intro .collection-controls {
+    grid-column: 1/-1;
+  }
+  .title-poster {
+    position: sticky;
+    top: 15px;
+  }
+  .title-description {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .journey-stats,
+  .dashboard-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .achievement-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .history-list a {
+    grid-template-columns: 1fr;
+  }
+  .anime-slider {
+    grid-auto-columns: 150px;
+    gap: 16px;
+  }
+  .title-page {
+    padding: 25px 5% 60px;
+  }
+  .title-intro .anime-meta {
+    flex-wrap: wrap;
+  }
+  .subscription-nav {
+    padding: 8px;
+  }
+  .social-header > .back-catalog {
+    font-size: 12px;
+  }
+  .title-playback .episode-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .title-playback
+    .episode-toolbar
+    > [data-slot='native-select-wrapper']:first-child {
+    grid-column: 1/-1;
+    width: 100%;
+  }
+  .title-playback
+    .episode-toolbar
+    > [data-slot='native-select-wrapper']:nth-child(2) {
+    min-width: 92px;
+  }
+  .discussion,
+  .social-panel {
+    border-radius: 12px;
+  }
+  .comment {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .comment.is-reply {
+    margin-left: 18px;
+  }
+  .comment-actions {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .catalog-pagination {
+    gap: 12px;
+  }
+  .catalog-pagination button {
+    min-height: 44px;
+  }
+}
+@media (max-width: 520px) {
+  .community-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+  .community-header .account-nav {
+    grid-column: 1/-1;
+    justify-content: flex-start;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 3px;
+  }
+  .community-header .back-catalog {
+    order: initial;
+    justify-self: end;
+  }
+  .account-nav > a,
+  .account-nav > button {
+    flex: 0 0 auto;
+    min-height: 40px;
+  }
+  .title-page {
+    padding-left: 3%;
+    padding-right: 3%;
+  }
+  .title-intro {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .title-intro h1 {
+    font-size: 23px;
+  }
+  .title-intro .eyebrow {
+    font-size: 8px;
+  }
+  .title-playback h2,
+  .recommend-section h2 {
+    font-size: 20px;
+  }
+  .journey-stats,
+  .dashboard-cards {
+    gap: 10px;
+  }
+  .journey-stats {
+    padding: 16px;
+  }
+  .journey-stats strong,
+  .dashboard-cards strong {
+    font-size: 30px;
+  }
+  .admin-table {
+    font-size: 12px;
+  }
+  .admin-table th,
+  .admin-table td {
+    padding: 10px 6px;
+  }
+  .sign-dialog {
+    width: calc(100vw - 20px) !important;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 20px !important;
+  }
+}
