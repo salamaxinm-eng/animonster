@@ -5,7 +5,11 @@ export default async function Page({
 }: {
   params: Promise<{ genre: string }>;
 }) {
-  const { genre } = await params;
+  const route = await params;
+  let genre = route.genre;
+  try {
+    genre = decodeURIComponent(genre);
+  } catch {}
   return (
     <div className="social-site">
       <CommunityHeader />
