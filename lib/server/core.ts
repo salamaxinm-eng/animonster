@@ -9,6 +9,7 @@ export type Runtime = {
   YOOKASSA_SHOP_ID?: string;
   YOOKASSA_SECRET_KEY?: string;
   PAYMENTS_ENABLED?: string;
+  KODIK_API_TOKEN?: string;
 };
 export const runtime = () => env as unknown as Runtime;
 export const db = () => runtime().DB;

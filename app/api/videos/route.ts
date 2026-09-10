@@ -8,6 +8,7 @@ import {
 } from '@/lib/server/anime';
 
 import { ApiError, fail, json } from '@/lib/server/core';
+import { kodikVoiceovers } from '@/lib/server/kodik';
 export async function GET(r: Request) {
   try {
     const p = new URL(r.url).searchParams,
@@ -48,8 +49,24 @@ export async function GET(r: Request) {
         hls_1080: e.hls_1080,
       }))
       .sort((a, b) => a.ordinal - b.ordinal);
-    await cacheAnime(normalize(release), release.episodes);
-    return json({ episodes, anime: normalize(release), source: 'AniLiberty' });
+    const anime = normalize(release);
+    await cacheAnime(anime, release.episodes);
+    const kodik = await kodikVoiceovers(anime);
+    return json({
+      episodes,
+      anime,
+      source: 'AniLiberty',
+      voiceovers: [
+        {
+          id: 'aniliberty',
+          title: 'AniLiberty',
+          provider: 'aniliberty',
+          episodes: episodes.length,
+        },
+        ...kodik.voiceovers,
+      ],
+      voiceovers_status: kodik.status,
+    });
   } catch (e) {
     return fail(e);
   }

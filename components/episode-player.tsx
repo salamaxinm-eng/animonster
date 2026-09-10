@@ -2,10 +2,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import type { Episode } from '@/lib/anime';
+import type { Episode, Voiceover } from '@/lib/anime';
 import { useCommunity } from '@/components/community/context';
 export function EpisodePlayer({
   episodes,
+  voiceovers,
+  voiceoverStatus,
+  animeTitle,
   initialEpisode = 1,
   animeId,
   initialPosition = 0,
@@ -13,6 +16,9 @@ export function EpisodePlayer({
   onRetry,
 }: {
   episodes: Episode[];
+  voiceovers: Voiceover[];
+  voiceoverStatus: string;
+  animeTitle: string;
   initialEpisode?: number;
   animeId?: number;
   initialPosition?: number;
@@ -26,11 +32,23 @@ export function EpisodePlayer({
       ),
     ),
     [quality, setQuality] = useState('720'),
+    [voiceoverId, setVoiceoverId] = useState('aniliberty'),
     [error, setError] = useState('');
   const video = useRef<HTMLVideoElement>(null);
+  const frame = useRef<HTMLIFrameElement>(null);
   const resumed = useRef('');
   const { user } = useCommunity();
   const episode = episodes[Math.min(index, episodes.length - 1)];
+  const voiceover =
+    voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
+  const isKodik = voiceover?.provider === 'kodik';
+  const lastVoiceoverIndex = Math.max(
+    0,
+    episodes.findLastIndex((item) => item.ordinal <= (voiceover?.episodes || 1)),
+  );
+  useEffect(() => {
+    if (index > lastVoiceoverIndex) setIndex(lastVoiceoverIndex);
+  }, [voiceoverId, lastVoiceoverIndex]);
   useEffect(() => {
     if (!animeId || !episode) return;
     let token = '',
@@ -38,6 +56,7 @@ export function EpisodePlayer({
       cancelled = false,
       sending = false;
     const el = video.current;
+    if (isKodik) return;
     void fetch('/api/watch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -88,7 +107,74 @@ export function EpisodePlayer({
       el?.removeEventListener('ended', flush);
       window.removeEventListener('pagehide', flush);
     };
-  }, [animeId, episode?.id, user?.id]);
+  }, [animeId, episode?.id, user?.id, isKodik]);
+
+  useEffect(() => {
+    if (!animeId || !episode || !isKodik) return;
+    let token = '',
+      seconds = 0,
+      position = episode.ordinal === initialEpisode ? initialPosition : 0,
+      lastPosition = position,
+      cancelled = false,
+      sending = false;
+    void fetch('/api/watch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'start',
+        anime_id: animeId,
+        episode: episode.ordinal,
+      }),
+    })
+      .then((r) => r.json())
+      .then((x: any) => {
+        if (!cancelled) token = x.token || '';
+      })
+      .catch(() => {});
+    const flush = () => {
+      if (!token || sending || seconds < 1) return;
+      const amount = Math.floor(seconds);
+      seconds = 0;
+      sending = true;
+      void fetch('/api/watch', {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, seconds: amount, position }),
+      })
+        .catch(() => {})
+        .finally(() => {
+          sending = false;
+        });
+    };
+    const receive = (event: MessageEvent) => {
+      if (event.source !== frame.current?.contentWindow) return;
+      let payload = event.data;
+      if (typeof payload === 'string') {
+        try {
+          payload = JSON.parse(payload);
+        } catch {
+          return;
+        }
+      }
+      const next = Number(payload?.kodik_player_time_update);
+      if (!Number.isFinite(next) || next < 0 || next > 24 * 60 * 60) return;
+      const delta = next - lastPosition;
+      if (delta > 0 && delta < 10) seconds += delta;
+      position = next;
+      lastPosition = next;
+    };
+    const timer = setInterval(flush, 15000);
+    window.addEventListener('message', receive);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      flush();
+      cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener('message', receive);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [animeId, episode?.id, user?.id, isKodik, voiceoverId]);
   const stream = episode
     ? (quality === '1080'
         ? episode.hls_1080
@@ -104,7 +190,7 @@ export function EpisodePlayer({
   }, [episode?.id]);
   useEffect(() => {
     setError('');
-    if (!stream || !video.current) return;
+    if (isKodik || !stream || !video.current) return;
     let engine: import('hls.js').default | undefined,
       cancelled = false;
     const el = video.current;
@@ -149,11 +235,39 @@ export function EpisodePlayer({
       el.removeAttribute('src');
       el.load();
     };
-  }, [stream]);
+  }, [stream, isKodik]);
+
+  const iframeUrl = (() => {
+    if (!isKodik || !voiceover.player_url || !episode) return '';
+    try {
+      const url = new URL(voiceover.player_url);
+      url.searchParams.set('episode', String(episode.ordinal));
+      if (episode.ordinal === initialEpisode && initialPosition > 0)
+        url.searchParams.set('start_from', String(Math.floor(initialPosition)));
+      return url.href;
+    } catch {
+      return '';
+    }
+  })();
   return (
     <div className="episode-view">
       <div className="player">
-        <video
+        {isKodik ? (
+          iframeUrl ? (
+            <iframe
+              ref={frame}
+              key={voiceover.id + ':' + episode.ordinal}
+              src={iframeUrl}
+              title={`${animeTitle} — ${voiceover.title}, серия ${episode.ordinal}`}
+              referrerPolicy="origin"
+              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allowFullScreen
+            />
+          ) : (
+            <p>Эта озвучка временно недоступна.</p>
+          )
+        ) : (
+          <video
           ref={video}
           controls
           playsInline
@@ -179,7 +293,8 @@ export function EpisodePlayer({
             setError('Не удалось воспроизвести видео. Обновите источник.')
           }
           aria-label={'Серия ' + episode?.ordinal}
-        />
+          />
+        )}
       </div>
       {error && (
         <div className="playback-error" role="alert">
@@ -191,17 +306,28 @@ export function EpisodePlayer({
       )}
       <div className="episode-toolbar">
         <NativeSelect
+          aria-label="Выбор озвучки"
+          value={voiceover?.id || 'aniliberty'}
+          onChange={(e) => setVoiceoverId(e.target.value)}
+        >
+          {voiceovers.map((item) => (
+            <option value={item.id} key={item.id}>
+              {item.title} · {item.episodes} серий
+            </option>
+          ))}
+        </NativeSelect>
+        <NativeSelect
           aria-label="Выбор серии"
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
         >
-          {episodes.map((e, i) => (
+          {episodes.slice(0, lastVoiceoverIndex + 1).map((e, i) => (
             <option value={i} key={e.id}>
               Серия {e.ordinal} · {e.name}
             </option>
           ))}
         </NativeSelect>
-        <NativeSelect
+        {!isKodik && <NativeSelect
           aria-label="Качество видео"
           value={
             episode?.[('hls_' + quality) as keyof Episode]
@@ -221,7 +347,7 @@ export function EpisodePlayer({
                 {q}p
               </option>
             ))}
-        </NativeSelect>
+        </NativeSelect>}
         <button
           disabled={index === 0}
           onClick={() => setIndex(index - 1)}
@@ -230,7 +356,7 @@ export function EpisodePlayer({
           <ChevronLeft size={20} />
         </button>
         <button
-          disabled={index >= episodes.length - 1}
+          disabled={index >= lastVoiceoverIndex}
           onClick={() => setIndex(index + 1)}
           aria-label="Следующая серия"
         >
@@ -238,7 +364,13 @@ export function EpisodePlayer({
         </button>
       </div>
       <p className="source-note">
-        Озвучка и видео: AniLiberty · {episodes.length} серий доступно
+        Озвучка: {voiceover?.title || 'AniLiberty'} ·{' '}
+        {voiceover?.episodes || episodes.length} серий доступно
+        {voiceovers.length === 1 && voiceoverStatus === 'disabled'
+          ? ' · дополнительные озвучки появятся после подключения Kodik'
+          : voiceovers.length === 1 && voiceoverStatus === 'unavailable'
+            ? ' · каталог озвучек временно недоступен'
+            : ''}
       </p>
     </div>
   );

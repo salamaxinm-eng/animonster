@@ -25,3 +25,11 @@ export type Episode = {
   hls_720: string | null;
   hls_1080: string | null;
 };
+
+export type Voiceover = {
+  id: string;
+  title: string;
+  provider: 'aniliberty' | 'kodik';
+  episodes: number;
+  player_url?: string;
+};
