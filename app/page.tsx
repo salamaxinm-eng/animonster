@@ -148,6 +148,7 @@ export default function Home() {
         </a>
         <nav>
           <a href="#catalog">Каталог</a>
+          <a href="/genres">Жанры</a>
           <a href="/recommendations">Рекомендации</a>
           <button
             onClick={() => {

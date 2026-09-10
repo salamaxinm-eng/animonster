@@ -113,6 +113,11 @@
 .community-header .account-nav {
   margin-left: auto;
 }
+.community-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
 .back-catalog {
   display: flex;
   align-items: center;
@@ -1525,6 +1530,79 @@ button:disabled {
   margin: auto;
   padding: 35px 5% 90px;
 }
+.genre-hub {
+  max-width: 1320px;
+  margin: auto;
+  padding: 30px 0 90px;
+}
+.genre-hub-heading {
+  margin: 12px 0 34px;
+}
+.genre-hub-heading h1 {
+  margin: 8px 0 10px;
+  font-size: clamp(34px, 4vw, 52px);
+  letter-spacing: -1.5px;
+}
+.genre-hub-heading > p:last-child {
+  color: #94a2b2;
+  font-size: 15px;
+}
+.genre-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+.genre-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 176px;
+  border: 1px solid #ffffff14;
+  border-radius: 13px;
+  background-color: #17202b;
+  background-position: center;
+  background-size: cover;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease;
+}
+.genre-tile:hover {
+  transform: translateY(-3px);
+  border-color: #b4ed5070;
+}
+.genre-tile-shade {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(180deg, #07101655, #071016e8);
+}
+.genre-tile-content {
+  display: flex;
+  height: 100%;
+  min-height: inherit;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 12px;
+  text-align: center;
+}
+.genre-tile-content svg {
+  width: 31px;
+  height: 31px;
+  color: #fff;
+  filter: drop-shadow(0 2px 8px #000);
+}
+.genre-tile-content strong {
+  font-size: 14px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-shadow: 0 2px 9px #000;
+}
+.genre-tile-content small {
+  color: #c1c9d2;
+  font-size: 10px;
+}
 .title-page > h1 {
   font-size: clamp(30px, 4vw, 50px);
   line-height: 1.12;
@@ -1762,6 +1840,9 @@ button:disabled {
   .achievement-grid {
     grid-template-columns: repeat(4, 1fr);
   }
+  .genre-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 @media (max-width: 760px) {
   .social-header {
@@ -1855,6 +1936,17 @@ button:disabled {
   .catalog-pagination button {
     min-height: 44px;
   }
+  .genre-hub {
+    padding-top: 16px;
+  }
+  .genre-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+  .genre-tile {
+    min-height: 142px;
+    border-radius: 8px;
+  }
 }
 @media (max-width: 520px) {
   .community-header {
@@ -1866,6 +1958,13 @@ button:disabled {
     justify-content: flex-start;
     overflow-x: auto;
     flex-wrap: nowrap;
+    padding-bottom: 3px;
+  }
+  .community-header .community-links {
+    grid-column: 1/-1;
+    grid-row: 2;
+    gap: 22px;
+    overflow-x: auto;
     padding-bottom: 3px;
   }
   .community-header .back-catalog {
@@ -1880,6 +1979,35 @@ button:disabled {
   .title-page {
     padding-left: 3%;
     padding-right: 3%;
+  }
+  .genre-hub-heading {
+    margin-bottom: 22px;
+  }
+  .genre-hub-heading h1 {
+    font-size: 32px;
+  }
+  .genre-hub-heading > p:last-child {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .genre-tile {
+    min-height: 112px;
+  }
+  .genre-tile-content {
+    gap: 6px;
+    padding: 12px 6px;
+  }
+  .genre-tile-content svg {
+    width: 27px;
+    height: 27px;
+  }
+  .genre-tile-content strong {
+    max-width: 100%;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+  .genre-tile-content small {
+    font-size: 9px;
   }
   .title-intro {
     grid-template-columns: 92px minmax(0, 1fr);

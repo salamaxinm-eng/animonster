@@ -83,7 +83,17 @@ export async function getAnimeByAlias(alias: string) {
     return null;
   }
 }
-export async function genreList(): Promise<{ id: number; name: string }[]> {
+export type Genre = {
+  id: number;
+  name: string;
+  image?: {
+    preview?: string;
+    thumbnail?: string;
+    optimized?: { preview?: string; thumbnail?: string };
+  };
+  total_releases?: number;
+};
+export async function genreList(): Promise<Genre[]> {
   return liberty('/anime/genres');
 }
 export async function genresCatalog(genres: string[], ongoing = false) {

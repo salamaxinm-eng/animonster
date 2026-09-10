@@ -231,12 +231,17 @@ export function CommunityHeader() {
           Ani<span>Monster</span>
         </span>
       </a>
-      <a className="back-catalog" href="/#catalog">
-        <ArrowLeft size={16} /> Каталог
-      </a>
-      <a className="back-catalog" href="/recommendations">
-        Рекомендации
-      </a>
+      <nav className="community-links" aria-label="Основные разделы">
+        <a className="back-catalog" href="/#catalog">
+          <ArrowLeft size={16} /> Каталог
+        </a>
+        <a className="back-catalog" href="/genres">
+          Жанры
+        </a>
+        <a className="back-catalog" href="/recommendations">
+          Рекомендации
+        </a>
+      </nav>
       <AccountNav />
     </header>
   );
