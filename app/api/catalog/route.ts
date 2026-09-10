@@ -12,12 +12,17 @@ export async function GET(request: Request) {
         release && available(release) ? [normalize(release)] : [],
       );
     }
+    const sorting: Record<string, string> = {
+      fresh: 'FRESH_AT_DESC',
+      year: 'YEAR_DESC',
+      rating: 'RATING_DESC',
+    };
     const query = new URLSearchParams({
       limit: '24',
       page: String(
         Math.max(1, Math.min(10000, Math.floor(Number(p.get('page')) || 1))),
       ),
-      'f[sorting]': 'RATING_DESC',
+      'f[sorting]': sorting[p.get('sort') || ''] || 'RATING_DESC',
     });
     if (p.get('q')) query.set('f[search]', p.get('q')!.slice(0, 100));
     if (p.get('kind') === 'movie') query.set('f[types]', 'MOVIE');
@@ -33,7 +38,7 @@ export async function GET(request: Request) {
       query.set('f[genres]', String(genre.id));
     }
     const data = await liberty('/anime/catalog/releases?' + query);
-    const items=data.data.filter(available).map(normalize);
+    const items = data.data.filter(available).map(normalize);
     await rememberAnime(items);
     const pagination = data.meta.pagination;
     return Response.json(items, {

@@ -11,6 +11,13 @@ export async function GET(r: Request) {
         )
         .bind(new Date(now() - 6 * 86400000).toISOString().slice(0, 10))
         .all<{ data: string }>();
+      const weekly = rows.results.map((x) => JSON.parse(x.data) as Anime);
+      const fallback = weekly.length < 18 ? await genresCatalog([]) : [];
+      const items = Array.from(
+        new Map(
+          [...weekly, ...fallback].map((anime) => [anime.id, anime]),
+        ).values(),
+      ).slice(0, 20);
       return json({
         sections: [
           {
@@ -18,11 +25,9 @@ export async function GET(r: Request) {
               ? 'Популярное за неделю'
               : 'Популярное в каталоге',
             note: rows.results.length
-              ? 'По просмотрам на AniMonster за последние 7 дней.'
+              ? 'По просмотрам на AniMonster за последние 7 дней, дополнено хитами каталога.'
               : 'Пока недостаточно просмотров для недельного рейтинга.',
-            items: rows.results.length
-              ? rows.results.map((x) => JSON.parse(x.data))
-              : await genresCatalog([]),
+            items,
           },
         ],
       });
