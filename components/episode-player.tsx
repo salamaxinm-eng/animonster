@@ -7,7 +7,6 @@ import { useCommunity } from '@/components/community/context';
 export function EpisodePlayer({
   episodes,
   voiceovers,
-  voiceoverStatus,
   animeTitle,
   initialEpisode = 1,
   animeId,
@@ -17,7 +16,6 @@ export function EpisodePlayer({
 }: {
   episodes: Episode[];
   voiceovers: Voiceover[];
-  voiceoverStatus: string;
   animeTitle: string;
   initialEpisode?: number;
   animeId?: number;
@@ -305,7 +303,8 @@ export function EpisodePlayer({
         </div>
       )}
       <div className="episode-toolbar">
-        <NativeSelect
+        {voiceovers.length > 1 && <NativeSelect
+          className="voiceover-select"
           aria-label="Выбор озвучки"
           value={voiceover?.id || 'aniliberty'}
           onChange={(e) => setVoiceoverId(e.target.value)}
@@ -315,8 +314,9 @@ export function EpisodePlayer({
               {item.title} · {item.episodes} серий
             </option>
           ))}
-        </NativeSelect>
+        </NativeSelect>}
         <NativeSelect
+          className="episode-select"
           aria-label="Выбор серии"
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
@@ -328,6 +328,7 @@ export function EpisodePlayer({
           ))}
         </NativeSelect>
         {!isKodik && <NativeSelect
+          className="quality-select"
           aria-label="Качество видео"
           value={
             episode?.[('hls_' + quality) as keyof Episode]
@@ -366,11 +367,6 @@ export function EpisodePlayer({
       <p className="source-note">
         Озвучка: {voiceover?.title || 'AniLiberty'} ·{' '}
         {voiceover?.episodes || episodes.length} серий доступно
-        {voiceovers.length === 1 && voiceoverStatus === 'disabled'
-          ? ' · дополнительные озвучки появятся после подключения Kodik'
-          : voiceovers.length === 1 && voiceoverStatus === 'unavailable'
-            ? ' · каталог озвучек временно недоступен'
-            : ''}
       </p>
     </div>
   );

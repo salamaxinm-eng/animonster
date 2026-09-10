@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 export function AnimePage({ anime }: { anime: Anime }) {
   const [episodes, setEpisodes] = useState<Episode[]>([]),
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
-    [voiceoverStatus, setVoiceoverStatus] = useState('disabled'),
     [episode, setEpisode] = useState(1),
     [start, setStart] = useState({ episode: 1, position: 0 }),
     [error, setError] = useState(''),
@@ -53,7 +52,6 @@ export function AnimePage({ anime }: { anime: Anime }) {
       setEpisode(selected);
       setEpisodes(x.episodes);
       setVoiceovers(x.voiceovers || []);
-      setVoiceoverStatus(x.voiceovers_status || 'disabled');
       setVersion((v) => v + 1);
     } catch (e) {
       setError((e as Error).message);
@@ -114,7 +112,6 @@ export function AnimePage({ anime }: { anime: Anime }) {
               animeId={anime.id}
               episodes={episodes}
               voiceovers={voiceovers}
-              voiceoverStatus={voiceoverStatus}
               animeTitle={anime.russian}
               initialEpisode={start.episode}
               initialPosition={start.position}
