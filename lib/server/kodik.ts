@@ -18,7 +18,13 @@ type KodikResponse = {
   results?: KodikResult[];
 };
 
-const PLAYER_HOSTS = ['kodik.info', 'kodik.biz', 'kodikplayer.com'];
+const PLAYER_HOSTS = [
+  'kodik.info',
+  'kodik.biz',
+  'kodikres.com',
+  'kodikplayer.com',
+  'kodikonline.com',
+];
 
 function safePlayerUrl(raw: string) {
   try {
