@@ -38,7 +38,7 @@ export function AdminTools() {
       <form className="admin-inline-form" onSubmit={createInvite}>
         <Input name="label" placeholder="Для кого" maxLength={80} />
         <Input name="days" type="number" min={1} max={90} defaultValue={14} aria-label="Срок, дней" />
-        <Button>Создать инвайт</Button>
+        <Button type="submit">Создать инвайт</Button>
       </form>
       {code && <p className="invite-result">Скопируйте сейчас: <strong>{code}</strong></p>}
       {error && <p className="error-msg">{error}</p>}
