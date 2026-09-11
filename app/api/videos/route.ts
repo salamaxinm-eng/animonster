@@ -7,7 +7,7 @@ import {
   type Release,
 } from '@/lib/server/anime';
 
-import { ApiError, fail, json } from '@/lib/server/core';
+import { ApiError, fail, json, viewer } from '@/lib/server/core';
 import { kodikVoiceovers } from '@/lib/server/kodik';
 export async function GET(r: Request) {
   try {
@@ -32,6 +32,11 @@ export async function GET(r: Request) {
     const release: Release = await liberty('/anime/releases/' + releaseId);
     if ((release.shikimori?.id || 100000000 + release.id) !== id)
       throw new ApiError('Релиз не совпадает с тайтлом');
+    if (release.age_rating?.is_adult) {
+      const user = await viewer(r);
+      if (!user?.adult_confirmed_at)
+        throw new ApiError('Подтвердите совершеннолетие в аккаунте.', 403, 'adult_confirmation_required');
+    }
     if (!available(release))
       return json({
         episodes: [],

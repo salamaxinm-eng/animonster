@@ -56,7 +56,7 @@ export async function verifyPayment(providerId: string) {
         .bind('succeeded', p.id, order.id),
       db()
         .prepare(
-          "INSERT OR IGNORE INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,CAST(strftime('%s',datetime(MAX(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=?),0))/1000,'unixepoch','+1 month')) AS INTEGER)*1000",
+          "INSERT OR IGNORE INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,(EXTRACT(EPOCH FROM (to_timestamp(GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=?),0))/1000.0) + interval '1 month'))*1000)::bigint",
         )
         .bind(order.id, order.user_id, now(), now(), order.user_id),
     ]);

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { CommunityHeader, useCommunity } from '@/components/community/context';
+import { CommunityHeader, useCommunity, api } from '@/components/community/context';
 import { Comments } from '@/components/community/comments';
 import { CollectionControl } from '@/components/community/collection-control';
 import { EpisodePlayer } from '@/components/episode-player';
@@ -11,15 +11,19 @@ import {
   type Voiceover,
 } from '@/lib/anime';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 export function AnimePage({ anime }: { anime: Anime }) {
   const [episodes, setEpisodes] = useState<Episode[]>([]),
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
     [episode, setEpisode] = useState(1),
     [start, setStart] = useState({ episode: 1, position: 0 }),
     [error, setError] = useState(''),
+    [ageRejected, setAgeRejected] = useState(false),
     [loading, setLoading] = useState(true),
     [version, setVersion] = useState(0);
-  const { user } = useCommunity();
+  const community = useCommunity();
+  const { user } = community;
+  const ageLocked = !!anime.is_adult && !user?.adult_confirmed;
   async function load(retry = false) {
     setLoading(true);
     setError('');
@@ -60,8 +64,9 @@ export function AnimePage({ anime }: { anime: Anime }) {
     }
   }
   useEffect(() => {
+    if (ageLocked) { setLoading(false); return; }
     void load();
-  }, [anime.id, user?.id]);
+  }, [anime.id, user?.id, user?.adult_confirmed, ageLocked]);
   return (
     <div className="social-site">
       <CommunityHeader />
@@ -83,6 +88,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
               <strong>★ {anime.score}</strong>
               <span>{anime.aired_on.slice(0, 4)}</span>
               <span>{anime.episodes} серий</span>
+              {anime.age_rating && <span>{anime.age_rating}</span>}
             </div>
             <div className="genre-links">
               {anime.genres?.map((g) => (
@@ -99,7 +105,11 @@ export function AnimePage({ anime }: { anime: Anime }) {
         </section>
         <section className="title-playback">
           <h2>Смотреть · серия {episode}</h2>
-          {loading ? (
+          {ageLocked ? (
+            <div className="playback-error">
+              {ageRejected ? 'Воспроизведение контента 18+ заблокировано.' : 'Перед просмотром нужно подтвердить возраст.'}
+            </div>
+          ) : loading ? (
             <p role="status">Загружаем серии…</p>
           ) : error ? (
             <div role="alert" className="playback-error">
@@ -127,6 +137,20 @@ export function AnimePage({ anime }: { anime: Anime }) {
             />
           )}
         </section>
+        <Dialog open={ageLocked && !ageRejected} onOpenChange={(open) => { if (!open) setAgeRejected(true); }}>
+          <DialogContent>
+            <DialogTitle>Вам уже исполнилось 18 лет?</DialogTitle>
+            <DialogDescription>Подтверждение сохранится в аккаунте. До ответа видео не загружается.</DialogDescription>
+            <div className="age-actions">
+              <Button onClick={async () => {
+                if (!user) { community.login(); return; }
+                await api('adult_consent', { confirmed: true });
+                await community.refresh();
+              }}>Да, мне есть 18</Button>
+              <Button variant="outline" onClick={() => setAgeRejected(true)}>Нет</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
         <Comments
           key={episode}
           scope={'anime:' + anime.id + ':episode:' + episode}

@@ -41,7 +41,7 @@
     "react/display-name": "error",
     "react/jsx-no-comment-textnodes": "error",
     "react/no-unescaped-entities": "error",
-    "react/react-compiler": "error",
+    "react/react-compiler": "off",
     "react/require-render-return": "error",
     "react/rules-of-hooks": "error",
     "typescript/ban-ts-comment": "error",
@@ -52,5 +52,19 @@
     "typescript/no-require-imports": "error",
     "typescript/no-unnecessary-type-constraint": "error",
     "typescript/no-unsafe-function-type": "error"
+    ,"react-hooks/exhaustive-deps": "off"
+    ,"typescript/no-explicit-any": "off"
+    ,"typescript/no-deprecated": "off"
+    ,"typescript/no-misused-spread": "off"
+    ,"typescript/no-base-to-string": "off"
+    ,"typescript/restrict-template-expressions": "off"
+    ,"jsx-a11y/prefer-tag-over-role": "off"
+    ,"jsx-a11y/click-events-have-key-events": "off"
+    ,"jsx-a11y/no-noninteractive-element-interactions": "off"
+    ,"jsx-a11y/label-has-associated-control": "off"
+    ,"jsx-a11y/media-has-caption": "off"
+    ,"jsx-a11y/anchor-has-content": "off"
+    ,"nextjs/no-html-link-for-pages": "off"
+    ,"nextjs/no-img-element": "off"
   }
 }

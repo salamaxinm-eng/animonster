@@ -1,6 +1,7 @@
 'use client';
 import { ProfileJourney } from './profile-journey';
 import { BuySubscription } from './buy-subscription';
+import { AccountData } from './account-data';
 
 import { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -563,6 +564,7 @@ export function ProfilePage({ id }: { id?: string }) {
                   ) : (
                     <p className="muted">Никого нет в чёрном списке.</p>
                   )}
+                  <AccountData />
                 </form>
               )}
               {tab === 'notifications' && data.own && (

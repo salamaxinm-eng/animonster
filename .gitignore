@@ -28,6 +28,8 @@ yarn-error.log*
 
 # local environment
 .env*
+!.env.example
+!.env.production.example
 
 # deployment and generated files
 .vercel
@@ -36,5 +38,7 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/.data/
+/artifacts/
 /.dev.vars
 *.tsbuildinfo

@@ -202,6 +202,8 @@ export type Profile = {
   collection_public: number;
   created_at: number;
   premium_until: number;
+  adult_confirmed: boolean;
+  email_verified: boolean;
 };
 export type Entry = {
   anime_id: number;

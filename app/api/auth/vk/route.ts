@@ -1,5 +1,5 @@
 import { db, runtime, base, hash, uid, now, json } from '@/lib/server/core';
-export async function GET() {
+export async function GET(r: Request) {
   const client = runtime().VK_CLIENT_ID;
   if (!client)
     return json(
@@ -9,6 +9,7 @@ export async function GET() {
       },
       503,
     );
+  const invite = new URL(r.url).searchParams.get('invite')?.trim().toUpperCase() || '';
   const state = uid(),
     browser = uid() + uid(),
     verifier = (uid() + uid()).replaceAll('-', '');
@@ -23,9 +24,9 @@ export async function GET() {
     db().prepare('DELETE FROM auth_flows WHERE expires<?').bind(now()),
     db()
       .prepare(
-        'INSERT INTO auth_flows(state,browser_hash,verifier,expires) VALUES (?,?,?,?)',
+        'INSERT INTO auth_flows(state,browser_hash,verifier,invite_hash,expires) VALUES (?,?,?,?,?)',
       )
-      .bind(state, await hash(browser), verifier, now() + 600000),
+      .bind(state, await hash(browser), verifier, invite ? await hash(invite) : null, now() + 600000),
   ]);
   const query = new URLSearchParams({
     client_id: client,

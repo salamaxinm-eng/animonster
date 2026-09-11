@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { BuySubscription } from './buy-subscription';
 import { EmailForm } from './email-form';
-import { Ghost, Bell, Gem, ArrowLeft } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Ghost, Bell, Gem, ArrowLeft, MessageCircle } from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
 export async function api(action: string, data?: Record<string, unknown>) {
   const r = await fetch(
@@ -37,6 +38,7 @@ const Context = createContext<{
   moderator: boolean;
   vkReady: boolean;
   paymentsReady: boolean;
+  supportUrl: string | null;
   loaded: boolean;
   refresh: () => Promise<void>;
   login: () => void;
@@ -46,6 +48,7 @@ const Context = createContext<{
   moderator: false,
   vkReady: false,
   paymentsReady: false,
+  supportUrl: null,
   loaded: false,
   refresh: async () => {},
   login: () => {},
@@ -58,6 +61,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       moderator: false,
       vk_ready: false,
       payments_ready: false,
+      support_url: null as string | null,
     }),
     [loaded, setLoaded] = useState(false),
     [showLogin, setShowLogin] = useState(false);
@@ -112,6 +116,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         moderator: me.moderator,
         vkReady: me.vk_ready,
         paymentsReady: me.payments_ready,
+        supportUrl: me.support_url,
         loaded,
         refresh,
         login: () => setShowLogin(true),
@@ -125,22 +130,27 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
           <DialogDescription>
             Сохраняй историю, собирай коллекцию и обсуждай серии.
           </DialogDescription>
-          <EmailForm
-            onSuccess={async () => {
-              await refresh();
-              setShowLogin(false);
-            }}
-          />
           {me.vk_ready ? (
-            <a className="vk-button" href="/api/auth/vk" target="_top">
-              Войти через VK ID
-            </a>
+            <form className="vk-login-form vk-login-primary" action="/api/auth/vk" method="get" target="_top">
+              <strong>Основной способ входа</strong>
+              <Input name="invite" placeholder="Инвайт для первого входа" minLength={8} maxLength={64} />
+              <button className="vk-button" type="submit">Войти через VK ID</button>
+            </form>
           ) : (
             <p className="setup-note">
               Вход через VK скоро появится. Сейчас приложение VK ID ещё не
               подключено.
             </p>
           )}
+          <details className="email-alternative" open={!me.vk_ready}>
+            <summary>Войти по email и паролю</summary>
+            <EmailForm
+              onSuccess={async () => {
+                await refresh();
+                setShowLogin(false);
+              }}
+            />
+          </details>
         </DialogContent>
       </Dialog>
     </Context.Provider>
@@ -197,22 +207,19 @@ export function AccountNav() {
             <Avatar avatar={c.user.avatar} theme={c.user.theme} />
             <span>{c.user.nick}</span>
           </a>
+          {!c.user.email_verified && <span className="verify-email-label">Подтвердите email</span>}
           <a href="/profile?tab=notifications" aria-label="Уведомления">
             <Bell size={18} />
           </a>
-          <button
+          {c.preview ? <span className="preview-label">Предпросмотр</span> : <button
             className="text-link"
             onClick={async () => {
-              if (c.preview) {
-                c.login();
-                return;
-              }
               await api('logout', {});
               await c.refresh();
             }}
           >
-            {c.preview ? 'Войти в аккаунт' : 'Выйти'}
-          </button>
+            Выйти
+          </button>}
         </>
       ) : (
         <button className="vk-mini" onClick={c.login}>
@@ -223,6 +230,7 @@ export function AccountNav() {
   );
 }
 export function CommunityHeader() {
+  const community = useCommunity();
   return (
     <header className="community-header">
       <a href="/" className="brand">
@@ -243,6 +251,7 @@ export function CommunityHeader() {
         </a>
       </nav>
       <AccountNav />
+      {community.supportUrl && <a className="support-link" href={community.supportUrl} target="_blank" rel="noreferrer"><MessageCircle size={17} /> Поддержка</a>}
     </header>
   );
 }

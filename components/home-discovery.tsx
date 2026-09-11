@@ -90,18 +90,14 @@ export function HomeDiscovery() {
           {error}
         </p>
       ) : (
-        sections.map((section) => (
+        sections.map((section, index) => (
           <div className="home-rail" key={section.title}>
             <div className="home-rail-heading">
               <div>
                 <h2>{section.title}</h2>
                 {section.note && <p>{section.note}</p>}
               </div>
-              <a
-                href={
-                  active === 'recommended' ? '/recommendations' : '#catalog'
-                }
-              >
+              <a href={`/browse/${active}?section=${index}`}>
                 Смотреть все
               </a>
             </div>

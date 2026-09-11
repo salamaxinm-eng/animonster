@@ -11,6 +11,8 @@ export type Anime = {
   description?: string;
   genres?: string[];
   popularity?: number;
+  age_rating?: string;
+  is_adult?: boolean;
 };
 export const posterUrl = (a: Anime) =>
   a.image.original.startsWith('https://')

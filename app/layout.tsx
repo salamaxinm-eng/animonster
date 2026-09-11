@@ -13,7 +13,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark">
       <body>
-        <CommunityProvider>{children}</CommunityProvider>
+        <CommunityProvider>{children}<footer className="site-footer"><span>© AniMonster · закрытая бета</span><nav><a href="/legal/privacy">Конфиденциальность</a><a href="/legal/terms">Условия</a><a href="/legal/rules">Правила</a></nav></footer></CommunityProvider>
       </body>
     </html>
   );

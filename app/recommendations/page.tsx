@@ -49,9 +49,12 @@ export default function Page() {
             <Button onClick={() => setAttempt((x) => x + 1)}>Повторить</Button>
           </div>
         ) : (
-          sections.map((s) => (
+          sections.map((s, index) => (
             <section className="recommend-section" key={s.title}>
-              <h2>{s.title}</h2>
+              <div className="recommend-heading">
+                <h2>{s.title}</h2>
+                <a href={`/browse/recommended?section=${index}`}>Смотреть все</a>
+              </div>
               {s.note && <p className="muted">{s.note}</p>}
               {s.items.length ? (
                 <AnimeGrid items={s.items} horizontal />

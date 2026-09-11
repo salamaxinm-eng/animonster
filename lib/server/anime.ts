@@ -1,4 +1,5 @@
 import type { Anime, Episode } from '@/lib/anime';
+import { db, now } from './core';
 export const LIBERTY = 'https://api.anilibria.app';
 export type Release = {
   id: number;
@@ -14,14 +15,36 @@ export type Release = {
   added_in_users_favorites: number;
   is_blocked_by_geo: boolean;
   is_blocked_by_copyrights: boolean;
+  age_rating?: { value: string; label: string; is_adult: boolean; description: string };
   episodes?: Episode[];
 };
 export async function liberty(path: string) {
-  const r = await fetch(LIBERTY + '/api/v1' + path, {
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!r.ok) throw Error('Источник временно недоступен');
-  return r.json() as Promise<any>;
+  const started = performance.now();
+  let lastError = 'Источник временно недоступен';
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const r = await fetch(LIBERTY + '/api/v1' + path, { signal: AbortSignal.timeout(12000) });
+      if (!r.ok) {
+        lastError = `HTTP ${r.status}`;
+        if (r.status < 500) break;
+      } else {
+        void providerHealth('ok', Math.round(performance.now() - started));
+        return r.json() as Promise<any>;
+      }
+    } catch (reason) {
+      lastError = reason instanceof Error ? reason.message : lastError;
+    }
+  }
+  void providerHealth('error', Math.round(performance.now() - started), lastError);
+  throw Error('Источник временно недоступен');
+}
+
+async function providerHealth(status: 'ok' | 'error', latency: number, error?: string) {
+  try {
+    await db().prepare(
+      'INSERT INTO provider_health(provider,status,latency_ms,error,checked_at) VALUES (?,?,?,?,?) ON CONFLICT(provider) DO UPDATE SET status=excluded.status,latency_ms=excluded.latency_ms,error=excluded.error,checked_at=excluded.checked_at',
+    ).bind('aniliberty', status, latency, error || null, now()).run();
+  } catch {}
 }
 export const available = (r: Release) =>
   !r.is_blocked_by_geo && !r.is_blocked_by_copyrights;
@@ -56,5 +79,7 @@ export function normalize(r: Release): Anime {
     description: r.description,
     genres: r.genres?.map((x) => x.name) || [],
     popularity: r.added_in_users_favorites || 0,
+    age_rating: r.age_rating?.label,
+    is_adult: !!r.age_rating?.is_adult,
   };
 }

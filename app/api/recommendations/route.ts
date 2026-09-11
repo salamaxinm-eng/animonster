@@ -7,7 +7,7 @@ export async function GET(r: Request) {
     if (!u) {
       const rows = await db()
         .prepare(
-          'SELECT v.anime_id,count(*) AS n,a.data FROM daily_views v JOIN anime_cache a ON a.id=v.anime_id WHERE v.day>=? GROUP BY v.anime_id ORDER BY n DESC LIMIT 20',
+          'SELECT v.anime_id,count(*) AS n,a.data FROM daily_views v JOIN anime_cache a ON a.id=v.anime_id WHERE v.day>=? GROUP BY v.anime_id,a.data ORDER BY n DESC LIMIT 20',
         )
         .bind(new Date(now() - 6 * 86400000).toISOString().slice(0, 10))
         .all<{ data: string }>();
@@ -34,7 +34,7 @@ export async function GET(r: Request) {
     }
     const recent = await db()
       .prepare(
-        'SELECT h.anime_id,a.data,MAX(h.updated_at) AS last_at FROM history h JOIN anime_cache a ON a.id=h.anime_id WHERE h.user_id=? GROUP BY h.anime_id ORDER BY last_at DESC LIMIT 10',
+        'SELECT h.anime_id,a.data,MAX(h.updated_at) AS last_at FROM history h JOIN anime_cache a ON a.id=h.anime_id WHERE h.user_id=? GROUP BY h.anime_id,a.data ORDER BY last_at DESC LIMIT 10',
       )
       .bind(u.id)
       .all<{ anime_id: number; data: string }>();

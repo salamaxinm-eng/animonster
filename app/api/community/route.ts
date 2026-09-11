@@ -43,6 +43,7 @@ export async function GET(r: Request) {
           runtime().PAYMENTS_ENABLED === 'true' &&
           !!runtime().YOOKASSA_SHOP_ID &&
           !!runtime().YOOKASSA_SECRET_KEY,
+        support_url: runtime().TELEGRAM_URL || null,
       });
     if (action === 'profile') {
       const id = p.get('id') || u?.id;
@@ -140,6 +141,11 @@ export async function POST(r: Request) {
     const u = await requireUser(r),
       b = await body(r);
     const action = b.action;
+    if (action === 'adult_consent') {
+      if (!b.confirmed) throw new ApiError('Подтверждение не сохранено');
+      await db().prepare('UPDATE users SET adult_confirmed_at=? WHERE id=?').bind(now(), u.id).run();
+      return json({ ok: true });
+    }
     if (action === 'profile') {
       const nick = String(b.nick || '').trim();
       if (!/^[\p{L}\p{N}_-]{3,24}$/u.test(nick))

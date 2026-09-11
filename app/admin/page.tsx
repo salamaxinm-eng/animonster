@@ -1,13 +1,18 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { viewer, isModerator, base } from '@/lib/server/core';
-import { dashboard } from '@/lib/server/admin';
 import { CommunityHeader } from '@/components/community/context';
+import { AdminTools } from '@/components/community/admin-tools';
 export default async function Page() {
-  const h = await headers(),
-    u = await viewer(new Request(base() + '/admin', { headers: h }));
-  if (!isModerator(u)) notFound();
-  const d = await dashboard();
+  const h = await headers();
+  const host = h.get('host');
+  if (!host) notFound();
+  const origin = process.env.SITE_URL || `${host.startsWith('localhost') ? 'http' : 'https'}://${host}`;
+  const response = await fetch(`${origin}/api/admin`, {
+    cache: 'no-store', headers: { cookie: h.get('cookie') || '' },
+  }).catch(() => null);
+  if (!response) notFound();
+  if (!response.ok) notFound();
+  const { dashboard: d } = await response.json();
   return (
     <div className="social-site">
       <CommunityHeader />
@@ -43,7 +48,7 @@ export default async function Page() {
                 </tr>
               </thead>
               <tbody>
-                {d.daily.map((x) => (
+                {d.daily.map((x: { day: string; n: number }) => (
                   <tr key={String(x.day)}>
                     <td>{String(x.day)}</td>
                     <td>{Number(x.n)}</td>
@@ -56,6 +61,7 @@ export default async function Page() {
           )}
         </section>
         <a href="/profile?tab=moderation">Проверить жалобы →</a>
+        <AdminTools />
       </main>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Gem, Check, Lock, ArrowRight } from 'lucide-react';
+import { Gem, Check, Lock } from 'lucide-react';
 import {
   CommunityHeader,
   useCommunity,
