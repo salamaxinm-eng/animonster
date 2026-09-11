@@ -2085,7 +2085,7 @@ button:disabled {
 .admin-table-wrap { overflow-x: auto; }
 .admin-table td small { display: block; max-width: 170px; overflow: hidden; text-overflow: ellipsis; color: #84909c; }
 .support-link { display: inline-flex; align-items: center; gap: 6px; }
-/* Популярное — аккуратная компоновка на десктопе */
+/* Популярное — десктоп: фиксированная кнопка + аккуратный текст */
 @media (min-width: 761px) {
   .anime-hero .hero-copy {
     max-width: 760px;
@@ -2107,9 +2107,11 @@ button:disabled {
 
   .anime-hero p.hero-description {
     max-width: 620px;
+    font-size: 14px;
+    line-height: 1.8;
 
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
 
     overflow: hidden;
@@ -2118,12 +2120,12 @@ button:disabled {
   }
 
   .anime-hero .hero-copy > .primary {
-    position: static;
-    left: auto;
-    bottom: auto;
+    position: absolute;
+    left: 5%;
+    bottom: 72px;
     z-index: 6;
     min-height: 49px;
-    margin-top: 16px;
+    margin-top: 0;
   }
 }
 
