@@ -85,6 +85,7 @@ export function ProfilePage({
     if (q.get('tab') === 'notifications') setTab('notifications');
     if (q.get('tab') === 'moderation') setTab('moderation');
     if (q.get('tab') === 'collection') setTab('collection');
+    if (q.get('tab') === 'settings') setTab('settings');
     if (q.get('auth') === 'failed')
       setError('Вход через VK не завершился. Попробуйте ещё раз.');
   }, []);
@@ -102,6 +103,18 @@ export function ProfilePage({
         .then(setReports)
         .catch((e) => setError(e.message));
   }, [tab, c.user, c.moderator]);
+  useEffect(() => {
+    if (tab !== 'settings' || !data) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('profile-settings')?.scrollIntoView({
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? 'instant'
+          : 'smooth',
+        block: 'start',
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [tab, !!data]);
   async function act(action: string, values: Record<string, unknown>) {
     setBusy(true);
     setNotice('');
@@ -242,7 +255,25 @@ export function ProfilePage({
             {data.own ? (
               <button
                 className="outline-button"
-                onClick={() => setTab('settings')}
+                onClick={() => {
+                  setTab('settings');
+                  history.replaceState(
+                    null,
+                    '',
+                    '/profile?tab=settings#profile-settings',
+                  );
+                  requestAnimationFrame(() =>
+                    document
+                      .getElementById('profile-settings')
+                      ?.scrollIntoView({
+                        behavior: matchMedia('(prefers-reduced-motion: reduce)')
+                          .matches
+                          ? 'instant'
+                          : 'smooth',
+                        block: 'start',
+                      }),
+                  );
+                }}
               >
                 <Settings size={16} /> Редактировать профиль
               </button>
@@ -601,6 +632,7 @@ export function ProfilePage({
               )}
               {tab === 'settings' && data.own && draft && (
                 <form
+                  id="profile-settings"
                   className="social-panel profile-editor"
                   onSubmit={(e) => {
                     e.preventDefault();

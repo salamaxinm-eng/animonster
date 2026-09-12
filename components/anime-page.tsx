@@ -1,6 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { CommunityHeader, useCommunity, api } from '@/components/community/context';
+import {
+  CommunityHeader,
+  useCommunity,
+  api,
+} from '@/components/community/context';
 import { Comments } from '@/components/community/comments';
 import { CollectionControl } from '@/components/community/collection-control';
 import { EpisodePlayer } from '@/components/episode-player';
@@ -11,7 +15,12 @@ import {
   type Voiceover,
 } from '@/lib/anime';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from '@/components/ui/dialog';
 export function AnimePage({ anime }: { anime: Anime }) {
   const [episodes, setEpisodes] = useState<Episode[]>([]),
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
@@ -19,6 +28,8 @@ export function AnimePage({ anime }: { anime: Anime }) {
     [start, setStart] = useState({ episode: 1, position: 0 }),
     [error, setError] = useState(''),
     [ageRejected, setAgeRejected] = useState(false),
+    [ageBusy, setAgeBusy] = useState(false),
+    [ageError, setAgeError] = useState(''),
     [loading, setLoading] = useState(true),
     [version, setVersion] = useState(0);
   const community = useCommunity();
@@ -64,7 +75,10 @@ export function AnimePage({ anime }: { anime: Anime }) {
     }
   }
   useEffect(() => {
-    if (ageLocked) { setLoading(false); return; }
+    if (ageLocked) {
+      setLoading(false);
+      return;
+    }
     void load();
   }, [anime.id, user?.id, user?.adult_confirmed, ageLocked]);
   return (
@@ -107,7 +121,9 @@ export function AnimePage({ anime }: { anime: Anime }) {
           <h2>Смотреть · серия {episode}</h2>
           {ageLocked ? (
             <div className="playback-error">
-              {ageRejected ? 'Воспроизведение контента 18+ заблокировано.' : 'Перед просмотром нужно подтвердить возраст.'}
+              {ageRejected
+                ? 'Воспроизведение контента 18+ заблокировано.'
+                : 'Перед просмотром нужно подтвердить возраст.'}
             </div>
           ) : loading ? (
             <p role="status">Загружаем серии…</p>
@@ -137,17 +153,53 @@ export function AnimePage({ anime }: { anime: Anime }) {
             />
           )}
         </section>
-        <Dialog open={ageLocked && !ageRejected} onOpenChange={(open) => { if (!open) setAgeRejected(true); }}>
+        <Dialog
+          open={ageLocked && !ageRejected}
+          onOpenChange={(open) => {
+            if (!open) setAgeRejected(true);
+          }}
+        >
           <DialogContent>
             <DialogTitle>Вам уже исполнилось 18 лет?</DialogTitle>
-            <DialogDescription>Подтверждение сохранится в аккаунте. До ответа видео не загружается.</DialogDescription>
+            <DialogDescription>
+              Подтверждение сохранится в аккаунте. До ответа видео не
+              загружается.
+            </DialogDescription>
+            {ageError && (
+              <p role="alert" className="error-msg">
+                {ageError}
+              </p>
+            )}
             <div className="age-actions">
-              <Button onClick={async () => {
-                if (!user) { community.login(); return; }
-                await api('adult_consent', { confirmed: true });
-                await community.refresh();
-              }}>Да, мне есть 18</Button>
-              <Button variant="outline" onClick={() => setAgeRejected(true)}>Нет</Button>
+              <Button
+                disabled={ageBusy}
+                onClick={async () => {
+                  if (!user) {
+                    setAgeRejected(true);
+                    community.login();
+                    return;
+                  }
+                  setAgeBusy(true);
+                  setAgeError('');
+                  try {
+                    await api('adult_consent', { confirmed: true });
+                    await community.refresh();
+                  } catch (reason) {
+                    setAgeError((reason as Error).message);
+                  } finally {
+                    setAgeBusy(false);
+                  }
+                }}
+              >
+                {ageBusy
+                  ? 'Сохраняем…'
+                  : user
+                    ? 'Да, мне есть 18'
+                    : 'Войти и подтвердить возраст'}
+              </Button>
+              <Button variant="outline" onClick={() => setAgeRejected(true)}>
+                Нет
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
