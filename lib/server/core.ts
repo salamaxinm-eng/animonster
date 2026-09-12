@@ -16,6 +16,9 @@ export type Runtime = {
   TELEGRAM_URL?: string;
   INVITE_REQUIRED?: string;
   EMAIL_VERIFICATION_ENABLED?: string;
+  MEDIA_PROXY_ENABLED?: string;
+  MEDIA_PROXY_SECRET?: string;
+  MEDIA_PROXY_HOSTS?: string;
 };
 
 export const runtime = () => process.env as Runtime;

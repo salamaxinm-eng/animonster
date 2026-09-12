@@ -9,6 +9,7 @@ import {
 
 import { ApiError, fail, json, viewer } from '@/lib/server/core';
 import { kodikVoiceovers } from '@/lib/server/kodik';
+import { mediaProxyUrl } from '@/lib/server/media';
 export async function GET(r: Request) {
   try {
     const p = new URL(r.url).searchParams,
@@ -57,8 +58,22 @@ export async function GET(r: Request) {
     const anime = normalize(release);
     await cacheAnime(anime, release.episodes);
     const kodik = await kodikVoiceovers(anime);
+    const proxiedEpisodes = await Promise.all(
+      episodes.map(async (episode) => ({
+        ...episode,
+        hls_480: episode.hls_480
+          ? await mediaProxyUrl(episode.hls_480)
+          : null,
+        hls_720: episode.hls_720
+          ? await mediaProxyUrl(episode.hls_720)
+          : null,
+        hls_1080: episode.hls_1080
+          ? await mediaProxyUrl(episode.hls_1080)
+          : null,
+      })),
+    );
     return json({
-      episodes,
+      episodes: proxiedEpisodes,
       anime,
       source: 'AniLiberty',
       voiceovers: [
@@ -66,7 +81,7 @@ export async function GET(r: Request) {
           id: 'aniliberty',
           title: 'AniLiberty',
           provider: 'aniliberty',
-          episodes: episodes.length,
+          episodes: proxiedEpisodes.length,
         },
         ...kodik.voiceovers,
       ],
