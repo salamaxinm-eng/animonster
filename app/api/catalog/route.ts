@@ -1,5 +1,10 @@
-import { genreList, rememberAnime } from '@/lib/server/library';
-import { liberty, normalize, available, findRelease } from '@/lib/server/anime';
+import {
+  genreList,
+  getAnime,
+  getAnimeByAlias,
+  rememberAnime,
+} from '@/lib/server/library';
+import { liberty, normalize, available } from '@/lib/server/anime';
 export async function GET(request: Request) {
   try {
     const p = new URL(request.url).searchParams,
@@ -7,10 +12,13 @@ export async function GET(request: Request) {
     if (id) {
       if (!Number.isInteger(id) || id < 1 || id > 999999999)
         return Response.json({ error: 'Некорректный тайтл' }, { status: 400 });
-      const release = await findRelease(id);
-      return Response.json(
-        release && available(release) ? [normalize(release)] : [],
-      );
+      const result = await getAnime(id);
+      return Response.json(result ? [result.anime] : []);
+    }
+    const alias = p.get('alias') || '';
+    if (alias) {
+      const result = await getAnimeByAlias(alias);
+      return Response.json(result ? [result.anime] : []);
     }
     const sorting: Record<string, string> = {
       fresh: 'FRESH_AT_DESC',

@@ -543,6 +543,12 @@
     gap: 15px;
   }
 
+  .title-load-state {
+    min-height: 65svh;
+    display: grid;
+    place-items: center;
+  }
+
   .title-intro .title-description,
   .title-intro .collection-controls {
     grid-column: 1 / -1;
