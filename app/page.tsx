@@ -11,6 +11,8 @@ import {
   Shuffle,
   Heart,
   Film,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PopularHero } from '@/components/popular-hero';
@@ -24,7 +26,9 @@ export default function Home() {
     [tab, setTab] = useState('all'),
     [saved, setSaved] = useState<Anime[]>([]),
     [favoriteIds, setFavoriteIds] = useState<number[]>([]),
-    [apiStatus, setApiStatus] = useState('');
+    [apiStatus, setApiStatus] = useState(''),
+    [catalogSort, setCatalogSort] = useState('rating'),
+    [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [page, setPage] = useState(1),
     [pages, setPages] = useState(1),
     [total, setTotal] = useState(0),
@@ -72,9 +76,11 @@ export default function Home() {
           '/api/catalog?q=' +
             encodeURIComponent(query) +
             '&kind=' +
-            (tab === 'movies' ? 'movie' : '') +
+            (tab === 'movies' ? 'movie' : tab === 'airing' ? 'ongoing' : '') +
             '&page=' +
-            page,
+            page +
+            '&sort=' +
+            catalogSort,
           { signal: controller.signal },
         );
         if (!r.ok) throw Error();
@@ -95,7 +101,7 @@ export default function Home() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, tab, page]);
+  }, [query, tab, page, catalogSort]);
   function has(id: number) {
     return favoriteIds.includes(id);
   }
@@ -222,6 +228,30 @@ export default function Home() {
             </label>
           </div>
           <div className="filter-row">
+            <nav className="mobile-catalog-tabs" aria-label="Разделы каталога">
+              <button
+                className={tab === 'all' ? 'active' : ''}
+                onClick={() => {
+                  setTab('all');
+                  setPage(1);
+                }}
+              >
+                Все аниме
+              </button>
+              <button
+                className={tab === 'airing' ? 'active' : ''}
+                onClick={() => {
+                  setTab('airing');
+                  setPage(1);
+                }}
+              >
+                Онгоинги
+              </button>
+              <a href="/genres">Жанры</a>
+              <button onClick={() => setMobileFiltersOpen(true)}>
+                <SlidersHorizontal size={15} /> Фильтры
+              </button>
+            </nav>
             <Tabs
               value={tab}
               onValueChange={(v) => {
@@ -242,6 +272,80 @@ export default function Home() {
               тайтлов <span>·</span> AniLiberty
             </span>
           </div>
+          {mobileFiltersOpen && (
+            <div className="mobile-filter-overlay" role="presentation">
+              <button
+                className="mobile-filter-backdrop"
+                onClick={() => setMobileFiltersOpen(false)}
+                aria-label="Закрыть фильтры"
+              />
+              <section
+                className="mobile-filter-sheet"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="mobile-filter-title"
+              >
+                <header>
+                  <h3 id="mobile-filter-title">Фильтры каталога</h3>
+                  <button
+                    onClick={() => setMobileFiltersOpen(false)}
+                    aria-label="Закрыть"
+                  >
+                    <X />
+                  </button>
+                </header>
+                <div>
+                  <strong>Тип</strong>
+                  <nav>
+                    <button
+                      className={tab === 'all' ? 'active' : ''}
+                      onClick={() => setTab('all')}
+                    >
+                      Все
+                    </button>
+                    <button
+                      className={tab === 'airing' ? 'active' : ''}
+                      onClick={() => setTab('airing')}
+                    >
+                      Онгоинги
+                    </button>
+                    <button
+                      className={tab === 'movies' ? 'active' : ''}
+                      onClick={() => setTab('movies')}
+                    >
+                      Фильмы
+                    </button>
+                  </nav>
+                </div>
+                <div>
+                  <strong>Сортировка</strong>
+                  <nav>
+                    <button
+                      className={catalogSort === 'rating' ? 'active' : ''}
+                      onClick={() => setCatalogSort('rating')}
+                    >
+                      По рейтингу
+                    </button>
+                    <button
+                      className={catalogSort === 'fresh' ? 'active' : ''}
+                      onClick={() => setCatalogSort('fresh')}
+                    >
+                      Сначала новые
+                    </button>
+                  </nav>
+                </div>
+                <button
+                  className="primary"
+                  onClick={() => {
+                    setPage(1);
+                    setMobileFiltersOpen(false);
+                  }}
+                >
+                  Показать
+                </button>
+              </section>
+            </div>
+          )}
           <p className="status" role="status">
             {apiStatus}
           </p>

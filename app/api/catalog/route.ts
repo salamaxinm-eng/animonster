@@ -26,6 +26,8 @@ export async function GET(request: Request) {
     });
     if (p.get('q')) query.set('f[search]', p.get('q')!.slice(0, 100));
     if (p.get('kind') === 'movie') query.set('f[types]', 'MOVIE');
+    if (p.get('kind') === 'ongoing')
+      query.set('f[publish_statuses]', 'IS_ONGOING');
     if (p.get('genre')) {
       const genres = await genreList();
       const genre = genres.find(

@@ -28,7 +28,13 @@ import {
   type Entry,
   type CollectionList,
 } from '@/lib/community';
-export function ProfilePage({ id }: { id?: string }) {
+export function ProfilePage({
+  id,
+  initialTab = 'wall',
+}: {
+  id?: string;
+  initialTab?: string;
+}) {
   const c = useCommunity(),
     [data, setData] = useState<{
       user: Profile;
@@ -38,7 +44,7 @@ export function ProfilePage({ id }: { id?: string }) {
       blocked: boolean;
     } | null>(null),
     [draft, setDraft] = useState<Profile | null>(null),
-    [tab, setTab] = useState('wall'),
+    [tab, setTab] = useState(initialTab),
     [status, setStatus] = useState('all'),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
@@ -78,6 +84,7 @@ export function ProfilePage({ id }: { id?: string }) {
     const q = new URLSearchParams(location.search);
     if (q.get('tab') === 'notifications') setTab('notifications');
     if (q.get('tab') === 'moderation') setTab('moderation');
+    if (q.get('tab') === 'collection') setTab('collection');
     if (q.get('auth') === 'failed')
       setError('Вход через VK не завершился. Попробуйте ещё раз.');
   }, []);
@@ -118,7 +125,10 @@ export function ProfilePage({ id }: { id?: string }) {
     try {
       const form = new FormData();
       form.set('avatar', file);
-      const response = await fetch('/api/avatar', { method: 'POST', body: form });
+      const response = await fetch('/api/avatar', {
+        method: 'POST',
+        body: form,
+      });
       const result = await response.json();
       if (!response.ok)
         throw new Error(result.error || 'Не удалось загрузить аватар');
@@ -160,8 +170,7 @@ export function ProfilePage({ id }: { id?: string }) {
           status === 'all' ||
           status === e.status ||
           (status.startsWith('list:') && e.list_ids.includes(status.slice(5))),
-      ) ||
-      [],
+      ) || [],
     theme =
       themes.find(
         (t) => t.id === (tab === 'settings' ? draft?.theme : data?.user.theme),
@@ -252,7 +261,10 @@ export function ProfilePage({ id }: { id?: string }) {
           </section>
           <ProfileJourney
             id={data.user.id}
-            revision={data.user.collection_public + data.entries.filter(e=>e.favorite).length*10}
+            revision={
+              data.user.collection_public +
+              data.entries.filter((e) => e.favorite).length * 10
+            }
           />
           <div className="profile-layout">
             <aside className="profile-sidebar">
@@ -308,7 +320,8 @@ export function ProfilePage({ id }: { id?: string }) {
                             aria-label={'Удалить список ' + list.name}
                             onClick={() => {
                               if (confirm(`Удалить список «${list.name}»?`)) {
-                                if (status === 'list:' + list.id) setStatus('all');
+                                if (status === 'list:' + list.id)
+                                  setStatus('all');
                                 void act('list_delete', { id: list.id });
                               }
                             }}
@@ -622,11 +635,7 @@ export function ProfilePage({ id }: { id?: string }) {
                   <fieldset>
                     <legend>Аватар</legend>
                     <div className="avatar-upload">
-                      <Avatar
-                        large
-                        avatar={draft.avatar}
-                        theme={draft.theme}
-                      />
+                      <Avatar large avatar={draft.avatar} theme={draft.theme} />
                       <div>
                         <label className="outline-button">
                           <ImagePlus size={17} />

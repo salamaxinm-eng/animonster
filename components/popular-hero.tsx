@@ -6,8 +6,12 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '@/components/ui/carousel';
-import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, ChevronLeft, ChevronRight, Bookmark } from 'lucide-react';
 import { posterUrl, type Anime } from '@/lib/anime';
+import {
+  api as communityApi,
+  useCommunity,
+} from '@/components/community/context';
 export function PopularHero({
   initial,
   onOpen,
@@ -15,13 +19,30 @@ export function PopularHero({
   initial: Anime[];
   onOpen: (a: Anime) => void;
 }) {
+  const community = useCommunity();
   const [items, setItems] = useState(initial.slice(0, 5)),
     [api, setApi] = useState<CarouselApi>(),
     [index, setIndex] = useState(0),
     [paused, setPaused] = useState(false),
     [hover, setHover] = useState(false),
     [focus, setFocus] = useState(false),
-    [label, setLabel] = useState('Популярное в каталоге');
+    [label, setLabel] = useState('Популярное в каталоге'),
+    [saved, setSaved] = useState<number[]>([]);
+  useEffect(() => {
+    if (!community.user) {
+      setSaved([]);
+      return;
+    }
+    communityApi('profile')
+      .then((profile) =>
+        setSaved(
+          profile.entries
+            .filter((entry: any) => entry.favorite)
+            .map((entry: any) => entry.anime_id),
+        ),
+      )
+      .catch(() => {});
+  }, [community.user?.id]);
   useEffect(() => {
     const m = matchMedia('(prefers-reduced-motion: reduce)');
     setPaused(m.matches);
@@ -94,6 +115,42 @@ export function PopularHero({
                   onClick={() => onOpen(a)}
                 >
                   <Play size={18} fill="currentColor" /> Смотреть аниме
+                </button>
+                <button
+                  tabIndex={i === index ? 0 : -1}
+                  className={
+                    saved.includes(a.id)
+                      ? 'mobile-hero-bookmark saved'
+                      : 'mobile-hero-bookmark'
+                  }
+                  aria-label={
+                    saved.includes(a.id)
+                      ? 'Убрать из закладок'
+                      : 'Добавить в закладки'
+                  }
+                  onClick={async () => {
+                    if (!community.user) {
+                      community.login();
+                      return;
+                    }
+                    const value = !saved.includes(a.id);
+                    await communityApi('favorite', {
+                      anime_id: a.id,
+                      value,
+                    });
+                    setSaved(
+                      value
+                        ? [...saved, a.id]
+                        : saved.filter((id) => id !== a.id),
+                    );
+                    window.dispatchEvent(
+                      new Event('animonster-library-changed'),
+                    );
+                  }}
+                >
+                  <Bookmark
+                    fill={saved.includes(a.id) ? 'currentColor' : 'none'}
+                  />
                 </button>
               </div>
             </section>
