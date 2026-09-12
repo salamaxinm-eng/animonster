@@ -8,7 +8,7 @@ export function BuySubscription({ className = 'outline-button' }: { className?: 
     <button className={className} onClick={() => setOpen(true)}>Plus · тест</button>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sign-dialog">
-        <DialogTitle>AniMonster Plus · закрытая бета</DialogTitle>
+        <DialogTitle>AniMonster Plus</DialogTitle>
         <DialogDescription>В бете Plus выдаёт администратор тестерам. Оплата отключена, деньги не списываются.</DialogDescription>
         <p className="muted">Plus открывает коллекцию пинов. Доступное качество видео определяется источником.</p>
       </DialogContent>

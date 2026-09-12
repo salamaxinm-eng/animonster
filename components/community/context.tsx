@@ -37,6 +37,8 @@ const Context = createContext<{
   preview: boolean;
   moderator: boolean;
   vkReady: boolean;
+  inviteRequired: boolean;
+  emailVerificationRequired: boolean;
   paymentsReady: boolean;
   supportUrl: string | null;
   loaded: boolean;
@@ -47,6 +49,8 @@ const Context = createContext<{
   preview: false,
   moderator: false,
   vkReady: false,
+  inviteRequired: false,
+  emailVerificationRequired: false,
   paymentsReady: false,
   supportUrl: null,
   loaded: false,
@@ -60,6 +64,8 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       preview: false,
       moderator: false,
       vk_ready: false,
+      invite_required: false,
+      email_verification_required: false,
       payments_ready: false,
       support_url: null as string | null,
     }),
@@ -115,6 +121,8 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         preview: me.preview,
         moderator: me.moderator,
         vkReady: me.vk_ready,
+        inviteRequired: me.invite_required,
+        emailVerificationRequired: me.email_verification_required,
         paymentsReady: me.payments_ready,
         supportUrl: me.support_url,
         loaded,
@@ -133,7 +141,9 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
           {me.vk_ready ? (
             <form className="vk-login-form vk-login-primary" action="/api/auth/vk" method="get" target="_top">
               <strong>Основной способ входа</strong>
-              <Input name="invite" placeholder="Инвайт для первого входа" minLength={8} maxLength={64} />
+              {me.invite_required && (
+                <Input name="invite" placeholder="Инвайт для первого входа" required minLength={8} maxLength={64} />
+              )}
               <button className="vk-button" type="submit">Войти через VK ID</button>
             </form>
           ) : (
@@ -145,6 +155,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
           <details className="email-alternative" open={!me.vk_ready}>
             <summary>Войти по email и паролю</summary>
             <EmailForm
+              inviteRequired={me.invite_required}
               onSuccess={async () => {
                 await refresh();
                 setShowLogin(false);
@@ -207,7 +218,9 @@ export function AccountNav() {
             <Avatar avatar={c.user.avatar} theme={c.user.theme} />
             <span>{c.user.nick}</span>
           </a>
-          {!c.user.email_verified && <span className="verify-email-label">Подтвердите email</span>}
+          {c.emailVerificationRequired && !c.user.email_verified && (
+            <span className="verify-email-label">Подтвердите email</span>
+          )}
           <a href="/profile?tab=notifications" aria-label="Уведомления">
             <Bell size={18} />
           </a>

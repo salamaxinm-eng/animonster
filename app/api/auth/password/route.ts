@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { db, body, sameOrigin, hash, uid, now, json, fail, ApiError, base } from '@/lib/server/core';
+import { db, body, sameOrigin, hash, uid, now, json, fail, ApiError, base, emailVerificationEnabled } from '@/lib/server/core';
 import { sendMail } from '@/lib/server/email';
 
 export async function POST(r: Request) {
@@ -8,7 +8,14 @@ export async function POST(r: Request) {
     const b = await body(r);
     if (b.action === 'request') {
       const email = String(b.email || '').trim().toLowerCase();
-      const user = await db().prepare('SELECT id FROM users WHERE email=? AND email_verified=1').bind(email).first<{ id: string }>();
+      const user = await db()
+        .prepare(
+          emailVerificationEnabled()
+            ? 'SELECT id FROM users WHERE email=? AND email_verified=1'
+            : 'SELECT id FROM users WHERE email=?',
+        )
+        .bind(email)
+        .first<{ id: string }>();
       if (user) {
         const token = uid() + uid();
         await db().prepare('DELETE FROM email_tokens WHERE user_id=? AND purpose=?').bind(user.id, 'reset').run();

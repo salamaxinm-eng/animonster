@@ -2,7 +2,13 @@
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-export function EmailForm({ onSuccess }: { onSuccess: (pendingVerification?: boolean) => Promise<void> }) {
+export function EmailForm({
+  onSuccess,
+  inviteRequired = false,
+}: {
+  onSuccess: (pendingVerification?: boolean) => Promise<void>;
+  inviteRequired?: boolean;
+}) {
   const [register, setRegister] = useState(false),
     [error, setError] = useState(''),
     [message, setMessage] = useState(''),
@@ -52,7 +58,7 @@ export function EmailForm({ onSuccess }: { onSuccess: (pendingVerification?: boo
           />
         </label>
       )}
-      {register && (
+      {register && inviteRequired && (
         <label>
           Код приглашения
           <Input name="invite" required minLength={8} maxLength={64} autoComplete="off" />

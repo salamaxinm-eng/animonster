@@ -14,6 +14,8 @@ import {
   now,
   uid,
   premium,
+  inviteRequired,
+  emailVerificationEnabled,
   type User,
 } from '@/lib/server/core';
 import { themes, avatars, pins } from '@/lib/community';
@@ -39,6 +41,8 @@ export async function GET(r: Request) {
         preview: !!u?.identity.startsWith('preview:'),
         moderator: isModerator(u),
         vk_ready: !!runtime().VK_CLIENT_ID,
+        invite_required: inviteRequired(),
+        email_verification_required: emailVerificationEnabled(),
         payments_ready:
           runtime().PAYMENTS_ENABLED === 'true' &&
           !!runtime().YOOKASSA_SHOP_ID &&

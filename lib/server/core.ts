@@ -14,6 +14,8 @@ export type Runtime = {
   UNISENDER_API_KEY?: string;
   EMAIL_FROM?: string;
   TELEGRAM_URL?: string;
+  INVITE_REQUIRED?: string;
+  EMAIL_VERIFICATION_ENABLED?: string;
 };
 
 export const runtime = () => process.env as Runtime;
@@ -116,6 +118,9 @@ export function db() {
 export const now = () => Date.now();
 export const uid = () => crypto.randomUUID();
 export const base = () => runtime().SITE_URL || 'http://localhost:3000';
+export const inviteRequired = () => runtime().INVITE_REQUIRED === 'true';
+export const emailVerificationEnabled = () =>
+  runtime().EMAIL_VERIFICATION_ENABLED === 'true';
 export function json(value: unknown, status = 200) {
   return Response.json(value, { status, headers: { 'Cache-Control': 'no-store' } });
 }
@@ -186,7 +191,7 @@ export async function viewer(r: Request) {
 export async function requireUser(r: Request) {
   const u = await viewer(r);
   if (!u) throw new ApiError('Войдите в аккаунт, чтобы продолжить', 401, 'authentication_required');
-  if (u.email && !u.email_verified)
+  if (emailVerificationEnabled() && u.email && !u.email_verified)
     throw new ApiError('Подтвердите email, чтобы использовать эту функцию.', 403, 'email_not_verified');
   return u;
 }
@@ -201,7 +206,8 @@ export async function publicUser(u: User) {
     pin: until ? u.pin : null, wall_open: u.wall_open,
     collection_public: u.collection_public, created_at: u.created_at,
     premium_until: until, adult_confirmed: !!u.adult_confirmed_at,
-    email_verified: !u.email || !!u.email_verified };
+    email_verified:
+      !emailVerificationEnabled() || !u.email || !!u.email_verified };
 }
 export const isModerator = (u: User | null) => !!u && (
   ['admin', 'moderator'].includes(u.role) ||

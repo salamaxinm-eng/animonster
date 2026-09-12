@@ -6,6 +6,7 @@ import {
   uid,
   now,
   cookie,
+  inviteRequired,
 } from '@/lib/server/core';
 export async function GET(r: Request) {
   try {
@@ -65,6 +66,13 @@ export async function GET(r: Request) {
       if (isConfiguredAdmin) {
         u = await db().prepare('INSERT INTO users(id,identity,nick,email_verified,role,created_at) VALUES (?,?,?,1,?,?) RETURNING id')
           .bind(id, identity, `${firstName}_${id.slice(0, 8)}`, 'admin', now()).first<{ id: string }>();
+      } else if (!inviteRequired()) {
+        u = await db()
+          .prepare(
+            'INSERT INTO users(id,identity,nick,email_verified,created_at) VALUES (?,?,?,1,?) RETURNING id',
+          )
+          .bind(id, identity, `${firstName}_${id.slice(0, 8)}`, now())
+          .first<{ id: string }>();
       } else {
         if (!flow.invite_hash) return Response.redirect(base() + '/profile?auth=invite_required', 302);
         u = await db().prepare(

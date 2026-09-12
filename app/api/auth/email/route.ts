@@ -10,11 +10,10 @@ import {
   fail,
   ApiError,
   base,
+  emailVerificationEnabled,
+  inviteRequired,
 } from '@/lib/server/core';
 import { sendMail } from '@/lib/server/email';
-
-const emailVerificationEnabled =
-  process.env.EMAIL_VERIFICATION_ENABLED !== 'false';
 
 const validEmail = (value: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
@@ -84,7 +83,7 @@ async function verification(
     await sendMail(
       email,
       'Подтвердите email в AniMonster',
-      'Подтвердите адрес, чтобы войти в закрытую бету AniMonster.',
+      'Подтвердите адрес электронной почты для AniMonster.',
       {
         label: 'Подтвердить email',
         url: `${base()}/api/auth/email/verify?token=${encodeURIComponent(token)}`,
@@ -136,7 +135,7 @@ export async function POST(r: Request) {
      * автоматически подтверждаем существующие старые аккаунты.
      */
     if (
-      !emailVerificationEnabled &&
+      !emailVerificationEnabled() &&
       account &&
       !account.email_verified
     ) {
@@ -154,7 +153,7 @@ export async function POST(r: Request) {
      * Повторная отправка письма.
      */
     if (action === 'resend') {
-      if (!emailVerificationEnabled) {
+      if (!emailVerificationEnabled()) {
         return json({
           ok: true,
           message: 'Подтверждение email сейчас не требуется.',
@@ -200,7 +199,7 @@ export async function POST(r: Request) {
         );
       }
 
-      if (!/^[A-Z0-9-]{8,64}$/.test(invite)) {
+      if (inviteRequired() && !/^[A-Z0-9-]{8,64}$/.test(invite)) {
         throw new ApiError(
           'Нужен действующий код приглашения.',
           403,
@@ -213,47 +212,55 @@ export async function POST(r: Request) {
       /*
        * При выключенной проверке email сразу ставим 1.
        */
-      const emailVerified = emailVerificationEnabled ? 0 : 1;
-
-      const created = await db()
-        .prepare(
-          `WITH claimed AS (
-            UPDATE invites
-            SET used_by=?, used_at=?
-            WHERE hash=?
-              AND used_by IS NULL
-              AND revoked_at IS NULL
-              AND (expires_at IS NULL OR expires_at>?)
-            RETURNING hash
-          )
-          INSERT INTO users(
-            id,
-            identity,
-            email,
-            password_hash,
-            nick,
-            email_verified,
-            created_at
-          )
-          SELECT ?,?,?,?,?,?,?
-          FROM claimed
-          RETURNING id`,
-        )
-        .bind(
-          id,
-          now(),
-          await hash(invite),
-          now(),
-
-          id,
-          'email:' + email,
-          email,
-          await bcrypt.hash(password, 12),
-          nick,
-          emailVerified,
-          now(),
-        )
-        .first<{ id: string }>();
+      const emailVerified = emailVerificationEnabled() ? 0 : 1;
+      const passwordHash = await bcrypt.hash(password, 12);
+      const created = inviteRequired()
+        ? await db()
+            .prepare(
+              `WITH claimed AS (
+                UPDATE invites
+                SET used_by=?, used_at=?
+                WHERE hash=?
+                  AND used_by IS NULL
+                  AND revoked_at IS NULL
+                  AND (expires_at IS NULL OR expires_at>?)
+                RETURNING hash
+              )
+              INSERT INTO users(
+                id, identity, email, password_hash, nick, email_verified, created_at
+              )
+              SELECT ?,?,?,?,?,?,?
+              FROM claimed
+              RETURNING id`,
+            )
+            .bind(
+              id,
+              now(),
+              await hash(invite),
+              now(),
+              id,
+              'email:' + email,
+              email,
+              passwordHash,
+              nick,
+              emailVerified,
+              now(),
+            )
+            .first<{ id: string }>()
+        : await db()
+            .prepare(
+              'INSERT INTO users(id,identity,email,password_hash,nick,email_verified,created_at) VALUES (?,?,?,?,?,?,?) RETURNING id',
+            )
+            .bind(
+              id,
+              'email:' + email,
+              email,
+              passwordHash,
+              nick,
+              emailVerified,
+              now(),
+            )
+            .first<{ id: string }>();
 
       if (!created) {
         throw new ApiError(
@@ -274,7 +281,7 @@ export async function POST(r: Request) {
        */
       let delivered = false;
 
-      if (emailVerificationEnabled) {
+      if (emailVerificationEnabled()) {
         delivered = await verification(
           id,
           email,
@@ -316,7 +323,7 @@ export async function POST(r: Request) {
       /*
        * Проверка email включена.
        */
-      if (emailVerificationEnabled) {
+      if (emailVerificationEnabled()) {
         return new Response(
           JSON.stringify({
             ok: true,
@@ -379,7 +386,7 @@ export async function POST(r: Request) {
      * Требуем подтверждение только если оно включено.
      */
     if (
-      emailVerificationEnabled &&
+      emailVerificationEnabled() &&
       !account.email_verified
     ) {
       throw new ApiError(

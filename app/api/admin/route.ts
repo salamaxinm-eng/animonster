@@ -1,4 +1,4 @@
-import { ApiError, body, db, fail, hash, isModerator, json, now, premium, sameOrigin, uid, viewer } from '@/lib/server/core';
+import { ApiError, body, db, fail, hash, inviteRequired, isModerator, json, now, premium, sameOrigin, uid, viewer } from '@/lib/server/core';
 import { dashboard } from '@/lib/server/admin';
 
 async function moderator(r: Request) {
@@ -22,7 +22,7 @@ export async function GET(r: Request) {
       db().prepare('SELECT action,reason,target_user_id,created_at FROM moderation_actions ORDER BY created_at DESC LIMIT 50').all(),
       dashboard(),
     ]);
-    return json({ can_manage_roles: actor.role === 'admin', dashboard: metrics, invites: invites.results, users: users.results, reports: reports.results, actions: actions.results });
+    return json({ can_manage_roles: actor.role === 'admin', invite_required: inviteRequired(), dashboard: metrics, invites: invites.results, users: users.results, reports: reports.results, actions: actions.results });
   } catch (e) { return fail(e); }
 }
 export async function POST(r: Request) {
@@ -32,6 +32,8 @@ export async function POST(r: Request) {
     const b = await body(r);
     const action = String(b.action || '');
     if (action === 'create_invite') {
+      if (!inviteRequired())
+        throw new ApiError('Приглашения сейчас отключены.', 409, 'invites_disabled');
       const code = `AM-${crypto.getRandomValues(new Uint32Array(2)).join('-').toUpperCase()}`;
       const days = Math.min(90, Math.max(1, Number(b.days) || 14));
       await db().prepare('INSERT INTO invites(hash,label,created_by,created_at,expires_at) VALUES (?,?,?,?,?)')
