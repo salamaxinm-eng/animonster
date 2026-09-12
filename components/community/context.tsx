@@ -188,15 +188,22 @@ export function Avatar({
   theme?: string;
   large?: boolean;
 }) {
+  const custom = avatar.match(/^custom:([a-f0-9-]{36}):(\d+)$/i);
   return (
     <span
       className={'user-avatar ' + (large ? 'large' : '')}
       style={{ borderColor: themes.find((t) => t.id === theme)?.color }}
     >
       <img
-        src="/hero.png"
+        src={
+          custom
+            ? `/api/avatar/${encodeURIComponent(custom[1])}?v=${custom[2]}`
+            : '/hero.png'
+        }
         style={{
-          objectPosition: avatars.find((a) => a.id === avatar)?.position,
+          objectPosition: custom
+            ? 'center'
+            : avatars.find((a) => a.id === avatar)?.position,
         }}
         alt="Аватар"
       />

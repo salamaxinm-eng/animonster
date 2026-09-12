@@ -75,16 +75,42 @@ class Database {
 
 let database: Database | undefined;
 async function localPostgres() {
-  const [{ PGlite }, { readFile }, { mkdir }] = await Promise.all([
-    import('@electric-sql/pglite'), import('node:fs/promises'), import('node:fs/promises'),
+  const [{ PGlite }, { readFile, readdir, mkdir }, path] = await Promise.all([
+    import('@electric-sql/pglite'),
+    import('node:fs/promises'),
+    import('node:path'),
   ]);
   await mkdir('.data', { recursive: true });
   const engine = new PGlite('.data/animonster');
   await engine.waitReady;
   const existing = await engine.query("SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='users'");
-  if (!existing.rows.length) {
-    const migration = await readFile('migrations/postgres/0001_initial.sql', 'utf8');
-    await engine.exec(migration);
+  await engine.exec(
+    'CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at bigint NOT NULL)',
+  );
+  if (existing.rows.length) {
+    await engine.query(
+      'INSERT INTO schema_migrations(name,applied_at) VALUES ($1,$2) ON CONFLICT DO NOTHING',
+      ['0001_initial.sql', now()],
+    );
+  }
+  const directory = path.resolve('migrations/postgres');
+  const migrations = (await readdir(directory))
+    .filter((name) => name.endsWith('.sql'))
+    .sort();
+  for (const name of migrations) {
+    const applied = await engine.query(
+      'SELECT 1 FROM schema_migrations WHERE name=$1',
+      [name],
+    );
+    if (applied.rows.length) continue;
+    const migration = await readFile(path.join(directory, name), 'utf8');
+    await engine.transaction(async (transaction) => {
+      await transaction.exec(migration);
+      await transaction.query(
+        'INSERT INTO schema_migrations(name,applied_at) VALUES ($1,$2)',
+        [name, now()],
+      );
+    });
   }
   const client = (executor: typeof engine) => ({
     unsafe: async (query: string, values: unknown[] = []) => {

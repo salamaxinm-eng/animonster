@@ -216,9 +216,9 @@ export function Comments({
               <Avatar avatar={c.avatar} theme={c.theme} />
             </a>
             <div className="comment-content">
-              <Pin id={c.pin} />
               <div className="comment-meta">
                 <a href={'/members/' + c.author_id}>{c.nick}</a>
+                <Pin id={c.pin} />
                 <time>
                   {new Date(c.created_at).toLocaleString('ru-RU', {
                     day: 'numeric',

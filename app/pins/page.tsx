@@ -130,14 +130,16 @@ export default function PinsPage() {
             <div className="preview-comment">
               <Avatar large avatar={c.user?.avatar} theme={c.user?.theme} />
               <div>
-                <Pin id={selected} />
-                <strong>{c.user?.nick || 'Твой ник'}</strong>
+                <div className="preview-name-row">
+                  <strong>{c.user?.nick || 'Твой ник'}</strong>
+                  <Pin id={selected} />
+                </div>
                 <p>Кажется, я нашёл своё любимое аниме.</p>
               </div>
             </div>
             <div className="preview-features">
               <span>
-                <Check size={16} /> Над ником в профиле
+                <Check size={16} /> Справа от ника в профиле
               </span>
               <span>
                 <Check size={16} /> В каждом комментарии

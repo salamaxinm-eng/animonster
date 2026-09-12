@@ -15,6 +15,7 @@ import {
   Check,
   Shield,
   Bell,
+  ImagePlus,
 } from 'lucide-react';
 import { api, useCommunity, CommunityHeader, Avatar, Pin } from './context';
 import { Comments } from './comments';
@@ -40,6 +41,7 @@ export function ProfilePage({ id }: { id?: string }) {
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false),
+    [avatarBusy, setAvatarBusy] = useState(false),
     [notifications, setNotifications] = useState<
       Array<{
         id: string;
@@ -104,6 +106,34 @@ export function ProfilePage({ id }: { id?: string }) {
       setBusy(false);
     }
   }
+  async function uploadAvatar(file?: File) {
+    if (!file) return;
+    setAvatarBusy(true);
+    setNotice('');
+    setError('');
+    try {
+      const form = new FormData();
+      form.set('avatar', file);
+      const response = await fetch('/api/avatar', { method: 'POST', body: form });
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || 'Не удалось загрузить аватар');
+      setDraft((current) =>
+        current ? { ...current, avatar: result.avatar } : current,
+      );
+      setData((current) =>
+        current
+          ? { ...current, user: { ...current.user, avatar: result.avatar } }
+          : current,
+      );
+      await c.refresh();
+      setNotice('Аватар обновлён');
+    } catch (uploadError) {
+      setError((uploadError as Error).message);
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
   const shown =
       data?.entries.filter((e) => status === 'all' || status === e.status) ||
       [],
@@ -158,10 +188,12 @@ export function ProfilePage({ id }: { id?: string }) {
               theme={theme.id}
             />
             <div className="profile-name">
-              <Pin
-                id={tab === 'settings' ? draft?.pin || null : data.user.pin}
-              />
-              <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
+              <div className="profile-title-row">
+                <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
+                <Pin
+                  id={tab === 'settings' ? draft?.pin || null : data.user.pin}
+                />
+              </div>
               <p>
                 На AniMonster с{' '}
                 {new Date(data.user.created_at).toLocaleDateString('ru-RU', {
@@ -239,7 +271,7 @@ export function ProfilePage({ id }: { id?: string }) {
               <a className="plus-promo" href="/pins">
                 <Gem size={24} />
                 <h3>Твой ник. Твой тайтл.</h3>
-                <p>Коллекционные пины над ником</p>
+                <p>Коллекционные пины рядом с ником</p>
                 <strong>
                   89 ₽ <span>/ месяц</span>
                 </strong>
@@ -469,6 +501,29 @@ export function ProfilePage({ id }: { id?: string }) {
                   </label>
                   <fieldset>
                     <legend>Аватар</legend>
+                    <div className="avatar-upload">
+                      <Avatar
+                        large
+                        avatar={draft.avatar}
+                        theme={draft.theme}
+                      />
+                      <div>
+                        <label className="outline-button">
+                          <ImagePlus size={17} />
+                          {avatarBusy ? 'Загружаем…' : 'Загрузить свой аватар'}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            disabled={avatarBusy}
+                            onChange={(event) => {
+                              void uploadAvatar(event.target.files?.[0]);
+                              event.target.value = '';
+                            }}
+                          />
+                        </label>
+                        <small>PNG, JPEG или WebP, до 2 МБ.</small>
+                      </div>
+                    </div>
                     <div className="avatar-options">
                       {avatars.map((a) => (
                         <button
@@ -502,7 +557,7 @@ export function ProfilePage({ id }: { id?: string }) {
                     </div>
                   </fieldset>
                   <label>
-                    Пин над ником{' '}
+                    Пин справа от ника{' '}
                     {data.user.premium_until ? '' : '· нужен Plus'}
                     <NativeSelect
                       value={draft.pin || ''}

@@ -162,9 +162,13 @@ export async function POST(r: Request) {
       const bio = String(b.bio || '').trim();
       if (bio.length > 400)
         throw new ApiError('Описание не длиннее 400 символов');
+      const avatar = String(b.avatar || '');
+      const customAvatar =
+        avatar === u.avatar &&
+        new RegExp(`^custom:${u.id.replaceAll('-', '\\-')}:\\d+$`).test(avatar);
       if (
         !themes.some((x) => x.id === b.theme) ||
-        !avatars.some((x) => x.id === b.avatar)
+        (!avatars.some((x) => x.id === avatar) && !customAvatar)
       )
         throw new ApiError('Неизвестное оформление');
       const pin = b.pin || null;
@@ -178,13 +182,18 @@ export async function POST(r: Request) {
           nick,
           bio,
           b.theme,
-          b.avatar,
+          avatar,
           pin,
           b.wall_open ? 1 : 0,
           b.collection_public ? 1 : 0,
           u.id,
         )
         .run();
+      if (!customAvatar)
+        await db()
+          .prepare('DELETE FROM user_avatars WHERE user_id=?')
+          .bind(u.id)
+          .run();
       return json({ ok: true });
     }
     if (action === 'favorite') {
