@@ -10,16 +10,28 @@ type MediaToken = { url: string; expires: number };
 const base64url = (bytes: Uint8Array) =>
   Buffer.from(bytes).toString('base64url');
 
-const allowedHosts = () =>
-  new Set(
+const allowedHosts = () => {
+  const hosts = new Set(
     (runtime().MEDIA_PROXY_HOSTS || 'cache.libria.fun,cache1.libria.fun')
       .split(',')
       .map((host) => host.trim().toLowerCase())
       .filter(Boolean),
   );
+  return hosts;
+};
 
-export const mediaProxyEnabled = () =>
-  runtime().MEDIA_PROXY_ENABLED === 'true';
+function allowedMediaHost(hostname: string) {
+  const hosts = allowedHosts();
+  // Each segment may be redirected to a different numbered provider cache.
+  // Trust only that CDN family when its entry host is explicitly enabled.
+  return (
+    hosts.has(hostname) ||
+    (hosts.has('cache.libria.fun') &&
+      /^cache[1-9][0-9]*\.libria\.fun$/.test(hostname))
+  );
+}
+
+export const mediaProxyEnabled = () => runtime().MEDIA_PROXY_ENABLED === 'true';
 
 function mediaSecret() {
   const secret = runtime().MEDIA_PROXY_SECRET?.trim() || '';
@@ -37,16 +49,24 @@ export function validateMediaUrl(value: string) {
   try {
     url = new URL(value);
   } catch {
-    throw new ApiError('Некорректная ссылка на поток.', 400, 'invalid_media_url');
+    throw new ApiError(
+      'Некорректная ссылка на поток.',
+      400,
+      'invalid_media_url',
+    );
   }
   if (
     url.protocol !== 'https:' ||
     url.username ||
     url.password ||
     (url.port && url.port !== '443') ||
-    !allowedHosts().has(url.hostname.toLowerCase())
+    !allowedMediaHost(url.hostname.toLowerCase())
   )
-    throw new ApiError('Источник потока не разрешён.', 403, 'media_host_denied');
+    throw new ApiError(
+      'Источник потока не разрешён.',
+      403,
+      'media_host_denied',
+    );
   return url;
 }
 
@@ -65,11 +85,16 @@ async function signature(payload: string) {
   );
 }
 
-export async function mediaProxyUrl(value: string, expires = Date.now() + TOKEN_LIFETIME_MS) {
+export async function mediaProxyUrl(
+  value: string,
+  expires = Date.now() + TOKEN_LIFETIME_MS,
+) {
   if (!mediaProxyEnabled()) return value;
   const url = validateMediaUrl(value);
   const payload = base64url(
-    encoder.encode(JSON.stringify({ url: url.href, expires } satisfies MediaToken)),
+    encoder.encode(
+      JSON.stringify({ url: url.href, expires } satisfies MediaToken),
+    ),
   );
   return `/api/media?token=${encodeURIComponent(payload + '.' + (await signature(payload)))}`;
 }

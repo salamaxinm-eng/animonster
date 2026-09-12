@@ -30,7 +30,8 @@ async function upstream(start: URL, request: Request) {
     if (![301, 302, 303, 307, 308].includes(response.status))
       return { response, url };
     const location = response.headers.get('location');
-    if (!location) throw new ApiError('Источник вернул неверный редирект.', 502);
+    if (!location)
+      throw new ApiError('Источник вернул неверный редирект.', 502);
     url = validateMediaUrl(new URL(location, url).href);
   }
   throw new ApiError('Слишком много перенаправлений источника.', 502);
@@ -43,6 +44,14 @@ export async function GET(request: Request) {
     const token = new URL(request.url).searchParams.get('token') || '';
     const source = await readMediaToken(token);
     const { response, url } = await upstream(source, request);
+    if (!response.ok && response.status !== 304) {
+      await response.body?.cancel();
+      throw new ApiError(
+        'Источник видео временно недоступен.',
+        502,
+        'media_upstream_error',
+      );
+    }
     const contentType = response.headers.get('content-type') || '';
     const manifest =
       contentType.toLowerCase().includes('mpegurl') ||
