@@ -13,7 +13,13 @@ async function database() {
     return { query: (source, params = []) => sql.unsafe(source, params), close: () => sql.end() };
   }
   const engine = new PGlite();
-  await engine.exec(await fs.readFile('migrations/postgres/0001_initial.sql', 'utf8'));
+  const migrations = (await fs.readdir('migrations/postgres'))
+    .filter((name) => name.endsWith('.sql'))
+    .sort();
+  for (const name of migrations)
+    await engine.exec(
+      await fs.readFile(`migrations/postgres/${name}`, 'utf8'),
+    );
   return { query: async (source, params = []) => (await engine.query(source, params)).rows, close: () => engine.close() };
 }
 
@@ -54,5 +60,44 @@ test('administrator role and Plus grant persist', async () => {
   const rows = await db.query('SELECT u.role,MAX(g.expires) AS premium_until FROM users u JOIN grants g ON g.user_id=u.id WHERE u.id=$1 GROUP BY u.role', [userId]);
   assert.equal(rows[0].role, 'moderator');
   assert.ok(Number(rows[0].premium_until) > now);
+  await db.close();
+});
+
+test('custom collection lists keep their own items and cascade on delete', async () => {
+  const db = await database();
+  const userId = crypto.randomUUID();
+  const listId = crypto.randomUUID();
+  const now = Date.now();
+  await db.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `user_${userId.slice(0, 8)}`, now],
+  );
+  await db.query(
+    'INSERT INTO collection_lists(id,user_id,name,created_at) VALUES ($1,$2,$3,$4)',
+    [listId, userId, 'На выходные', now],
+  );
+  await db.query(
+    'INSERT INTO collection_list_items(list_id,anime_id) VALUES ($1,$2)',
+    [listId, 42],
+  );
+  assert.equal(
+    Number(
+      (await db.query(
+        'SELECT count(*) AS n FROM collection_list_items WHERE list_id=$1',
+        [listId],
+      ))[0].n,
+    ),
+    1,
+  );
+  await db.query('DELETE FROM collection_lists WHERE id=$1', [listId]);
+  assert.equal(
+    Number(
+      (await db.query(
+        'SELECT count(*) AS n FROM collection_list_items WHERE list_id=$1',
+        [listId],
+      ))[0].n,
+    ),
+    0,
+  );
   await db.close();
 });

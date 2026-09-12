@@ -12,6 +12,8 @@ import {
 import { actor } from '../activity/route';
 import { getAnime } from '@/lib/server/library';
 
+const WATCHED_EPISODE_SECONDS = 12 * 60;
+
 export async function GET(r: Request) {
   try {
     const u = await viewer(r);
@@ -172,7 +174,7 @@ export async function POST(r: Request) {
       stmts.push(
         db()
           .prepare(
-            'INSERT INTO history(user_id,anime_id,episode,position,duration,watched_seconds,completed,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO UPDATE SET position=excluded.position,watched_seconds=LEAST(history.duration,history.watched_seconds+excluded.watched_seconds),completed=GREATEST(history.completed,CASE WHEN history.watched_seconds+excluded.watched_seconds>=history.duration*0.8 AND excluded.position>=history.duration*0.9 THEN 1 ELSE 0 END),updated_at=excluded.updated_at',
+          'INSERT INTO history(user_id,anime_id,episode,position,duration,watched_seconds,completed,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO UPDATE SET position=excluded.position,watched_seconds=LEAST(history.duration,history.watched_seconds+excluded.watched_seconds),completed=GREATEST(history.completed,CASE WHEN history.watched_seconds+excluded.watched_seconds>=? THEN 1 ELSE 0 END),updated_at=excluded.updated_at',
           )
           .bind(
             a.user.id,
@@ -181,8 +183,9 @@ export async function POST(r: Request) {
             position,
             s.duration,
             delta,
-            delta >= s.duration * 0.8 && position >= s.duration * 0.9 ? 1 : 0,
+            delta >= WATCHED_EPISODE_SECONDS ? 1 : 0,
             n,
+            WATCHED_EPISODE_SECONDS,
           ),
       );
     }

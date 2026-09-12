@@ -1,8 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { api, useCommunity } from './context';
-import { statuses, type Entry } from '@/lib/community';
+import {
+  statuses,
+  type CollectionList,
+  type Entry,
+} from '@/lib/community';
 export function CollectionControl({
   anime,
 }: {
@@ -15,6 +20,7 @@ export function CollectionControl({
 }) {
   const { user, login } = useCommunity(),
     [entry, setEntry] = useState<Entry | null>(null),
+    [lists, setLists] = useState<CollectionList[]>([]),
     [status, setStatus] = useState('planned'),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
@@ -27,6 +33,7 @@ export function CollectionControl({
           if (ok) {
             const e = x.entries.find((x: Entry) => x.anime_id === anime.id);
             setEntry(e || null);
+            setLists(x.lists || []);
             setStatus(e?.status || 'planned');
           }
         })
@@ -51,12 +58,35 @@ export function CollectionControl({
         status,
         rating: entry?.rating || 0,
         favorite: entry?.favorite || 0,
+        list_ids: entry?.list_ids || [],
       };
       await api('collection', e);
       setEntry(e);
       setError('');
     } catch (e) {
       setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function toggleList(listId: string, value: boolean) {
+    if (!entry) return;
+    setBusy(true);
+    try {
+      await api('list_membership', {
+        list_id: listId,
+        anime_id: anime.id,
+        value,
+      });
+      setEntry({
+        ...entry,
+        list_ids: value
+          ? [...entry.list_ids, listId]
+          : entry.list_ids.filter((id) => id !== listId),
+      });
+      setError('');
+    } catch (listError) {
+      setError((listError as Error).message);
     } finally {
       setBusy(false);
     }
@@ -78,6 +108,25 @@ export function CollectionControl({
         {entry ? 'Сохранить статус' : 'В коллекцию'}
       </button>
       {entry && <span className="success-msg">В твоём профиле</span>}
+      {entry && !!lists.length && (
+        <details className="collection-custom-lists">
+          <summary>Добавить в свой список</summary>
+          <div>
+            {lists.map((list) => (
+              <label key={list.id}>
+                <Checkbox
+                  checked={entry.list_ids.includes(list.id)}
+                  disabled={busy}
+                  onCheckedChange={(value) =>
+                    void toggleList(list.id, !!value)
+                  }
+                />
+                {list.name}
+              </label>
+            ))}
+          </div>
+        </details>
+      )}
       {error && <span className="error-msg">{error}</span>}
     </div>
   );

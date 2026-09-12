@@ -26,12 +26,14 @@ import {
   statuses,
   type Profile,
   type Entry,
+  type CollectionList,
 } from '@/lib/community';
 export function ProfilePage({ id }: { id?: string }) {
   const c = useCommunity(),
     [data, setData] = useState<{
       user: Profile;
       entries: Entry[];
+      lists: CollectionList[];
       own: boolean;
       blocked: boolean;
     } | null>(null),
@@ -41,6 +43,8 @@ export function ProfilePage({ id }: { id?: string }) {
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false),
+    [creatingList, setCreatingList] = useState(false),
+    [newListName, setNewListName] = useState(''),
     [avatarBusy, setAvatarBusy] = useState(false),
     [notifications, setNotifications] = useState<
       Array<{
@@ -134,8 +138,29 @@ export function ProfilePage({ id }: { id?: string }) {
       setAvatarBusy(false);
     }
   }
+  async function createList() {
+    if (!newListName.trim()) return;
+    setBusy(true);
+    setError('');
+    try {
+      await api('list_create', { name: newListName });
+      setNewListName('');
+      setCreatingList(false);
+      await load();
+      setNotice('Список создан');
+    } catch (listError) {
+      setError((listError as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   const shown =
-      data?.entries.filter((e) => status === 'all' || status === e.status) ||
+      data?.entries.filter(
+        (e) =>
+          status === 'all' ||
+          status === e.status ||
+          (status.startsWith('list:') && e.list_ids.includes(status.slice(5))),
+      ) ||
       [],
     theme =
       themes.find(
@@ -264,6 +289,73 @@ export function ProfilePage({ id }: { id?: string }) {
                     </button>
                   ))}
                 </div>
+                {!!data.lists.length && (
+                  <div className="custom-list-nav">
+                    {data.lists.map((list) => (
+                      <div key={list.id}>
+                        <button
+                          onClick={() => {
+                            setTab('collection');
+                            setStatus('list:' + list.id);
+                          }}
+                        >
+                          <span>{list.name}</span>
+                          <strong>{list.item_count}</strong>
+                        </button>
+                        {data.own && (
+                          <button
+                            className="list-delete"
+                            aria-label={'Удалить список ' + list.name}
+                            onClick={() => {
+                              if (confirm(`Удалить список «${list.name}»?`)) {
+                                if (status === 'list:' + list.id) setStatus('all');
+                                void act('list_delete', { id: list.id });
+                              }
+                            }}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {data.own &&
+                  (creatingList ? (
+                    <form
+                      className="create-list-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void createList();
+                      }}
+                    >
+                      <input
+                        aria-label="Название нового списка"
+                        value={newListName}
+                        minLength={2}
+                        maxLength={30}
+                        placeholder="Название списка"
+                        onChange={(event) => setNewListName(event.target.value)}
+                      />
+                      <button disabled={busy}>Создать</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCreatingList(false);
+                          setNewListName('');
+                        }}
+                      >
+                        Отмена
+                      </button>
+                    </form>
+                  ) : (
+                    <button
+                      className="create-list-button"
+                      onClick={() => setCreatingList(true)}
+                    >
+                      + Создать свой список
+                    </button>
+                  ))}
                 {!data.user.collection_public && !data.own && (
                   <p className="muted">Коллекция скрыта владельцем.</p>
                 )}
@@ -367,6 +459,11 @@ export function ProfilePage({ id }: { id?: string }) {
                           {t}
                         </option>
                       ))}
+                      {data.lists.map((list) => (
+                        <option key={list.id} value={'list:' + list.id}>
+                          {list.name}
+                        </option>
+                      ))}
                     </NativeSelect>
                   </div>
                   {!shown.length ? (
@@ -459,6 +556,29 @@ export function ProfilePage({ id }: { id?: string }) {
                               {statuses[e.status as keyof typeof statuses]}{' '}
                               {e.rating ? '· ★ ' + e.rating : ''}
                             </p>
+                          )}
+                          {data.own && !!data.lists.length && (
+                            <details className="entry-custom-lists">
+                              <summary>Свои списки</summary>
+                              <div>
+                                {data.lists.map((list) => (
+                                  <label key={list.id}>
+                                    <Checkbox
+                                      checked={e.list_ids.includes(list.id)}
+                                      disabled={busy}
+                                      onCheckedChange={(value) =>
+                                        void act('list_membership', {
+                                          list_id: list.id,
+                                          anime_id: e.anime_id,
+                                          value: !!value,
+                                        })
+                                      }
+                                    />
+                                    {list.name}
+                                  </label>
+                                ))}
+                              </div>
+                            </details>
                           )}
                         </div>
                       </div>

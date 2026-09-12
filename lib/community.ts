@@ -212,6 +212,12 @@ export type Entry = {
   status: string;
   rating: number;
   favorite: number;
+  list_ids: string[];
+};
+export type CollectionList = {
+  id: string;
+  name: string;
+  item_count: number;
 };
 export const statuses = {
   planned: 'Запланировано',

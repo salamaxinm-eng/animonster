@@ -69,9 +69,37 @@ export async function GET(r: Request) {
                 .all()
             ).results
           : [];
+      const lists =
+        own || profile.collection_public
+          ? (
+              await db()
+                .prepare(
+                  'SELECT l.id,l.name,count(i.anime_id) AS item_count FROM collection_lists l LEFT JOIN collection_list_items i ON i.list_id=l.id WHERE l.user_id=? GROUP BY l.id,l.name,l.created_at ORDER BY l.created_at,l.name',
+                )
+                .bind(id)
+                .all()
+            ).results
+          : [];
+      const memberships =
+        own || profile.collection_public
+          ? (
+              await db()
+                .prepare(
+                  'SELECT i.list_id,i.anime_id FROM collection_list_items i JOIN collection_lists l ON l.id=i.list_id WHERE l.user_id=?',
+                )
+                .bind(id)
+                .all<{ list_id: string; anime_id: number }>()
+            ).results
+          : [];
       return json({
         user: await publicUser(profile),
-        entries,
+        entries: entries.map((entry: any) => ({
+          ...entry,
+          list_ids: memberships
+            .filter((item) => item.anime_id === entry.anime_id)
+            .map((item) => item.list_id),
+        })),
+        lists,
         own,
         blocked: u ? await blocked(u.id, id) : false,
       });
@@ -232,10 +260,16 @@ export async function POST(r: Request) {
       if (!Number.isInteger(id) || id < 1 || id > 999999999)
         throw new ApiError('Некорректный тайтл');
       if (b.remove) {
-        await db()
-          .prepare('DELETE FROM collection WHERE user_id=? AND anime_id=?')
-          .bind(u.id, id)
-          .run();
+        await db().batch([
+          db()
+            .prepare(
+              'DELETE FROM collection_list_items WHERE anime_id=? AND list_id IN (SELECT id FROM collection_lists WHERE user_id=?)',
+            )
+            .bind(id, u.id),
+          db()
+            .prepare('DELETE FROM collection WHERE user_id=? AND anime_id=?')
+            .bind(u.id, id),
+        ]);
         return json({ ok: true });
       }
       if (!['planned', 'watching', 'completed', 'dropped'].includes(b.status))
@@ -270,6 +304,71 @@ export async function POST(r: Request) {
         )
         .bind(u.id, id, title, image, b.status, rating, b.favorite ? 1 : 0)
         .run();
+      return json({ ok: true });
+    }
+    if (action === 'list_create') {
+      const name = String(b.name || '').trim().replace(/\s+/g, ' ');
+      if (name.length < 2 || name.length > 30)
+        throw new ApiError('Название списка: от 2 до 30 символов');
+      const count = await db()
+        .prepare('SELECT count(*) AS n FROM collection_lists WHERE user_id=?')
+        .bind(u.id)
+        .first<{ n: number }>();
+      if ((count?.n || 0) >= 12)
+        throw new ApiError('Можно создать не больше 12 своих списков');
+      const exists = await db()
+        .prepare(
+          'SELECT 1 FROM collection_lists WHERE user_id=? AND lower(name)=lower(?)',
+        )
+        .bind(u.id, name)
+        .first();
+      if (exists) throw new ApiError('Список с таким названием уже существует', 409);
+      const id = uid();
+      await db()
+        .prepare(
+          'INSERT INTO collection_lists(id,user_id,name,created_at) VALUES (?,?,?,?)',
+        )
+        .bind(id, u.id, name, now())
+        .run();
+      return json({ id, name, item_count: 0 });
+    }
+    if (action === 'list_delete') {
+      const id = String(b.id || '');
+      await db()
+        .prepare('DELETE FROM collection_lists WHERE id=? AND user_id=?')
+        .bind(id, u.id)
+        .run();
+      return json({ ok: true });
+    }
+    if (action === 'list_membership') {
+      const listId = String(b.list_id || '');
+      const animeId = Number(b.anime_id);
+      if (!Number.isInteger(animeId) || animeId < 1)
+        throw new ApiError('Некорректный тайтл');
+      const list = await db()
+        .prepare('SELECT 1 FROM collection_lists WHERE id=? AND user_id=?')
+        .bind(listId, u.id)
+        .first();
+      if (!list) throw new ApiError('Список не найден', 404);
+      const entry = await db()
+        .prepare('SELECT 1 FROM collection WHERE user_id=? AND anime_id=?')
+        .bind(u.id, animeId)
+        .first();
+      if (!entry) throw new ApiError('Сначала добавьте тайтл в коллекцию');
+      if (b.value)
+        await db()
+          .prepare(
+            'INSERT OR IGNORE INTO collection_list_items(list_id,anime_id) VALUES (?,?)',
+          )
+          .bind(listId, animeId)
+          .run();
+      else
+        await db()
+          .prepare(
+            'DELETE FROM collection_list_items WHERE list_id=? AND anime_id=?',
+          )
+          .bind(listId, animeId)
+          .run();
       return json({ ok: true });
     }
     if (action === 'comment') {

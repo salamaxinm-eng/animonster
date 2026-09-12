@@ -284,6 +284,96 @@
   font-size: 12px;
   color: #8996a7;
 }
+.custom-list-nav {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #ffffff10;
+}
+.custom-list-nav > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  gap: 5px;
+}
+.custom-list-nav button:first-child {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  color: #b9c5d2;
+  background: #0d141d;
+}
+.custom-list-nav button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.custom-list-nav button strong {
+  color: var(--profile-accent);
+  font-size: 12px;
+}
+.custom-list-nav .list-delete {
+  color: #7d8a98;
+  border-radius: 7px;
+}
+.create-list-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 9px;
+  border: 1px dashed #b4ed5045;
+  border-radius: 7px;
+  color: var(--profile-accent);
+  font-size: 12px;
+}
+.create-list-form {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+.create-list-form input {
+  min-width: 0;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #34404e;
+  border-radius: 7px;
+  background: #0e141c;
+  color: #e5eaf2;
+}
+.create-list-form button {
+  padding: 8px;
+  border-radius: 7px;
+  background: #1a2530;
+  font-size: 12px;
+}
+.create-list-form button:first-of-type {
+  color: #10160d;
+  background: var(--profile-accent);
+  font-weight: 700;
+}
+.entry-custom-lists {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #91a0b1;
+}
+.entry-custom-lists summary {
+  cursor: pointer;
+  color: var(--profile-accent);
+}
+.entry-custom-lists > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-top: 10px;
+}
+.entry-custom-lists label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
 .plus-promo {
   display: block;
   border: 1px solid #72578955;
@@ -778,6 +868,27 @@
 }
 .collection-control .primary {
   padding: 10px 15px;
+}
+.collection-custom-lists {
+  flex-basis: 100%;
+  font-size: 13px;
+  color: #9aa8b8;
+}
+.collection-custom-lists summary {
+  width: fit-content;
+  cursor: pointer;
+  color: #b4ed50;
+}
+.collection-custom-lists > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 12px;
+}
+.collection-custom-lists label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 .setup-note {
   font-size: 13px;
