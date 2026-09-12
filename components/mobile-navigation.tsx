@@ -34,7 +34,7 @@ const items: MobileNavItem[] = [
     active: (path) => path === '/bookmarks',
   },
   {
-    href: '/#catalog',
+    href: '/catalog',
     label: 'Каталог',
     icon: LayoutGrid,
     active: (path, hash) =>
@@ -42,6 +42,7 @@ const items: MobileNavItem[] = [
       path.startsWith('/genres/') ||
       path.startsWith('/anime/') ||
       path.startsWith('/browse/') ||
+      path === '/catalog' ||
       path === '/recommendations' ||
       (path === '/' && hash === '#catalog'),
   },
@@ -59,6 +60,12 @@ export function MobileNavigation() {
   const pathname = usePathname();
   const community = useCommunity();
   const [hash, setHash] = useState('');
+  const sectionTitle =
+    pathname === '/bookmarks'
+      ? 'Закладки'
+      : pathname === '/catalog' || pathname === '/genres'
+        ? 'Каталог'
+        : '';
 
   useEffect(() => {
     const update = () => setHash(location.hash);
@@ -78,12 +85,20 @@ export function MobileNavigation() {
   return (
     <>
       <header className="mobile-topbar">
-        <a className="mobile-brand" href="/" aria-label="AniMonster — главная">
-          <Ghost aria-hidden="true" fill="currentColor" />
-          <span>
-            Ani<strong>Monster</strong>
-          </span>
-        </a>
+        {sectionTitle ? (
+          <strong className="mobile-page-heading">{sectionTitle}</strong>
+        ) : (
+          <a
+            className="mobile-brand"
+            href="/"
+            aria-label="AniMonster — главная"
+          >
+            <Ghost aria-hidden="true" fill="currentColor" />
+            <span>
+              Ani<strong>Monster</strong>
+            </span>
+          </a>
+        )}
         <a
           className="mobile-search-button"
           href="/search"

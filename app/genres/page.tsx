@@ -29,6 +29,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { CommunityHeader } from '@/components/community/context';
+import { MobileCatalogTabs } from '@/components/mobile-catalog-tabs';
 import { LIBERTY } from '@/lib/server/anime';
 import { genreList, type Genre } from '@/lib/server/library';
 
@@ -122,6 +123,7 @@ export default async function GenresPage() {
     <div className="social-site">
       <CommunityHeader />
       <main className="genre-hub">
+        <MobileCatalogTabs active="genres" />
         <div className="genre-hub-heading">
           <p className="eyebrow">КАТАЛОГ ANIMONSTER</p>
           <h1>Жанры аниме</h1>
