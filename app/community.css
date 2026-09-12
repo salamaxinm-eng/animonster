@@ -2088,7 +2088,8 @@ button:disabled {
 /* Популярное — десктоп: фиксированная кнопка + аккуратный текст */
 @media (min-width: 761px) {
   .anime-hero .hero-copy {
-    max-width: 760px;
+    width: 100%;
+    max-width: none;
   }
 
   .anime-hero h1 {
@@ -2121,7 +2122,7 @@ button:disabled {
 
   .anime-hero .hero-copy > .primary {
     position: absolute;
-    left: 6%;
+    left: 5%;
     bottom: 72px;
     z-index: 6;
     min-height: 49px;
