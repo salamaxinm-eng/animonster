@@ -739,6 +739,17 @@ export function ProfilePage({
                     Примерить коллекцию пинов →
                   </a>
                   <div className="privacy-settings">
+                    <h3>Настройки просмотра</h3>
+                    <label>
+                      <Checkbox
+                        checked={!!draft.auto_skip_segments}
+                        onCheckedChange={(v) =>
+                          setDraft({ ...draft, auto_skip_segments: !!v })
+                        }
+                      />{' '}
+                      Автоматически пропускать опенинги и эндинги
+                    </label>
+                    <h3>Приватность</h3>
                     <label>
                       <Checkbox
                         checked={!!draft.wall_open}

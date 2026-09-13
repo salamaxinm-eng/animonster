@@ -7,6 +7,7 @@ export type Release = {
   alias: string;
   poster: { src: string };
   shikimori?: { id: number; rating: number };
+  mal?: { id: number; rating?: number };
   type: { value: string };
   year: number;
   episodes_total: number;
@@ -15,7 +16,12 @@ export type Release = {
   added_in_users_favorites: number;
   is_blocked_by_geo: boolean;
   is_blocked_by_copyrights: boolean;
-  age_rating?: { value: string; label: string; is_adult: boolean; description: string };
+  age_rating?: {
+    value: string;
+    label: string;
+    is_adult: boolean;
+    description: string;
+  };
   episodes?: Episode[];
 };
 export async function liberty(path: string) {
@@ -23,7 +29,9 @@ export async function liberty(path: string) {
   let lastError = 'Источник временно недоступен';
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const r = await fetch(LIBERTY + '/api/v1' + path, { signal: AbortSignal.timeout(12000) });
+      const r = await fetch(LIBERTY + '/api/v1' + path, {
+        signal: AbortSignal.timeout(12000),
+      });
       if (!r.ok) {
         lastError = `HTTP ${r.status}`;
         if (r.status < 500) break;
@@ -35,15 +43,26 @@ export async function liberty(path: string) {
       lastError = reason instanceof Error ? reason.message : lastError;
     }
   }
-  void providerHealth('error', Math.round(performance.now() - started), lastError);
+  void providerHealth(
+    'error',
+    Math.round(performance.now() - started),
+    lastError,
+  );
   throw Error('Источник временно недоступен');
 }
 
-async function providerHealth(status: 'ok' | 'error', latency: number, error?: string) {
+async function providerHealth(
+  status: 'ok' | 'error',
+  latency: number,
+  error?: string,
+) {
   try {
-    await db().prepare(
-      'INSERT INTO provider_health(provider,status,latency_ms,error,checked_at) VALUES (?,?,?,?,?) ON CONFLICT(provider) DO UPDATE SET status=excluded.status,latency_ms=excluded.latency_ms,error=excluded.error,checked_at=excluded.checked_at',
-    ).bind('aniliberty', status, latency, error || null, now()).run();
+    await db()
+      .prepare(
+        'INSERT INTO provider_health(provider,status,latency_ms,error,checked_at) VALUES (?,?,?,?,?) ON CONFLICT(provider) DO UPDATE SET status=excluded.status,latency_ms=excluded.latency_ms,error=excluded.error,checked_at=excluded.checked_at',
+      )
+      .bind('aniliberty', status, latency, error || null, now())
+      .run();
   } catch {}
 }
 export const available = (r: Release) =>
@@ -69,6 +88,7 @@ export function normalize(r: Release): Anime {
   return {
     id: r.shikimori?.id || 100000000 + r.id,
     release_id: r.id,
+    mal_id: r.mal?.id || r.shikimori?.id,
     russian: r.name.main,
     name: r.name.english || r.name.main,
     image: { original: new URL(r.poster.src, LIBERTY).href },

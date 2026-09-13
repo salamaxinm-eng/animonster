@@ -136,6 +136,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
             <EpisodePlayer
               key={version}
               animeId={anime.id}
+              releaseId={anime.release_id}
               episodes={episodes}
               voiceovers={voiceovers}
               animeTitle={anime.russian}

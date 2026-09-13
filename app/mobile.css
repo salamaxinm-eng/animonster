@@ -688,6 +688,33 @@
     object-fit: contain;
   }
 
+  .skip-segment-button {
+    right: 12px;
+    bottom: 12px;
+    min-height: 44px;
+  }
+
+  .auto-skip-question {
+    right: 10px;
+    bottom: 10px;
+    width: calc(100% - 20px);
+    padding: 12px;
+  }
+
+  .auto-skip-question strong {
+    margin-bottom: 9px;
+    font-size: 13px;
+  }
+
+  .auto-skip-question button {
+    min-height: 44px;
+    flex: 1;
+  }
+
+  .admin-skip-form {
+    grid-template-columns: 1fr;
+  }
+
   /* Самостоятельный экран закладок. */
   .bookmarks-page .title-page,
   .mobile-catalog-page .title-page {

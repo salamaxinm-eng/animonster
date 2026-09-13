@@ -1,29 +1,85 @@
-import { ApiError, body, db, fail, hash, inviteRequired, isModerator, json, now, premium, sameOrigin, uid, viewer } from '@/lib/server/core';
+import {
+  ApiError,
+  body,
+  db,
+  fail,
+  hash,
+  inviteRequired,
+  isModerator,
+  json,
+  now,
+  premium,
+  sameOrigin,
+  uid,
+  viewer,
+} from '@/lib/server/core';
 import { dashboard } from '@/lib/server/admin';
+import { validSegment } from '@/lib/server/skip-times';
 
 async function moderator(r: Request) {
   const user = await viewer(r);
   if (!isModerator(user)) throw new ApiError('Не найдено', 404, 'not_found');
   return user!;
 }
-async function audit(actor: string, action: string, target?: string, reason = '', metadata = '{}') {
-  await db().prepare('INSERT INTO moderation_actions(id,actor_id,target_user_id,action,reason,metadata,created_at) VALUES (?,?,?,?,?,?,?)')
-    .bind(uid(), actor, target || null, action, reason, metadata, now()).run();
+async function audit(
+  actor: string,
+  action: string,
+  target?: string,
+  reason = '',
+  metadata = '{}',
+) {
+  await db()
+    .prepare(
+      'INSERT INTO moderation_actions(id,actor_id,target_user_id,action,reason,metadata,created_at) VALUES (?,?,?,?,?,?,?)',
+    )
+    .bind(uid(), actor, target || null, action, reason, metadata, now())
+    .run();
 }
 export async function GET(r: Request) {
   try {
     const actor = await moderator(r);
-    const [invites, users, reports, actions, metrics] = await Promise.all([
-      db().prepare('SELECT label,created_at,expires_at,used_by,used_at,revoked_at FROM invites ORDER BY created_at DESC LIMIT 50').all(),
-      db().prepare(`SELECT u.id,u.nick,u.email,u.role,u.email_verified,u.suspended_until,u.created_at,
+    const [invites, users, reports, actions, skipOverrides, metrics] =
+      await Promise.all([
+        db()
+          .prepare(
+            'SELECT label,created_at,expires_at,used_by,used_at,revoked_at FROM invites ORDER BY created_at DESC LIMIT 50',
+          )
+          .all(),
+        db()
+          .prepare(`SELECT u.id,u.nick,u.email,u.role,u.email_verified,u.suspended_until,u.created_at,
         (SELECT MAX(g.expires) FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL) AS premium_until
-        FROM users u WHERE u.deleted_at IS NULL ORDER BY u.created_at DESC LIMIT 100`).all(),
-      db().prepare(`SELECT r.*,c.body,u.nick AS reporter FROM reports r JOIN comments c ON c.id=r.comment_id JOIN users u ON u.id=r.user_id ORDER BY r.created_at DESC LIMIT 100`).all(),
-      db().prepare('SELECT action,reason,target_user_id,created_at FROM moderation_actions ORDER BY created_at DESC LIMIT 50').all(),
-      dashboard(),
-    ]);
-    return json({ can_manage_roles: actor.role === 'admin', invite_required: inviteRequired(), dashboard: metrics, invites: invites.results, users: users.results, reports: reports.results, actions: actions.results });
-  } catch (e) { return fail(e); }
+        FROM users u WHERE u.deleted_at IS NULL ORDER BY u.created_at DESC LIMIT 100`)
+          .all(),
+        db()
+          .prepare(
+            `SELECT r.*,c.body,u.nick AS reporter FROM reports r JOIN comments c ON c.id=r.comment_id JOIN users u ON u.id=r.user_id ORDER BY r.created_at DESC LIMIT 100`,
+          )
+          .all(),
+        db()
+          .prepare(
+            'SELECT action,reason,target_user_id,created_at FROM moderation_actions ORDER BY created_at DESC LIMIT 50',
+          )
+          .all(),
+        db()
+          .prepare(
+            'SELECT id,anime_id,episode,voiceover,opening_start,opening_stop,ending_start,ending_stop,updated_at FROM skip_time_overrides ORDER BY updated_at DESC LIMIT 100',
+          )
+          .all(),
+        dashboard(),
+      ]);
+    return json({
+      can_manage_roles: actor.role === 'admin',
+      invite_required: inviteRequired(),
+      dashboard: metrics,
+      invites: invites.results,
+      users: users.results,
+      reports: reports.results,
+      actions: actions.results,
+      skip_overrides: skipOverrides.results,
+    });
+  } catch (e) {
+    return fail(e);
+  }
 }
 export async function POST(r: Request) {
   try {
@@ -33,42 +89,181 @@ export async function POST(r: Request) {
     const action = String(b.action || '');
     if (action === 'create_invite') {
       if (!inviteRequired())
-        throw new ApiError('Приглашения сейчас отключены.', 409, 'invites_disabled');
+        throw new ApiError(
+          'Приглашения сейчас отключены.',
+          409,
+          'invites_disabled',
+        );
       const code = `AM-${crypto.getRandomValues(new Uint32Array(2)).join('-').toUpperCase()}`;
       const days = Math.min(90, Math.max(1, Number(b.days) || 14));
-      await db().prepare('INSERT INTO invites(hash,label,created_by,created_at,expires_at) VALUES (?,?,?,?,?)')
-        .bind(await hash(code), String(b.label || 'Бета').slice(0, 80), actor.id, now(), now() + days * 86400000).run();
-      await audit(actor.id, 'invite.create', undefined, '', JSON.stringify({ days }));
+      await db()
+        .prepare(
+          'INSERT INTO invites(hash,label,created_by,created_at,expires_at) VALUES (?,?,?,?,?)',
+        )
+        .bind(
+          await hash(code),
+          String(b.label || 'Бета').slice(0, 80),
+          actor.id,
+          now(),
+          now() + days * 86400000,
+        )
+        .run();
+      await audit(
+        actor.id,
+        'invite.create',
+        undefined,
+        '',
+        JSON.stringify({ days }),
+      );
       return json({ ok: true, code });
     }
+    if (action === 'skip_override') {
+      const animeId = Number(b.anime_id),
+        episode = Number(b.episode),
+        voiceover =
+          String(b.voiceover || '*')
+            .trim()
+            .slice(0, 100) || '*';
+      if (!Number.isInteger(animeId) || animeId < 1 || animeId > 999999999)
+        throw new ApiError('Некорректное аниме');
+      if (!Number.isInteger(episode) || episode < 1 || episode > 100000)
+        throw new ApiError('Некорректная серия');
+      const readSegment = (prefix: 'opening' | 'ending') => {
+        const startValue = b[`${prefix}_start`],
+          stopValue = b[`${prefix}_stop`];
+        if (
+          (startValue == null || startValue === '') &&
+          (stopValue == null || stopValue === '')
+        )
+          return undefined;
+        const segment = validSegment({ start: startValue, stop: stopValue }, 0);
+        if (!segment)
+          throw new ApiError(
+            `Некорректный ${prefix === 'opening' ? 'опенинг' : 'эндинг'}`,
+          );
+        return segment;
+      };
+      const opening = readSegment('opening'),
+        ending = readSegment('ending');
+      if (!opening && !ending)
+        throw new ApiError('Укажите хотя бы один интервал');
+      const id = uid();
+      await db()
+        .prepare(
+          `INSERT INTO skip_time_overrides(id,anime_id,episode,voiceover,opening_start,opening_stop,ending_start,ending_stop,created_by,updated_at)
+           VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(anime_id,episode,voiceover) DO UPDATE SET opening_start=excluded.opening_start,opening_stop=excluded.opening_stop,ending_start=excluded.ending_start,ending_stop=excluded.ending_stop,created_by=excluded.created_by,updated_at=excluded.updated_at`,
+        )
+        .bind(
+          id,
+          animeId,
+          episode,
+          voiceover,
+          opening?.start ?? null,
+          opening?.stop ?? null,
+          ending?.start ?? null,
+          ending?.stop ?? null,
+          actor.id,
+          now(),
+        )
+        .run();
+      await audit(
+        actor.id,
+        'skip.override',
+        undefined,
+        '',
+        JSON.stringify({ anime_id: animeId, episode, voiceover }),
+      );
+      return json({ ok: true });
+    }
+    if (action === 'skip_override_delete') {
+      const id = String(b.id || '');
+      const existingOverride = await db()
+        .prepare(
+          'SELECT anime_id,episode,voiceover FROM skip_time_overrides WHERE id=?',
+        )
+        .bind(id)
+        .first();
+      if (!existingOverride) throw new ApiError('Таймкод не найден', 404);
+      await db()
+        .prepare('DELETE FROM skip_time_overrides WHERE id=?')
+        .bind(id)
+        .run();
+      await audit(
+        actor.id,
+        'skip.override.delete',
+        undefined,
+        '',
+        JSON.stringify(existingOverride),
+      );
+      return json({ ok: true });
+    }
     const target = String(b.user_id || '');
-    const exists = await db().prepare('SELECT id,role FROM users WHERE id=?').bind(target).first<{ id: string; role: string }>();
+    const exists = await db()
+      .prepare('SELECT id,role FROM users WHERE id=?')
+      .bind(target)
+      .first<{ id: string; role: string }>();
     if (!exists) throw new ApiError('Пользователь не найден', 404);
     if (action === 'grant_plus') {
       const days = Math.min(366, Math.max(1, Number(b.days) || 31));
       const id = `manual:${uid()}`;
       const start = now();
       const expires = Math.max(start, await premium(target)) + days * 86400000;
-      await db().prepare('INSERT INTO grants(order_id,user_id,starts_at,expires,created_by,reason) VALUES (?,?,?,?,?,?)')
-        .bind(id, target, start, expires, actor.id, String(b.reason || 'Закрытая бета').slice(0, 200)).run();
-      await audit(actor.id, 'plus.grant', target, String(b.reason || ''), JSON.stringify({ days }));
+      await db()
+        .prepare(
+          'INSERT INTO grants(order_id,user_id,starts_at,expires,created_by,reason) VALUES (?,?,?,?,?,?)',
+        )
+        .bind(
+          id,
+          target,
+          start,
+          expires,
+          actor.id,
+          String(b.reason || 'Закрытая бета').slice(0, 200),
+        )
+        .run();
+      await audit(
+        actor.id,
+        'plus.grant',
+        target,
+        String(b.reason || ''),
+        JSON.stringify({ days }),
+      );
       return json({ ok: true, premium_until: expires });
     }
     if (action === 'suspend') {
       const hours = Math.min(8760, Math.max(0, Number(b.hours) || 0));
-      await db().prepare('UPDATE users SET suspended_until=? WHERE id=?').bind(hours ? now() + hours * 3600000 : null, target).run();
-      await db().prepare('DELETE FROM sessions WHERE user_id=?').bind(target).run();
-      await audit(actor.id, hours ? 'user.suspend' : 'user.unsuspend', target, String(b.reason || '').slice(0, 300), JSON.stringify({ hours }));
+      await db()
+        .prepare('UPDATE users SET suspended_until=? WHERE id=?')
+        .bind(hours ? now() + hours * 3600000 : null, target)
+        .run();
+      await db()
+        .prepare('DELETE FROM sessions WHERE user_id=?')
+        .bind(target)
+        .run();
+      await audit(
+        actor.id,
+        hours ? 'user.suspend' : 'user.unsuspend',
+        target,
+        String(b.reason || '').slice(0, 300),
+        JSON.stringify({ hours }),
+      );
       return json({ ok: true });
     }
     if (action === 'role') {
-      if (actor.role !== 'admin') throw new ApiError('Только администратор меняет роли', 403);
+      if (actor.role !== 'admin')
+        throw new ApiError('Только администратор меняет роли', 403);
       const role = String(b.role || '');
-      if (!['user', 'moderator', 'admin'].includes(role)) throw new ApiError('Неизвестная роль');
-      await db().prepare('UPDATE users SET role=? WHERE id=?').bind(role, target).run();
+      if (!['user', 'moderator', 'admin'].includes(role))
+        throw new ApiError('Неизвестная роль');
+      await db()
+        .prepare('UPDATE users SET role=? WHERE id=?')
+        .bind(role, target)
+        .run();
       await audit(actor.id, 'user.role', target, '', JSON.stringify({ role }));
       return json({ ok: true });
     }
     throw new ApiError('Неизвестное действие', 404);
-  } catch (e) { return fail(e); }
+  } catch (e) {
+    return fail(e);
+  }
 }

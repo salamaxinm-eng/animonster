@@ -175,8 +175,26 @@ export async function POST(r: Request) {
     const action = b.action;
     if (action === 'adult_consent') {
       if (!b.confirmed) throw new ApiError('Подтверждение не сохранено');
-      await db().prepare('UPDATE users SET adult_confirmed_at=? WHERE id=?').bind(now(), u.id).run();
+      await db()
+        .prepare('UPDATE users SET adult_confirmed_at=? WHERE id=?')
+        .bind(now(), u.id)
+        .run();
       return json({ ok: true });
+    }
+    if (action === 'playback_settings') {
+      if (
+        b.auto_skip_segments !== null &&
+        typeof b.auto_skip_segments !== 'boolean'
+      )
+        throw new ApiError('Некорректная настройка воспроизведения');
+      await db()
+        .prepare('UPDATE users SET auto_skip_segments=? WHERE id=?')
+        .bind(
+          b.auto_skip_segments == null ? null : b.auto_skip_segments ? 1 : 0,
+          u.id,
+        )
+        .run();
+      return json({ ok: true, auto_skip_segments: b.auto_skip_segments });
     }
     if (action === 'profile') {
       const nick = String(b.nick || '').trim();
@@ -202,9 +220,15 @@ export async function POST(r: Request) {
       const pin = b.pin || null;
       if (pin && (!pins.some((x) => x.id === pin) || !(await premium(u.id))))
         throw new ApiError('Пины доступны по активной подписке', 403);
+      const autoSkipSegments =
+        b.auto_skip_segments == null
+          ? (u.auto_skip_segments ?? null)
+          : b.auto_skip_segments
+            ? 1
+            : 0;
       await db()
         .prepare(
-          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,wall_open=?,collection_public=? WHERE id=?',
+          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,wall_open=?,collection_public=?,auto_skip_segments=? WHERE id=?',
         )
         .bind(
           nick,
@@ -214,6 +238,7 @@ export async function POST(r: Request) {
           pin,
           b.wall_open ? 1 : 0,
           b.collection_public ? 1 : 0,
+          autoSkipSegments,
           u.id,
         )
         .run();
@@ -307,7 +332,9 @@ export async function POST(r: Request) {
       return json({ ok: true });
     }
     if (action === 'list_create') {
-      const name = String(b.name || '').trim().replace(/\s+/g, ' ');
+      const name = String(b.name || '')
+        .trim()
+        .replace(/\s+/g, ' ');
       if (name.length < 2 || name.length > 30)
         throw new ApiError('Название списка: от 2 до 30 символов');
       const count = await db()
@@ -322,7 +349,8 @@ export async function POST(r: Request) {
         )
         .bind(u.id, name)
         .first();
-      if (exists) throw new ApiError('Список с таким названием уже существует', 409);
+      if (exists)
+        throw new ApiError('Список с таким названием уже существует', 409);
       const id = uid();
       await db()
         .prepare(

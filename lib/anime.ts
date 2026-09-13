@@ -1,6 +1,7 @@
 export type Anime = {
   id: number;
   release_id?: number;
+  mal_id?: number;
   name: string;
   russian: string;
   image: { original: string };
@@ -14,6 +15,10 @@ export type Anime = {
   age_rating?: string;
   is_adult?: boolean;
 };
+export type SkipSegment = {
+  start: number;
+  stop: number;
+};
 export const posterUrl = (a: Anime) =>
   a.image.original.startsWith('https://')
     ? a.image.original
@@ -23,6 +28,8 @@ export type Episode = {
   ordinal: number;
   name: string;
   duration: number;
+  opening?: SkipSegment;
+  ending?: SkipSegment;
   hls_480: string | null;
   hls_720: string | null;
   hls_1080: string | null;

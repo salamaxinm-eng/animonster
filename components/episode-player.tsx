@@ -2,14 +2,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import type { Episode, Voiceover } from '@/lib/anime';
-import { useCommunity } from '@/components/community/context';
+import type { Episode, SkipSegment, Voiceover } from '@/lib/anime';
+import { api, useCommunity } from '@/components/community/context';
+
+type SkipTimes = {
+  opening?: SkipSegment;
+  ending?: SkipSegment;
+  source: 'override' | 'aniliberty' | 'aniskip' | 'mixed' | 'none';
+  confidence: 'exact' | 'matched' | 'unverified';
+  opening_confidence?: 'exact' | 'matched' | 'unverified';
+  ending_confidence?: 'exact' | 'matched' | 'unverified';
+  reference_duration?: number;
+};
+
+const AUTO_SKIP_KEY = 'animonster-auto-skip-segments-v1';
 export function EpisodePlayer({
   episodes,
   voiceovers,
   animeTitle,
   initialEpisode = 1,
   animeId,
+  releaseId,
   initialPosition = 0,
   onEpisodeChange,
   onRetry,
@@ -19,6 +32,7 @@ export function EpisodePlayer({
   animeTitle: string;
   initialEpisode?: number;
   animeId?: number;
+  releaseId?: number;
   initialPosition?: number;
   onEpisodeChange: (n: number) => void;
   onRetry: () => void;
@@ -32,12 +46,24 @@ export function EpisodePlayer({
     [quality, setQuality] = useState('720'),
     [voiceoverId, setVoiceoverId] = useState('aniliberty'),
     [error, setError] = useState(''),
-    [playbackActive, setPlaybackActive] = useState(false);
+    [playbackActive, setPlaybackActive] = useState(false),
+    [currentTime, setCurrentTime] = useState(0),
+    [kodikDuration, setKodikDuration] = useState<number | null>(null),
+    [iframeSeek, setIframeSeek] = useState<number | null>(null),
+    [iframeRevision, setIframeRevision] = useState(0),
+    [skipTimes, setSkipTimes] = useState<SkipTimes>({
+      source: 'none',
+      confidence: 'unverified',
+    }),
+    [autoSkip, setAutoSkip] = useState<boolean | null>(null),
+    [preferenceReady, setPreferenceReady] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const resumed = useRef('');
   const wakeLock = useRef<WakeLockSentinel | null>(null);
-  const { user } = useCommunity();
+  const community = useCommunity(),
+    { user } = community;
+  const skippedSegment = useRef('');
   const episode = episodes[Math.min(index, episodes.length - 1)];
   const voiceover =
     voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
@@ -51,6 +77,23 @@ export function EpisodePlayer({
   useEffect(() => {
     if (index > lastVoiceoverIndex) setIndex(lastVoiceoverIndex);
   }, [voiceoverId, lastVoiceoverIndex]);
+  useEffect(() => {
+    if (!community.loaded) return;
+    let local: boolean | null = null;
+    try {
+      const stored = localStorage.getItem(AUTO_SKIP_KEY);
+      if (stored === 'true' || stored === 'false') local = stored === 'true';
+    } catch {}
+    if (user?.auto_skip_segments != null) setAutoSkip(user.auto_skip_segments);
+    else {
+      setAutoSkip(local);
+      if (user && local != null)
+        void api('playback_settings', { auto_skip_segments: local }).then(
+          community.refresh,
+        );
+    }
+    setPreferenceReady(true);
+  }, [community.loaded, user?.id, user?.auto_skip_segments]);
   useEffect(() => {
     let cancelled = false;
     const acquire = async () => {
@@ -197,7 +240,22 @@ export function EpisodePlayer({
           return;
         }
       }
-      const next = Number(payload?.kodik_player_time_update);
+      const timeValue =
+          payload?.key === 'kodik_player_time_update'
+            ? payload.value
+            : payload?.kodik_player_time_update,
+        durationValue =
+          payload?.key === 'kodik_player_duration_update'
+            ? payload.value
+            : payload?.kodik_player_duration_update;
+      const reportedDuration = Number(durationValue);
+      if (
+        Number.isFinite(reportedDuration) &&
+        reportedDuration >= 60 &&
+        reportedDuration <= 24 * 60 * 60
+      )
+        setKodikDuration(reportedDuration);
+      const next = Number(timeValue);
       if (!Number.isFinite(next) || next < 0 || next > 24 * 60 * 60) return;
       const delta = next - lastPosition;
       if (delta > 0 && delta < 10) {
@@ -208,6 +266,7 @@ export function EpisodePlayer({
       }
       position = next;
       lastPosition = next;
+      setCurrentTime(next);
     };
     const timer = setInterval(flush, 15000);
     window.addEventListener('message', receive);
@@ -232,6 +291,33 @@ export function EpisodePlayer({
       episode.hls_480 ||
       episode.hls_1080
     : null;
+  useEffect(() => {
+    setCurrentTime(0);
+    setKodikDuration(null);
+    setIframeSeek(null);
+    setSkipTimes({ source: 'none', confidence: 'unverified' });
+    skippedSegment.current = '';
+  }, [episode?.id, voiceover?.id, isKodik]);
+  useEffect(() => {
+    if (!animeId || !episode) return;
+    const controller = new AbortController(),
+      params = new URLSearchParams({
+        anime_id: String(animeId),
+        episode: String(episode.ordinal),
+        duration: String(kodikDuration || episode.duration),
+        provider: isKodik ? 'kodik' : 'aniliberty',
+        voiceover: voiceover?.id || (isKodik ? 'kodik' : 'aniliberty'),
+      });
+    if (kodikDuration) params.set('duration_verified', 'true');
+    if (releaseId) params.set('release_id', String(releaseId));
+    void fetch('/api/skip-times?' + params, { signal: controller.signal })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((result: SkipTimes | null) => {
+        if (result) setSkipTimes(result);
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [animeId, releaseId, episode?.id, voiceover?.id, isKodik, kodikDuration]);
   useEffect(() => {
     if (episode) onEpisodeChange(episode.ordinal);
   }, [episode?.id]);
@@ -289,13 +375,74 @@ export function EpisodePlayer({
     try {
       const url = new URL(voiceover.player_url);
       url.searchParams.set('episode', String(episode.ordinal));
-      if (episode.ordinal === initialEpisode && initialPosition > 0)
-        url.searchParams.set('start_from', String(Math.floor(initialPosition)));
+      const requestedPosition =
+        iframeSeek ??
+        (episode.ordinal === initialEpisode && initialPosition > 0
+          ? initialPosition
+          : 0);
+      if (requestedPosition > 0)
+        url.searchParams.set(
+          'start_from',
+          String(Math.floor(requestedPosition)),
+        );
       return url.href;
     } catch {
       return '';
     }
   })();
+  const activeKind =
+      skipTimes.opening &&
+      currentTime >= skipTimes.opening.start &&
+      currentTime < skipTimes.opening.stop - 0.25
+        ? 'opening'
+        : skipTimes.ending &&
+            currentTime >= skipTimes.ending.start &&
+            currentTime < skipTimes.ending.stop - 0.25
+          ? 'ending'
+          : null,
+    activeSegment = activeKind ? skipTimes[activeKind] : undefined,
+    activeConfidence = activeKind
+      ? skipTimes[`${activeKind}_confidence`] || skipTimes.confidence
+      : skipTimes.confidence,
+    autoSkipAllowed =
+      activeConfidence === 'exact' || activeConfidence === 'matched',
+    showAutoSkipQuestion =
+      preferenceReady &&
+      autoSkip == null &&
+      activeKind === 'opening' &&
+      autoSkipAllowed;
+  const seekPast = (kind: 'opening' | 'ending', segment: SkipSegment) => {
+    skippedSegment.current = `${episode?.id}:${voiceover?.id}:${kind}:${segment.stop}`;
+    setCurrentTime(segment.stop);
+    if (isKodik) {
+      setIframeSeek(segment.stop);
+      setIframeRevision((value) => value + 1);
+    } else if (video.current) video.current.currentTime = segment.stop;
+  };
+  const saveAutoSkip = (value: boolean) => {
+    setAutoSkip(value);
+    try {
+      localStorage.setItem(AUTO_SKIP_KEY, String(value));
+    } catch {}
+    if (user)
+      void api('playback_settings', { auto_skip_segments: value }).then(
+        community.refresh,
+      );
+  };
+  useEffect(() => {
+    if (!activeKind || !activeSegment || autoSkip !== true || !autoSkipAllowed)
+      return;
+    const key = `${episode?.id}:${voiceover?.id}:${activeKind}:${activeSegment.stop}`;
+    if (skippedSegment.current === key) return;
+    seekPast(activeKind, activeSegment);
+  }, [
+    activeKind,
+    activeSegment?.stop,
+    autoSkip,
+    autoSkipAllowed,
+    episode?.id,
+    voiceover?.id,
+  ]);
   return (
     <div className="episode-view">
       <div className="player" data-keep-awake={playbackActive || undefined}>
@@ -303,7 +450,7 @@ export function EpisodePlayer({
           iframeUrl ? (
             <iframe
               ref={frame}
-              key={voiceover.id + ':' + episode.ordinal}
+              key={voiceover.id + ':' + episode.ordinal + ':' + iframeRevision}
               src={iframeUrl}
               title={`${animeTitle} — ${voiceover.title}, серия ${episode.ordinal}`}
               referrerPolicy="origin"
@@ -322,6 +469,9 @@ export function EpisodePlayer({
             onPlay={() => setPlaybackActive(true)}
             onPlaying={() => setPlaybackActive(true)}
             onPause={() => setPlaybackActive(false)}
+            onTimeUpdate={(event) =>
+              setCurrentTime(event.currentTarget.currentTime)
+            }
             onLoadedMetadata={() => {
               if (
                 video.current &&
@@ -346,6 +496,38 @@ export function EpisodePlayer({
             }}
             aria-label={'Серия ' + episode?.ordinal}
           />
+        )}
+        {activeKind && activeSegment && !showAutoSkipQuestion && (
+          <button
+            type="button"
+            className="skip-segment-button"
+            onClick={() => seekPast(activeKind, activeSegment)}
+          >
+            Пропустить {activeKind === 'opening' ? 'опенинг' : 'эндинг'}
+          </button>
+        )}
+        {showAutoSkipQuestion && activeSegment && (
+          <div
+            className="auto-skip-question"
+            role="dialog"
+            aria-label="Настройка автопропуска"
+          >
+            <strong>Пропускать опенинги и эндинги автоматически?</strong>
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  saveAutoSkip(true);
+                  seekPast('opening', activeSegment);
+                }}
+              >
+                Включить
+              </button>
+              <button type="button" onClick={() => saveAutoSkip(false)}>
+                Нет
+              </button>
+            </div>
+          </div>
         )}
       </div>
       {error && (

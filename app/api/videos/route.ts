@@ -10,6 +10,7 @@ import {
 import { ApiError, fail, json, viewer } from '@/lib/server/core';
 import { kodikVoiceovers } from '@/lib/server/kodik';
 import { mediaProxyUrl } from '@/lib/server/media';
+import { validSegment } from '@/lib/server/skip-times';
 export async function GET(r: Request) {
   try {
     const p = new URL(r.url).searchParams,
@@ -36,7 +37,11 @@ export async function GET(r: Request) {
     if (release.age_rating?.is_adult) {
       const user = await viewer(r);
       if (!user?.adult_confirmed_at)
-        throw new ApiError('Подтвердите совершеннолетие в аккаунте.', 403, 'adult_confirmation_required');
+        throw new ApiError(
+          'Подтвердите совершеннолетие в аккаунте.',
+          403,
+          'adult_confirmation_required',
+        );
     }
     if (!available(release))
       return json({
@@ -50,6 +55,8 @@ export async function GET(r: Request) {
         ordinal: e.ordinal,
         name: e.name || 'Серия ' + e.ordinal,
         duration: e.duration,
+        opening: validSegment(e.opening, e.duration),
+        ending: validSegment(e.ending, e.duration),
         hls_480: e.hls_480,
         hls_720: e.hls_720,
         hls_1080: e.hls_1080,
@@ -61,12 +68,8 @@ export async function GET(r: Request) {
     const proxiedEpisodes = await Promise.all(
       episodes.map(async (episode) => ({
         ...episode,
-        hls_480: episode.hls_480
-          ? await mediaProxyUrl(episode.hls_480)
-          : null,
-        hls_720: episode.hls_720
-          ? await mediaProxyUrl(episode.hls_720)
-          : null,
+        hls_480: episode.hls_480 ? await mediaProxyUrl(episode.hls_480) : null,
+        hls_720: episode.hls_720 ? await mediaProxyUrl(episode.hls_720) : null,
         hls_1080: episode.hls_1080
           ? await mediaProxyUrl(episode.hls_1080)
           : null,

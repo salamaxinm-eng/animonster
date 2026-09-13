@@ -204,6 +204,7 @@ export type Profile = {
   premium_until: number;
   adult_confirmed: boolean;
   email_verified: boolean;
+  auto_skip_segments: boolean | null;
 };
 export type Entry = {
   anime_id: number;
