@@ -1979,6 +1979,38 @@ button:disabled {
 .anime-slider .card {
   scroll-snap-align: start;
 }
+@media (min-width: 768px) {
+  .recommend-section .anime-slider .card {
+    display: grid;
+    grid-template-rows: auto 62px 24px 36px;
+    align-content: start;
+    min-width: 0;
+  }
+  .recommend-section .anime-slider .card-title {
+    min-height: 0;
+    margin-top: 13px;
+    overflow: hidden;
+  }
+  .recommend-section .anime-slider .card-title > a {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  .recommend-section .anime-slider .card > p {
+    min-width: 0;
+    margin: 4px 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .recommend-section .anime-slider .card > .recommendation-reason {
+    display: -webkit-box;
+    margin-top: 0;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}
 .card-title > a {
   font-weight: 600;
   font-size: 14px;
