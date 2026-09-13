@@ -14,6 +14,7 @@ export type Anime = {
   popularity?: number;
   age_rating?: string;
   is_adult?: boolean;
+  reason?: string;
 };
 export type SkipSegment = {
   start: number;

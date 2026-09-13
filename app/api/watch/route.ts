@@ -11,6 +11,7 @@ import {
 } from '@/lib/server/core';
 import { actor } from '../activity/route';
 import { getAnime } from '@/lib/server/library';
+import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
 
 const WATCHED_EPISODE_SECONDS = 12 * 60;
 
@@ -50,12 +51,7 @@ export async function POST(r: Request) {
       const id = Number(b.anime_id),
         ep = Number(b.episode);
 
-      if (
-        !Number.isInteger(id) ||
-        id < 1 ||
-        !Number.isInteger(ep) ||
-        ep < 1
-      ) {
+      if (!Number.isInteger(id) || id < 1 || !Number.isInteger(ep) || ep < 1) {
         throw new ApiError('Некорректная серия');
       }
 
@@ -96,6 +92,7 @@ export async function POST(r: Request) {
             n + 14400000,
           ),
       ]);
+      if (a.user) await markRecommendationsDirty(a.user.id, n);
 
       const response = json({ token });
 
@@ -154,9 +151,7 @@ export async function POST(r: Request) {
 
     const stmts = [
       db()
-        .prepare(
-          'INSERT OR IGNORE INTO daily_activity(day,actor) VALUES (?,?)',
-        )
+        .prepare('INSERT OR IGNORE INTO daily_activity(day,actor) VALUES (?,?)')
         .bind(day, a.key),
     ];
 
@@ -174,7 +169,7 @@ export async function POST(r: Request) {
       stmts.push(
         db()
           .prepare(
-          'INSERT INTO history(user_id,anime_id,episode,position,duration,watched_seconds,completed,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO UPDATE SET position=excluded.position,watched_seconds=LEAST(history.duration,history.watched_seconds+excluded.watched_seconds),completed=GREATEST(history.completed,CASE WHEN history.watched_seconds+excluded.watched_seconds>=? THEN 1 ELSE 0 END),updated_at=excluded.updated_at',
+            'INSERT INTO history(user_id,anime_id,episode,position,duration,watched_seconds,completed,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO UPDATE SET position=excluded.position,watched_seconds=LEAST(history.duration,history.watched_seconds+excluded.watched_seconds),completed=GREATEST(history.completed,CASE WHEN history.watched_seconds+excluded.watched_seconds>=? THEN 1 ELSE 0 END),updated_at=excluded.updated_at',
           )
           .bind(
             a.user.id,
@@ -191,6 +186,22 @@ export async function POST(r: Request) {
     }
 
     await db().batch(stmts);
+
+    const nextWatched = s.watched + delta;
+    const recommendationThresholds = [
+      30,
+      Math.floor(s.duration * 0.5),
+      Math.floor(s.duration * 0.9),
+      WATCHED_EPISODE_SECONDS,
+    ];
+    if (
+      a.user &&
+      recommendationThresholds.some(
+        (threshold) =>
+          threshold > 0 && s.watched < threshold && nextWatched >= threshold,
+      )
+    )
+      await markRecommendationsDirty(a.user.id, n);
 
     return json({ ok: true });
   } catch (e) {

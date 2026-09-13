@@ -12,6 +12,7 @@ export type Runtime = {
   YOOKASSA_SECRET_KEY?: string;
   KODIK_API_TOKEN?: string;
   ANILIBERTY_API_URL?: string;
+  RECOMMENDATION_CRON_SECRET?: string;
   UNISENDER_API_KEY?: string;
   EMAIL_FROM?: string;
   TELEGRAM_URL?: string;

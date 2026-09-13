@@ -63,7 +63,9 @@ export function AnimeGrid({
                         : [...saved, a.id],
                     );
                     setError('');
-                    window.dispatchEvent(new Event('animonster-library-changed'));
+                    window.dispatchEvent(
+                      new Event('animonster-library-changed'),
+                    );
                   } catch (e) {
                     setError((e as Error).message);
                   }
@@ -78,6 +80,7 @@ export function AnimeGrid({
             <p>
               {a.aired_on.slice(0, 4)} · {a.episodes || '—'} серий
             </p>
+            {a.reason && <p className="recommendation-reason">{a.reason}</p>}
           </article>
         ))}
       </div>

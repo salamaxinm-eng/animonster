@@ -116,7 +116,13 @@ export function HomeDiscovery() {
               </div>
               <a href={`/browse/${active}?section=${index}`}>Смотреть все</a>
             </div>
-            <AnimeGrid items={section.items.slice(0, 16)} horizontal />
+            {section.items.length ? (
+              <AnimeGrid items={section.items.slice(0, 16)} horizontal />
+            ) : (
+              <p className="muted">
+                Подборка появится после обновления каталога.
+              </p>
+            )}
           </div>
         ))
       )}

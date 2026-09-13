@@ -1927,6 +1927,11 @@ button:disabled {
   font-size: 25px;
   margin: 0;
 }
+.recommendation-reason {
+  color: var(--lime, #a8f03c) !important;
+  font-size: 0.75rem !important;
+  line-height: 1.35;
+}
 .recommend-heading {
   display: flex;
   align-items: end;

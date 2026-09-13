@@ -19,6 +19,7 @@ import {
   type User,
 } from '@/lib/server/core';
 import { themes, avatars, pins } from '@/lib/community';
+import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
 const validScope = (s: string) =>
   /^wall:[a-f0-9-]{36}$/.test(s) ||
   /^anime:\d{1,9}(?::episode:\d{1,5}|:video:\d{1,12})?$/.test(s);
@@ -260,6 +261,7 @@ export async function POST(r: Request) {
           )
           .bind(u.id, id)
           .run();
+        await markRecommendationsDirty(u.id);
         return json({ ok: true });
       }
       const count = await db()
@@ -278,6 +280,7 @@ export async function POST(r: Request) {
         )
         .bind(u.id, id, item.anime.russian, item.anime.image.original)
         .run();
+      await markRecommendationsDirty(u.id);
       return json({ ok: true });
     }
     if (action === 'collection') {
@@ -295,6 +298,7 @@ export async function POST(r: Request) {
             .prepare('DELETE FROM collection WHERE user_id=? AND anime_id=?')
             .bind(u.id, id),
         ]);
+        await markRecommendationsDirty(u.id);
         return json({ ok: true });
       }
       if (!['planned', 'watching', 'completed', 'dropped'].includes(b.status))
@@ -329,6 +333,7 @@ export async function POST(r: Request) {
         )
         .bind(u.id, id, title, image, b.status, rating, b.favorite ? 1 : 0)
         .run();
+      await markRecommendationsDirty(u.id);
       return json({ ok: true });
     }
     if (action === 'list_create') {

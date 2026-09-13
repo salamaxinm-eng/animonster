@@ -199,3 +199,75 @@ test('playback preference and one skip override per voiceover persist', async ()
   );
   await databaseClient.close();
 });
+
+test('recommendation cache is empty-safe and isolated per user', async () => {
+  const databaseClient = await database();
+  const firstUser = crypto.randomUUID();
+  const secondUser = crypto.randomUUID();
+  const emptyUser = crypto.randomUUID();
+  const timestamp = Date.now();
+  for (const id of [firstUser, secondUser, emptyUser])
+    await databaseClient.query(
+      'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+      [id, `test:${id}`, `user_${id.slice(0, 8)}`, timestamp],
+    );
+  for (const animeId of [101, 202])
+    await databaseClient.query(
+      "INSERT INTO anime_cache(id,data,episodes,updated_at) VALUES ($1,$2,'[]',$3)",
+      [animeId, JSON.stringify({ id: animeId }), timestamp],
+    );
+  await databaseClient.query(
+    'INSERT INTO user_recommendations(user_id,anime_id,score,reason,source,algorithm_version,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7),($8,$9,$10,$11,$12,$13,$14)',
+    [
+      firstUser,
+      101,
+      0.8,
+      'first',
+      'personal',
+      1,
+      timestamp,
+      secondUser,
+      202,
+      0.7,
+      'second',
+      'quality',
+      1,
+      timestamp,
+    ],
+  );
+  const firstRows = await databaseClient.query(
+    'SELECT anime_id FROM user_recommendations WHERE user_id=$1 ORDER BY score DESC LIMIT 20',
+    [firstUser],
+  );
+  const emptyRows = await databaseClient.query(
+    'SELECT anime_id FROM user_recommendations WHERE user_id=$1 ORDER BY score DESC LIMIT 20',
+    [emptyUser],
+  );
+  assert.deepEqual(
+    firstRows.map((row) => Number(row.anime_id)),
+    [101],
+  );
+  assert.deepEqual(emptyRows, []);
+  await databaseClient.close();
+});
+
+test('failed recommendation work stays dirty without affecting the site', async () => {
+  const databaseClient = await database();
+  const userId = crypto.randomUUID();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `user_${userId.slice(0, 8)}`, timestamp],
+  );
+  await databaseClient.query(
+    'INSERT INTO user_recommendation_state(user_id,dirty,dirty_at,last_error) VALUES ($1,1,$2,$3)',
+    [userId, timestamp, 'test failure'],
+  );
+  const state = await databaseClient.query(
+    'SELECT dirty,last_error FROM user_recommendation_state WHERE user_id=$1',
+    [userId],
+  );
+  assert.equal(state[0].dirty, 1);
+  assert.equal(state[0].last_error, 'test failure');
+  await databaseClient.close();
+});
