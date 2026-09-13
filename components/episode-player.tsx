@@ -31,10 +31,12 @@ export function EpisodePlayer({
     ),
     [quality, setQuality] = useState('720'),
     [voiceoverId, setVoiceoverId] = useState('aniliberty'),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [playbackActive, setPlaybackActive] = useState(false);
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLIFrameElement>(null);
   const resumed = useRef('');
+  const wakeLock = useRef<WakeLockSentinel | null>(null);
   const { user } = useCommunity();
   const episode = episodes[Math.min(index, episodes.length - 1)];
   const voiceover =
@@ -42,11 +44,50 @@ export function EpisodePlayer({
   const isKodik = voiceover?.provider === 'kodik';
   const lastVoiceoverIndex = Math.max(
     0,
-    episodes.findLastIndex((item) => item.ordinal <= (voiceover?.episodes || 1)),
+    episodes.findLastIndex(
+      (item) => item.ordinal <= (voiceover?.episodes || 1),
+    ),
   );
   useEffect(() => {
     if (index > lastVoiceoverIndex) setIndex(lastVoiceoverIndex);
   }, [voiceoverId, lastVoiceoverIndex]);
+  useEffect(() => {
+    let cancelled = false;
+    const acquire = async () => {
+      if (
+        !playbackActive ||
+        document.visibilityState !== 'visible' ||
+        wakeLock.current ||
+        !('wakeLock' in navigator)
+      )
+        return;
+      try {
+        const sentinel = await navigator.wakeLock.request('screen');
+        if (cancelled || !playbackActive) {
+          await sentinel.release();
+          return;
+        }
+        wakeLock.current = sentinel;
+        sentinel.addEventListener('release', () => {
+          if (wakeLock.current === sentinel) wakeLock.current = null;
+        });
+      } catch {
+        // Power-saving settings and older browsers may reject the request.
+      }
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') void acquire();
+    };
+    if (playbackActive) void acquire();
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      const sentinel = wakeLock.current;
+      wakeLock.current = null;
+      void sentinel?.release();
+    };
+  }, [playbackActive]);
   useEffect(() => {
     if (!animeId || !episode) return;
     let token = '',
@@ -114,7 +155,8 @@ export function EpisodePlayer({
       position = episode.ordinal === initialEpisode ? initialPosition : 0,
       lastPosition = position,
       cancelled = false,
-      sending = false;
+      sending = false,
+      idleTimer: ReturnType<typeof setTimeout> | undefined;
     void fetch('/api/watch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -158,7 +200,12 @@ export function EpisodePlayer({
       const next = Number(payload?.kodik_player_time_update);
       if (!Number.isFinite(next) || next < 0 || next > 24 * 60 * 60) return;
       const delta = next - lastPosition;
-      if (delta > 0 && delta < 10) seconds += delta;
+      if (delta > 0 && delta < 10) {
+        seconds += delta;
+        setPlaybackActive(true);
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => setPlaybackActive(false), 12_000);
+      }
       position = next;
       lastPosition = next;
     };
@@ -169,6 +216,8 @@ export function EpisodePlayer({
       flush();
       cancelled = true;
       clearInterval(timer);
+      clearTimeout(idleTimer);
+      setPlaybackActive(false);
       window.removeEventListener('message', receive);
       window.removeEventListener('pagehide', flush);
     };
@@ -249,7 +298,7 @@ export function EpisodePlayer({
   })();
   return (
     <div className="episode-view">
-      <div className="player">
+      <div className="player" data-keep-awake={playbackActive || undefined}>
         {isKodik ? (
           iframeUrl ? (
             <iframe
@@ -266,31 +315,36 @@ export function EpisodePlayer({
           )
         ) : (
           <video
-          ref={video}
-          controls
-          playsInline
-          preload="metadata"
-          onLoadedMetadata={() => {
-            if (
-              video.current &&
-              resumed.current !== episode.id &&
-              episode.ordinal === initialEpisode &&
-              initialPosition > 0
-            ) {
-              resumed.current = episode.id;
-              video.current.currentTime = Math.min(
-                initialPosition,
-                Math.max(0, video.current.duration - 1),
-              );
-            }
-          }}
-          onEnded={() => {
-            if (index < episodes.length - 1) setIndex(index + 1);
-          }}
-          onError={() =>
-            setError('Не удалось воспроизвести видео. Обновите источник.')
-          }
-          aria-label={'Серия ' + episode?.ordinal}
+            ref={video}
+            controls
+            playsInline
+            preload="metadata"
+            onPlay={() => setPlaybackActive(true)}
+            onPlaying={() => setPlaybackActive(true)}
+            onPause={() => setPlaybackActive(false)}
+            onLoadedMetadata={() => {
+              if (
+                video.current &&
+                resumed.current !== episode.id &&
+                episode.ordinal === initialEpisode &&
+                initialPosition > 0
+              ) {
+                resumed.current = episode.id;
+                video.current.currentTime = Math.min(
+                  initialPosition,
+                  Math.max(0, video.current.duration - 1),
+                );
+              }
+            }}
+            onEnded={() => {
+              setPlaybackActive(false);
+              if (index < episodes.length - 1) setIndex(index + 1);
+            }}
+            onError={() => {
+              setPlaybackActive(false);
+              setError('Не удалось воспроизвести видео. Обновите источник.');
+            }}
+            aria-label={'Серия ' + episode?.ordinal}
           />
         )}
       </div>
@@ -303,18 +357,20 @@ export function EpisodePlayer({
         </div>
       )}
       <div className="episode-toolbar">
-        {voiceovers.length > 1 && <NativeSelect
-          className="voiceover-select"
-          aria-label="Выбор озвучки"
-          value={voiceover?.id || 'aniliberty'}
-          onChange={(e) => setVoiceoverId(e.target.value)}
-        >
-          {voiceovers.map((item) => (
-            <option value={item.id} key={item.id}>
-              {item.title} · {item.episodes} серий
-            </option>
-          ))}
-        </NativeSelect>}
+        {voiceovers.length > 1 && (
+          <NativeSelect
+            className="voiceover-select"
+            aria-label="Выбор озвучки"
+            value={voiceover?.id || 'aniliberty'}
+            onChange={(e) => setVoiceoverId(e.target.value)}
+          >
+            {voiceovers.map((item) => (
+              <option value={item.id} key={item.id}>
+                {item.title} · {item.episodes} серий
+              </option>
+            ))}
+          </NativeSelect>
+        )}
         <NativeSelect
           className="episode-select"
           aria-label="Выбор серии"
@@ -327,28 +383,30 @@ export function EpisodePlayer({
             </option>
           ))}
         </NativeSelect>
-        {!isKodik && <NativeSelect
-          className="quality-select"
-          aria-label="Качество видео"
-          value={
-            episode?.[('hls_' + quality) as keyof Episode]
-              ? quality
-              : episode?.hls_720
-                ? '720'
-                : episode?.hls_480
-                  ? '480'
-                  : '1080'
-          }
-          onChange={(e) => setQuality(e.target.value)}
-        >
-          {['480', '720', '1080']
-            .filter((q) => episode?.[('hls_' + q) as keyof Episode])
-            .map((q) => (
-              <option key={q} value={q}>
-                {q}p
-              </option>
-            ))}
-        </NativeSelect>}
+        {!isKodik && (
+          <NativeSelect
+            className="quality-select"
+            aria-label="Качество видео"
+            value={
+              episode?.[('hls_' + quality) as keyof Episode]
+                ? quality
+                : episode?.hls_720
+                  ? '720'
+                  : episode?.hls_480
+                    ? '480'
+                    : '1080'
+            }
+            onChange={(e) => setQuality(e.target.value)}
+          >
+            {['480', '720', '1080']
+              .filter((q) => episode?.[('hls_' + q) as keyof Episode])
+              .map((q) => (
+                <option key={q} value={q}>
+                  {q}p
+                </option>
+              ))}
+          </NativeSelect>
+        )}
         <button
           disabled={index === 0}
           onClick={() => setIndex(index - 1)}
