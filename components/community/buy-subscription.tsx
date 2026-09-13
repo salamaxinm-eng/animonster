@@ -17,6 +17,7 @@ export function BuySubscription({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [accepted, setAccepted] = useState(false);
+  const [paymentUnavailable, setPaymentUnavailable] = useState(false);
 
   async function buy() {
     setBusy(true);
@@ -28,6 +29,11 @@ export function BuySubscription({
         body: JSON.stringify({ action: 'create' }),
       });
       const result = await response.json();
+      if (!response.ok && response.status === 503) {
+        setPaymentUnavailable(true);
+        setBusy(false);
+        return;
+      }
       if (!response.ok)
         throw new Error(result.error || 'Не удалось создать платёж');
       window.location.assign(result.confirmation_url);
@@ -61,14 +67,12 @@ export function BuySubscription({
             Посмотреть бонусные подборки →
           </a>
           {error && <p className="error-msg">{error}</p>}
-          <button
-            className="primary plus-buy-button"
-            type="button"
-            disabled={busy || !accepted}
-            onClick={buy}
-          >
-            {busy ? 'Переходим к оплате…' : 'Купить на 30 дней · 89 ₽'}
-          </button>
+          {paymentUnavailable && (
+            <p className="plus-payment-notice" role="status">
+              Оплата пока не подключена, деньги не списываются. Пока магазин
+              настраивается, Plus можно получить у администратора.
+            </p>
+          )}
           <p className="plus-legal-links">
             <label>
               <input
@@ -81,10 +85,18 @@ export function BuySubscription({
             <a href="/legal/offer">условия оферты</a>.{' '}
             <a href="/legal/requisites">Реквизиты продавца</a>
           </p>
-          <p className="muted">
-            Если магазин ещё не подключён, Plus можно получить у администратора.
-            Деньги при этом не списываются.
-          </p>
+          <button
+            className="primary plus-buy-button"
+            type="button"
+            disabled={busy || !accepted || paymentUnavailable}
+            onClick={buy}
+          >
+            {busy
+              ? 'Переходим к оплате…'
+              : paymentUnavailable
+                ? 'Оплата скоро появится'
+                : 'Купить на 30 дней · 89 ₽'}
+          </button>
         </DialogContent>
       </Dialog>
     </>
