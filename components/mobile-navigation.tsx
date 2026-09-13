@@ -112,6 +112,8 @@ export function MobileNavigation() {
           <a href="/legal/privacy">Конфиденциальность</a>
           <a href="/legal/terms">Условия</a>
           <a href="/legal/rules">Правила</a>
+          <a href="/legal/offer">Оферта</a>
+          <a href="/legal/requisites">Реквизиты</a>
         </nav>
       )}
       <nav className="mobile-bottom-nav" aria-label="Навигация">

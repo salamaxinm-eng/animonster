@@ -16,6 +16,7 @@ export function BuySubscription({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [accepted, setAccepted] = useState(false);
 
   async function buy() {
     setBusy(true);
@@ -63,11 +64,23 @@ export function BuySubscription({
           <button
             className="primary plus-buy-button"
             type="button"
-            disabled={busy}
+            disabled={busy || !accepted}
             onClick={buy}
           >
             {busy ? 'Переходим к оплате…' : 'Купить на 30 дней · 89 ₽'}
           </button>
+          <p className="plus-legal-links">
+            <label>
+              <input
+                type="checkbox"
+                checked={accepted}
+                onChange={(event) => setAccepted(event.target.checked)}
+              />{' '}
+              Принимаю{' '}
+            </label>
+            <a href="/legal/offer">условия оферты</a>.{' '}
+            <a href="/legal/requisites">Реквизиты продавца</a>
+          </p>
           <p className="muted">
             Если магазин ещё не подключён, Plus можно получить у администратора.
             Деньги при этом не списываются.

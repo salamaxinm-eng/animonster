@@ -2389,6 +2389,19 @@ button:disabled {
 .plus-buy-button {
   min-height: 46px;
 }
+.plus-legal-links {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.plus-legal-links a {
+  color: #b29aff;
+}
+.plus-legal-links label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 .profile-frame-lime .user-avatar {
   box-shadow:
     0 0 0 3px #b4ed50,
