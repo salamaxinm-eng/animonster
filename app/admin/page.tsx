@@ -6,9 +6,12 @@ export default async function Page() {
   const h = await headers();
   const host = h.get('host');
   if (!host) notFound();
-  const origin = process.env.SITE_URL || `${host.startsWith('localhost') ? 'http' : 'https'}://${host}`;
+  const origin =
+    process.env.SITE_URL ||
+    `${host.startsWith('localhost') ? 'http' : 'https'}://${host}`;
   const response = await fetch(`${origin}/api/admin`, {
-    cache: 'no-store', headers: { cookie: h.get('cookie') || '' },
+    cache: 'no-store',
+    headers: { cookie: h.get('cookie') || '' },
   }).catch(() => null);
   if (!response) notFound();
   if (!response.ok) notFound();
@@ -16,7 +19,7 @@ export default async function Page() {
   const metrics: [string, number][] = [
     ['DAU · сегодня', d.dau],
     ['MAU · 30 дней', d.mau],
-    ['Активны сейчас · 15 мин', d.activeSessions],
+    ['Входы · последние 15 мин', d.recentLogins],
     ['Аккаунты', d.users],
     ['Регистрации · 7 дней', d.signups7d],
     ['Регистрации · 30 дней', d.signups30d],
@@ -59,22 +62,24 @@ export default async function Page() {
           {d.daily.length ? (
             <div className="admin-table-wrap">
               <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Дата</th>
-                  <th>Просмотры</th>
-                  <th>Активные зрители</th>
-                </tr>
-              </thead>
-              <tbody>
-                {d.daily.map((x: { day: string; views: number; active: number }) => (
-                  <tr key={String(x.day)}>
-                    <td>{String(x.day)}</td>
-                    <td>{Number(x.views)}</td>
-                    <td>{Number(x.active)}</td>
+                <thead>
+                  <tr>
+                    <th>Дата</th>
+                    <th>Просмотры</th>
+                    <th>Активные зрители</th>
                   </tr>
-                ))}
-              </tbody>
+                </thead>
+                <tbody>
+                  {d.daily.map(
+                    (x: { day: string; views: number; active: number }) => (
+                      <tr key={String(x.day)}>
+                        <td>{String(x.day)}</td>
+                        <td>{Number(x.views)}</td>
+                        <td>{Number(x.active)}</td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
               </table>
             </div>
           ) : (
@@ -87,19 +92,28 @@ export default async function Page() {
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
-                  <tr><th>Аниме</th><th>Просмотры</th></tr>
+                  <tr>
+                    <th>Аниме</th>
+                    <th>Просмотры</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {d.topAnime.map((item: { id: number; title: string; views: number }) => (
-                    <tr key={item.id}>
-                      <td><a href={`/anime/${item.id}`}>{item.title}</a></td>
-                      <td>{item.views}</td>
-                    </tr>
-                  ))}
+                  {d.topAnime.map(
+                    (item: { id: number; title: string; views: number }) => (
+                      <tr key={item.id}>
+                        <td>
+                          <a href={`/anime/${item.id}`}>{item.title}</a>
+                        </td>
+                        <td>{item.views}</td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>
-          ) : <p>Данных о просмотрах пока нет.</p>}
+          ) : (
+            <p>Данных о просмотрах пока нет.</p>
+          )}
         </section>
         <section className="social-panel">
           <h2>Состояние источников</h2>
@@ -107,21 +121,48 @@ export default async function Page() {
             <div className="admin-table-wrap">
               <table className="admin-table">
                 <thead>
-                  <tr><th>Источник</th><th>Статус</th><th>Задержка</th><th>Последняя проверка</th></tr>
+                  <tr>
+                    <th>Источник</th>
+                    <th>Статус</th>
+                    <th>Задержка</th>
+                    <th>Последняя проверка</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {d.providers.map((item: { provider: string; status: string; latency_ms: number | null; error: string | null; checked_at: number }) => (
-                    <tr key={item.provider}>
-                      <td>{item.provider}</td>
-                      <td>{item.status}{item.error ? <small>{item.error}</small> : null}</td>
-                      <td>{item.latency_ms == null ? '—' : `${item.latency_ms} мс`}</td>
-                      <td>{new Date(item.checked_at).toLocaleString('ru-RU', { timeZone: 'UTC' })} UTC</td>
-                    </tr>
-                  ))}
+                  {d.providers.map(
+                    (item: {
+                      provider: string;
+                      status: string;
+                      latency_ms: number | null;
+                      error: string | null;
+                      checked_at: number;
+                    }) => (
+                      <tr key={item.provider}>
+                        <td>{item.provider}</td>
+                        <td>
+                          {item.status}
+                          {item.error ? <small>{item.error}</small> : null}
+                        </td>
+                        <td>
+                          {item.latency_ms == null
+                            ? '—'
+                            : `${item.latency_ms} мс`}
+                        </td>
+                        <td>
+                          {new Date(item.checked_at).toLocaleString('ru-RU', {
+                            timeZone: 'UTC',
+                          })}{' '}
+                          UTC
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>
-          ) : <p>Проверки источников пока не записывались.</p>}
+          ) : (
+            <p>Проверки источников пока не записывались.</p>
+          )}
         </section>
         <a href="/profile?tab=moderation">Проверить жалобы →</a>
         <AdminTools />

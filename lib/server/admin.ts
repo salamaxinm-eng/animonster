@@ -16,7 +16,7 @@ export async function dashboard() {
     signups30d,
     views7d,
     views30d,
-    activeSessions,
+    recentLogins,
     premiumUsers,
     watchStats,
     favorites,
@@ -42,7 +42,9 @@ export async function dashboard() {
       .prepare('SELECT count(*) AS n FROM daily_views')
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT count(*) AS n FROM users WHERE identity NOT LIKE ? AND deleted_at IS NULL')
+      .prepare(
+        'SELECT count(*) AS n FROM users WHERE identity NOT LIKE ? AND deleted_at IS NULL',
+      )
       .bind('preview:%')
       .first<{ n: number }>(),
     db()
@@ -52,11 +54,15 @@ export async function dashboard() {
       .bind(month)
       .all(),
     db()
-      .prepare('SELECT count(*) AS n FROM users WHERE deleted_at IS NULL AND created_at>=?')
+      .prepare(
+        "SELECT count(*) AS n FROM users WHERE deleted_at IS NULL AND identity NOT LIKE 'preview:%' AND created_at>=?",
+      )
       .bind(timestamp - 6 * 86400000)
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT count(*) AS n FROM users WHERE deleted_at IS NULL AND created_at>=?')
+      .prepare(
+        "SELECT count(*) AS n FROM users WHERE deleted_at IS NULL AND identity NOT LIKE 'preview:%' AND created_at>=?",
+      )
       .bind(monthStart)
       .first<{ n: number }>(),
     db()
@@ -68,21 +74,29 @@ export async function dashboard() {
       .bind(month)
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT count(DISTINCT user_id) AS n FROM sessions WHERE expires>? AND last_seen_at>=?')
+      .prepare(
+        'SELECT count(*) AS n FROM sessions WHERE expires>? AND created_at>=?',
+      )
       .bind(timestamp, activeSince)
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT count(DISTINCT user_id) AS n FROM grants WHERE revoked_at IS NULL AND starts_at<=? AND expires>?')
+      .prepare(
+        'SELECT count(DISTINCT user_id) AS n FROM grants WHERE revoked_at IS NULL AND starts_at<=? AND expires>?',
+      )
       .bind(timestamp, timestamp)
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT COALESCE(sum(watched_seconds),0) AS seconds, count(*) AS tracked, COALESCE(sum(completed),0) AS completed FROM history')
+      .prepare(
+        'SELECT COALESCE(sum(watched_seconds),0) AS seconds, count(*) AS tracked, COALESCE(sum(completed),0) AS completed FROM history',
+      )
       .first<{ seconds: number; tracked: number; completed: number }>(),
     db()
       .prepare('SELECT count(*) AS n FROM collection WHERE favorite=1')
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT count(*) AS n FROM comments WHERE deleted=0 AND created_at>=?')
+      .prepare(
+        'SELECT count(*) AS n FROM comments WHERE deleted=0 AND created_at>=?',
+      )
       .bind(monthStart)
       .first<{ n: number }>(),
     db()
@@ -92,10 +106,14 @@ export async function dashboard() {
       .prepare('SELECT count(*) AS n FROM anime_cache')
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT count(*) AS recommendations, count(DISTINCT user_id) AS users FROM user_recommendations')
+      .prepare(
+        'SELECT count(*) AS recommendations, count(DISTINCT user_id) AS users FROM user_recommendations',
+      )
       .first<{ recommendations: number; users: number }>(),
     db()
-      .prepare('SELECT day,count(*) AS n FROM daily_activity WHERE day>=? GROUP BY day ORDER BY day DESC')
+      .prepare(
+        'SELECT day,count(*) AS n FROM daily_activity WHERE day>=? GROUP BY day ORDER BY day DESC',
+      )
       .bind(month)
       .all(),
     db()
@@ -105,17 +123,24 @@ export async function dashboard() {
       .bind(month)
       .all(),
     db()
-      .prepare('SELECT provider,status,latency_ms,error,checked_at FROM provider_health ORDER BY provider')
+      .prepare(
+        'SELECT provider,status,latency_ms,error,checked_at FROM provider_health ORDER BY provider',
+      )
       .all(),
   ]);
   const activityByDay = new Map(
-    dailyActivity.results.map((item: any) => [String(item.day), Number(item.n)]),
+    dailyActivity.results.map((item: any) => [
+      String(item.day),
+      Number(item.n),
+    ]),
   );
   const viewByDay = new Map(
     daily.results.map((item: any) => [String(item.day), Number(item.n)]),
   );
   const activity = Array.from({ length: 30 }, (_, index) => {
-    const date = new Date(timestamp - index * 86400000).toISOString().slice(0, 10);
+    const date = new Date(timestamp - index * 86400000)
+      .toISOString()
+      .slice(0, 10);
     return {
       day: date,
       views: viewByDay.get(date) || 0,
@@ -132,7 +157,7 @@ export async function dashboard() {
     signups30d: signups30d?.n || 0,
     views7d: views7d?.n || 0,
     views30d: views30d?.n || 0,
-    activeSessions: activeSessions?.n || 0,
+    recentLogins: recentLogins?.n || 0,
     premiumUsers: premiumUsers?.n || 0,
     watchHours: Math.round(((watchStats?.seconds || 0) / 3600) * 10) / 10,
     trackedEpisodes: watchStats?.tracked || 0,
