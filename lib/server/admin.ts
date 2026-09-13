@@ -1,8 +1,33 @@
 import { db, now } from './core';
 export async function dashboard() {
-  const day = new Date(now()).toISOString().slice(0, 10),
-    month = new Date(now() - 29 * 86400000).toISOString().slice(0, 10);
-  const [dau, mau, views, users, daily] = await Promise.all([
+  const timestamp = now(),
+    day = new Date(timestamp).toISOString().slice(0, 10),
+    week = new Date(timestamp - 6 * 86400000).toISOString().slice(0, 10),
+    month = new Date(timestamp - 29 * 86400000).toISOString().slice(0, 10),
+    monthStart = timestamp - 29 * 86400000,
+    activeSince = timestamp - 15 * 60 * 1000;
+  const [
+    dau,
+    mau,
+    views,
+    users,
+    daily,
+    signups7d,
+    signups30d,
+    views7d,
+    views30d,
+    activeSessions,
+    premiumUsers,
+    watchStats,
+    favorites,
+    comments30d,
+    openReports,
+    catalogTitles,
+    recommendationStats,
+    dailyActivity,
+    topAnime,
+    providers,
+  ] = await Promise.all([
     db()
       .prepare('SELECT count(*) AS n FROM daily_activity WHERE day=?')
       .bind(day)
@@ -17,7 +42,7 @@ export async function dashboard() {
       .prepare('SELECT count(*) AS n FROM daily_views')
       .first<{ n: number }>(),
     db()
-      .prepare('SELECT count(*) AS n FROM users WHERE identity NOT LIKE ?')
+      .prepare('SELECT count(*) AS n FROM users WHERE identity NOT LIKE ? AND deleted_at IS NULL')
       .bind('preview:%')
       .first<{ n: number }>(),
     db()
@@ -26,12 +51,109 @@ export async function dashboard() {
       )
       .bind(month)
       .all(),
+    db()
+      .prepare('SELECT count(*) AS n FROM users WHERE deleted_at IS NULL AND created_at>=?')
+      .bind(timestamp - 6 * 86400000)
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(*) AS n FROM users WHERE deleted_at IS NULL AND created_at>=?')
+      .bind(monthStart)
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(*) AS n FROM daily_views WHERE day>=?')
+      .bind(week)
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(*) AS n FROM daily_views WHERE day>=?')
+      .bind(month)
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(DISTINCT user_id) AS n FROM sessions WHERE expires>? AND last_seen_at>=?')
+      .bind(timestamp, activeSince)
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(DISTINCT user_id) AS n FROM grants WHERE revoked_at IS NULL AND starts_at<=? AND expires>?')
+      .bind(timestamp, timestamp)
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT COALESCE(sum(watched_seconds),0) AS seconds, count(*) AS tracked, COALESCE(sum(completed),0) AS completed FROM history')
+      .first<{ seconds: number; tracked: number; completed: number }>(),
+    db()
+      .prepare('SELECT count(*) AS n FROM collection WHERE favorite=1')
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(*) AS n FROM comments WHERE deleted=0 AND created_at>=?')
+      .bind(monthStart)
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(*) AS n FROM reports WHERE resolved=0')
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(*) AS n FROM anime_cache')
+      .first<{ n: number }>(),
+    db()
+      .prepare('SELECT count(*) AS recommendations, count(DISTINCT user_id) AS users FROM user_recommendations')
+      .first<{ recommendations: number; users: number }>(),
+    db()
+      .prepare('SELECT day,count(*) AS n FROM daily_activity WHERE day>=? GROUP BY day ORDER BY day DESC')
+      .bind(month)
+      .all(),
+    db()
+      .prepare(`SELECT v.anime_id,count(*) AS views,a.data FROM daily_views v
+        LEFT JOIN anime_cache a ON a.id=v.anime_id
+        WHERE v.day>=? GROUP BY v.anime_id,a.data ORDER BY views DESC LIMIT 10`)
+      .bind(month)
+      .all(),
+    db()
+      .prepare('SELECT provider,status,latency_ms,error,checked_at FROM provider_health ORDER BY provider')
+      .all(),
   ]);
+  const activityByDay = new Map(
+    dailyActivity.results.map((item: any) => [String(item.day), Number(item.n)]),
+  );
+  const viewByDay = new Map(
+    daily.results.map((item: any) => [String(item.day), Number(item.n)]),
+  );
+  const activity = Array.from({ length: 30 }, (_, index) => {
+    const date = new Date(timestamp - index * 86400000).toISOString().slice(0, 10);
+    return {
+      day: date,
+      views: viewByDay.get(date) || 0,
+      active: activityByDay.get(date) || 0,
+    };
+  });
   return {
     dau: dau?.n || 0,
     mau: mau?.n || 0,
     views: views?.n || 0,
     users: users?.n || 0,
-    daily: daily.results,
+    daily: activity,
+    signups7d: signups7d?.n || 0,
+    signups30d: signups30d?.n || 0,
+    views7d: views7d?.n || 0,
+    views30d: views30d?.n || 0,
+    activeSessions: activeSessions?.n || 0,
+    premiumUsers: premiumUsers?.n || 0,
+    watchHours: Math.round(((watchStats?.seconds || 0) / 3600) * 10) / 10,
+    trackedEpisodes: watchStats?.tracked || 0,
+    completedEpisodes: watchStats?.completed || 0,
+    favorites: favorites?.n || 0,
+    comments30d: comments30d?.n || 0,
+    openReports: openReports?.n || 0,
+    catalogTitles: catalogTitles?.n || 0,
+    recommendationCount: recommendationStats?.recommendations || 0,
+    recommendationUsers: recommendationStats?.users || 0,
+    topAnime: topAnime.results.map((item: any) => {
+      let anime: any = null;
+      try {
+        anime = item.data ? JSON.parse(String(item.data)) : null;
+      } catch {}
+      return {
+        id: Number(item.anime_id),
+        title: anime?.russian || anime?.name || `Аниме #${item.anime_id}`,
+        views: Number(item.views),
+      };
+    }),
+    providers: providers.results,
   };
 }
