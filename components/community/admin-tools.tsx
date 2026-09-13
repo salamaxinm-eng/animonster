@@ -4,6 +4,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
 
+function commentLocation(scope: string, commentId: string) {
+  const anchor = `#comment-${encodeURIComponent(commentId)}`;
+  const wall = /^wall:([a-f0-9-]{36})$/.exec(scope);
+  if (wall)
+    return {
+      href: `/members/${wall[1]}${anchor}`,
+      label: 'Стена профиля',
+    };
+  const anime = /^anime:(\d+)(?::episode:(\d+)|:video:\d+)?$/.exec(scope);
+  if (anime) {
+    const episode = /:episode:(\d+)$/.exec(scope)?.[1];
+    return {
+      href: `/anime/${anime[1]}${episode ? `?episode=${episode}` : ''}${anchor}`,
+      label: episode
+        ? `Аниме #${anime[1]} · серия ${episode}`
+        : `Аниме #${anime[1]}`,
+    };
+  }
+  return { href: '#', label: 'Обсуждение' };
+}
+
 export function AdminTools() {
   const [data, setData] = useState<any>({
     can_manage_roles: false,
@@ -12,6 +33,7 @@ export function AdminTools() {
     invites: [],
     reports: [],
     actions: [],
+    comments: [],
   });
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
@@ -221,6 +243,53 @@ export function AdminTools() {
         )}
       </section>
       <section className="social-panel">
+        <h2>Последние комментарии</h2>
+        {data.comments.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Автор</th>
+                  <th>Где написан</th>
+                  <th>Комментарий</th>
+                  <th>Дата</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.comments.map((comment: any) => {
+                  const location = commentLocation(
+                    String(comment.scope),
+                    String(comment.id),
+                  );
+                  return (
+                    <tr key={comment.id}>
+                      <td>
+                        <a href={`/members/${comment.user_id}`}>
+                          {comment.nick}
+                        </a>
+                      </td>
+                      <td>
+                        <a href={location.href}>{location.label}</a>
+                      </td>
+                      <td className="admin-comment-preview">
+                        {String(comment.body).slice(0, 300)}
+                      </td>
+                      <td>
+                        {new Date(Number(comment.created_at)).toLocaleString(
+                          'ru-RU',
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="muted">Комментариев пока нет.</p>
+        )}
+      </section>
+      <section className="social-panel">
         <h2>Пользователи</h2>
         {message && (
           <p role="status" className="success-msg">
@@ -246,7 +315,7 @@ export function AdminTools() {
               {data.users.map((user: any) => (
                 <tr key={user.id}>
                   <td>
-                    {user.nick}
+                    <a href={`/members/${user.id}`}>{user.nick}</a>
                     <small>{user.id}</small>
                   </td>
                   <td>

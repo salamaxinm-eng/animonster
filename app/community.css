@@ -2445,6 +2445,12 @@ button:disabled {
   text-overflow: ellipsis;
   color: #84909c;
 }
+.admin-comment-preview {
+  max-width: 380px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #aeb9c7;
+}
 .support-link {
   display: inline-flex;
   align-items: center;

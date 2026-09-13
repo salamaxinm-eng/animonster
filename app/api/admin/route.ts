@@ -38,7 +38,7 @@ async function audit(
 export async function GET(r: Request) {
   try {
     const actor = await moderator(r);
-    const [invites, users, reports, actions, skipOverrides, metrics] =
+    const [invites, users, reports, actions, skipOverrides, comments, metrics] =
       await Promise.all([
         db()
           .prepare(
@@ -65,6 +65,13 @@ export async function GET(r: Request) {
             'SELECT id,anime_id,episode,voiceover,opening_start,opening_stop,ending_start,ending_stop,updated_at FROM skip_time_overrides ORDER BY updated_at DESC LIMIT 100',
           )
           .all(),
+        db()
+          .prepare(
+            `SELECT c.id,c.scope,c.body,c.created_at,u.id AS user_id,u.nick
+             FROM comments c JOIN users u ON u.id=c.author_id
+             WHERE c.deleted=0 ORDER BY c.created_at DESC LIMIT 100`,
+          )
+          .all(),
         dashboard(),
       ]);
     return json({
@@ -76,6 +83,7 @@ export async function GET(r: Request) {
       reports: reports.results,
       actions: actions.results,
       skip_overrides: skipOverrides.results,
+      comments: comments.results,
     });
   } catch (e) {
     return fail(e);
