@@ -3,12 +3,18 @@ import {
   getAnime,
   getAnimeByAlias,
   rememberAnime,
+  cachedCatalog,
 } from '@/lib/server/library';
-import { liberty, normalize, available } from '@/lib/server/anime';
+import {
+  liberty,
+  normalize,
+  available,
+  compactAnime,
+} from '@/lib/server/anime';
 export async function GET(request: Request) {
+  const p = new URL(request.url).searchParams,
+    id = Number(p.get('anime_id'));
   try {
-    const p = new URL(request.url).searchParams,
-      id = Number(p.get('anime_id'));
     if (id) {
       if (!Number.isInteger(id) || id < 1 || id > 999999999)
         return Response.json({ error: 'Некорректный тайтл' }, { status: 400 });
@@ -51,7 +57,7 @@ export async function GET(request: Request) {
     const items = data.data.filter(available).map(normalize);
     await rememberAnime(items);
     const pagination = data.meta.pagination;
-    return Response.json(items, {
+    return Response.json(compactAnime(items), {
       headers: {
         'Cache-Control': 'public, max-age=60',
         'X-Total-Count': String(pagination.total),
@@ -59,9 +65,34 @@ export async function GET(request: Request) {
       },
     });
   } catch {
-    return Response.json(
-      { error: 'Источник каталога временно недоступен' },
-      { status: 502 },
-    );
+    if (id || p.get('alias'))
+      return Response.json(
+        { error: 'Источник каталога временно недоступен' },
+        { status: 502 },
+      );
+    try {
+      const page = Math.max(1, Math.floor(Number(p.get('page')) || 1));
+      const kind = p.get('kind') === 'movie' ? 'movie' : '';
+      const cached = await cachedCatalog({
+        genre: p.get('genre') || '',
+        kind,
+        limit: 500,
+        query: p.get('q') || '',
+      });
+      const offset = (page - 1) * 24;
+      return Response.json(compactAnime(cached.slice(offset, offset + 24)), {
+        headers: {
+          'Cache-Control': 'public, max-age=30, stale-while-revalidate=300',
+          'X-Data-Source': 'cache',
+          'X-Total-Count': String(cached.length),
+          'X-Total-Pages': String(Math.max(1, Math.ceil(cached.length / 24))),
+        },
+      });
+    } catch {
+      return Response.json(
+        { error: 'Источник каталога временно недоступен' },
+        { status: 502 },
+      );
+    }
   }
 }

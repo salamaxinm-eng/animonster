@@ -1,6 +1,17 @@
 import { db, viewer, json, fail, now } from '@/lib/server/core';
 import { genresCatalog } from '@/lib/server/library';
 import type { Anime } from '@/lib/anime';
+import { compactAnime } from '@/lib/server/anime';
+
+const recommendations = (
+  sections: { title: string; note?: string; items: Anime[] }[],
+) =>
+  json({
+    sections: sections.map((section) => ({
+      ...section,
+      items: compactAnime(section.items),
+    })),
+  });
 export async function GET(r: Request) {
   try {
     const u = await viewer(r);
@@ -18,19 +29,17 @@ export async function GET(r: Request) {
           [...weekly, ...fallback].map((anime) => [anime.id, anime]),
         ).values(),
       ).slice(0, 20);
-      return json({
-        sections: [
-          {
-            title: rows.results.length
-              ? 'Популярное за неделю'
-              : 'Популярное в каталоге',
-            note: rows.results.length
-              ? 'По просмотрам на AniMonster за последние 7 дней, дополнено хитами каталога.'
-              : 'Пока недостаточно просмотров для недельного рейтинга.',
-            items,
-          },
-        ],
-      });
+      return recommendations([
+        {
+          title: rows.results.length
+            ? 'Популярное за неделю'
+            : 'Популярное в каталоге',
+          note: rows.results.length
+            ? 'По просмотрам на AniMonster за последние 7 дней, дополнено хитами каталога.'
+            : 'Пока недостаточно просмотров для недельного рейтинга.',
+          items,
+        },
+      ]);
     }
     const recent = await db()
       .prepare(
@@ -69,15 +78,13 @@ export async function GET(r: Request) {
         .sort((a, b) => score(b) - score(a))
         .slice(0, 18);
     if (!top.length)
-      return json({
-        sections: [
-          {
-            title: 'Открой своё первое аниме',
-            note: 'Посмотри серию или добавь тайтл в избранное — подборки станут персональными.',
-            items: clean(await genresCatalog([])),
-          },
-        ],
-      });
+      return recommendations([
+        {
+          title: 'Открой своё первое аниме',
+          note: 'Посмотри серию или добавь тайтл в избранное — подборки станут персональными.',
+          items: clean(await genresCatalog([])),
+        },
+      ]);
     const [candidates, ongoing] = await Promise.all([
       Promise.all(top.map((g) => genresCatalog([g]))).then((x) => x.flat()),
       genresCatalog([top[0]], true),
@@ -85,27 +92,25 @@ export async function GET(r: Request) {
     const last = recent.results[0]
       ? (JSON.parse(recent.results[0].data) as Anime)
       : null;
-    return json({
-      sections: [
-        ...(last
-          ? [
-              {
-                title: 'Похожее на «' + last.russian + '»',
-                items: clean(
-                  candidates.filter((a) =>
-                    a.genres?.some((g) => last.genres?.includes(g)),
-                  ),
+    return recommendations([
+      ...(last
+        ? [
+            {
+              title: 'Похожее на «' + last.russian + '»',
+              items: clean(
+                candidates.filter((a) =>
+                  a.genres?.some((g) => last.genres?.includes(g)),
                 ),
-              },
-            ]
-          : []),
-        {
-          title: 'Поскольку тебе нравится ' + top[0],
-          items: clean(candidates.filter((a) => a.genres?.includes(top[0]))),
-        },
-        { title: 'Вам может понравиться · онгоинги', items: clean(ongoing) },
-      ],
-    });
+              ),
+            },
+          ]
+        : []),
+      {
+        title: 'Поскольку тебе нравится ' + top[0],
+        items: clean(candidates.filter((a) => a.genres?.includes(top[0]))),
+      },
+      { title: 'Вам может понравиться · онгоинги', items: clean(ongoing) },
+    ]);
   } catch (e) {
     return fail(e);
   }

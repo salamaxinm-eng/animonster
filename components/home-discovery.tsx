@@ -47,8 +47,25 @@ export function HomeDiscovery() {
         ];
       })
       .then(setSections)
-      .catch((reason) => {
-        if (!controller.signal.aborted) setError(reason.message);
+      .catch(async () => {
+        if (controller.signal.aborted) return;
+        try {
+          const response = await fetch('/api/catalog?sort=rating', {
+            signal: controller.signal,
+          });
+          if (!response.ok) throw Error();
+          const items = (await response.json()) as Anime[];
+          setSections([
+            {
+              title: 'Популярное сейчас',
+              note: 'Подборка из сохранённого каталога AniMonster.',
+              items,
+            },
+          ]);
+        } catch {
+          if (!controller.signal.aborted)
+            setError('Не удалось загрузить подборку. Попробуйте ещё раз.');
+        }
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -97,9 +114,7 @@ export function HomeDiscovery() {
                 <h2>{section.title}</h2>
                 {section.note && <p>{section.note}</p>}
               </div>
-              <a href={`/browse/${active}?section=${index}`}>
-                Смотреть все
-              </a>
+              <a href={`/browse/${active}?section=${index}`}>Смотреть все</a>
             </div>
             <AnimeGrid items={section.items.slice(0, 16)} horizontal />
           </div>

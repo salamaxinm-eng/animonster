@@ -46,15 +46,33 @@ export function PopularHero({
   useEffect(() => {
     const m = matchMedia('(prefers-reduced-motion: reduce)');
     setPaused(m.matches);
-    fetch('/api/popular')
-      .then((r) => r.json())
-      .then((x: any) => {
-        if (x.items?.length) {
-          setItems(x.items);
-          setLabel(x.source);
+    const controller = new AbortController();
+    void (async () => {
+      try {
+        const response = await fetch('/api/popular', {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw Error();
+        const result = await response.json();
+        if (result.items?.length) {
+          setItems(result.items);
+          setLabel(result.source);
+          return;
         }
-      })
-      .catch(() => {});
+        throw Error();
+      } catch {
+        if (controller.signal.aborted) return;
+        try {
+          const response = await fetch('/api/catalog?sort=rating', {
+            signal: controller.signal,
+          });
+          if (!response.ok) return;
+          const fallback = (await response.json()) as Anime[];
+          if (fallback.length) setItems(fallback.slice(0, 5));
+        } catch {}
+      }
+    })();
+    return () => controller.abort();
   }, []);
   useEffect(() => {
     if (!api) return;

@@ -1,6 +1,15 @@
 import type { Anime, Episode } from '@/lib/anime';
 import { db, now } from './core';
-export const LIBERTY = 'https://api.anilibria.app';
+export const LIBERTY = (
+  process.env.ANILIBERTY_API_URL || 'https://api.anilibria.app'
+).replace(/\/+$/, '');
+const LIBERTY_TIMEOUT = 4500;
+const LIBERTY_STALE_TTL = 24 * 60 * 60 * 1000;
+type LibertyCacheEntry = { value: unknown; updatedAt: number };
+const libertyCacheState = globalThis as typeof globalThis & {
+  __animonsterLibertyCache?: Map<string, LibertyCacheEntry>;
+};
+const libertyCache = (libertyCacheState.__animonsterLibertyCache ??= new Map());
 export type Release = {
   id: number;
   name: { main: string; english: string };
@@ -27,28 +36,29 @@ export type Release = {
 export async function liberty(path: string) {
   const started = performance.now();
   let lastError = 'Источник временно недоступен';
-  for (let attempt = 0; attempt < 2; attempt++) {
-    try {
-      const r = await fetch(LIBERTY + '/api/v1' + path, {
-        signal: AbortSignal.timeout(12000),
-        next: { revalidate: 300 },
-      });
-      if (!r.ok) {
-        lastError = `HTTP ${r.status}`;
-        if (r.status < 500) break;
-      } else {
-        void providerHealth('ok', Math.round(performance.now() - started));
-        return r.json() as Promise<any>;
-      }
-    } catch (reason) {
-      lastError = reason instanceof Error ? reason.message : lastError;
+  try {
+    const r = await fetch(LIBERTY + '/api/v1' + path, {
+      signal: AbortSignal.timeout(LIBERTY_TIMEOUT),
+      next: { revalidate: 300 },
+    });
+    if (!r.ok) lastError = `HTTP ${r.status}`;
+    else {
+      const value = await r.json();
+      libertyCache.set(path, { value, updatedAt: Date.now() });
+      void providerHealth('ok', Math.round(performance.now() - started));
+      return value as any;
     }
+  } catch (reason) {
+    lastError = reason instanceof Error ? reason.message : lastError;
   }
   void providerHealth(
     'error',
     Math.round(performance.now() - started),
     lastError,
   );
+  const stale = libertyCache.get(path);
+  if (stale && stale.updatedAt > Date.now() - LIBERTY_STALE_TTL)
+    return stale.value as any;
   throw Error('Источник временно недоступен');
 }
 
@@ -68,6 +78,13 @@ async function providerHealth(
 }
 export const available = (r: Release) =>
   !r.is_blocked_by_geo && !r.is_blocked_by_copyrights;
+export function compactAnime(items: Anime[]) {
+  return items.map((item) => {
+    const compact = { ...item };
+    delete compact.description;
+    return compact;
+  });
+}
 export async function findRelease(id: number): Promise<Release | undefined> {
   if (id >= 100000000 && id < 101000000) {
     const release: Release = await liberty(

@@ -1,35 +1,36 @@
 import { db } from '@/lib/server/core';
 import type { Anime } from '@/lib/anime';
-import { findRelease, normalize, available, liberty } from '@/lib/server/anime';
+import { normalize, available, liberty } from '@/lib/server/anime';
+import { cachedCatalog, rememberAnime } from '@/lib/server/library';
 export async function GET() {
   let counts: Record<string, number> = {};
   const candidates: Anime[] = [];
   try {
-    const data = await liberty(
-      '/anime/catalog/releases?limit=5&f[sorting]=RATING_DESC',
-    );
-    candidates.push(...data.data.filter(available).map(normalize));
-  } catch {}
-  try {
     const rows = await db()
       .prepare(
-        'SELECT anime_id,max(title) AS title,max(image) AS image,count(*) AS n FROM collection GROUP BY anime_id ORDER BY n DESC,anime_id LIMIT 5',
+        'SELECT anime_id,count(*) AS n FROM collection GROUP BY anime_id ORDER BY n DESC,anime_id LIMIT 20',
       )
-      .all<{ anime_id: number; title: string; image: string; n: number }>();
+      .all<{ anime_id: number; n: number }>();
     counts = Object.fromEntries(rows.results.map((x) => [x.anime_id, x.n]));
-    await Promise.all(
-      rows.results.map(async (row) => {
-        if (candidates.some((a) => a.id === row.anime_id)) return;
-        try {
-          const release = await findRelease(row.anime_id);
-          if (release && available(release))
-            candidates.push(normalize(release));
-        } catch {}
-      }),
-    );
   } catch {}
+  const cached = await cachedCatalog({ limit: 20 }).catch(() => []);
+  for (const anime of cached)
+    if (!candidates.some((item) => item.id === anime.id))
+      candidates.push(anime);
+  if (candidates.length < 5)
+    try {
+      const data = await liberty(
+        '/anime/catalog/releases?limit=5&f[sorting]=RATING_DESC',
+      );
+      const fresh = data.data.filter(available).map(normalize) as Anime[];
+      await rememberAnime(fresh);
+      for (const anime of fresh)
+        if (!candidates.some((item) => item.id === anime.id))
+          candidates.push(anime);
+    } catch {}
+  const score = (anime: Anime) => Number(anime.score) || 0;
   const ranked = candidates.sort(
-    (a, b) => (counts[b.id] || 0) - (counts[a.id] || 0),
+    (a, b) => (counts[b.id] || 0) - (counts[a.id] || 0) || score(b) - score(a),
   );
   return Response.json(
     {

@@ -7,6 +7,48 @@ import {
   type Release,
 } from './anime';
 import type { Anime, Episode } from '@/lib/anime';
+type CachedCatalogOptions = {
+  genre?: string;
+  kind?: string;
+  limit?: number;
+  query?: string;
+};
+
+export async function cachedCatalog({
+  genre = '',
+  kind = '',
+  limit = 50,
+  query = '',
+}: CachedCatalogOptions = {}) {
+  const rows = await db()
+    .prepare('SELECT data FROM anime_cache ORDER BY updated_at DESC LIMIT 500')
+    .all<{ data: string }>();
+  const needle = query.trim().toLocaleLowerCase('ru-RU');
+  return rows.results
+    .flatMap((row) => {
+      try {
+        return [JSON.parse(row.data) as Anime];
+      } catch {
+        return [];
+      }
+    })
+    .filter(
+      (anime) =>
+        (!genre ||
+          anime.genres?.some(
+            (value) =>
+              value.toLocaleLowerCase('ru-RU') ===
+              genre.toLocaleLowerCase('ru-RU'),
+          )) &&
+        (!kind || anime.kind === kind) &&
+        (!needle ||
+          `${anime.russian} ${anime.name}`
+            .toLocaleLowerCase('ru-RU')
+            .includes(needle)),
+    )
+    .sort((left, right) => Number(right.score) - Number(left.score))
+    .slice(0, Math.max(1, limit));
+}
 export async function rememberAnime(items: Anime[]) {
   if (!items.length) return;
   await db().batch(
@@ -97,13 +139,22 @@ export async function genreList(): Promise<Genre[]> {
   return liberty('/anime/genres');
 }
 export async function genresCatalog(genres: string[], ongoing = false) {
-  const all = await genreList();
-  const ids = all.filter((g) => genres.includes(g.name)).map((g) => g.id);
-  const q = new URLSearchParams({ limit: '50', 'f[sorting]': 'RATING_DESC' });
-  if (ids.length) q.set('f[genres]', ids.join(','));
-  if (ongoing) q.set('f[publish_statuses]', 'IS_ONGOING');
-  const result = await liberty('/anime/catalog/releases?' + q);
-  const items = result.data.filter(available).map(normalize) as Anime[];
-  await rememberAnime(items);
-  return items;
+  const cached = await cachedCatalog({ genre: genres[0], limit: 50 });
+  if (cached.length >= 18) return cached;
+  try {
+    const ids = genres.length
+      ? (await genreList())
+          .filter((g) => genres.includes(g.name))
+          .map((g) => g.id)
+      : [];
+    const q = new URLSearchParams({ limit: '50', 'f[sorting]': 'RATING_DESC' });
+    if (ids.length) q.set('f[genres]', ids.join(','));
+    if (ongoing) q.set('f[publish_statuses]', 'IS_ONGOING');
+    const result = await liberty('/anime/catalog/releases?' + q);
+    const items = result.data.filter(available).map(normalize) as Anime[];
+    await rememberAnime(items);
+    return items;
+  } catch {
+    return cached;
+  }
 }
