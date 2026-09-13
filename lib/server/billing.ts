@@ -1,4 +1,5 @@
 import { db, runtime, ApiError, now } from './core';
+import { PLUS_DURATION_MS, PLUS_PRICE } from './plus';
 export async function paymentFetch(path: string, init: RequestInit = {}) {
   const e = runtime();
   if (
@@ -42,9 +43,9 @@ export async function verifyPayment(providerId: string) {
   if (
     !order ||
     p.metadata?.user_id !== order.user_id ||
-    p.amount.value !== '89.00' ||
+    p.amount.value !== PLUS_PRICE ||
     p.amount.currency !== 'RUB' ||
-    p.test
+    (p.test && runtime().YOOKASSA_ALLOW_TEST !== 'true')
   )
     throw new ApiError('Платёж не подтверждён', 400);
   if (order.provider_id && order.provider_id !== p.id)
@@ -56,9 +57,16 @@ export async function verifyPayment(providerId: string) {
         .bind('succeeded', p.id, order.id),
       db()
         .prepare(
-          "INSERT OR IGNORE INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,(EXTRACT(EPOCH FROM (to_timestamp(GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=?),0))/1000.0) + interval '1 month'))*1000)::bigint",
+          'INSERT OR IGNORE INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=? AND revoked_at IS NULL),0))+?',
         )
-        .bind(order.id, order.user_id, now(), now(), order.user_id),
+        .bind(
+          order.id,
+          order.user_id,
+          now(),
+          now(),
+          order.user_id,
+          PLUS_DURATION_MS,
+        ),
     ]);
   } else if (p.status === 'canceled') {
     await db()

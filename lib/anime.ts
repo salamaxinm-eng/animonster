@@ -37,6 +37,8 @@ export type Episode = {
   duration: number;
   opening?: SkipSegment;
   ending?: SkipSegment;
+  free_at?: number;
+  plus_locked?: boolean;
   hls_480: string | null;
   hls_720: string | null;
   hls_1080: string | null;

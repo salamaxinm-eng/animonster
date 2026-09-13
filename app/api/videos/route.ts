@@ -7,12 +7,14 @@ import {
   type Release,
 } from '@/lib/server/anime';
 
-import { ApiError, fail, json, viewer } from '@/lib/server/core';
+import { ApiError, fail, json, viewer, premium } from '@/lib/server/core';
 import { kodikVoiceovers } from '@/lib/server/kodik';
-import { mediaProxyUrl } from '@/lib/server/media';
+import { mediaProxyEnabled, mediaProxyUrl } from '@/lib/server/media';
 import { validSegment } from '@/lib/server/skip-times';
+import { syncEpisodeAccess } from '@/lib/server/episode-access';
 export async function GET(r: Request) {
   try {
+    const currentUser = await viewer(r);
     const p = new URL(r.url).searchParams,
       id = Number(p.get('id'));
     if (!Number.isInteger(id) || id < 1 || id > 999999999)
@@ -35,8 +37,7 @@ export async function GET(r: Request) {
     if ((release.shikimori?.id || 100000000 + release.id) !== id)
       throw new ApiError('Релиз не совпадает с тайтлом');
     if (release.age_rating?.is_adult) {
-      const user = await viewer(r);
-      if (!user?.adult_confirmed_at)
+      if (!currentUser?.adult_confirmed_at)
         throw new ApiError(
           'Подтвердите совершеннолетие в аккаунте.',
           403,
@@ -64,16 +65,40 @@ export async function GET(r: Request) {
       .sort((a, b) => a.ordinal - b.ordinal);
     const anime = normalize(release);
     await cacheAnime(anime, release.episodes);
+    const access = await syncEpisodeAccess(
+      anime.id,
+      'aniliberty',
+      episodes.map((episode) => episode.ordinal),
+    );
+    const premiumUntil = currentUser ? await premium(currentUser.id) : 0;
     const kodik = await kodikVoiceovers(anime);
     const proxiedEpisodes = await Promise.all(
-      episodes.map(async (episode) => ({
-        ...episode,
-        hls_480: episode.hls_480 ? await mediaProxyUrl(episode.hls_480) : null,
-        hls_720: episode.hls_720 ? await mediaProxyUrl(episode.hls_720) : null,
-        hls_1080: episode.hls_1080
-          ? await mediaProxyUrl(episode.hls_1080)
-          : null,
-      })),
+      episodes.map(async (episode) => {
+        const availability = access.get(episode.ordinal),
+          freeAt = availability?.freeAt || 0;
+        const locked = freeAt > Date.now() && !premiumUntil;
+        if (freeAt > Date.now() && premiumUntil && !mediaProxyEnabled())
+          throw new ApiError('Медиашлюз раннего доступа не настроен.', 503);
+        const tokenAccess =
+          freeAt > Date.now() ? { userId: currentUser?.id, freeAt } : undefined;
+        return {
+          ...episode,
+          free_at: freeAt,
+          plus_locked: locked,
+          hls_480:
+            !locked && episode.hls_480
+              ? await mediaProxyUrl(episode.hls_480, undefined, tokenAccess)
+              : null,
+          hls_720:
+            !locked && episode.hls_720
+              ? await mediaProxyUrl(episode.hls_720, undefined, tokenAccess)
+              : null,
+          hls_1080:
+            !locked && episode.hls_1080
+              ? await mediaProxyUrl(episode.hls_1080, undefined, tokenAccess)
+              : null,
+        };
+      }),
     );
     return json({
       episodes: proxiedEpisodes,
@@ -86,7 +111,10 @@ export async function GET(r: Request) {
           provider: 'aniliberty',
           episodes: proxiedEpisodes.length,
         },
-        ...kodik.voiceovers,
+        ...(premiumUntil ||
+        !proxiedEpisodes.some((episode) => episode.plus_locked)
+          ? kodik.voiceovers
+          : []),
       ],
       voiceovers_status: kodik.status,
     });

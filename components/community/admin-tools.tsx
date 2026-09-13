@@ -102,6 +102,35 @@ export function AdminTools() {
       ending_stop: form.get('ending_stop'),
     });
   }
+  async function saveEditorial(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const element = event.currentTarget;
+    const form = new FormData(element);
+    await mutate({
+      action: 'editorial_save',
+      id: form.get('id'),
+      title: form.get('title'),
+      description: form.get('description'),
+      cover: form.get('cover'),
+      anime_ids: form.get('anime_ids'),
+      published: form.get('published') === 'on',
+    });
+    element.reset();
+  }
+  async function saveCharacter(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const element = event.currentTarget;
+    const form = new FormData(element);
+    await mutate({
+      action: 'character_save',
+      id: form.get('id'),
+      name: form.get('name'),
+      image: form.get('image'),
+      anime_id: form.get('anime_id'),
+      active: true,
+    });
+    element.reset();
+  }
   return (
     <div className="admin-tools">
       {data.invite_required && (
@@ -243,6 +272,260 @@ export function AdminTools() {
         )}
       </section>
       <section className="social-panel">
+        <h2>Plus: серии и Telegram</h2>
+        <p>
+          Первичная синхронизация:{' '}
+          <strong>
+            {data.plus_state?.value === 'complete' ? 'готова' : 'не выполнена'}
+          </strong>
+          {' · '}ранний доступ:{' '}
+          <strong>
+            {data.plus_early_access_enabled ? 'включён' : 'выключен'}
+          </strong>
+        </p>
+        <div className="dashboard-cards compact">
+          <div>
+            <strong>{Number(data.episode_access?.episodes || 0)}</strong>
+            <span>серий отслеживается</span>
+          </div>
+          {(data.telegram_queue || []).map((item: any) => (
+            <div key={item.status}>
+              <strong>{Number(item.count)}</strong>
+              <span>Telegram · {item.status}</span>
+            </div>
+          ))}
+        </div>
+        {data.episode_access?.last_seen && (
+          <p className="muted">
+            Последнее обнаружение:{' '}
+            {new Date(Number(data.episode_access.last_seen)).toLocaleString(
+              'ru-RU',
+            )}
+          </p>
+        )}
+      </section>
+      <section className="social-panel">
+        <h2>Авторские Plus-подборки</h2>
+        <form className="admin-skip-form" onSubmit={saveEditorial}>
+          <Input name="title" placeholder="Название" maxLength={120} required />
+          <Input name="cover" type="url" placeholder="HTTPS-обложка" />
+          <Input
+            name="anime_ids"
+            placeholder="ID аниме через запятую"
+            required
+          />
+          <Input name="description" placeholder="Описание" maxLength={800} />
+          <label>
+            <input name="published" type="checkbox" /> Опубликовать
+          </label>
+          <Button type="submit">Создать подборку</Button>
+        </form>
+        {!!data.editorial_collections?.length && (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Тайтлы</th>
+                  <th>Статус</th>
+                  <th aria-label="Действия" />
+                </tr>
+              </thead>
+              <tbody>
+                {data.editorial_collections.map((item: any) => (
+                  <tr key={item.id}>
+                    <td>{item.title}</td>
+                    <td>{item.anime_ids || '—'}</td>
+                    <td>{item.published ? 'Опубликована' : 'Черновик'}</td>
+                    <td>
+                      <details>
+                        <summary>Изменить</summary>
+                        <form
+                          className="admin-skip-form"
+                          onSubmit={saveEditorial}
+                        >
+                          <input type="hidden" name="id" value={item.id} />
+                          <Input
+                            name="title"
+                            defaultValue={item.title}
+                            required
+                          />
+                          <Input
+                            name="cover"
+                            type="url"
+                            defaultValue={item.cover || ''}
+                            placeholder="HTTPS-обложка"
+                          />
+                          <Input
+                            name="anime_ids"
+                            defaultValue={item.anime_ids || ''}
+                            required
+                          />
+                          <Input
+                            name="description"
+                            defaultValue={item.description || ''}
+                          />
+                          <label>
+                            <input
+                              name="published"
+                              type="checkbox"
+                              defaultChecked={!!item.published}
+                            />{' '}
+                            Опубликовать
+                          </label>
+                          <Button size="sm" type="submit">
+                            Сохранить
+                          </Button>
+                        </form>
+                      </details>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void mutate({
+                            action: 'editorial_delete',
+                            id: item.id,
+                          })
+                        }
+                      >
+                        Удалить
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      <section className="social-panel">
+        <h2>Справочник персонажей</h2>
+        <form className="admin-skip-form" onSubmit={saveCharacter}>
+          <Input
+            name="name"
+            placeholder="Имя персонажа"
+            maxLength={100}
+            required
+          />
+          <Input
+            name="image"
+            type="url"
+            placeholder="HTTPS-изображение"
+            required
+          />
+          <Input
+            name="anime_id"
+            type="number"
+            min={1}
+            placeholder="ID связанного аниме"
+          />
+          <Button type="submit">Добавить персонажа</Button>
+        </form>
+        {!!data.characters?.length && (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Персонаж</th>
+                  <th>Аниме</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.characters.map((item: any) => (
+                  <tr key={item.id}>
+                    <td>{item.name}</td>
+                    <td>{item.anime_id || '—'}</td>
+                    <td>
+                      <details>
+                        <summary>Изменить</summary>
+                        <form
+                          className="admin-skip-form"
+                          onSubmit={saveCharacter}
+                        >
+                          <input type="hidden" name="id" value={item.id} />
+                          <Input
+                            name="name"
+                            defaultValue={item.name}
+                            required
+                          />
+                          <Input
+                            name="image"
+                            type="url"
+                            defaultValue={item.image}
+                            required
+                          />
+                          <Input
+                            name="anime_id"
+                            type="number"
+                            min={1}
+                            defaultValue={item.anime_id || ''}
+                          />
+                          <Button size="sm" type="submit">
+                            Сохранить
+                          </Button>
+                        </form>
+                      </details>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void mutate({
+                            action: 'character_delete',
+                            id: item.id,
+                          })
+                        }
+                      >
+                        Удалить
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+      <section className="social-panel">
+        <h2>Платежи Plus</h2>
+        {data.payments?.length ? (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Пользователь</th>
+                  <th>Статус</th>
+                  <th>Создан</th>
+                  <th>Plus до</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.payments.map((item: any) => (
+                  <tr key={item.id}>
+                    <td>
+                      <a href={`/members/${item.user_id}`}>{item.nick}</a>
+                    </td>
+                    <td>{item.status}</td>
+                    <td>
+                      {new Date(Number(item.created_at)).toLocaleString(
+                        'ru-RU',
+                      )}
+                    </td>
+                    <td>
+                      {item.expires
+                        ? new Date(Number(item.expires)).toLocaleString('ru-RU')
+                        : '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="muted">Платежей пока нет.</p>
+        )}
+      </section>
+      <section className="social-panel">
         <h2>Последние комментарии</h2>
         {data.comments.length ? (
           <div className="admin-table-wrap">
@@ -356,12 +639,12 @@ export function AdminTools() {
                         mutate({
                           action: 'grant_plus',
                           user_id: user.id,
-                          days: 31,
+                          days: 30,
                           reason: 'Выдано администратором',
                         })
                       }
                     >
-                      Выдать Plus на 31 день
+                      Выдать Plus на 30 дней
                     </Button>
                     <Button
                       size="sm"

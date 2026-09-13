@@ -10,12 +10,17 @@ export type Runtime = {
   PAYMENTS_ENABLED?: string;
   YOOKASSA_SHOP_ID?: string;
   YOOKASSA_SECRET_KEY?: string;
+  YOOKASSA_ALLOW_TEST?: string;
   KODIK_API_TOKEN?: string;
   ANILIBERTY_API_URL?: string;
   RECOMMENDATION_CRON_SECRET?: string;
   UNISENDER_API_KEY?: string;
   EMAIL_FROM?: string;
   TELEGRAM_URL?: string;
+  TELEGRAM_BOT_TOKEN?: string;
+  TELEGRAM_BOT_USERNAME?: string;
+  TELEGRAM_WEBHOOK_SECRET?: string;
+  PLUS_EARLY_ACCESS_ENABLED?: string;
   INVITE_REQUIRED?: string;
   EMAIL_VERIFICATION_ENABLED?: string;
   MEDIA_PROXY_ENABLED?: string;
@@ -281,6 +286,8 @@ export type User = {
   collection_public: number;
   adult_confirmed_at?: number | null;
   auto_skip_segments?: number | null;
+  profile_background?: string | null;
+  profile_frame?: string;
   suspended_until?: number | null;
   created_at: number;
 };
@@ -355,6 +362,13 @@ export async function premium(id: string) {
 }
 export async function publicUser(u: User) {
   const until = await premium(u.id);
+  const progress = await db()
+    .prepare(
+      'SELECT COALESCE(sum(completed),0) AS episodes FROM history WHERE user_id=?',
+    )
+    .bind(u.id)
+    .first<{ episodes: number }>();
+  const level = 1 + Math.floor(Number(progress?.episodes || 0) / 10);
   return {
     id: u.id,
     nick: u.nick,
@@ -366,6 +380,18 @@ export async function publicUser(u: User) {
     collection_public: u.collection_public,
     created_at: u.created_at,
     premium_until: until,
+    level,
+    entitlements: {
+      can_change_avatar: !!until || level >= 5,
+      custom_list_limit: until ? 20 : 3,
+      telegram_title_limit: until ? null : 3,
+      can_customize_lists: !!until,
+      can_customize_profile: !!until,
+      can_react: !!until,
+      early_access: !!until,
+    },
+    profile_background: until ? u.profile_background || null : null,
+    profile_frame: until ? u.profile_frame || 'none' : 'none',
     adult_confirmed: !!u.adult_confirmed_at,
     auto_skip_segments:
       u.auto_skip_segments == null ? null : !!u.auto_skip_segments,

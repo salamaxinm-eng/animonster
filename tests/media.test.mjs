@@ -54,3 +54,23 @@ test('media proxy follows numbered CDN hosts with legacy deployment configuratio
     code: 'media_host_denied',
   });
 });
+
+test('media access binding survives manifest rewriting', async () => {
+  process.env.MEDIA_PROXY_HOSTS = 'cache.libria.fun';
+  process.env.MEDIA_PROXY_ENABLED = 'true';
+  process.env.MEDIA_PROXY_SECRET =
+    'test-only-media-secret-at-least-32-characters';
+  const userId = '11111111-1111-4111-8111-111111111111';
+  const freeAt = Date.now() + 3600000;
+  const manifest = await media.rewriteManifest(
+    '#EXTM3U\nsegment.ts',
+    new URL('https://cache.libria.fun/show/index.m3u8'),
+    { userId, freeAt },
+  );
+  const child = manifest.split('\n')[1];
+  const details = await media.readMediaTokenDetails(
+    new URL(child, 'https://example.test').searchParams.get('token'),
+  );
+  assert.equal(details.access.userId, userId);
+  assert.equal(details.access.freeAt, freeAt);
+});

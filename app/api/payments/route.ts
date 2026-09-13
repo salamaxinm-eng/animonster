@@ -11,6 +11,7 @@ import {
   runtime,
 } from '@/lib/server/core';
 import { paymentFetch, verifyPayment } from '@/lib/server/billing';
+import { PLUS_PRICE } from '@/lib/server/plus';
 export async function POST(r: Request) {
   try {
     sameOrigin(r);
@@ -56,10 +57,11 @@ export async function POST(r: Request) {
       method: 'POST',
       headers: { 'Idempotence-Key': id },
       body: JSON.stringify({
-        amount: { value: '89.00', currency: 'RUB' },
+        amount: { value: PLUS_PRICE, currency: 'RUB' },
         capture: true,
         confirmation: {
-          type: 'embedded',
+          type: 'redirect',
+          return_url: `${runtime().SITE_URL || new URL(r.url).origin}/profile?payment=return`,
         },
         description: 'AniMonster Plus — 1 месяц',
         metadata: { order_id: id, user_id: u.id },
@@ -69,9 +71,9 @@ export async function POST(r: Request) {
       .prepare('UPDATE orders SET provider_id=? WHERE id=?')
       .bind(p.id, id)
       .run();
-    if (!p.confirmation?.confirmation_token)
-      throw new ApiError('Не получен токен формы оплаты', 502);
-    return json({ confirmation_token: p.confirmation.confirmation_token });
+    if (!p.confirmation?.confirmation_url)
+      throw new ApiError('Не получена ссылка на оплату', 502);
+    return json({ confirmation_url: p.confirmation.confirmation_url });
   } catch (e) {
     return fail(e);
   }

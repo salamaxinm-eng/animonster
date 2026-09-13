@@ -136,8 +136,8 @@ test('custom collection lists keep their own items and cascade on delete', async
     [userId, `test:${userId}`, `user_${userId.slice(0, 8)}`, now],
   );
   await db.query(
-    'INSERT INTO collection_lists(id,user_id,name,created_at) VALUES ($1,$2,$3,$4)',
-    [listId, userId, 'На выходные', now],
+    'INSERT INTO collection_lists(id,user_id,name,created_at,slot) VALUES ($1,$2,$3,$4,$5)',
+    [listId, userId, 'На выходные', now, 1],
   );
   await db.query(
     'INSERT INTO collection_list_items(list_id,anime_id) VALUES ($1,$2)',
@@ -269,5 +269,81 @@ test('failed recommendation work stays dirty without affecting the site', async 
   );
   assert.equal(state[0].dirty, 1);
   assert.equal(state[0].last_error, 'test failure');
+  await databaseClient.close();
+});
+
+test('Plus episode availability and reactions are idempotent', async () => {
+  const databaseClient = await database();
+  const userId = crypto.randomUUID();
+  const commentId = crypto.randomUUID();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `user_${userId.slice(0, 8)}`, timestamp],
+  );
+  await databaseClient.query(
+    'INSERT INTO comments(id,scope,author_id,body,created_at) VALUES ($1,$2,$3,$4,$5)',
+    [commentId, 'anime:42', userId, 'test', timestamp],
+  );
+  await databaseClient.query(
+    'INSERT INTO episode_availability(anime_id,provider,episode,first_seen_at,free_at) VALUES ($1,$2,$3,$4,$5)',
+    [42, 'aniliberty', 1, timestamp, timestamp + 4 * 3600000],
+  );
+  const access = await databaseClient.query(
+    'SELECT free_at-first_seen_at AS delay FROM episode_availability WHERE anime_id=$1 AND episode=$2',
+    [42, 1],
+  );
+  assert.equal(Number(access[0].delay), 4 * 3600000);
+  await databaseClient.query(
+    'INSERT INTO comment_reactions(comment_id,user_id,reaction,created_at) VALUES ($1,$2,$3,$4)',
+    [commentId, userId, 'fire', timestamp],
+  );
+  await assert.rejects(() =>
+    databaseClient.query(
+      'INSERT INTO comment_reactions(comment_id,user_id,reaction,created_at) VALUES ($1,$2,$3,$4)',
+      [commentId, userId, 'fire', timestamp],
+    ),
+  );
+  await assert.rejects(() =>
+    databaseClient.query(
+      'INSERT INTO comment_reactions(comment_id,user_id,reaction,created_at) VALUES ($1,$2,$3,$4)',
+      [commentId, userId, 'unknown', timestamp],
+    ),
+  );
+  await databaseClient.close();
+});
+
+test('free custom-list slots cannot exceed the server limit under concurrency', async () => {
+  const databaseClient = await database();
+  const userId = crypto.randomUUID();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `user_${userId.slice(0, 8)}`, timestamp],
+  );
+  await Promise.all(
+    Array.from({ length: 8 }, (_, index) =>
+      databaseClient.query(
+        `INSERT INTO collection_lists(id,user_id,name,created_at,slot)
+         SELECT $1,$2,$3,$4,candidate.slot FROM generate_series(1,3) AS candidate(slot)
+         WHERE (SELECT count(*) FROM collection_lists existing WHERE existing.user_id=$5)<3
+         AND NOT EXISTS(SELECT 1 FROM collection_lists l WHERE l.user_id=$6 AND l.slot=candidate.slot)
+         ORDER BY candidate.slot LIMIT 1 ON CONFLICT DO NOTHING`,
+        [
+          crypto.randomUUID(),
+          userId,
+          `list-${index}`,
+          timestamp + index,
+          userId,
+          userId,
+        ],
+      ),
+    ),
+  );
+  const rows = await databaseClient.query(
+    'SELECT count(*) AS count FROM collection_lists WHERE user_id=$1',
+    [userId],
+  );
+  assert.ok(Number(rows[0].count) <= 3);
   await databaseClient.close();
 });

@@ -205,6 +205,18 @@ export type Profile = {
   adult_confirmed: boolean;
   email_verified: boolean;
   auto_skip_segments: boolean | null;
+  level: number;
+  profile_background: string | null;
+  profile_frame: string;
+  entitlements: {
+    can_change_avatar: boolean;
+    custom_list_limit: number;
+    telegram_title_limit: number | null;
+    can_customize_lists: boolean;
+    can_customize_profile: boolean;
+    can_react: boolean;
+    early_access: boolean;
+  };
 };
 export type Entry = {
   anime_id: number;
@@ -219,6 +231,9 @@ export type CollectionList = {
   id: string;
   name: string;
   item_count: number;
+  description: string;
+  cover: string | null;
+  pinned: number;
 };
 export const statuses = {
   planned: 'Запланировано',

@@ -509,6 +509,14 @@ export function EpisodePlayer({
           ) : (
             <p>Эта озвучка временно недоступна.</p>
           )
+        ) : episode?.plus_locked ? (
+          <div className="plus-episode-lock">
+            <strong>Ранний доступ AniMonster Plus</strong>
+            <span>
+              Бесплатный просмотр откроется{' '}
+              {new Date(episode.free_at || 0).toLocaleString('ru-RU')}
+            </span>
+          </div>
         ) : (
           <video
             ref={video}
@@ -611,6 +619,9 @@ export function EpisodePlayer({
           {episodes.slice(0, lastVoiceoverIndex + 1).map((e, i) => (
             <option value={i} key={e.id}>
               Серия {e.ordinal} · {e.name}
+              {e.plus_locked
+                ? ` · Plus до ${new Date(e.free_at || 0).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                : ''}
             </option>
           ))}
         </NativeSelect>

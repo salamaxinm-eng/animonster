@@ -5,7 +5,8 @@ const decoder = new TextDecoder();
 const MAX_MANIFEST_BYTES = 2 * 1024 * 1024;
 const TOKEN_LIFETIME_MS = 6 * 60 * 60 * 1000;
 
-type MediaToken = { url: string; expires: number };
+type MediaAccess = { userId?: string; freeAt?: number };
+type MediaToken = { url: string; expires: number; access?: MediaAccess };
 
 const base64url = (bytes: Uint8Array) =>
   Buffer.from(bytes).toString('base64url');
@@ -88,12 +89,13 @@ async function signature(payload: string) {
 export async function mediaProxyUrl(
   value: string,
   expires = Date.now() + TOKEN_LIFETIME_MS,
+  access?: MediaAccess,
 ) {
   if (!mediaProxyEnabled()) return value;
   const url = validateMediaUrl(value);
   const payload = base64url(
     encoder.encode(
-      JSON.stringify({ url: url.href, expires } satisfies MediaToken),
+      JSON.stringify({ url: url.href, expires, access } satisfies MediaToken),
     ),
   );
   return `/api/media?token=${encodeURIComponent(payload + '.' + (await signature(payload)))}`;
@@ -110,6 +112,10 @@ function constantTimeEqual(left: string, right: string) {
 }
 
 export async function readMediaToken(token: string) {
+  return (await readMediaTokenDetails(token)).url;
+}
+
+export async function readMediaTokenDetails(token: string) {
   const separator = token.lastIndexOf('.');
   if (separator < 1) throw new ApiError('Некорректный токен потока.', 400);
   const payload = token.slice(0, separator);
@@ -125,13 +131,17 @@ export async function readMediaToken(token: string) {
   }
   if (!Number.isFinite(parsed.expires) || parsed.expires < Date.now())
     throw new ApiError('Ссылка на поток устарела.', 410, 'media_token_expired');
-  return validateMediaUrl(parsed.url);
+  return { url: validateMediaUrl(parsed.url), access: parsed.access };
 }
 
-export async function rewriteManifest(manifest: string, source: URL) {
+export async function rewriteManifest(
+  manifest: string,
+  source: URL,
+  access?: MediaAccess,
+) {
   const expires = Date.now() + TOKEN_LIFETIME_MS;
   const rewrite = async (value: string) =>
-    mediaProxyUrl(new URL(value, source).href, expires);
+    mediaProxyUrl(new URL(value, source).href, expires, access);
   const lines = manifest.split(/\r?\n/);
   return (
     await Promise.all(

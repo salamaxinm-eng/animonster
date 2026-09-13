@@ -36,7 +36,18 @@ type Comment = {
   vote: number;
   dislike_count: number;
   score: number;
+  plus: boolean;
+  reaction_counts: Record<string, number>;
+  my_reactions: string[];
 };
+const reactionOptions = [
+  ['fire', '🔥', 'Огонь'],
+  ['wow', '🤩', 'Восторг'],
+  ['laugh', '😂', 'Смех'],
+  ['cry', '😢', 'Слёзы'],
+  ['shock', '😱', 'Шок'],
+  ['heart', '💚', 'Сердце'],
+] as const;
 export function Comments({
   scope,
   closed = false,
@@ -218,6 +229,7 @@ export function Comments({
             <div className="comment-content">
               <div className="comment-meta">
                 <a href={'/members/' + c.author_id}>{c.nick}</a>
+                {c.plus && <span className="plus-comment-badge">PLUS</span>}
                 <Pin id={c.pin} />
                 <time>
                   {new Date(c.created_at).toLocaleString('ru-RU', {
@@ -250,82 +262,105 @@ export function Comments({
                 <p className="comment-body">{c.body}</p>
               )}
               {!c.deleted && (
-                <div className="comment-actions">
-                  <button
-                    disabled={busy}
-                    className={c.vote === 1 ? 'liked' : ''}
-                    onClick={() =>
-                      act('like', { id: c.id, vote: c.vote === 1 ? 0 : 1 })
-                    }
-                  >
-                    <Heart size={14} />
-                    {c.like_count || 'Нравится'}
-                  </button>
-                  <button
-                    disabled={busy}
-                    className={c.vote === -1 ? 'liked' : ''}
-                    aria-label="Дизлайк"
-                    onClick={() =>
-                      act('like', { id: c.id, vote: c.vote === -1 ? 0 : -1 })
-                    }
-                  >
-                    <ThumbsDown size={14} />
-                    {c.dislike_count}
-                  </button>
-                  <span className="vote-score">Рейтинг {c.score}</span>
-                  <button
-                    onClick={() => {
-                      if (!user) login();
-                      else {
-                        setReply(c);
-                        document
-                          .querySelector('.comment-form textarea')
-                          ?.scrollIntoView({
-                            block: 'center',
-                            behavior: 'smooth',
-                          });
+                <>
+                  <div className="comment-reactions" aria-label="Реакции">
+                    {reactionOptions.map(([id, emoji, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        title={label}
+                        aria-label={label}
+                        className={c.my_reactions?.includes(id) ? 'active' : ''}
+                        onClick={() =>
+                          act('reaction', { id: c.id, reaction: id })
+                        }
+                      >
+                        <span>{emoji}</span>
+                        {!!c.reaction_counts?.[id] && (
+                          <b>{c.reaction_counts[id]}</b>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="comment-actions">
+                    <button
+                      disabled={busy}
+                      className={c.vote === 1 ? 'liked' : ''}
+                      onClick={() =>
+                        act('like', { id: c.id, vote: c.vote === 1 ? 0 : 1 })
                       }
-                    }}
-                  >
-                    <Reply size={14} /> Ответить
-                  </button>
-                  {user?.id === c.author_id && (
+                    >
+                      <Heart size={14} />
+                      {c.like_count || 'Нравится'}
+                    </button>
+                    <button
+                      disabled={busy}
+                      className={c.vote === -1 ? 'liked' : ''}
+                      aria-label="Дизлайк"
+                      onClick={() =>
+                        act('like', { id: c.id, vote: c.vote === -1 ? 0 : -1 })
+                      }
+                    >
+                      <ThumbsDown size={14} />
+                      {c.dislike_count}
+                    </button>
+                    <span className="vote-score">Рейтинг {c.score}</span>
                     <button
                       onClick={() => {
-                        setEdit(c);
-                        setEditing(c.body);
+                        if (!user) login();
+                        else {
+                          setReply(c);
+                          document
+                            .querySelector('.comment-form textarea')
+                            ?.scrollIntoView({
+                              block: 'center',
+                              behavior: 'smooth',
+                            });
+                        }
                       }}
                     >
-                      Изменить
+                      <Reply size={14} /> Ответить
                     </button>
-                  )}
-                  {(user?.id === c.author_id || owner) && (
-                    <button
-                      onClick={() => setConfirm({ action: 'delete', row: c })}
-                    >
-                      Удалить
-                    </button>
-                  )}
-                  {owner && (
-                    <button
-                      onClick={() => act('pin', { id: c.id, value: !c.pinned })}
-                    >
-                      {c.pinned ? 'Открепить' : 'Закрепить'}
-                    </button>
-                  )}
-                  {user?.id !== c.author_id && (
-                    <button
-                      aria-label="Пожаловаться"
-                      onClick={() =>
-                        user
-                          ? setConfirm({ action: 'report', row: c })
-                          : login()
-                      }
-                    >
-                      <Flag size={13} />
-                    </button>
-                  )}
-                </div>
+                    {user?.id === c.author_id && (
+                      <button
+                        onClick={() => {
+                          setEdit(c);
+                          setEditing(c.body);
+                        }}
+                      >
+                        Изменить
+                      </button>
+                    )}
+                    {(user?.id === c.author_id || owner) && (
+                      <button
+                        onClick={() => setConfirm({ action: 'delete', row: c })}
+                      >
+                        Удалить
+                      </button>
+                    )}
+                    {owner && (
+                      <button
+                        onClick={() =>
+                          act('pin', { id: c.id, value: !c.pinned })
+                        }
+                      >
+                        {c.pinned ? 'Открепить' : 'Закрепить'}
+                      </button>
+                    )}
+                    {user?.id !== c.author_id && (
+                      <button
+                        aria-label="Пожаловаться"
+                        onClick={() =>
+                          user
+                            ? setConfirm({ action: 'report', row: c })
+                            : login()
+                        }
+                      >
+                        <Flag size={13} />
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </article>

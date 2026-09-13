@@ -2,6 +2,7 @@
 import { ProfileJourney } from './profile-journey';
 import { BuySubscription } from './buy-subscription';
 import { AccountData } from './account-data';
+import { TelegramSettings } from './telegram-settings';
 
 import { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -41,6 +42,9 @@ export function ProfilePage({
       user: Profile;
       entries: Entry[];
       lists: CollectionList[];
+      anime_showcase: Array<{ anime_id: number; anime: any }>;
+      character_showcase: Array<{ id: string; name: string; image: string }>;
+      characters: Array<{ id: string; name: string; image: string }>;
       own: boolean;
       blocked: boolean;
     } | null>(null),
@@ -52,6 +56,8 @@ export function ProfilePage({
     [busy, setBusy] = useState(false),
     [creatingList, setCreatingList] = useState(false),
     [newListName, setNewListName] = useState(''),
+    [showcaseAnime, setShowcaseAnime] = useState(''),
+    [showcaseCharacters, setShowcaseCharacters] = useState<string[]>([]),
     [avatarBusy, setAvatarBusy] = useState(false),
     [notifications, setNotifications] = useState<
       Array<{
@@ -73,6 +79,12 @@ export function ProfilePage({
       );
       setData(x);
       setDraft(x.user);
+      setShowcaseAnime(
+        (x.anime_showcase || []).map((item: any) => item.anime_id).join(', '),
+      );
+      setShowcaseCharacters(
+        (x.character_showcase || []).map((item: any) => item.id),
+      );
       setError('');
     } catch (e) {
       setError((e as Error).message);
@@ -89,6 +101,30 @@ export function ProfilePage({
     if (q.get('tab') === 'settings') setTab('settings');
     if (q.get('auth') === 'failed')
       setError('Вход через VK не завершился. Попробуйте ещё раз.');
+    if (q.get('payment') === 'return')
+      void fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check' }),
+      })
+        .then(async (response) => {
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error);
+          if (result.status === 'succeeded') {
+            setNotice('AniMonster Plus активирован на 30 дней');
+            await c.refresh();
+            await load();
+          } else if (result.status === 'canceled')
+            setError('Оплата отменена. Plus не был активирован.');
+          else
+            setNotice(
+              'Платёж ещё обрабатывается. Статус обновится после подтверждения.',
+            );
+          history.replaceState(null, '', '/profile');
+        })
+        .catch((paymentError) =>
+          setError(paymentError.message || 'Не удалось проверить платёж'),
+        );
   }, []);
   useEffect(() => {
     if (tab === 'notifications' && c.user)
@@ -162,6 +198,35 @@ export function ProfilePage({
       setAvatarBusy(false);
     }
   }
+  async function uploadPlusAsset(
+    kind: 'profile_background' | 'list_cover',
+    file?: File,
+    listId?: string,
+  ) {
+    if (!file) return;
+    setBusy(true);
+    setError('');
+    try {
+      const form = new FormData();
+      form.set('image', file);
+      form.set('kind', kind);
+      if (listId) form.set('list_id', listId);
+      const response = await fetch('/api/plus-assets', {
+        method: 'POST',
+        body: form,
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || 'Не удалось загрузить изображение');
+      await load();
+      await c.refresh();
+      setNotice('Оформление обновлено');
+    } catch (assetError) {
+      setError((assetError as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function createList() {
     if (!newListName.trim()) return;
     setBusy(true);
@@ -225,11 +290,20 @@ export function ProfilePage({
       ) : (
         <>
           <div className={'profile-cover theme-' + theme.id}>
-            <img src="/hero.png" alt="Обложка профиля" />
+            <img
+              src={
+                data.user.profile_background?.startsWith('asset:')
+                  ? `/api/plus-assets/${data.user.profile_background.split(':')[1]}`
+                  : '/hero.png'
+              }
+              alt="Обложка профиля"
+            />
             <div />
             <span>ANIMONSTER COMMUNITY</span>
           </div>
-          <section className="profile-identity">
+          <section
+            className={`profile-identity profile-frame-${data.user.profile_frame || 'none'}`}
+          >
             <Avatar
               large
               avatar={tab === 'settings' ? draft?.avatar : data.user.avatar}
@@ -303,7 +377,15 @@ export function ProfilePage({
               <section className="social-panel">
                 <p className="muted">
                   Подписка:{' '}
-                  {data.user.premium_until ? 'Платная · Plus' : 'Бесплатная'}
+                  {data.user.premium_until
+                    ? `Plus до ${new Date(
+                        data.user.premium_until,
+                      ).toLocaleString('ru-RU', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}`
+                    : 'Бесплатная'}
                 </p>
                 {data.own && <BuySubscription />}
                 <h3>О себе</h3>
@@ -343,9 +425,22 @@ export function ProfilePage({
                             setStatus('list:' + list.id);
                           }}
                         >
+                          {list.cover?.startsWith('asset:') && (
+                            <img
+                              className="custom-list-cover"
+                              src={`/api/plus-assets/${list.cover.split(':')[1]}`}
+                              alt=""
+                            />
+                          )}
                           <span>{list.name}</span>
+                          {!!list.pinned && <span title="Закреплено">★</span>}
                           <strong>{list.item_count}</strong>
                         </button>
+                        {!!list.description && (
+                          <p className="custom-list-description">
+                            {list.description}
+                          </p>
+                        )}
                         {data.own && (
                           <button
                             className="list-delete"
@@ -360,6 +455,51 @@ export function ProfilePage({
                           >
                             ×
                           </button>
+                        )}
+                        {data.own && !!data.user.premium_until && (
+                          <details className="list-plus-editor">
+                            <summary>Оформить</summary>
+                            <textarea
+                              defaultValue={list.description}
+                              maxLength={300}
+                              placeholder="Описание списка"
+                              onBlur={(event) =>
+                                void act('list_update', {
+                                  id: list.id,
+                                  description: event.target.value,
+                                  pinned: !!list.pinned,
+                                })
+                              }
+                            />
+                            <label>
+                              <Checkbox
+                                checked={!!list.pinned}
+                                onCheckedChange={(value) =>
+                                  void act('list_update', {
+                                    id: list.id,
+                                    description: list.description,
+                                    pinned: !!value,
+                                  })
+                                }
+                              />{' '}
+                              Закрепить в профиле
+                            </label>
+                            <label className="outline-button">
+                              Обложка
+                              <input
+                                type="file"
+                                accept="image/png,image/jpeg,image/webp"
+                                onChange={(event) => {
+                                  void uploadPlusAsset(
+                                    'list_cover',
+                                    event.target.files?.[0],
+                                    list.id,
+                                  );
+                                  event.target.value = '';
+                                }}
+                              />
+                            </label>
+                          </details>
                         )}
                       </div>
                     ))}
@@ -410,7 +550,7 @@ export function ProfilePage({
                 <h3>Твой ник. Твой тайтл.</h3>
                 <p>Коллекционные пины рядом с ником</p>
                 <strong>
-                  89 ₽ <span>/ месяц</span>
+                  89 ₽ <span>/ 30 дней</span>
                 </strong>
                 <span className="plus-promo-link">
                   Открыть AniMonster Plus →
@@ -418,6 +558,39 @@ export function ProfilePage({
               </a>
             </aside>
             <div className="profile-main">
+              {!!data.user.premium_until &&
+                (!!data.anime_showcase.length ||
+                  !!data.character_showcase.length) && (
+                  <section className="social-panel plus-showcase">
+                    <h2>Избранное Plus</h2>
+                    <div className="plus-showcase-grid">
+                      {data.anime_showcase.map((item) => (
+                        <a
+                          href={`/anime/${item.anime_id}`}
+                          key={`anime-${item.anime_id}`}
+                        >
+                          {item.anime?.image?.original && (
+                            <img
+                              src={proxyImageUrl(item.anime.image.original)}
+                              alt=""
+                            />
+                          )}
+                          <strong>
+                            {item.anime?.russian ||
+                              item.anime?.name ||
+                              `Аниме #${item.anime_id}`}
+                          </strong>
+                        </a>
+                      ))}
+                      {data.character_showcase.map((item) => (
+                        <article key={`character-${item.id}`}>
+                          <img src={item.image} alt="" />
+                          <strong>{item.name}</strong>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                )}
               <Tabs
                 value={tab}
                 onValueChange={(v) => {
@@ -676,14 +849,21 @@ export function ProfilePage({
                           <input
                             type="file"
                             accept="image/png,image/jpeg,image/webp"
-                            disabled={avatarBusy}
+                            disabled={
+                              avatarBusy ||
+                              !data.user.entitlements.can_change_avatar
+                            }
                             onChange={(event) => {
                               void uploadAvatar(event.target.files?.[0]);
                               event.target.value = '';
                             }}
                           />
                         </label>
-                        <small>PNG, JPEG или WebP, до 2 МБ.</small>
+                        <small>
+                          {data.user.entitlements.can_change_avatar
+                            ? 'PNG, JPEG или WebP, до 2 МБ.'
+                            : `Смена аватара откроется на 5 уровне. Сейчас уровень ${data.user.level}.`}
+                        </small>
                       </div>
                     </div>
                     <div className="avatar-options">
@@ -692,6 +872,7 @@ export function ProfilePage({
                           type="button"
                           className={draft.avatar === a.id ? 'selected' : ''}
                           key={a.id}
+                          disabled={!data.user.entitlements.can_change_avatar}
                           onClick={() => setDraft({ ...draft, avatar: a.id })}
                         >
                           <Avatar avatar={a.id} theme={draft.theme} />
@@ -717,6 +898,92 @@ export function ProfilePage({
                         </button>
                       ))}
                     </div>
+                    <NativeSelect
+                      value={draft.profile_frame || 'none'}
+                      disabled={!data.user.premium_until}
+                      onChange={(e) =>
+                        setDraft({ ...draft, profile_frame: e.target.value })
+                      }
+                    >
+                      <option value="none">Без рамки</option>
+                      <option value="lime">Лайм</option>
+                      <option value="violet">Фиолетовая</option>
+                      <option value="fire">Огненная</option>
+                      <option value="ice">Ледяная</option>
+                    </NativeSelect>
+                  </fieldset>
+                  <fieldset>
+                    <legend>Фон профиля · Plus</legend>
+                    <label className="outline-button">
+                      <ImagePlus size={17} /> Загрузить фон
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        disabled={!data.user.premium_until || busy}
+                        onChange={(event) => {
+                          void uploadPlusAsset(
+                            'profile_background',
+                            event.target.files?.[0],
+                          );
+                          event.target.value = '';
+                        }}
+                      />
+                    </label>
+                  </fieldset>
+                  <fieldset disabled={!data.user.premium_until}>
+                    <legend>Расширенная витрина · Plus</legend>
+                    <label>
+                      До пяти ID аниме через запятую
+                      <input
+                        value={showcaseAnime}
+                        placeholder="38659, 40028"
+                        onChange={(event) =>
+                          setShowcaseAnime(event.target.value)
+                        }
+                      />
+                    </label>
+                    {!!data.characters.length && (
+                      <div className="showcase-character-options">
+                        {data.characters.map((character) => (
+                          <label key={character.id}>
+                            <Checkbox
+                              checked={showcaseCharacters.includes(
+                                character.id,
+                              )}
+                              disabled={
+                                !showcaseCharacters.includes(character.id) &&
+                                showcaseCharacters.length >= 5
+                              }
+                              onCheckedChange={(value) =>
+                                setShowcaseCharacters((current) =>
+                                  value
+                                    ? [...current, character.id].slice(0, 5)
+                                    : current.filter(
+                                        (id) => id !== character.id,
+                                      ),
+                                )
+                              }
+                            />{' '}
+                            {character.name}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    <button
+                      className="outline-button"
+                      type="button"
+                      onClick={() =>
+                        void act('showcase', {
+                          anime_ids: showcaseAnime
+                            .split(',')
+                            .map((id) => Number(id.trim()))
+                            .filter(Boolean),
+                          character_ids: showcaseCharacters,
+                        })
+                      }
+                    >
+                      Сохранить витрину
+                    </button>
                   </fieldset>
                   <label>
                     Пин справа от ника{' '}
@@ -797,6 +1064,7 @@ export function ProfilePage({
               )}
               {tab === 'notifications' && data.own && (
                 <section className="social-panel">
+                  <TelegramSettings />
                   <div className="panel-title">
                     <h3>Ответы и записи на стенке</h3>
                     <button

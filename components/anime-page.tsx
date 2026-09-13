@@ -15,6 +15,7 @@ import {
   type Voiceover,
 } from '@/lib/anime';
 import { Button } from '@/components/ui/button';
+import { EpisodeNotifications } from '@/components/episode-notifications';
 import {
   Dialog,
   DialogContent,
@@ -115,6 +116,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
               {anime.description?.replace(/<[^>]*>/g, '')}
             </p>
             <CollectionControl anime={anime} />
+            <EpisodeNotifications animeId={anime.id} title={anime.russian} />
           </div>
         </section>
         <section className="title-playback">

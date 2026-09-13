@@ -2,10 +2,11 @@ import { ApiError, fail } from '@/lib/server/core';
 import {
   assertManifestSize,
   mediaProxyEnabled,
-  readMediaToken,
+  readMediaTokenDetails,
   rewriteManifest,
   validateMediaUrl,
 } from '@/lib/server/media';
+import { premium, viewer } from '@/lib/server/core';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,21 @@ export async function GET(request: Request) {
     if (!mediaProxyEnabled())
       throw new ApiError('Медиашлюз отключён.', 404, 'media_proxy_disabled');
     const token = new URL(request.url).searchParams.get('token') || '';
-    const source = await readMediaToken(token);
+    const details = await readMediaTokenDetails(token),
+      source = details.url;
+    if (details.access?.freeAt && details.access.freeAt > Date.now()) {
+      const user = await viewer(request);
+      if (
+        !user ||
+        user.id !== details.access.userId ||
+        !(await premium(user.id))
+      )
+        throw new ApiError(
+          'Серия пока доступна только с AniMonster Plus.',
+          403,
+          'plus_early_access',
+        );
+    }
     const { response, url } = await upstream(source, request);
     if (!response.ok && response.status !== 304) {
       await response.body?.cancel();
@@ -60,19 +75,27 @@ export async function GET(request: Request) {
       assertManifestSize(Number(response.headers.get('content-length') || 0));
       const bytes = new Uint8Array(await response.arrayBuffer());
       assertManifestSize(bytes.byteLength);
-      const body = await rewriteManifest(new TextDecoder().decode(bytes), url);
+      const body = await rewriteManifest(
+        new TextDecoder().decode(bytes),
+        url,
+        details.access,
+      );
       return new Response(body, {
         status: response.status,
         headers: {
           'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
-          'Cache-Control': 'private, max-age=10',
+          'Cache-Control': details.access
+            ? 'private, no-store'
+            : 'private, max-age=10',
           'X-Content-Type-Options': 'nosniff',
         },
       });
     }
     const headers = new Headers({
       'Content-Type': contentType || 'application/octet-stream',
-      'Cache-Control': 'public, max-age=86400, immutable',
+      'Cache-Control': details.access
+        ? 'private, no-store'
+        : 'public, max-age=86400, immutable',
       'X-Content-Type-Options': 'nosniff',
     });
     for (const name of [

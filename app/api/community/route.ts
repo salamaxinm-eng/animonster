@@ -20,6 +20,7 @@ import {
 } from '@/lib/server/core';
 import { themes, avatars, pins } from '@/lib/community';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
+import { plusEntitlements, profileFrames, reactions } from '@/lib/server/plus';
 const validScope = (s: string) =>
   /^wall:[a-f0-9-]{36}$/.test(s) ||
   /^anime:\d{1,9}(?::episode:\d{1,5}|:video:\d{1,12})?$/.test(s);
@@ -75,7 +76,7 @@ export async function GET(r: Request) {
           ? (
               await db()
                 .prepare(
-                  'SELECT l.id,l.name,count(i.anime_id) AS item_count FROM collection_lists l LEFT JOIN collection_list_items i ON i.list_id=l.id WHERE l.user_id=? GROUP BY l.id,l.name,l.created_at ORDER BY l.created_at,l.name',
+                  'SELECT l.id,l.name,l.description,l.cover,l.pinned,count(i.anime_id) AS item_count FROM collection_lists l LEFT JOIN collection_list_items i ON i.list_id=l.id WHERE l.user_id=? GROUP BY l.id,l.name,l.description,l.cover,l.pinned,l.created_at ORDER BY l.pinned DESC,l.created_at,l.name',
                 )
                 .bind(id)
                 .all()
@@ -92,15 +93,54 @@ export async function GET(r: Request) {
                 .all<{ list_id: string; anime_id: number }>()
             ).results
           : [];
+      const publicProfile = await publicUser(profile);
+      const [animeShowcase, characterShowcase, characters] = await Promise.all([
+        db()
+          .prepare(
+            'SELECT s.anime_id,a.data FROM profile_anime_showcase s LEFT JOIN anime_cache a ON a.id=s.anime_id WHERE s.user_id=? ORDER BY s.position LIMIT 5',
+          )
+          .bind(id)
+          .all(),
+        db()
+          .prepare(
+            'SELECT c.id,c.name,c.image,c.anime_id FROM profile_character_showcase s JOIN characters c ON c.id=s.character_id WHERE s.user_id=? AND c.active=1 ORDER BY s.position LIMIT 5',
+          )
+          .bind(id)
+          .all(),
+        own
+          ? db()
+              .prepare(
+                'SELECT id,name,image,anime_id FROM characters WHERE active=1 ORDER BY name LIMIT 200',
+              )
+              .all()
+          : Promise.resolve({ results: [] }),
+      ]);
       return json({
-        user: await publicUser(profile),
+        user: publicProfile,
         entries: entries.map((entry: any) => ({
           ...entry,
           list_ids: memberships
             .filter((item) => item.anime_id === entry.anime_id)
             .map((item) => item.list_id),
         })),
-        lists,
+        lists: publicProfile.premium_until
+          ? lists
+          : lists.map((list: any) => ({
+              ...list,
+              description: '',
+              cover: null,
+              pinned: 0,
+            })),
+        anime_showcase: publicProfile.premium_until
+          ? animeShowcase.results.map((row: any) => ({
+              anime_id: row.anime_id,
+              anime: row.data ? JSON.parse(String(row.data)) : null,
+            }))
+          : [],
+        character_showcase: publicProfile.premium_until
+          ? characterShowcase.results
+          : [],
+        characters: characters.results,
         own,
         blocked: u ? await blocked(u.id, id) : false,
       });
@@ -112,16 +152,46 @@ export async function GET(r: Request) {
         p.get('sort') === 'popular'
           ? 'score DESC,c.created_at DESC'
           : 'c.created_at DESC';
-      const rows = await db()
-        .prepare(
-          `SELECT c.*,u.nick,u.avatar,u.theme,CASE WHEN EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.expires>?) THEN u.pin ELSE NULL END AS pin,(SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=1) AS like_count,(SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=-1) AS dislike_count,COALESCE((SELECT sum(value) FROM likes l WHERE l.comment_id=c.id),0) AS score,COALESCE((SELECT value FROM likes l WHERE l.comment_id=c.id AND l.user_id=?),0) AS vote FROM comments c JOIN users u ON u.id=c.author_id WHERE c.scope=? AND NOT EXISTS(SELECT 1 FROM blocks b WHERE (b.user_id=? AND b.target_id=c.author_id) OR (b.user_id=c.author_id AND b.target_id=?)) ORDER BY c.pinned DESC,${order} LIMIT 100`,
-        )
-        .bind(now(), u?.id || '', scope, u?.id || '', u?.id || '')
-        .all();
+      const [rows, reactionRows] = await Promise.all([
+        db()
+          .prepare(
+            `SELECT c.*,u.nick,u.avatar,u.theme,EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?) AS plus,CASE WHEN EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?) THEN u.pin ELSE NULL END AS pin,(SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=1) AS like_count,(SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=-1) AS dislike_count,COALESCE((SELECT sum(value) FROM likes l WHERE l.comment_id=c.id),0) AS score,COALESCE((SELECT value FROM likes l WHERE l.comment_id=c.id AND l.user_id=?),0) AS vote FROM comments c JOIN users u ON u.id=c.author_id WHERE c.scope=? AND NOT EXISTS(SELECT 1 FROM blocks b WHERE (b.user_id=? AND b.target_id=c.author_id) OR (b.user_id=c.author_id AND b.target_id=?)) ORDER BY c.pinned DESC,${order} LIMIT 100`,
+          )
+          .bind(now(), now(), u?.id || '', scope, u?.id || '', u?.id || '')
+          .all(),
+        db()
+          .prepare(
+            'SELECT comment_id,user_id,reaction,count(*) AS n FROM comment_reactions WHERE comment_id IN (SELECT id FROM comments WHERE scope=?) GROUP BY comment_id,user_id,reaction',
+          )
+          .bind(scope)
+          .all(),
+      ]);
       return json(
-        rows.results.map((c) =>
-          c.deleted ? { ...c, body: 'Комментарий удалён', pin: null } : c,
-        ),
+        rows.results.map((c: any) => {
+          const related = reactionRows.results.filter(
+            (x: any) => x.comment_id === c.id,
+          );
+          const reaction_counts = Object.fromEntries(
+            reactions.map((reaction) => [
+              reaction,
+              related
+                .filter((x: any) => x.reaction === reaction)
+                .reduce((sum: number, x: any) => sum + Number(x.n), 0),
+            ]),
+          );
+          const my_reactions = related
+            .filter((x: any) => x.user_id === u?.id)
+            .map((x: any) => x.reaction);
+          return c.deleted
+            ? {
+                ...c,
+                body: 'Комментарий удалён',
+                pin: null,
+                reaction_counts,
+                my_reactions,
+              }
+            : { ...c, plus: !!c.plus, reaction_counts, my_reactions };
+        }),
       );
     }
     if (action === 'notifications') {
@@ -198,6 +268,7 @@ export async function POST(r: Request) {
       return json({ ok: true, auto_skip_segments: b.auto_skip_segments });
     }
     if (action === 'profile') {
+      const access = await plusEntitlements(u.id);
       const nick = String(b.nick || '').trim();
       if (!/^[\p{L}\p{N}_-]{3,24}$/u.test(nick))
         throw new ApiError('Ник: 3–24 буквы, цифры, дефис или _');
@@ -213,14 +284,28 @@ export async function POST(r: Request) {
       const customAvatar =
         avatar === u.avatar &&
         new RegExp(`^custom:${u.id.replaceAll('-', '\\-')}:\\d+$`).test(avatar);
+      if (avatar !== u.avatar && !access.canChangeAvatar)
+        throw new ApiError(
+          'Смена аватара откроется на 5 уровне или с AniMonster Plus.',
+          403,
+        );
       if (
         !themes.some((x) => x.id === b.theme) ||
         (!avatars.some((x) => x.id === avatar) && !customAvatar)
       )
         throw new ApiError('Неизвестное оформление');
-      const pin = b.pin || null;
-      if (pin && (!pins.some((x) => x.id === pin) || !(await premium(u.id))))
+      const requestedPin = b.pin || null;
+      const pin = access.active ? requestedPin : u.pin;
+      if (
+        access.active &&
+        pin &&
+        (!pins.some((x) => x.id === pin) || !(await premium(u.id)))
+      )
         throw new ApiError('Пины доступны по активной подписке', 403);
+      const requestedFrame = String(b.profile_frame || 'none');
+      const frame = access.active ? requestedFrame : u.profile_frame || 'none';
+      if (!profileFrames.includes(frame))
+        throw new ApiError('Неизвестная рамка профиля');
       const autoSkipSegments =
         b.auto_skip_segments == null
           ? (u.auto_skip_segments ?? null)
@@ -229,7 +314,7 @@ export async function POST(r: Request) {
             : 0;
       await db()
         .prepare(
-          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,wall_open=?,collection_public=?,auto_skip_segments=? WHERE id=?',
+          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,profile_frame=?,wall_open=?,collection_public=?,auto_skip_segments=? WHERE id=?',
         )
         .bind(
           nick,
@@ -237,6 +322,7 @@ export async function POST(r: Request) {
           b.theme,
           avatar,
           pin,
+          frame,
           b.wall_open ? 1 : 0,
           b.collection_public ? 1 : 0,
           autoSkipSegments,
@@ -342,12 +428,7 @@ export async function POST(r: Request) {
         .replace(/\s+/g, ' ');
       if (name.length < 2 || name.length > 30)
         throw new ApiError('Название списка: от 2 до 30 символов');
-      const count = await db()
-        .prepare('SELECT count(*) AS n FROM collection_lists WHERE user_id=?')
-        .bind(u.id)
-        .first<{ n: number }>();
-      if ((count?.n || 0) >= 12)
-        throw new ApiError('Можно создать не больше 12 своих списков');
+      const access = await plusEntitlements(u.id);
       const exists = await db()
         .prepare(
           'SELECT 1 FROM collection_lists WHERE user_id=? AND lower(name)=lower(?)',
@@ -357,13 +438,102 @@ export async function POST(r: Request) {
       if (exists)
         throw new ApiError('Список с таким названием уже существует', 409);
       const id = uid();
+      const created = await db()
+        .prepare(
+          `INSERT INTO collection_lists(id,user_id,name,created_at,slot)
+           SELECT ?,?,?,?,candidate.slot FROM generate_series(1,?) AS candidate(slot)
+           WHERE (SELECT count(*) FROM collection_lists existing WHERE existing.user_id=?)<?
+           AND NOT EXISTS(SELECT 1 FROM collection_lists l WHERE l.user_id=? AND l.slot=candidate.slot)
+           ORDER BY candidate.slot LIMIT 1 ON CONFLICT DO NOTHING RETURNING id`,
+        )
+        .bind(
+          id,
+          u.id,
+          name,
+          now(),
+          access.customListLimit,
+          u.id,
+          access.customListLimit,
+          u.id,
+        )
+        .first();
+      if (!created)
+        throw new ApiError(
+          `Доступно не больше ${access.customListLimit} своих списков.`,
+          403,
+          'list_limit_reached',
+        );
+      return json({ id, name, item_count: 0 });
+    }
+    if (action === 'list_update') {
+      const access = await plusEntitlements(u.id);
+      if (!access.canCustomizeLists)
+        throw new ApiError(
+          'Оформление списков доступно с AniMonster Plus',
+          403,
+        );
+      const id = String(b.id || ''),
+        description = String(b.description || '')
+          .trim()
+          .slice(0, 300),
+        pinned = b.pinned ? 1 : 0;
+      if (pinned) {
+        const count = await db()
+          .prepare(
+            'SELECT count(*) AS n FROM collection_lists WHERE user_id=? AND pinned=1 AND id<>?',
+          )
+          .bind(u.id, id)
+          .first<{ n: number }>();
+        if (Number(count?.n || 0) >= 3)
+          throw new ApiError('Можно закрепить не больше трёх списков');
+      }
       await db()
         .prepare(
-          'INSERT INTO collection_lists(id,user_id,name,created_at) VALUES (?,?,?,?)',
+          'UPDATE collection_lists SET description=?,pinned=? WHERE id=? AND user_id=?',
         )
-        .bind(id, u.id, name, now())
+        .bind(description, pinned, id, u.id)
         .run();
-      return json({ id, name, item_count: 0 });
+      return json({ ok: true });
+    }
+    if (action === 'showcase') {
+      const access = await plusEntitlements(u.id);
+      if (!access.canCustomizeProfile)
+        throw new ApiError('Витрина доступна с AniMonster Plus', 403);
+      const animeIds: number[] = Array.isArray(b.anime_ids)
+        ? Array.from(
+            new Set<number>(
+              b.anime_ids
+                .map(Number)
+                .filter((id: number) => Number.isInteger(id) && id > 0),
+            ),
+          ).slice(0, 5)
+        : [];
+      const characterIds: string[] = Array.isArray(b.character_ids)
+        ? Array.from(new Set<string>(b.character_ids.map(String))).slice(0, 5)
+        : [];
+      await db().batch([
+        db()
+          .prepare('DELETE FROM profile_anime_showcase WHERE user_id=?')
+          .bind(u.id),
+        ...animeIds.map((id: number, position: number) =>
+          db()
+            .prepare(
+              'INSERT INTO profile_anime_showcase(user_id,anime_id,position) VALUES (?,?,?)',
+            )
+            .bind(u.id, id, position),
+        ),
+        db()
+          .prepare('DELETE FROM profile_character_showcase WHERE user_id=?')
+          .bind(u.id),
+        ...characterIds.map((id: string, position: number) =>
+          db()
+            .prepare(
+              'INSERT INTO profile_character_showcase(user_id,character_id,position) SELECT ?,id,? FROM characters WHERE id=? AND active=1',
+            )
+            .bind(u.id, position, id),
+        ),
+      ]);
+      return json({ ok: true });
     }
     if (action === 'list_delete') {
       const id = String(b.id || '');
@@ -551,6 +721,42 @@ export async function POST(r: Request) {
           .run();
       }
       return json({ ok: true });
+    }
+    if (action === 'reaction') {
+      const id = String(b.id || ''),
+        reaction = String(b.reaction || '');
+      if (!reactions.includes(reaction))
+        throw new ApiError('Неизвестная реакция');
+      const comment = await db()
+        .prepare('SELECT 1 FROM comments WHERE id=? AND deleted=0')
+        .bind(id)
+        .first();
+      if (!comment) throw new ApiError('Комментарий не найден', 404);
+      const existing = await db()
+        .prepare(
+          'SELECT 1 FROM comment_reactions WHERE comment_id=? AND user_id=? AND reaction=?',
+        )
+        .bind(id, u.id, reaction)
+        .first();
+      if (existing) {
+        await db()
+          .prepare(
+            'DELETE FROM comment_reactions WHERE comment_id=? AND user_id=? AND reaction=?',
+          )
+          .bind(id, u.id, reaction)
+          .run();
+        return json({ ok: true, active: false });
+      }
+      const access = await plusEntitlements(u.id);
+      if (!access.canReact)
+        throw new ApiError('Фирменные реакции доступны с AniMonster Plus', 403);
+      await db()
+        .prepare(
+          'INSERT INTO comment_reactions(comment_id,user_id,reaction,created_at) VALUES (?,?,?,?)',
+        )
+        .bind(id, u.id, reaction, now())
+        .run();
+      return json({ ok: true, active: true });
     }
     if (action === 'block') {
       const target = String(b.id || '');
