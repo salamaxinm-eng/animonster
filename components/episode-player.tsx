@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import type { Episode, SkipSegment, Voiceover } from '@/lib/anime';
@@ -61,6 +61,9 @@ export function EpisodePlayer({
   const frame = useRef<HTMLIFrameElement>(null);
   const resumed = useRef('');
   const wakeLock = useRef<WakeLockSentinel | null>(null);
+  const wakeLockRequesting = useRef(false);
+  const wakeLockRetry = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const playbackActiveRef = useRef(false);
   const community = useCommunity(),
     { user } = community;
   const skippedSegment = useRef('');
@@ -94,43 +97,89 @@ export function EpisodePlayer({
     }
     setPreferenceReady(true);
   }, [community.loaded, user?.id, user?.auto_skip_segments]);
-  useEffect(() => {
-    let cancelled = false;
-    const acquire = async () => {
+  const requestWakeLock = useCallback(async () => {
+    if (
+      !playbackActiveRef.current ||
+      document.visibilityState !== 'visible' ||
+      wakeLock.current ||
+      wakeLockRequesting.current ||
+      !('wakeLock' in navigator)
+    )
+      return;
+    if (wakeLockRetry.current) {
+      clearTimeout(wakeLockRetry.current);
+      wakeLockRetry.current = null;
+    }
+    wakeLockRequesting.current = true;
+    try {
+      const sentinel = await navigator.wakeLock.request('screen');
       if (
-        !playbackActive ||
-        document.visibilityState !== 'visible' ||
-        wakeLock.current ||
-        !('wakeLock' in navigator)
-      )
+        !playbackActiveRef.current ||
+        document.visibilityState !== 'visible'
+      ) {
+        await sentinel.release();
         return;
-      try {
-        const sentinel = await navigator.wakeLock.request('screen');
-        if (cancelled || !playbackActive) {
-          await sentinel.release();
-          return;
-        }
-        wakeLock.current = sentinel;
-        sentinel.addEventListener('release', () => {
-          if (wakeLock.current === sentinel) wakeLock.current = null;
-        });
-      } catch {
-        // Power-saving settings and older browsers may reject the request.
       }
+      wakeLock.current = sentinel;
+      sentinel.addEventListener('release', () => {
+        if (wakeLock.current === sentinel) wakeLock.current = null;
+        if (playbackActiveRef.current && document.visibilityState === 'visible')
+          wakeLockRetry.current = setTimeout(() => {
+            void requestWakeLock();
+          }, 500);
+      });
+    } catch {
+      if (playbackActiveRef.current && document.visibilityState === 'visible')
+        wakeLockRetry.current = setTimeout(() => {
+          void requestWakeLock();
+        }, 5000);
+    } finally {
+      wakeLockRequesting.current = false;
+    }
+  }, []);
+  const setPlayback = useCallback(
+    (active: boolean) => {
+      playbackActiveRef.current = active;
+      setPlaybackActive(active);
+      if (active) void requestWakeLock();
+      else {
+        if (wakeLockRetry.current) clearTimeout(wakeLockRetry.current);
+        wakeLockRetry.current = null;
+        const sentinel = wakeLock.current;
+        wakeLock.current = null;
+        void sentinel?.release();
+      }
+    },
+    [requestWakeLock],
+  );
+  useEffect(() => {
+    const restore = () => {
+      if (document.visibilityState === 'visible') void requestWakeLock();
     };
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') void acquire();
-    };
-    if (playbackActive) void acquire();
-    document.addEventListener('visibilitychange', onVisibilityChange);
+    const element = video.current;
+    document.addEventListener('visibilitychange', restore);
+    document.addEventListener('fullscreenchange', restore);
+    window.addEventListener('pageshow', restore);
+    element?.addEventListener('webkitbeginfullscreen', restore);
+    element?.addEventListener('webkitendfullscreen', restore);
     return () => {
-      cancelled = true;
-      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('visibilitychange', restore);
+      document.removeEventListener('fullscreenchange', restore);
+      window.removeEventListener('pageshow', restore);
+      element?.removeEventListener('webkitbeginfullscreen', restore);
+      element?.removeEventListener('webkitendfullscreen', restore);
+    };
+  }, [episode?.id, isKodik, requestWakeLock]);
+  useEffect(
+    () => () => {
+      playbackActiveRef.current = false;
+      if (wakeLockRetry.current) clearTimeout(wakeLockRetry.current);
       const sentinel = wakeLock.current;
       wakeLock.current = null;
       void sentinel?.release();
-    };
-  }, [playbackActive]);
+    },
+    [],
+  );
   useEffect(() => {
     if (!animeId || !episode) return;
     let token = '',
@@ -260,9 +309,9 @@ export function EpisodePlayer({
       const delta = next - lastPosition;
       if (delta > 0 && delta < 10) {
         seconds += delta;
-        setPlaybackActive(true);
+        setPlayback(true);
         clearTimeout(idleTimer);
-        idleTimer = setTimeout(() => setPlaybackActive(false), 12_000);
+        idleTimer = setTimeout(() => setPlayback(false), 12_000);
       }
       position = next;
       lastPosition = next;
@@ -276,11 +325,11 @@ export function EpisodePlayer({
       cancelled = true;
       clearInterval(timer);
       clearTimeout(idleTimer);
-      setPlaybackActive(false);
+      setPlayback(false);
       window.removeEventListener('message', receive);
       window.removeEventListener('pagehide', flush);
     };
-  }, [animeId, episode?.id, user?.id, isKodik, voiceoverId]);
+  }, [animeId, episode?.id, user?.id, isKodik, voiceoverId, setPlayback]);
   const stream = episode
     ? (quality === '1080'
         ? episode.hls_1080
@@ -466,9 +515,9 @@ export function EpisodePlayer({
             controls
             playsInline
             preload="metadata"
-            onPlay={() => setPlaybackActive(true)}
-            onPlaying={() => setPlaybackActive(true)}
-            onPause={() => setPlaybackActive(false)}
+            onPlay={() => setPlayback(true)}
+            onPlaying={() => setPlayback(true)}
+            onPause={() => setPlayback(false)}
             onTimeUpdate={(event) =>
               setCurrentTime(event.currentTarget.currentTime)
             }
@@ -487,11 +536,11 @@ export function EpisodePlayer({
               }
             }}
             onEnded={() => {
-              setPlaybackActive(false);
+              setPlayback(false);
               if (index < episodes.length - 1) setIndex(index + 1);
             }}
             onError={() => {
-              setPlaybackActive(false);
+              setPlayback(false);
               setError('Не удалось воспроизвести видео. Обновите источник.');
             }}
             aria-label={'Серия ' + episode?.ordinal}
