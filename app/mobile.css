@@ -657,8 +657,9 @@
   }
 
   .title-playback {
-    margin-left: -18px;
-    margin-right: -18px;
+    width: 100%;
+    min-width: 0;
+    margin: 32px 0;
   }
 
   .title-playback > h2,
@@ -666,26 +667,41 @@
   .title-playback > [role='alert'],
   .title-playback .episode-toolbar,
   .title-page > [data-comments] {
-    margin-left: 18px;
-    margin-right: 18px;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   .title-playback .player,
   .title-playback video,
   .title-playback iframe {
     width: 100%;
-    border-radius: 0;
   }
 
   .title-playback .player {
-    height: min(56.25vw, 190px);
-    aspect-ratio: auto;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid #ffffff12;
+    border-radius: 10px;
   }
 
   .title-playback .player video,
   .title-playback .player iframe {
     height: 100%;
+    border-radius: inherit;
     object-fit: contain;
+  }
+
+  .title-playback .episode-view,
+  .title-playback .episode-toolbar {
+    min-width: 0;
+  }
+
+  .title-playback .source-note {
+    margin-left: 0;
+    margin-right: 0;
+    overflow-wrap: anywhere;
   }
 
   .skip-segment-button {
