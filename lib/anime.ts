@@ -19,10 +19,16 @@ export type SkipSegment = {
   start: number;
   stop: number;
 };
-export const posterUrl = (a: Anime) =>
-  a.image.original.startsWith('https://')
-    ? a.image.original
-    : 'https://shikimori.one' + a.image.original;
+export function proxyImageUrl(source?: string) {
+  if (!source) return '';
+  if (source.startsWith('/') && !source.startsWith('//')) return source;
+  const absolute = source.startsWith('https://')
+    ? source
+    : 'https://shikimori.one' + source;
+  return '/api/image?url=' + encodeURIComponent(absolute);
+}
+
+export const posterUrl = (anime: Anime) => proxyImageUrl(anime.image.original);
 export type Episode = {
   id: string;
   ordinal: number;

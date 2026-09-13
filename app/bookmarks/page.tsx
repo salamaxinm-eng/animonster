@@ -8,6 +8,7 @@ import {
   useCommunity,
 } from '@/components/community/context';
 import type { CollectionList, Entry } from '@/lib/community';
+import { proxyImageUrl } from '@/lib/anime';
 
 type BookmarkTab = 'later' | 'lists' | 'history';
 type HistoryEntry = {
@@ -124,7 +125,10 @@ export default function BookmarksPage() {
                 >
                   {entry.anime?.image?.original ? (
                     <span className="bookmark-history-poster">
-                      <img src={entry.anime.image.original} alt="" />
+                      <img
+                        src={proxyImageUrl(entry.anime.image.original)}
+                        alt=""
+                      />
                     </span>
                   ) : (
                     <div className="bookmark-placeholder">
@@ -169,7 +173,7 @@ export default function BookmarksPage() {
               shown.map((entry) => (
                 <article className="bookmark-row" key={entry.anime_id}>
                   <a href={`/anime/${entry.anime_id}`}>
-                    <img src={entry.image} alt={entry.title} />
+                    <img src={proxyImageUrl(entry.image)} alt={entry.title} />
                   </a>
                   <div>
                     <a href={`/anime/${entry.anime_id}`}>

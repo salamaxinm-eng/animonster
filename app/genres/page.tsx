@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { CommunityHeader } from '@/components/community/context';
 import { MobileCatalogTabs } from '@/components/mobile-catalog-tabs';
+import { proxyImageUrl } from '@/lib/anime';
 import { LIBERTY } from '@/lib/server/anime';
 import { genreList, type Genre } from '@/lib/server/library';
 
@@ -100,7 +101,7 @@ function imageUrl(genre: Genre) {
     genre.image?.preview ||
     genre.image?.optimized?.thumbnail ||
     genre.image?.thumbnail;
-  return path ? new URL(path, LIBERTY).href : '';
+  return path ? proxyImageUrl(new URL(path, LIBERTY).href) : '';
 }
 
 export default async function GenresPage() {

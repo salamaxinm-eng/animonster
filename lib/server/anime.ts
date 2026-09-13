@@ -31,6 +31,7 @@ export async function liberty(path: string) {
     try {
       const r = await fetch(LIBERTY + '/api/v1' + path, {
         signal: AbortSignal.timeout(12000),
+        next: { revalidate: 300 },
       });
       if (!r.ok) {
         lastError = `HTTP ${r.status}`;

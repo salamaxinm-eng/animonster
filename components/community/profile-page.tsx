@@ -28,6 +28,7 @@ import {
   type Entry,
   type CollectionList,
 } from '@/lib/community';
+import { proxyImageUrl } from '@/lib/anime';
 export function ProfilePage({
   id,
   initialTab = 'wall',
@@ -469,7 +470,7 @@ export function ProfilePage({
                           .filter((e) => e.favorite)
                           .map((e) => (
                             <a href={'/?anime=' + e.anime_id} key={e.anime_id}>
-                              <img src={e.image} alt={e.title} />
+                              <img src={proxyImageUrl(e.image)} alt={e.title} />
                               <span>{e.title}</span>
                             </a>
                           ))}
@@ -522,7 +523,7 @@ export function ProfilePage({
                     shown.map((e) => (
                       <div className="collection-entry" key={e.anime_id}>
                         <a href={'/?anime=' + e.anime_id}>
-                          <img src={e.image} alt={e.title} />
+                          <img src={proxyImageUrl(e.image)} alt={e.title} />
                         </a>
                         <div className="collection-entry-info">
                           <a href={'/?anime=' + e.anime_id}>{e.title}</a>
