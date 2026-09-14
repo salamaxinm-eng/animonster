@@ -124,7 +124,12 @@ function normalizeKodikAnime(
   const data = item.material_data;
   const russian = String(data?.anime_title || data?.title || item.title || '').trim();
   const name = String(data?.title_en || item.title_orig || russian).trim();
-  const poster = String(data?.poster_url || current?.image?.original || '').trim();
+  const poster = String(
+  data?.anime_poster_url ||
+    data?.poster_url ||
+    current?.image?.original ||
+    '',
+).trim();
   if (!russian || !name || !poster || !/^https:\/\//i.test(poster)) return null;
   const providers = [...new Set(['kodik', ...(current?.providers || [])])] as (
     | 'kodik'
