@@ -47,8 +47,8 @@ export async function GET(r: Request) {
         email_verification_required: emailVerificationEnabled(),
         payments_ready:
           runtime().PAYMENTS_ENABLED === 'true' &&
-          !!runtime().YOOKASSA_SHOP_ID &&
-          !!runtime().YOOKASSA_SECRET_KEY,
+          !!runtime().PLATEGA_MERCHANT_ID &&
+          !!runtime().PLATEGA_SECRET_KEY,
         support_url: runtime().TELEGRAM_URL || null,
       });
     if (action === 'profile') {

@@ -21,7 +21,9 @@ export default function RootLayout({
             <span>© AniMonster</span>
             <nav>
               <a href="/legal/privacy">Конфиденциальность</a>
-              <a href="/legal/terms">Условия</a>
+              <a href="/legal/terms">Пользовательское соглашение</a>
+              <a href="/legal/prices">Цены и тарифы</a>
+              <a href="/legal/support">Поддержка</a>
               <a href="/legal/rules">Правила</a>
               <a href="/legal/offer">Оферта</a>
               <a href="/legal/requisites">Реквизиты</a>

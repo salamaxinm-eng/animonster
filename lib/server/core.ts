@@ -8,9 +8,8 @@ export type Runtime = {
   SITE_URL?: string;
   OWNER_PREVIEW?: string;
   PAYMENTS_ENABLED?: string;
-  YOOKASSA_SHOP_ID?: string;
-  YOOKASSA_SECRET_KEY?: string;
-  YOOKASSA_ALLOW_TEST?: string;
+  PLATEGA_MERCHANT_ID?: string;
+  PLATEGA_SECRET_KEY?: string;
   KODIK_API_TOKEN?: string;
   ANILIBERTY_API_URL?: string;
   RECOMMENDATION_CRON_SECRET?: string;

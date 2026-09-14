@@ -1,60 +1,77 @@
 import { db, runtime, ApiError, now } from './core';
 import { PLUS_DURATION_MS, PLUS_PRICE } from './plus';
+
+type PlategaTransaction = {
+  id?: string;
+  transactionId?: string;
+  status?: string;
+  amount?: number;
+  currency?: string;
+  paymentDetails?: { amount?: number | string; currency?: string };
+  payload?: string;
+  externalId?: string;
+};
+
 export async function paymentFetch(path: string, init: RequestInit = {}) {
   const e = runtime();
   if (
     e.PAYMENTS_ENABLED !== 'true' ||
-    !e.YOOKASSA_SHOP_ID ||
-    !e.YOOKASSA_SECRET_KEY
+    !e.PLATEGA_MERCHANT_ID ||
+    !e.PLATEGA_SECRET_KEY
   )
     throw new ApiError(
       'Оплата пока не подключена. Деньги не списываются.',
       503,
     );
-  const r = await fetch('https://api.yookassa.ru/v3/' + path, {
+  const r = await fetch('https://app.platega.io/' + path.replace(/^\/+/, ''), {
     ...init,
     headers: {
-      Authorization:
-        'Basic ' + btoa(e.YOOKASSA_SHOP_ID + ':' + e.YOOKASSA_SECRET_KEY),
+      'X-MerchantId': e.PLATEGA_MERCHANT_ID,
+      'X-Secret': e.PLATEGA_SECRET_KEY,
       'Content-Type': 'application/json',
       ...init.headers,
     },
     signal: AbortSignal.timeout(15000),
   });
-  if (!r.ok) throw new ApiError('Платёжный сервис временно недоступен', 502);
-  return (await r.json()) as {
-    id: string;
-    status: string;
-    paid: boolean;
-    test?: boolean;
-    amount: { value: string; currency: string };
-    metadata?: { order_id?: string; user_id?: string };
-    confirmation?: { confirmation_url?: string; confirmation_token?: string };
-  };
+  if (!r.ok) {
+    console.error('Platega API error', r.status);
+    throw new ApiError('Платёжный сервис временно недоступен', 502);
+  }
+  return (await r.json()) as PlategaTransaction;
 }
+
 export async function verifyPayment(providerId: string) {
-  if (!/^[a-zA-Z0-9-]{10,80}$/.test(providerId))
+  if (!/^[a-zA-Z0-9-]{10,100}$/.test(providerId))
     throw new ApiError('Некорректный платёж');
-  const p = await paymentFetch('payments/' + providerId);
+  const p = await paymentFetch('transaction/' + encodeURIComponent(providerId));
+  const paymentId = p.id || p.transactionId;
+  const orderId = p.payload || p.externalId || '';
+  const amount = Number(p.paymentDetails?.amount ?? p.amount);
+  const currency = p.paymentDetails?.currency || p.currency;
   const order = await db()
-    .prepare('SELECT * FROM orders WHERE id=?')
-    .bind(p.metadata?.order_id || '')
-    .first<{ id: string; user_id: string; provider_id: string | null }>();
+    .prepare('SELECT * FROM orders WHERE id=? AND provider=?')
+    .bind(orderId, 'platega')
+    .first<{
+      id: string;
+      user_id: string;
+      provider: string;
+      provider_id: string | null;
+    }>();
   if (
     !order ||
-    p.metadata?.user_id !== order.user_id ||
-    p.amount.value !== PLUS_PRICE ||
-    p.amount.currency !== 'RUB' ||
-    (p.test && runtime().YOOKASSA_ALLOW_TEST !== 'true')
+    !paymentId ||
+    paymentId !== providerId ||
+    amount !== Number(PLUS_PRICE) ||
+    currency !== 'RUB'
   )
     throw new ApiError('Платёж не подтверждён', 400);
-  if (order.provider_id && order.provider_id !== p.id)
+  if (order.provider_id && order.provider_id !== paymentId)
     throw new ApiError('Платёж не совпадает', 400);
-  if (p.status === 'succeeded' && p.paid) {
+  if (p.status === 'CONFIRMED') {
     await db().batch([
       db()
         .prepare('UPDATE orders SET status=?,provider_id=? WHERE id=?')
-        .bind('succeeded', p.id, order.id),
+        .bind('succeeded', paymentId, order.id),
       db()
         .prepare(
           'INSERT OR IGNORE INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=? AND revoked_at IS NULL),0))+?',
@@ -68,11 +85,22 @@ export async function verifyPayment(providerId: string) {
           PLUS_DURATION_MS,
         ),
     ]);
-  } else if (p.status === 'canceled') {
-    await db()
-      .prepare('UPDATE orders SET status=? WHERE id=?')
-      .bind('canceled', order.id)
-      .run();
+  } else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED') {
+    const status = p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled';
+    await db().batch([
+      db()
+        .prepare('UPDATE orders SET status=? WHERE id=?')
+        .bind(status, order.id),
+      ...(p.status === 'CHARGEBACKED'
+        ? [
+            db()
+              .prepare(
+                'UPDATE grants SET revoked_at=? WHERE order_id=? AND revoked_at IS NULL',
+              )
+              .bind(now(), order.id),
+          ]
+        : []),
+    ]);
   }
-  return p.status;
+  return p.status?.toLowerCase() || 'unknown';
 }

@@ -36,6 +36,10 @@
 успешный запуск воркера пометит уже известные серии как бесплатные. После этого
 флаг можно переключить на `true` и перезапустить контейнер приложения.
 
-Платежи остаются выключенными при `PAYMENTS_ENABLED=false`. Для тестового
-магазина нужны реквизиты ЮKassa и `YOOKASSA_ALLOW_TEST=true`; перед боевым
-запуском значение возвращается в `false`.
+Платежи остаются выключенными при `PAYMENTS_ENABLED=false`. После подключения
+Platega получите `MerchantId` и API-ключ в личном кабинете, добавьте их в
+`.env.production` как `PLATEGA_MERCHANT_ID` и `PLATEGA_SECRET_KEY`, укажите
+`https://animonster.su/api/payments/webhook` в Platega → Настройки → Callback URLs,
+затем установите `PAYMENTS_ENABLED=true` и пересоздайте приложение. Callback
+принимается только с корректными заголовками Platega; подтверждение Plus
+дополнительно проверяется запросом статуса транзакции к API Platega.

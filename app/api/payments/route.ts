@@ -25,55 +25,56 @@ export async function POST(r: Request) {
     if (b.action === 'check') {
       const order = await db()
         .prepare(
-          'SELECT provider_id FROM orders WHERE user_id=? AND provider_id IS NOT NULL ORDER BY created_at DESC LIMIT 1',
+          'SELECT provider_id FROM orders WHERE provider=? AND user_id=? AND provider_id IS NOT NULL ORDER BY created_at DESC LIMIT 1',
         )
-        .bind(u.id)
+        .bind('platega', u.id)
         .first<{ provider_id: string }>();
       if (!order) return json({ status: 'not_found' });
       return json({ status: await verifyPayment(order.provider_id) });
     }
     if (
       runtime().PAYMENTS_ENABLED !== 'true' ||
-      !runtime().YOOKASSA_SHOP_ID ||
-      !runtime().YOOKASSA_SECRET_KEY
+      !runtime().PLATEGA_MERCHANT_ID ||
+      !runtime().PLATEGA_SECRET_KEY
     )
       throw new ApiError(
         'Оплата пока не подключена. Деньги не списываются.',
         503,
       );
-    const existing = await db()
+    // Platega does not document an idempotency header for transaction creation.
+    // Give each checkout a distinct order so independent successful payments
+    // are never collapsed into one order/grant.
+    const id = uid();
+    await db()
       .prepare(
-        'SELECT id FROM orders WHERE user_id=? AND status=? AND created_at>? ORDER BY created_at DESC LIMIT 1',
+        'INSERT INTO orders(id,user_id,created_at,provider) VALUES (?,?,?,?)',
       )
-      .bind(u.id, 'pending', now() - 3600000)
-      .first<{ id: string }>();
-    const id = existing?.id || uid();
-    if (!existing)
-      await db()
-        .prepare('INSERT INTO orders(id,user_id,created_at) VALUES (?,?,?)')
-        .bind(id, u.id, now())
-        .run();
-    const p = await paymentFetch('payments', {
+      .bind(id, u.id, now(), 'platega')
+      .run();
+    const p = await paymentFetch('v2/transaction/process', {
       method: 'POST',
-      headers: { 'Idempotence-Key': id },
       body: JSON.stringify({
-        amount: { value: PLUS_PRICE, currency: 'RUB' },
-        capture: true,
-        confirmation: {
-          type: 'redirect',
-          return_url: `${runtime().SITE_URL || new URL(r.url).origin}/profile?payment=return`,
+        paymentDetails: {
+          amount: Number(PLUS_PRICE),
+          currency: 'RUB',
         },
         description: 'AniMonster Plus — 1 месяц',
-        metadata: { order_id: id, user_id: u.id },
+        return: `${runtime().SITE_URL || new URL(r.url).origin}/pins?payment=return`,
+        failedUrl: `${runtime().SITE_URL || new URL(r.url).origin}/pins?payment=failed`,
+        payload: id,
+        metadata: { userId: u.id },
       }),
     });
+    const providerId = p.transactionId || p.id;
     await db()
       .prepare('UPDATE orders SET provider_id=? WHERE id=?')
-      .bind(p.id, id)
+      .bind(providerId || null, id)
       .run();
-    if (!p.confirmation?.confirmation_url)
+    const paymentUrl = (p as typeof p & { url?: string; redirect?: string }).url ||
+      (p as typeof p & { redirect?: string }).redirect;
+    if (!providerId || !paymentUrl)
       throw new ApiError('Не получена ссылка на оплату', 502);
-    return json({ confirmation_url: p.confirmation.confirmation_url });
+    return json({ url: paymentUrl });
   } catch (e) {
     return fail(e);
   }

@@ -2982,6 +2982,50 @@ button:disabled {
   line-height: 1.6;
   color: #99a6b5;
 }
+
+.platega-review-label {
+  display: inline-flex;
+  align-items: center;
+  margin: 8px 0;
+  padding: 5px 10px;
+  border: 1px dashed #8cd92f;
+  border-radius: 999px;
+  color: #b9f176;
+  background: #8cd92f12;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.payment-doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.payment-doc-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 7px 12px;
+  border: 1px solid #ffffff1f;
+  border-radius: 9px;
+  color: #c7d1df;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.payment-doc-links a:hover,
+.payment-doc-links a:focus-visible {
+  border-color: #a0e542;
+  color: #b9f176;
+}
+
+@media (max-width: 767px) {
+  .payment-doc-links a {
+    min-height: 44px;
+  }
+}
 .profile-editor-heading {
   display: flex;
   align-items: center;

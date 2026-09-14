@@ -92,8 +92,18 @@ export default function PinsPage() {
             <div className="subscription-price">
               89 ₽ <span>/ месяц</span>
             </div>
+            <p className="platega-review-label" role="note">
+              Platega test
+            </p>
+            <nav className="payment-doc-links" aria-label="Документы и условия оплаты">
+              <a href="/legal/prices">Цены и тарифы</a>
+              <a href="/legal/offer">Публичная оферта</a>
+              <a href="/legal/terms">Пользовательское соглашение</a>
+              <a href="/legal/privacy">Политика конфиденциальности</a>
+              <a href="/legal/support">Поддержка</a>
+            </nav>
             <p className="billing-note">
-              Один месяц доступа ко всей коллекции. Продление вручную, без
+              30 дней доступа ко всей коллекции. Продление вручную, без
               автоматических списаний.
             </p>
             {c.user?.premium_until ? (

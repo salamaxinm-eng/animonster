@@ -39,7 +39,7 @@ export function BuySubscription({
       }
       if (!response.ok)
         throw new Error(result.error || 'Не удалось создать платёж');
-      window.location.assign(result.confirmation_url);
+      window.location.assign(result.url);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : 'Не удалось создать платёж',
@@ -74,6 +74,9 @@ export function BuySubscription({
             </div>
             <p>Без автосписаний. Продлеваешь, когда захочешь.</p>
           </div>
+          <span className="platega-review-label" role="note">
+            Platega test
+          </span>
           <ul className="plus-benefits">
             {[
               {
@@ -137,6 +140,18 @@ export function BuySubscription({
             </label>
             <a href="/legal/requisites" target="_blank" rel="noreferrer">
               Реквизиты продавца ↗
+            </a>
+            <a href="/legal/privacy" target="_blank" rel="noreferrer">
+              Политика конфиденциальности ↗
+            </a>
+            <a href="/legal/terms" target="_blank" rel="noreferrer">
+              Пользовательское соглашение ↗
+            </a>
+            <a href="/legal/prices" target="_blank" rel="noreferrer">
+              Цены и тарифы ↗
+            </a>
+            <a href="/legal/support" target="_blank" rel="noreferrer">
+              Поддержка ↗
             </a>
           </div>
           <button
