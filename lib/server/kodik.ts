@@ -8,7 +8,6 @@ export type KodikMaterialData = {
   description?: string;
   anime_description?: string;
   poster_url?: string;
-  anime_poster_url?: string;
   duration?: number;
   anime_kind?: string;
   anime_status?: 'anons' | 'ongoing' | 'released';
