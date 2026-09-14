@@ -106,7 +106,8 @@ export function normalize(r: Release): Anime {
   return {
     id: r.shikimori?.id || 100000000 + r.id,
     release_id: r.id,
-    mal_id: r.mal?.id || r.shikimori?.id,
+    shikimori_id: r.shikimori?.id,
+    mal_id: r.mal?.id,
     russian: r.name.main,
     name: r.name.english || r.name.main,
     image: { original: new URL(r.poster.src, LIBERTY).href },

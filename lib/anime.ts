@@ -1,6 +1,7 @@
 export type Anime = {
   id: number;
   release_id?: number;
+  shikimori_id?: number;
   mal_id?: number;
   name: string;
   russian: string;

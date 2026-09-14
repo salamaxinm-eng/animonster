@@ -1902,6 +1902,34 @@ button:disabled {
 .genre-links a:hover {
   border-color: #b4ed50;
 }
+.anime-themes {
+  margin-top: 18px;
+}
+.anime-themes h2 {
+  margin: 0 0 9px;
+  color: #9ba8b9;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.anime-themes ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.anime-themes li {
+  padding: 6px 11px;
+  border: 1px solid #344051;
+  border-radius: 999px;
+  background: #141b24;
+  color: #c3cfdd;
+  font-size: 12px;
+  line-height: 1.35;
+}
 .title-playback {
   margin: 35px 0;
 }

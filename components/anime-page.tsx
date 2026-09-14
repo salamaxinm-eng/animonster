@@ -16,6 +16,7 @@ import {
 } from '@/lib/anime';
 import { Button } from '@/components/ui/button';
 import { EpisodeNotifications } from '@/components/episode-notifications';
+import { AnimeThemes } from '@/components/anime-themes';
 import {
   Dialog,
   DialogContent,
@@ -112,6 +113,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
                 </a>
               ))}
             </div>
+            <AnimeThemes animeId={anime.id} />
             <p className="title-description">
               {anime.description?.replace(/<[^>]*>/g, '')}
             </p>
