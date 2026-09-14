@@ -91,26 +91,21 @@ export async function GET(request: Request) {
         'adult_confirmation_required',
       );
 
-  const kodik = await kodikVoiceovers(
-  anime,
-  process.env.SITE_URL || 'https://animonster.su',
-);
-
-const kodikCount = Math.max(
-  0,
-  ...kodik.voiceovers.map((voiceover) => voiceover.episodes),
-);
-
-const cachedEpisodes = (() => {
-  try {
-    return JSON.parse(cached?.episodes || '[]') as {
-      ordinal: number;
-      duration: number;
-    }[];
-  } catch {
-    return [];
-  }
-})();
+    const kodik = await kodikVoiceovers(anime, new URL(request.url).origin);
+    const kodikCount = Math.max(
+      0,
+      ...kodik.voiceovers.map((voiceover) => voiceover.episodes),
+    );
+    const cachedEpisodes = (() => {
+      try {
+        return JSON.parse(cached?.episodes || '[]') as {
+          ordinal: number;
+          duration: number;
+        }[];
+      } catch {
+        return [];
+      }
+    })();
     const nativeByOrdinal = new Map(
       nativeEpisodes.map((episode) => [episode.ordinal, episode]),
     );
