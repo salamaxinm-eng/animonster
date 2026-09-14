@@ -16,6 +16,7 @@ import {
 } from '@/lib/server/core';
 import { dashboard } from '@/lib/server/admin';
 import { validSegment } from '@/lib/server/skip-times';
+import { linkQueuedKodik, runKodikSync } from '@/lib/server/kodik-sync';
 
 async function moderator(r: Request) {
   const user = await viewer(r);
@@ -51,6 +52,9 @@ export async function GET(r: Request) {
       characters,
       telegramQueue,
       episodeAccess,
+      kodikState,
+      kodikQueue,
+      kodikCounts,
       payments,
       plusState,
     ] = await Promise.all([
@@ -111,6 +115,22 @@ export async function GET(r: Request) {
         .bind(now())
         .first(),
       db()
+        .prepare("SELECT * FROM provider_sync_state WHERE provider='kodik'")
+        .first(),
+      db()
+        .prepare(
+          "SELECT source_id,title,title_orig,year,kind,reason,updated_at FROM kodik_match_queue WHERE status='pending' ORDER BY updated_at DESC LIMIT 100",
+        )
+        .all(),
+      db()
+        .prepare(
+          `SELECT count(DISTINCT anime_id) AS imported,
+           count(DISTINCT anime_id) FILTER (WHERE (SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id) ? 'aniliberty') AS merged,
+           count(DISTINCT anime_id) FILTER (WHERE NOT ((SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id) ? 'aniliberty')) AS kodik_only
+           FROM anime_sources WHERE provider='kodik' AND active=1`,
+        )
+        .first(),
+      db()
         .prepare(
           `SELECT g.order_id AS id,COALESCE(o.status,'manual') AS status,g.starts_at AS created_at,g.user_id,u.nick,g.expires,g.created_by,g.reason
              FROM grants g JOIN users u ON u.id=g.user_id LEFT JOIN orders o ON o.id=g.order_id
@@ -140,6 +160,11 @@ export async function GET(r: Request) {
       payments: payments.results,
       plus_state: plusState,
       plus_early_access_enabled: runtime().PLUS_EARLY_ACCESS_ENABLED === 'true',
+      kodik_sync_enabled: runtime().KODIK_SYNC_ENABLED === 'true',
+      kodik_catalog_enabled: runtime().KODIK_CATALOG_ENABLED === 'true',
+      kodik_state: kodikState,
+      kodik_queue: kodikQueue.results,
+      kodik_counts: kodikCounts,
     });
   } catch (e) {
     return fail(e);
@@ -373,6 +398,46 @@ export async function POST(r: Request) {
         undefined,
         '',
         JSON.stringify({ id }),
+      );
+      return json({ ok: true });
+    }
+    if (action === 'kodik_sync') {
+      const result = await runKodikSync(
+        Math.max(1, Math.min(5, Number(b.pages) || 1)),
+      );
+      await audit(actor.id, 'kodik.sync', undefined, '', JSON.stringify(result));
+      return json(result);
+    }
+    if (action === 'kodik_match_link') {
+      const sourceId = String(b.source_id || '').slice(0, 200);
+      const animeId = Number(b.anime_id);
+      if (!sourceId || !Number.isInteger(animeId) || animeId < 1)
+        throw new ApiError('Укажите материал Kodik и Shikimori ID');
+      const result = await linkQueuedKodik(sourceId, animeId);
+      await audit(
+        actor.id,
+        'kodik.match.link',
+        undefined,
+        '',
+        JSON.stringify({ source_id: sourceId, anime_id: animeId }),
+      );
+      return json({ ok: true, ...result });
+    }
+    if (action === 'kodik_match_reject') {
+      const sourceId = String(b.source_id || '').slice(0, 200);
+      const updated = await db()
+        .prepare(
+          "UPDATE kodik_match_queue SET status='rejected',updated_at=? WHERE source_id=? AND status='pending' RETURNING source_id",
+        )
+        .bind(now(), sourceId)
+        .first();
+      if (!updated) throw new ApiError('Материал не найден', 404);
+      await audit(
+        actor.id,
+        'kodik.match.reject',
+        undefined,
+        '',
+        JSON.stringify({ source_id: sourceId }),
       );
       return json({ ok: true });
     }

@@ -16,6 +16,9 @@ export type Anime = {
   age_rating?: string;
   is_adult?: boolean;
   reason?: string;
+  primary_provider?: 'kodik' | 'aniliberty';
+  providers?: ('kodik' | 'aniliberty')[];
+  status?: 'anons' | 'ongoing' | 'released' | '';
 };
 export type SkipSegment = {
   start: number;
@@ -51,4 +54,5 @@ export type Voiceover = {
   provider: 'aniliberty' | 'kodik';
   episodes: number;
   player_url?: string;
+  translation_type?: 'voice' | 'subtitles';
 };

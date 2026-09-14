@@ -54,20 +54,25 @@ export async function GET(request: Request) {
     const search = p.get('q') || '';
     const genreName = p.get('genre') || '';
     const kind = p.get('kind') === 'movie' ? 'movie' : '';
+    const status = p.get('kind') === 'ongoing' ? 'ongoing' : '';
+    const databaseCatalog = process.env.KODIK_CATALOG_ENABLED === 'true';
     const cacheFirst =
       !search && sort === 'rating' && p.get('kind') !== 'ongoing' && page <= 20;
-    if (cacheFirst) {
+    if (databaseCatalog || cacheFirst) {
       const cached = await cachedCatalogPage({
         genre: genreName,
         kind,
+        status,
+        sort: sort === 'fresh' || sort === 'year' ? sort : 'rating',
         limit: 24,
         offset: (page - 1) * 24,
+        query: search,
       });
-      if (cached.items.length) {
+      if (databaseCatalog || cached.items.length) {
         return Response.json(compactAnime(cached.items), {
           headers: {
             'Cache-Control': 'public, max-age=30, stale-while-revalidate=600',
-            'X-Data-Source': 'cache',
+            'X-Data-Source': databaseCatalog ? 'kodik-catalog' : 'cache',
             'X-Total-Count': String(cached.total),
             'X-Total-Pages': String(Math.max(1, Math.ceil(cached.total / 24))),
           },

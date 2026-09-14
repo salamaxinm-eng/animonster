@@ -11,6 +11,8 @@ export type Runtime = {
   PLATEGA_MERCHANT_ID?: string;
   PLATEGA_SECRET_KEY?: string;
   KODIK_API_TOKEN?: string;
+  KODIK_SYNC_ENABLED?: string;
+  KODIK_CATALOG_ENABLED?: string;
   ANILIBERTY_API_URL?: string;
   RECOMMENDATION_CRON_SECRET?: string;
   UNISENDER_API_KEY?: string;

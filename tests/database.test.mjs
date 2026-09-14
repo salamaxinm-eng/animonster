@@ -313,6 +313,49 @@ test('Plus episode availability and reactions are idempotent', async () => {
   await databaseClient.close();
 });
 
+test('Kodik sources preserve one canonical episode access clock', async () => {
+  const databaseClient = await database();
+  const timestamp = Date.now();
+  const anime = {
+    id: 5114,
+    russian: 'Стальной алхимик',
+    name: 'Fullmetal Alchemist',
+    image: { original: 'https://shikimori.one/poster.jpg' },
+    score: '9.1',
+    kind: 'tv',
+    episodes: 64,
+    aired_on: '2009',
+    genres: ['Экшен'],
+    providers: ['kodik'],
+    primary_provider: 'kodik',
+  };
+  await databaseClient.query(
+    `INSERT INTO anime_cache(id,data,episodes,updated_at,primary_provider,search_text,kind_index,status_index,year_index,score_index,genres_index)
+     VALUES ($1,$2,$3,$4,'kodik',$5,'tv','released',2009,9.1,$6)`,
+    [5114, JSON.stringify(anime), '[]', timestamp, 'стальной алхимик fullmetal alchemist', JSON.stringify(['Экшен'])],
+  );
+  await databaseClient.query(
+    `INSERT INTO anime_sources(provider,source_id,anime_id,shikimori_id,translation_id,translation_title,translation_type,player_url,episodes_count,last_seen_at)
+     VALUES ('kodik','source-1',$1,$1,77,'Тест','voice','https://kodik.info/video/1',64,$2)`,
+    [5114, timestamp],
+  );
+  await databaseClient.query(
+    'INSERT INTO anime_episode_availability(anime_id,episode,first_seen_at,free_at) VALUES ($1,1,$2,$3) ON CONFLICT DO NOTHING',
+    [5114, timestamp, timestamp + 4 * 3600000],
+  );
+  await databaseClient.query(
+    'INSERT INTO anime_episode_availability(anime_id,episode,first_seen_at,free_at) VALUES ($1,1,$2,$2) ON CONFLICT DO NOTHING',
+    [5114, timestamp + 1000],
+  );
+  const rows = await databaseClient.query(
+    'SELECT first_seen_at,free_at FROM anime_episode_availability WHERE anime_id=$1 AND episode=1',
+    [5114],
+  );
+  assert.equal(Number(rows[0].first_seen_at), timestamp);
+  assert.equal(Number(rows[0].free_at), timestamp + 4 * 3600000);
+  await databaseClient.close();
+});
+
 test('free custom-list slots cannot exceed the server limit under concurrency', async () => {
   const databaseClient = await database();
   const userId = crypto.randomUUID();

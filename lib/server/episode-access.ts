@@ -20,13 +20,18 @@ export async function bootstrapEpisodes() {
     try {
       episodes = JSON.parse(String(row.episodes));
     } catch {}
-    return episodes.map((episode) =>
+    return episodes.flatMap((episode) => [
       db()
         .prepare(
           "INSERT INTO episode_availability(anime_id,provider,episode,first_seen_at,free_at) VALUES (?,'aniliberty',?,?,?) ON CONFLICT DO NOTHING",
         )
         .bind(Number(row.id), Number(episode.ordinal), timestamp, timestamp),
-    );
+      db()
+        .prepare(
+          'INSERT INTO anime_episode_availability(anime_id,episode,first_seen_at,free_at) VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
+        )
+        .bind(Number(row.id), Number(episode.ordinal), timestamp, timestamp),
+    ]);
   });
   statements.push(
     db()
@@ -43,27 +48,35 @@ export async function syncEpisodeAccess(
   animeId: number,
   provider: string,
   ordinals: number[],
+  baseline = false,
 ) {
   const timestamp = now(),
     initialized = await earlyAccessInitialized();
   const delay =
-    runtime().PLUS_EARLY_ACCESS_ENABLED === 'true' && initialized
+    !baseline && runtime().PLUS_EARLY_ACCESS_ENABLED === 'true' && initialized
       ? FREE_EPISODE_DELAY_MS
       : 0;
-  await db().batch(
-    ordinals.map((episode) =>
+  await db().batch([
+    ...ordinals.map((episode) =>
       db()
         .prepare(
           'INSERT INTO episode_availability(anime_id,provider,episode,first_seen_at,free_at) VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING',
         )
         .bind(animeId, provider, episode, timestamp, timestamp + delay),
     ),
-  );
+    ...ordinals.map((episode) =>
+      db()
+        .prepare(
+          'INSERT INTO anime_episode_availability(anime_id,episode,first_seen_at,free_at) VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
+        )
+        .bind(animeId, episode, timestamp, timestamp + delay),
+    ),
+  ]);
   const rows = await db()
     .prepare(
-      'SELECT episode,first_seen_at,free_at FROM episode_availability WHERE anime_id=? AND provider=?',
+      'SELECT episode,first_seen_at,free_at FROM anime_episode_availability WHERE anime_id=?',
     )
-    .bind(animeId, provider)
+    .bind(animeId)
     .all();
   return new Map(
     rows.results.map((row: any) => [

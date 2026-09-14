@@ -49,7 +49,9 @@ export async function POST(r: Request) {
 
     if (b.action === 'start') {
       const id = Number(b.anime_id),
-        ep = Number(b.episode);
+        ep = Number(b.episode),
+        provider = b.provider === 'kodik' ? 'kodik' : 'aniliberty',
+        voiceover = String(b.voiceover || provider).slice(0, 120);
 
       if (!Number.isInteger(id) || id < 1 || !Number.isInteger(ep) || ep < 1) {
         throw new ApiError('Некорректная серия');
@@ -79,7 +81,7 @@ export async function POST(r: Request) {
 
         db()
           .prepare(
-            'INSERT INTO watch_sessions(token,actor,user_id,anime_id,episode,duration,last_at,expires) VALUES (?,?,?,?,?,?,?,?)',
+            'INSERT INTO watch_sessions(token,actor,user_id,anime_id,episode,duration,last_at,expires,provider,voiceover) VALUES (?,?,?,?,?,?,?,?,?,?)',
           )
           .bind(
             token,
@@ -90,6 +92,8 @@ export async function POST(r: Request) {
             episode.duration,
             n,
             n + 14400000,
+            provider,
+            voiceover,
           ),
       ]);
       if (a.user) await markRecommendationsDirty(a.user.id, n);
@@ -118,6 +122,8 @@ export async function POST(r: Request) {
         last_at: number;
         watched: number;
         user_id: string | null;
+        provider: string;
+        voiceover: string;
       }>();
 
     if (!s) {
@@ -169,12 +175,13 @@ export async function POST(r: Request) {
       stmts.push(
         db()
           .prepare(
-            'INSERT INTO history(user_id,anime_id,episode,position,duration,watched_seconds,completed,updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO UPDATE SET position=excluded.position,watched_seconds=LEAST(history.duration,history.watched_seconds+excluded.watched_seconds),completed=GREATEST(history.completed,CASE WHEN history.watched_seconds+excluded.watched_seconds>=? THEN 1 ELSE 0 END),updated_at=excluded.updated_at',
+            'INSERT INTO history(user_id,anime_id,episode,voiceover,position,duration,watched_seconds,completed,updated_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO UPDATE SET voiceover=excluded.voiceover,position=excluded.position,watched_seconds=LEAST(history.duration,history.watched_seconds+excluded.watched_seconds),completed=GREATEST(history.completed,CASE WHEN history.watched_seconds+excluded.watched_seconds>=? THEN 1 ELSE 0 END),updated_at=excluded.updated_at',
           )
           .bind(
             a.user.id,
             s.anime_id,
             s.episode,
+            s.voiceover || s.provider,
             position,
             s.duration,
             delta,

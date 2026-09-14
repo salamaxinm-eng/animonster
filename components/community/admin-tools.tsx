@@ -131,6 +131,15 @@ export function AdminTools() {
     });
     element.reset();
   }
+  async function linkKodik(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    await mutate({
+      action: 'kodik_match_link',
+      source_id: form.get('source_id'),
+      anime_id: form.get('anime_id'),
+    });
+  }
   return (
     <div className="admin-tools">
       {data.invite_required && (
@@ -302,6 +311,104 @@ export function AdminTools() {
               'ru-RU',
             )}
           </p>
+        )}
+      </section>
+      <section className="social-panel">
+        <h2>Каталог Kodik</h2>
+        <p>
+          Синхронизация:{' '}
+          <strong>{data.kodik_sync_enabled ? 'включена' : 'выключена'}</strong>
+          {' · '}публикация каталога:{' '}
+          <strong>{data.kodik_catalog_enabled ? 'включена' : 'выключена'}</strong>
+        </p>
+        <div className="dashboard-cards compact">
+          <div>
+            <strong>{Number(data.kodik_counts?.imported || 0)}</strong>
+            <span>тайтлов Kodik</span>
+          </div>
+          <div>
+            <strong>{Number(data.kodik_counts?.merged || 0)}</strong>
+            <span>объединено</span>
+          </div>
+          <div>
+            <strong>{Number(data.kodik_counts?.kodik_only || 0)}</strong>
+            <span>только Kodik</span>
+          </div>
+          <div>
+            <strong>{Number(data.kodik_state?.skipped || 0)}</strong>
+            <span>пропущено</span>
+          </div>
+        </div>
+        <p className="muted">
+          Этап: {data.kodik_state?.phase || 'не запускался'} · курсор:{' '}
+          {data.kodik_state?.cursor ? 'сохранён' : 'нет'}
+          {data.kodik_state?.last_success_at
+            ? ` · успешно ${new Date(Number(data.kodik_state.last_success_at)).toLocaleString('ru-RU')}`
+            : ''}
+        </p>
+        {data.kodik_state?.last_error && (
+          <p className="error-msg">{data.kodik_state.last_error}</p>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => void mutate({ action: 'kodik_sync', pages: 1 })}
+        >
+          Повторить синхронизацию
+        </Button>
+        {!!data.kodik_queue?.length && (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Материал</th>
+                  <th>Причина</th>
+                  <th>Связать</th>
+                  <th aria-label="Действия" />
+                </tr>
+              </thead>
+              <tbody>
+                {data.kodik_queue.map((item: any) => (
+                  <tr key={item.source_id}>
+                    <td>
+                      {item.title || item.title_orig}
+                      <small>
+                        {item.year || '—'} · {item.kind || '—'} · {item.source_id}
+                      </small>
+                    </td>
+                    <td>{item.reason}</td>
+                    <td>
+                      <form className="admin-inline-form" onSubmit={linkKodik}>
+                        <input type="hidden" name="source_id" value={item.source_id} />
+                        <Input
+                          name="anime_id"
+                          type="number"
+                          min={1}
+                          placeholder="Shikimori ID"
+                          required
+                        />
+                        <Button size="sm" type="submit">Связать</Button>
+                      </form>
+                    </td>
+                    <td>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void mutate({
+                            action: 'kodik_match_reject',
+                            source_id: item.source_id,
+                          })
+                        }
+                      >
+                        Отклонить
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
       <section className="social-panel">

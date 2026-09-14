@@ -1,10 +1,11 @@
-import { db, now, premium, runtime } from './core';
+import { db, now, runtime } from './core';
 import {
   bootstrapEpisodes,
   earlyAccessInitialized,
   syncEpisodeAccess,
 } from './episode-access';
 import { liberty, normalize, type Release } from './anime';
+import { queueEpisodeNotifications } from './episode-notifications';
 
 async function telegram(chatId: number, text: string) {
   const response = await fetch(
@@ -77,37 +78,13 @@ export async function runPlusWorker(limit = 20) {
         'aniliberty',
         ordinals,
       );
-      for (const episode of ordinals.filter((number) => !known.has(number))) {
-        discovered++;
-        const subscribers = await db()
-          .prepare(
-            `SELECT s.user_id,s.title,s.created_at FROM telegram_subscriptions s
-           WHERE s.anime_id=? AND (
-             EXISTS(SELECT 1 FROM grants g WHERE g.user_id=s.user_id AND g.revoked_at IS NULL AND g.expires>?)
-             OR (SELECT count(*) FROM telegram_subscriptions earlier
-                 WHERE earlier.user_id=s.user_id AND
-                 (earlier.created_at<s.created_at OR (earlier.created_at=s.created_at AND earlier.anime_id<=s.anime_id)))<=3
-           )`,
-          )
-          .bind(normalized.id, now())
-          .all();
-        for (const subscriber of subscribers.results as any[]) {
-          const plus = await premium(subscriber.user_id),
-            availableAt = plus ? now() : access.get(episode)?.freeAt || now();
-          await db()
-            .prepare(`INSERT INTO telegram_deliveries(id,user_id,anime_id,episode,available_at,next_attempt_at)
-            VALUES (?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO NOTHING`)
-            .bind(
-              crypto.randomUUID(),
-              subscriber.user_id,
-              normalized.id,
-              episode,
-              availableAt,
-              availableAt,
-            )
-            .run();
-        }
-      }
+      const newEpisodes = ordinals.filter((number) => !known.has(number));
+      discovered += newEpisodes.length;
+      await queueEpisodeNotifications(
+        normalized.id,
+        newEpisodes,
+        access,
+      );
     } catch (error) {
       scanFailed++;
       console.error(

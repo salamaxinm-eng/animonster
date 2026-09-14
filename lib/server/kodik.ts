@@ -1,7 +1,27 @@
 import type { Anime, Voiceover } from '@/lib/anime';
-import { runtime } from '@/lib/server/core';
+import { db, now, runtime } from '@/lib/server/core';
 
-type KodikResult = {
+export type KodikMaterialData = {
+  title?: string;
+  anime_title?: string;
+  title_en?: string;
+  description?: string;
+  anime_description?: string;
+  poster_url?: string;
+  duration?: number;
+  anime_kind?: string;
+  anime_status?: 'anons' | 'ongoing' | 'released';
+  year?: number;
+  anime_genres?: string[];
+  genres?: string[];
+  shikimori_rating?: number;
+  minimal_age?: number;
+  rating_mpaa?: string;
+  episodes_total?: number;
+  episodes_aired?: number;
+};
+
+export type KodikResult = {
   id?: string;
   link?: string;
   title?: string;
@@ -9,29 +29,49 @@ type KodikResult = {
   year?: number;
   shikimori_id?: string | number;
   episodes_count?: number;
+  last_episode?: number;
   camrip?: boolean;
+  caprip?: boolean;
   blocked_countries?: string[];
+  updated_at?: string;
+  type?: string;
   translation?: { id?: number; title?: string; type?: string };
+  seasons?: Record<
+    string,
+    {
+      link?: string;
+      episodes?: Record<string, string | { link?: string }>;
+    }
+  >;
+  material_data?: KodikMaterialData;
 };
 
 type KodikResponse = {
   results?: KodikResult[];
+  total?: number;
+  next_page?: string | null;
 };
 
-const PLAYER_HOSTS = [
+export const KODIK_PLAYER_HOSTS = [
   'kodik.info',
   'kodik.biz',
   'kodikres.com',
   'kodikplayer.com',
   'kodikonline.com',
+  'kodik.cc',
+  'aniqit.com',
 ];
 
-function safePlayerUrl(raw: string) {
+export function safeKodikPlayerUrl(raw: string) {
   try {
     const url = new URL(raw.startsWith('//') ? 'https:' + raw : raw);
     if (url.protocol !== 'https:') return;
     const host = url.hostname.toLowerCase();
-    if (!PLAYER_HOSTS.some((x) => host === x || host.endsWith('.' + x)))
+    if (
+      !KODIK_PLAYER_HOSTS.some(
+        (allowed) => host === allowed || host.endsWith('.' + allowed),
+      )
+    )
       return;
     url.hash = '';
     return url.href;
@@ -40,12 +80,101 @@ function safePlayerUrl(raw: string) {
   }
 }
 
-const comparable = (value: string) =>
+export const comparable = (value: string) =>
   value
     .toLocaleLowerCase('ru')
     .replace(/ё/g, 'е')
     .replace(/[^a-zа-я0-9]+/gi, ' ')
     .trim();
+
+async function providerHealth(
+  status: 'ok' | 'error',
+  latency: number,
+  error?: string,
+) {
+  try {
+    await db()
+      .prepare(
+        'INSERT INTO provider_health(provider,status,latency_ms,error,checked_at) VALUES (?,?,?,?,?) ON CONFLICT(provider) DO UPDATE SET status=excluded.status,latency_ms=excluded.latency_ms,error=excluded.error,checked_at=excluded.checked_at',
+      )
+      .bind('kodik', status, latency, error || null, now())
+      .run();
+  } catch {}
+}
+
+export async function kodikRequest(
+  path: 'list' | 'search',
+  params: URLSearchParams,
+): Promise<KodikResponse> {
+  const token = runtime().KODIK_API_TOKEN?.trim();
+  if (!token) throw new Error('Kodik token is not configured');
+  params.set('token', token);
+  const started = performance.now();
+  try {
+    const response = await fetch(`https://kodik-api.com/${path}?${params}`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(15_000),
+      cache: 'no-store',
+    });
+    if (!response.ok) throw new Error(`Kodik HTTP ${response.status}`);
+    const result = (await response.json()) as KodikResponse;
+    void providerHealth('ok', Math.round(performance.now() - started));
+    return result;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'unknown';
+    void providerHealth('error', Math.round(performance.now() - started), message);
+    throw new Error(message);
+  }
+}
+
+export function safeKodikCursor(nextPage?: string | null) {
+  if (!nextPage) return null;
+  try {
+    const url = new URL(nextPage);
+    if (url.protocol !== 'https:' || url.hostname !== 'kodik-api.com') return null;
+    const cursor = url.searchParams.get('next');
+    return cursor && cursor.length <= 500 ? cursor : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function kodikCatalogPage(
+  cursor?: string | null,
+  order: 'asc' | 'desc' = 'asc',
+) {
+  const params = new URLSearchParams({
+    types: 'anime,anime-serial',
+    limit: '100',
+    sort: 'updated_at',
+    order,
+    with_material_data: 'true',
+    not_blocked_in: 'RU',
+    not_blocked_for_me: 'true',
+  });
+  if (cursor) params.set('next', cursor);
+  const response = await kodikRequest('list', params);
+  return {
+    results: response.results || [],
+    total: Number(response.total || 0),
+    cursor: safeKodikCursor(response.next_page),
+  };
+}
+
+export function allowedKodikResult(item: KodikResult) {
+  const translationType = item.translation?.type;
+  return (
+    (item.type === 'anime' || item.type === 'anime-serial') &&
+    (translationType === 'voice' || translationType === 'subtitles') &&
+    !item.camrip &&
+    !item.caprip &&
+    !item.blocked_countries?.some((country) =>
+      ['RU', 'RUS'].includes(country.toUpperCase()),
+    ) &&
+    !!item.link &&
+    !!safeKodikPlayerUrl(item.link)
+  );
+}
 
 export function normalizeKodikVoiceovers(
   results: KodikResult[],
@@ -55,7 +184,7 @@ export function normalizeKodikVoiceovers(
   for (const item of results) {
     const translation = item.translation;
     const title = translation?.title?.trim();
-    const player = item.link ? safePlayerUrl(item.link) : undefined;
+    const player = item.link ? safeKodikPlayerUrl(item.link) : undefined;
     const remoteId = Number(item.shikimori_id);
     const exactId = anime.id < 100000000;
     const exactFallbackTitle = [item.title, item.title_orig]
@@ -66,13 +195,9 @@ export function normalizeKodikVoiceovers(
           comparable(String(value)) === comparable(anime.name),
       );
     if (
-      translation?.type !== 'voice' ||
+      !allowedKodikResult(item) ||
       !title ||
       !player ||
-      item.camrip ||
-      item.blocked_countries?.some((country) =>
-        ['RU', 'RUS'].includes(country.toUpperCase()),
-      ) ||
       (exactId && remoteId !== anime.id) ||
       (!exactId &&
         (!exactFallbackTitle ||
@@ -80,12 +205,17 @@ export function normalizeKodikVoiceovers(
       /anilibr(?:ia|ity)/i.test(title)
     )
       continue;
-    const id = String(translation.id || comparable(title));
+    const type = translation?.type === 'subtitles' ? 'subtitles' : 'voice';
+    const id = `${type}:${translation?.id || comparable(title)}`;
     const next: Voiceover = {
       id: 'kodik:' + id,
-      title,
+      title: type === 'subtitles' ? `Субтитры · ${title}` : title,
       provider: 'kodik',
-      episodes: Math.max(1, Number(item.episodes_count) || anime.episodes || 1),
+      translation_type: type,
+      episodes: Math.max(
+        1,
+        Number(item.episodes_count || item.last_episode) || anime.episodes || 1,
+      ),
       player_url: player,
     };
     const current = byTranslation.get(id);
@@ -93,41 +223,143 @@ export function normalizeKodikVoiceovers(
       byTranslation.set(id, next);
   }
   return [...byTranslation.values()]
-    .sort((a, b) => b.episodes - a.episodes || a.title.localeCompare(b.title, 'ru'))
-    .slice(0, 30);
+    .sort(
+      (a, b) =>
+        Number(a.translation_type === 'subtitles') -
+          Number(b.translation_type === 'subtitles') ||
+        b.episodes - a.episodes ||
+        a.title.localeCompare(b.title, 'ru'),
+    )
+    .slice(0, 40);
 }
 
-export async function kodikVoiceovers(anime: Anime): Promise<{
+export async function rememberKodikSources(animeId: number, results: KodikResult[]) {
+  const timestamp = now();
+  const valid = results.filter(allowedKodikResult);
+  if (!valid.length) return;
+  await db().batch(
+    valid.map((item) =>
+      db()
+        .prepare(
+          `INSERT INTO anime_sources(provider,source_id,anime_id,shikimori_id,translation_id,translation_title,translation_type,player_url,episodes_count,payload,provider_updated_at,last_seen_at,active)
+           VALUES ('kodik',?,?,?,?,?,?,?,?,?,?,?,1)
+           ON CONFLICT(provider,source_id) DO UPDATE SET anime_id=excluded.anime_id,shikimori_id=excluded.shikimori_id,
+           translation_id=excluded.translation_id,translation_title=excluded.translation_title,translation_type=excluded.translation_type,
+           player_url=excluded.player_url,episodes_count=excluded.episodes_count,payload=excluded.payload,
+           provider_updated_at=excluded.provider_updated_at,last_seen_at=excluded.last_seen_at,active=1`,
+        )
+        .bind(
+          String(item.id || `${animeId}:${item.translation?.id || 0}`),
+          animeId,
+          Number(item.shikimori_id) || null,
+          Number(item.translation?.id) || null,
+          String(item.translation?.title || ''),
+          item.translation?.type === 'subtitles' ? 'subtitles' : 'voice',
+          safeKodikPlayerUrl(item.link || '') || null,
+          Math.max(1, Number(item.episodes_count || item.last_episode) || 1),
+          JSON.stringify(item),
+          Date.parse(item.updated_at || '') || timestamp,
+          timestamp,
+        ),
+    ),
+  );
+  const episodeLinks = valid.flatMap((item) => {
+    const translationId = Number(item.translation?.id);
+    if (!Number.isInteger(translationId) || translationId < 1) return [];
+    return Object.values(item.seasons || {}).flatMap((season) =>
+      Object.entries(season.episodes || {}).flatMap(([key, value]) => {
+        const episode = Number(key);
+        const raw = typeof value === 'string' ? value : value.link || '';
+        const player = safeKodikPlayerUrl(raw);
+        return Number.isInteger(episode) && episode > 0 && player
+          ? [{ translationId, episode, player }]
+          : [];
+      }),
+    );
+  });
+  if (episodeLinks.length)
+    await db().batch(
+      episodeLinks.slice(0, 5000).map((episode) =>
+        db()
+          .prepare(
+            `INSERT INTO kodik_episode_links(anime_id,translation_id,episode,player_url,updated_at)
+             VALUES (?,?,?,?,?) ON CONFLICT(anime_id,translation_id,episode) DO UPDATE SET
+             player_url=excluded.player_url,updated_at=excluded.updated_at`,
+          )
+          .bind(
+            animeId,
+            episode.translationId,
+            episode.episode,
+            episode.player,
+            timestamp,
+          ),
+      ),
+    );
+}
+
+async function storedKodikResults(animeId: number) {
+  const rows = await db()
+    .prepare(
+      "SELECT payload FROM anime_sources WHERE provider='kodik' AND anime_id=? AND active=1 ORDER BY translation_type,episodes_count DESC,translation_title",
+    )
+    .bind(animeId)
+    .all<{ payload: string }>();
+  return rows.results.flatMap((row) => {
+    try {
+      return [JSON.parse(row.payload) as KodikResult];
+    } catch {
+      return [];
+    }
+  });
+}
+
+export async function kodikVoiceovers(
+  anime: Anime,
+  origin?: string,
+): Promise<{
   voiceovers: Voiceover[];
   status: 'ready' | 'disabled' | 'unavailable';
 }> {
   const token = runtime().KODIK_API_TOKEN?.trim();
   if (!token) return { voiceovers: [], status: 'disabled' };
+  let results = await storedKodikResults(anime.id);
   try {
     const params = new URLSearchParams({
-      token,
       types: 'anime,anime-serial',
-      translation_type: 'voice',
       with_episodes: 'true',
+      with_seasons: 'true',
+      with_material_data: 'true',
       limit: '100',
-      not_blocked_for_me: 'true',
+      not_blocked_in: 'RU',
     });
-    if (anime.id < 100000000) params.set('shikimori_id', String(anime.id));
+    if (anime.shikimori_id || anime.id < 100000000)
+      params.set('shikimori_id', String(anime.shikimori_id || anime.id));
     else params.set('title', anime.name || anime.russian);
-    const response = await fetch('https://kodik-api.com/search?' + params, {
-      signal: AbortSignal.timeout(10000),
-    });
-    if (!response.ok) throw Error('Kodik returned ' + response.status);
-    const data = (await response.json()) as KodikResponse;
-    return {
-      voiceovers: normalizeKodikVoiceovers(data.results || [], anime),
-      status: 'ready',
-    };
+    const data = await kodikRequest('search', params);
+    if (data.results?.length) {
+      results = data.results;
+      await rememberKodikSources(anime.id, results);
+    }
   } catch (error) {
-    console.error(
-      'Kodik request failed',
-      error instanceof Error ? error.message : 'unknown',
-    );
-    return { voiceovers: [], status: 'unavailable' };
+    if (!results.length) {
+      console.error(
+        'Kodik request failed',
+        error instanceof Error ? error.message : 'unknown',
+      );
+      return { voiceovers: [], status: 'unavailable' };
+    }
   }
+  const voiceovers = normalizeKodikVoiceovers(results, anime).map((voiceover) => {
+    const translation = voiceover.id.split(':').at(-1) || '';
+    return {
+      ...voiceover,
+      player_url: origin
+        ? new URL(
+            `/api/kodik/player?anime_id=${anime.id}&translation=${encodeURIComponent(translation)}`,
+            origin,
+          ).href
+        : voiceover.player_url,
+    };
+  });
+  return { voiceovers, status: 'ready' };
 }

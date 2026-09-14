@@ -44,7 +44,7 @@ export function EpisodePlayer({
       ),
     ),
     [quality, setQuality] = useState('720'),
-    [voiceoverId, setVoiceoverId] = useState('aniliberty'),
+    [voiceoverId, setVoiceoverId] = useState(() => voiceovers[0]?.id || 'aniliberty'),
     [error, setError] = useState(''),
     [playbackActive, setPlaybackActive] = useState(false),
     [currentTime, setCurrentTime] = useState(0),
@@ -195,6 +195,8 @@ export function EpisodePlayer({
         action: 'start',
         anime_id: animeId,
         episode: episode.ordinal,
+        provider: 'aniliberty',
+        voiceover: voiceover?.id || 'aniliberty',
       }),
     })
       .then((r) => r.json())
@@ -238,7 +240,7 @@ export function EpisodePlayer({
       el?.removeEventListener('ended', flush);
       window.removeEventListener('pagehide', flush);
     };
-  }, [animeId, episode?.id, user?.id, isKodik]);
+  }, [animeId, episode?.id, user?.id, isKodik, voiceover?.id]);
 
   useEffect(() => {
     if (!animeId || !episode || !isKodik) return;
@@ -256,6 +258,8 @@ export function EpisodePlayer({
         action: 'start',
         anime_id: animeId,
         episode: episode.ordinal,
+        provider: 'kodik',
+        voiceover: voiceover?.id || 'kodik',
       }),
     })
       .then((r) => r.json())
@@ -281,6 +285,22 @@ export function EpisodePlayer({
     };
     const receive = (event: MessageEvent) => {
       if (event.source !== frame.current?.contentWindow) return;
+      try {
+        const host = new URL(event.origin).hostname.toLowerCase();
+        const allowed = [
+          'kodik.info',
+          'kodik.biz',
+          'kodikres.com',
+          'kodikplayer.com',
+          'kodikonline.com',
+          'kodik.cc',
+          'aniqit.com',
+        ];
+        if (!allowed.some((item) => host === item || host.endsWith('.' + item)))
+          return;
+      } catch {
+        return;
+      }
       let payload = event.data;
       if (typeof payload === 'string') {
         try {
@@ -505,6 +525,16 @@ export function EpisodePlayer({
               referrerPolicy="origin"
               allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
               allowFullScreen
+              onError={() => {
+                const fallback = voiceovers.find(
+                  (item) => item.provider === 'aniliberty',
+                );
+                if (fallback) setVoiceoverId(fallback.id);
+                else
+                  setError(
+                    'Kodik временно недоступен. Повторите загрузку плеера.',
+                  );
+              }}
             />
           ) : (
             <p>Эта озвучка временно недоступна.</p>

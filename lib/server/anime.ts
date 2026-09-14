@@ -18,6 +18,7 @@ export type Release = {
   shikimori?: { id: number; rating: number };
   mal?: { id: number; rating?: number };
   type: { value: string };
+  publish_status?: { value?: string } | string;
   year: number;
   episodes_total: number;
   description: string;
@@ -103,6 +104,10 @@ export async function findRelease(id: number): Promise<Release | undefined> {
   return candidates.find((release) => release.shikimori?.id === id);
 }
 export function normalize(r: Release): Anime {
+  const publishStatus =
+    typeof r.publish_status === 'string'
+      ? r.publish_status
+      : r.publish_status?.value;
   return {
     id: r.shikimori?.id || 100000000 + r.id,
     release_id: r.id,
@@ -120,5 +125,15 @@ export function normalize(r: Release): Anime {
     popularity: r.added_in_users_favorites || 0,
     age_rating: r.age_rating?.label,
     is_adult: !!r.age_rating?.is_adult,
+    primary_provider: 'aniliberty',
+    providers: ['aniliberty'],
+    status:
+      publishStatus === 'IS_ONGOING'
+        ? 'ongoing'
+        : publishStatus === 'IS_NOT_YET_RELEASED'
+          ? 'anons'
+          : publishStatus
+            ? 'released'
+            : '',
   };
 }

@@ -54,7 +54,10 @@ function remember(url: string, image: CachedImage) {
 const allowedHost = (hostname: string) =>
   hostname === 'api.anilibria.app' ||
   hostname === 'shikimori.one' ||
-  hostname === 'desu.shikimori.one';
+  hostname === 'desu.shikimori.one' ||
+  hostname === 'st.kp.yandex.net' ||
+  hostname === 'avatars.mds.yandex.net' ||
+  hostname === 'image.openmoviedb.com';
 
 function safeImageUrl(value: string) {
   const url = new URL(value);
