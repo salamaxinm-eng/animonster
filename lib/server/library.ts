@@ -11,20 +11,36 @@ type CachedCatalogOptions = {
   genre?: string;
   kind?: string;
   limit?: number;
+  offset?: number;
   query?: string;
+};
+export type CachedCatalogPage = {
+  items: Anime[];
+  total: number;
 };
 
 export async function cachedCatalog({
   genre = '',
   kind = '',
   limit = 50,
+  offset = 0,
   query = '',
 }: CachedCatalogOptions = {}) {
+  return (await cachedCatalogPage({ genre, kind, limit, offset, query })).items;
+}
+
+export async function cachedCatalogPage({
+  genre = '',
+  kind = '',
+  limit = 50,
+  offset = 0,
+  query = '',
+}: CachedCatalogOptions = {}): Promise<CachedCatalogPage> {
   const rows = await db()
     .prepare('SELECT data FROM anime_cache ORDER BY updated_at DESC LIMIT 500')
     .all<{ data: string }>();
   const needle = query.trim().toLocaleLowerCase('ru-RU');
-  return rows.results
+  const items = rows.results
     .flatMap((row) => {
       try {
         return [JSON.parse(row.data) as Anime];
@@ -46,8 +62,14 @@ export async function cachedCatalog({
             .toLocaleLowerCase('ru-RU')
             .includes(needle)),
     )
-    .sort((left, right) => Number(right.score) - Number(left.score))
-    .slice(0, Math.max(1, limit));
+    .sort((left, right) => Number(right.score) - Number(left.score));
+  return {
+    items: items.slice(
+      Math.max(0, offset),
+      Math.max(0, offset) + Math.max(1, limit),
+    ),
+    total: items.length,
+  };
 }
 export async function rememberAnime(items: Anime[]) {
   if (!items.length) return;

@@ -3,7 +3,7 @@ import {
   getAnime,
   getAnimeByAlias,
   rememberAnime,
-  cachedCatalog,
+  cachedCatalogPage,
 } from '@/lib/server/library';
 import {
   liberty,
@@ -31,21 +31,47 @@ export async function GET(request: Request) {
       year: 'YEAR_DESC',
       rating: 'RATING_DESC',
     };
+    const page = Math.max(
+      1,
+      Math.min(10000, Math.floor(Number(p.get('page')) || 1)),
+    );
+    const sort = p.get('sort') || 'rating';
+    const search = p.get('q') || '';
+    const genreName = p.get('genre') || '';
+    const kind = p.get('kind') === 'movie' ? 'movie' : '';
+    const cacheFirst =
+      !search && sort === 'rating' && p.get('kind') !== 'ongoing' && page <= 20;
+    if (cacheFirst) {
+      const cached = await cachedCatalogPage({
+        genre: genreName,
+        kind,
+        limit: 24,
+        offset: (page - 1) * 24,
+      });
+      if (cached.items.length) {
+        return Response.json(compactAnime(cached.items), {
+          headers: {
+            'Cache-Control': 'public, max-age=30, stale-while-revalidate=600',
+            'X-Data-Source': 'cache',
+            'X-Total-Count': String(cached.total),
+            'X-Total-Pages': String(Math.max(1, Math.ceil(cached.total / 24))),
+          },
+        });
+      }
+    }
     const query = new URLSearchParams({
       limit: '24',
-      page: String(
-        Math.max(1, Math.min(10000, Math.floor(Number(p.get('page')) || 1))),
-      ),
-      'f[sorting]': sorting[p.get('sort') || ''] || 'RATING_DESC',
+      page: String(page),
+      'f[sorting]': sorting[sort] || 'RATING_DESC',
     });
-    if (p.get('q')) query.set('f[search]', p.get('q')!.slice(0, 100));
+    if (search) query.set('f[search]', search.slice(0, 100));
     if (p.get('kind') === 'movie') query.set('f[types]', 'MOVIE');
     if (p.get('kind') === 'ongoing')
       query.set('f[publish_statuses]', 'IS_ONGOING');
-    if (p.get('genre')) {
+    if (genreName) {
       const genres = await genreList();
       const genre = genres.find(
-        (g) => g.name.toLowerCase() === p.get('genre')!.toLowerCase(),
+        (g) => g.name.toLowerCase() === genreName.toLowerCase(),
       );
       if (!genre)
         return Response.json([], {
@@ -73,19 +99,19 @@ export async function GET(request: Request) {
     try {
       const page = Math.max(1, Math.floor(Number(p.get('page')) || 1));
       const kind = p.get('kind') === 'movie' ? 'movie' : '';
-      const cached = await cachedCatalog({
+      const cached = await cachedCatalogPage({
         genre: p.get('genre') || '',
         kind,
-        limit: 500,
+        limit: 24,
+        offset: (page - 1) * 24,
         query: p.get('q') || '',
       });
-      const offset = (page - 1) * 24;
-      return Response.json(compactAnime(cached.slice(offset, offset + 24)), {
+      return Response.json(compactAnime(cached.items), {
         headers: {
           'Cache-Control': 'public, max-age=30, stale-while-revalidate=300',
           'X-Data-Source': 'cache',
-          'X-Total-Count': String(cached.length),
-          'X-Total-Pages': String(Math.max(1, Math.ceil(cached.length / 24))),
+          'X-Total-Count': String(cached.total),
+          'X-Total-Pages': String(Math.max(1, Math.ceil(cached.total / 24))),
         },
       });
     } catch {

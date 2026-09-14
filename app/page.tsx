@@ -68,7 +68,6 @@ export default function Home() {
     }
     const controller = new AbortController();
     setCatalogLoading(true);
-    setItems([]);
     const timer = setTimeout(async () => {
       setApiStatus('Обновляем каталог…');
       try {

@@ -38,6 +38,7 @@ export const metadata = {
   title: 'Жанры аниме — AniMonster',
   description: 'Выберите жанр и найдите аниме под настроение.',
 };
+export const dynamic = 'force-dynamic';
 
 const order = [
   'Экшен',
