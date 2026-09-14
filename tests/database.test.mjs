@@ -347,27 +347,3 @@ test('free custom-list slots cannot exceed the server limit under concurrency', 
   assert.ok(Number(rows[0].count) <= 3);
   await databaseClient.close();
 });
-
-test('catalog page snapshots update cached items and pagination together', async () => {
-  const databaseClient = await database();
-  const key = JSON.stringify({ page: 1, kind: 'ongoing' });
-  await databaseClient.query(
-    'INSERT INTO catalog_page_cache(cache_key,data,total_count,total_pages,updated_at) VALUES ($1,$2,$3,$4,$5)',
-    [key, '[{"id":1}]', 24, 2, 100],
-  );
-  await databaseClient.query(
-    `INSERT INTO catalog_page_cache(cache_key,data,total_count,total_pages,updated_at)
-     VALUES ($1,$2,$3,$4,$5)
-     ON CONFLICT(cache_key) DO UPDATE SET data=excluded.data,total_count=excluded.total_count,total_pages=excluded.total_pages,updated_at=excluded.updated_at`,
-    [key, '[{"id":2}]', 25, 2, 200],
-  );
-  const [snapshot] = await databaseClient.query(
-    'SELECT data,total_count,total_pages,updated_at FROM catalog_page_cache WHERE cache_key=$1',
-    [key],
-  );
-  assert.deepEqual(JSON.parse(snapshot.data), [{ id: 2 }]);
-  assert.equal(Number(snapshot.total_count), 25);
-  assert.equal(Number(snapshot.total_pages), 2);
-  assert.equal(Number(snapshot.updated_at), 200);
-  await databaseClient.close();
-});

@@ -19,56 +19,6 @@ export type CachedCatalogPage = {
   total: number;
 };
 
-export type CatalogSnapshot = {
-  items: Anime[];
-  total: number;
-  pages: number;
-  updatedAt: number;
-};
-
-export async function getCatalogSnapshot(key: string) {
-  const row = await db()
-    .prepare(
-      'SELECT data,total_count,total_pages,updated_at FROM catalog_page_cache WHERE cache_key=?',
-    )
-    .bind(key)
-    .first<{
-      data: string;
-      total_count: number;
-      total_pages: number;
-      updated_at: number;
-    }>();
-  if (!row) return null;
-  try {
-    return {
-      items: JSON.parse(row.data) as Anime[],
-      total: row.total_count,
-      pages: row.total_pages,
-      updatedAt: row.updated_at,
-    } satisfies CatalogSnapshot;
-  } catch {
-    return null;
-  }
-}
-
-export async function saveCatalogSnapshot(
-  key: string,
-  snapshot: Omit<CatalogSnapshot, 'updatedAt'>,
-) {
-  await db()
-    .prepare(
-      'INSERT INTO catalog_page_cache(cache_key,data,total_count,total_pages,updated_at) VALUES (?,?,?,?,?) ON CONFLICT(cache_key) DO UPDATE SET data=excluded.data,total_count=excluded.total_count,total_pages=excluded.total_pages,updated_at=excluded.updated_at',
-    )
-    .bind(
-      key,
-      JSON.stringify(snapshot.items),
-      snapshot.total,
-      snapshot.pages,
-      now(),
-    )
-    .run();
-}
-
 export async function cachedCatalog({
   genre = '',
   kind = '',
