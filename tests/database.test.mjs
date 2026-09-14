@@ -332,7 +332,14 @@ test('Kodik sources preserve one canonical episode access clock', async () => {
   await databaseClient.query(
     `INSERT INTO anime_cache(id,data,episodes,updated_at,primary_provider,search_text,kind_index,status_index,year_index,score_index,genres_index)
      VALUES ($1,$2,$3,$4,'kodik',$5,'tv','released',2009,9.1,$6)`,
-    [5114, JSON.stringify(anime), '[]', timestamp, 'стальной алхимик fullmetal alchemist', JSON.stringify(['Экшен'])],
+    [
+      5114,
+      JSON.stringify(anime),
+      '[]',
+      timestamp,
+      'стальной алхимик fullmetal alchemist',
+      JSON.stringify(['Экшен']),
+    ],
   );
   await databaseClient.query(
     `INSERT INTO anime_sources(provider,source_id,anime_id,shikimori_id,translation_id,translation_title,translation_type,player_url,episodes_count,last_seen_at)
@@ -353,6 +360,75 @@ test('Kodik sources preserve one canonical episode access clock', async () => {
   );
   assert.equal(Number(rows[0].first_seen_at), timestamp);
   assert.equal(Number(rows[0].free_at), timestamp + 4 * 3600000);
+  await databaseClient.close();
+});
+
+test('Kodik repair migration retries missing posters and restores primary provider', async () => {
+  const databaseClient = await database();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    `INSERT INTO kodik_match_queue(source_id,title,reason,payload,status,updated_at)
+     VALUES ($1,$2,$3,$4,'pending',$5),($6,$7,$8,$9,'pending',$10)`,
+    [
+      'poster-retry',
+      'Poster retry',
+      'Недостаточно метаданных или отсутствует HTTPS-постер',
+      '{}',
+      timestamp,
+      'manual-review',
+      'Manual review',
+      'Нет однозначного совпадения Shikimori',
+      '{}',
+      timestamp,
+    ],
+  );
+  await databaseClient.query(
+    `INSERT INTO anime_cache(id,data,episodes,updated_at,primary_provider)
+     VALUES ($1,$2,'[]',$3,'aniliberty')`,
+    [
+      25,
+      JSON.stringify({
+        id: 25,
+        name: 'Fallback title',
+        primary_provider: 'aniliberty',
+        providers: ['aniliberty'],
+      }),
+      timestamp,
+    ],
+  );
+  await databaseClient.query(
+    `INSERT INTO anime_sources(provider,source_id,anime_id,last_seen_at)
+     VALUES ('kodik','primary-repair',$1,$2)`,
+    [25, timestamp],
+  );
+  const repairMigration = await fs.readFile(
+    'migrations/postgres/0012_repair_kodik_catalog.sql',
+    'utf8',
+  );
+  for (const statement of repairMigration.split(';').map((part) => part.trim()))
+    if (statement) await databaseClient.query(statement);
+  const rows = await databaseClient.query(
+    'SELECT source_id,reason FROM kodik_match_queue ORDER BY source_id',
+  );
+  assert.deepEqual(
+    rows.map((row) => [row.source_id, row.reason]),
+    [
+      ['manual-review', 'Нет однозначного совпадения Shikimori'],
+      ['poster-retry', 'Ожидает автоматического сопоставления'],
+    ],
+  );
+  const repaired = (
+    await databaseClient.query(
+      'SELECT data,primary_provider FROM anime_cache WHERE id=$1',
+      [25],
+    )
+  )[0];
+  assert.equal(repaired.primary_provider, 'kodik');
+  assert.equal(JSON.parse(repaired.data).primary_provider, 'kodik');
+  assert.deepEqual(JSON.parse(repaired.data).providers, [
+    'kodik',
+    'aniliberty',
+  ]);
   await databaseClient.close();
 });
 

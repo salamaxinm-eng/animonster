@@ -54,6 +54,7 @@ export async function GET(r: Request) {
       episodeAccess,
       kodikState,
       kodikQueue,
+      kodikQueueCounts,
       kodikCounts,
       payments,
       plusState,
@@ -124,6 +125,14 @@ export async function GET(r: Request) {
         .all(),
       db()
         .prepare(
+          `SELECT count(*) AS pending,
+           count(*) FILTER (WHERE reason='Ожидает автоматического сопоставления') AS automatic,
+           count(*) FILTER (WHERE reason<>'Ожидает автоматического сопоставления') AS manual
+           FROM kodik_match_queue WHERE status='pending'`,
+        )
+        .first(),
+      db()
+        .prepare(
           `SELECT count(DISTINCT anime_id) AS imported,
            count(DISTINCT anime_id) FILTER (WHERE (SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id) ? 'aniliberty') AS merged,
            count(DISTINCT anime_id) FILTER (WHERE NOT ((SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id) ? 'aniliberty')) AS kodik_only
@@ -164,6 +173,7 @@ export async function GET(r: Request) {
       kodik_catalog_enabled: runtime().KODIK_CATALOG_ENABLED === 'true',
       kodik_state: kodikState,
       kodik_queue: kodikQueue.results,
+      kodik_queue_counts: kodikQueueCounts,
       kodik_counts: kodikCounts,
     });
   } catch (e) {
@@ -405,7 +415,13 @@ export async function POST(r: Request) {
       const result = await runKodikSync(
         Math.max(1, Math.min(5, Number(b.pages) || 1)),
       );
-      await audit(actor.id, 'kodik.sync', undefined, '', JSON.stringify(result));
+      await audit(
+        actor.id,
+        'kodik.sync',
+        undefined,
+        '',
+        JSON.stringify(result),
+      );
       return json(result);
     }
     if (action === 'kodik_match_link') {

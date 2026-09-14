@@ -319,7 +319,9 @@ export function AdminTools() {
           Синхронизация:{' '}
           <strong>{data.kodik_sync_enabled ? 'включена' : 'выключена'}</strong>
           {' · '}публикация каталога:{' '}
-          <strong>{data.kodik_catalog_enabled ? 'включена' : 'выключена'}</strong>
+          <strong>
+            {data.kodik_catalog_enabled ? 'включена' : 'выключена'}
+          </strong>
         </p>
         <div className="dashboard-cards compact">
           <div>
@@ -338,9 +340,19 @@ export function AdminTools() {
             <strong>{Number(data.kodik_state?.skipped || 0)}</strong>
             <span>пропущено</span>
           </div>
+          <div>
+            <strong>{Number(data.kodik_queue_counts?.automatic || 0)}</strong>
+            <span>ждут автопроверки</span>
+          </div>
+          <div>
+            <strong>{Number(data.kodik_queue_counts?.manual || 0)}</strong>
+            <span>ждут решения</span>
+          </div>
         </div>
         <p className="muted">
-          Этап: {data.kodik_state?.phase || 'не запускался'} · курсор:{' '}
+          Полный импорт:{' '}
+          {data.kodik_state?.full_sync_complete ? 'завершён' : 'не завершён'} ·
+          этап: {data.kodik_state?.phase || 'не запускался'} · курсор:{' '}
           {data.kodik_state?.cursor ? 'сохранён' : 'нет'}
           {data.kodik_state?.last_success_at
             ? ` · успешно ${new Date(Number(data.kodik_state.last_success_at)).toLocaleString('ru-RU')}`
@@ -373,13 +385,18 @@ export function AdminTools() {
                     <td>
                       {item.title || item.title_orig}
                       <small>
-                        {item.year || '—'} · {item.kind || '—'} · {item.source_id}
+                        {item.year || '—'} · {item.kind || '—'} ·{' '}
+                        {item.source_id}
                       </small>
                     </td>
                     <td>{item.reason}</td>
                     <td>
                       <form className="admin-inline-form" onSubmit={linkKodik}>
-                        <input type="hidden" name="source_id" value={item.source_id} />
+                        <input
+                          type="hidden"
+                          name="source_id"
+                          value={item.source_id}
+                        />
                         <Input
                           name="anime_id"
                           type="number"
@@ -387,7 +404,9 @@ export function AdminTools() {
                           placeholder="Shikimori ID"
                           required
                         />
-                        <Button size="sm" type="submit">Связать</Button>
+                        <Button size="sm" type="submit">
+                          Связать
+                        </Button>
                       </form>
                     </td>
                     <td>

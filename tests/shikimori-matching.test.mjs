@@ -79,6 +79,68 @@ test('explicit Shikimori ID wins only when it agrees with known MAL ID', () => {
   );
 });
 
+test('Kodik catalog matching requires one exact title, year and compatible type', () => {
+  const candidates = [
+    {
+      id: 1,
+      name: 'Cowboy Bebop',
+      russian: 'Ковбой Бибоп',
+      kind: 'tv',
+      aired_on: '1998-04-03',
+    },
+    {
+      id: 5,
+      name: 'Cowboy Bebop: Tengoku no Tobira',
+      russian: 'Ковбой Бибоп: Достучаться до небес',
+      synonyms: ['Cowboy Bebop Movie'],
+      kind: 'movie',
+      aired_on: '2001-09-01',
+    },
+  ];
+  assert.equal(
+    matching.exactKodikCatalogMatch(candidates, {
+      title: 'Cowboy Bebop',
+      year: 1998,
+      type: 'anime-serial',
+    })?.id,
+    1,
+  );
+  assert.equal(
+    matching.exactKodikCatalogMatch(candidates, {
+      title: 'Cowboy Bebop Movie',
+      year: 2001,
+      type: 'anime',
+    })?.id,
+    5,
+  );
+  assert.equal(
+    matching.exactKodikCatalogMatch(candidates, {
+      title: 'Cowboy Bebop',
+      year: 2001,
+      type: 'anime-serial',
+    }),
+    undefined,
+  );
+});
+
+test('Kodik catalog matching rejects ambiguous results', () => {
+  const duplicate = {
+    name: 'Example',
+    kind: 'tv',
+    aired_on: '2024-01-01',
+  };
+  assert.equal(
+    matching.exactKodikCatalogMatch(
+      [
+        { ...duplicate, id: 10 },
+        { ...duplicate, id: 11 },
+      ],
+      { title: 'Example', year: 2024, type: 'anime-serial' },
+    ),
+    undefined,
+  );
+});
+
 test('only unique Russian Shikimori theme labels are returned', () => {
   assert.deepEqual(
     matching.russianThemes({

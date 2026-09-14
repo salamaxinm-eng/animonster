@@ -122,7 +122,7 @@ export async function saveAnime(
 }
 export async function rememberAnime(items: Anime[]) {
   if (!items.length) return;
-  await Promise.all(items.map((anime) => saveAnime(anime)));
+  await Promise.all(items.map((anime) => cacheAnime(anime)));
 }
 export async function cacheAnime(anime: Anime, episodes?: Episode[]) {
   const existing = await db()

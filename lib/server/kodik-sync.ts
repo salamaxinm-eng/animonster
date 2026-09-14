@@ -3,9 +3,9 @@ import { db, now, runtime } from './core';
 import { syncEpisodeAccess } from './episode-access';
 import { saveAnime } from './library';
 import { queueEpisodeNotifications } from './episode-notifications';
+import { exactKodikCatalogMatch } from './shikimori-matching';
 import {
   allowedKodikResult,
-  comparable,
   kodikCatalogPage,
   rememberKodikSources,
   type KodikMaterialData,
@@ -58,22 +58,22 @@ function compatibleKind(kodik: string, shikimori: string | undefined) {
 async function matchShikimori(item: KodikResult) {
   const exact = Number(item.shikimori_id);
   if (Number.isInteger(exact) && exact > 0 && exact < 100000000) return exact;
-  const title = String(item.title_orig || item.material_data?.title_en || '').trim();
+  const title = String(
+    item.title_orig || item.material_data?.title_en || '',
+  ).trim();
   const year = Number(item.year || item.material_data?.year);
   if (!title || !year) return null;
   const candidates = (await shikimori(
     `/animes?limit=10&order=popularity&search=${encodeURIComponent(title)}`,
   )) as ShikimoriCandidate[];
-  const wanted = comparable(title);
-  const matches = candidates.filter(
-    (candidate) =>
-      [candidate.name, candidate.russian]
-        .filter(Boolean)
-        .some((value) => comparable(String(value)) === wanted) &&
-      Number(String(candidate.aired_on || '').slice(0, 4)) === year &&
-      compatibleKind(item.type || '', candidate.kind),
-  );
-  return matches.length === 1 ? Number(matches[0].id) : null;
+  const match = exactKodikCatalogMatch(candidates, {
+    title,
+    year,
+    type: item.type || '',
+  });
+  return match && compatibleKind(item.type || '', match.kind)
+    ? Number(match.id)
+    : null;
 }
 
 function durationSeconds(data: KodikMaterialData | undefined) {
@@ -109,7 +109,10 @@ async function existingAnime(id: number) {
   try {
     return {
       anime: JSON.parse(row.data) as Anime,
-      episodes: JSON.parse(row.episodes) as { ordinal: number; duration: number }[],
+      episodes: JSON.parse(row.episodes) as {
+        ordinal: number;
+        duration: number;
+      }[],
     };
   } catch {
     return null;
@@ -122,9 +125,16 @@ function normalizeKodikAnime(
   current?: Anime,
 ): Anime | null {
   const data = item.material_data;
-  const russian = String(data?.anime_title || data?.title || item.title || '').trim();
+  const russian = String(
+    data?.anime_title || data?.title || item.title || '',
+  ).trim();
   const name = String(data?.title_en || item.title_orig || russian).trim();
-  const poster = String(data?.poster_url || current?.image?.original || '').trim();
+  const poster = String(
+    data?.anime_poster_url ||
+      data?.poster_url ||
+      current?.image?.original ||
+      '',
+  ).trim();
   if (!russian || !name || !poster || !/^https:\/\//i.test(poster)) return null;
   const providers = [...new Set(['kodik', ...(current?.providers || [])])] as (
     | 'kodik'
@@ -146,7 +156,10 @@ function normalizeKodikAnime(
     ),
     aired_on: String(data?.year || item.year || current?.aired_on || ''),
     description:
-      data?.anime_description || data?.description || current?.description || '',
+      data?.anime_description ||
+      data?.description ||
+      current?.description ||
+      '',
     genres: data?.anime_genres || data?.genres || current?.genres || [],
     age_rating: ageRating(data) || current?.age_rating,
     is_adult:
@@ -181,7 +194,11 @@ async function queueMatch(item: KodikResult, reason: string) {
     .run();
 }
 
-async function importItem(item: KodikResult, allowLookup: boolean, baseline: boolean) {
+async function importItem(
+  item: KodikResult,
+  allowLookup: boolean,
+  baseline: boolean,
+) {
   if (!allowedKodikResult(item)) return { skipped: 1, imported: 0, updated: 0 };
   let animeId = Number(item.shikimori_id);
   if (!Number.isInteger(animeId) || animeId < 1 || animeId >= 100000000) {
@@ -192,7 +209,8 @@ async function importItem(item: KodikResult, allowLookup: boolean, baseline: boo
     try {
       animeId = (await matchShikimori(item)) || 0;
     } catch {
-      animeId = 0;
+      await queueMatch(item, 'Ожидает автоматического сопоставления');
+      return { skipped: 1, imported: 0, updated: 0 };
     }
   }
   if (!animeId) {
@@ -203,7 +221,10 @@ async function importItem(item: KodikResult, allowLookup: boolean, baseline: boo
   const existing = await existingAnime(animeId);
   const anime = normalizeKodikAnime(item, animeId, existing?.anime);
   if (!anime) {
-    await queueMatch(item, 'Недостаточно метаданных или отсутствует HTTPS-постер');
+    await queueMatch(
+      item,
+      'Недостаточно метаданных или отсутствует HTTPS-постер',
+    );
     return { skipped: 1, imported: 0, updated: 0 };
   }
   const count = Math.max(1, anime.episodes || 1);
@@ -212,7 +233,9 @@ async function importItem(item: KodikResult, allowLookup: boolean, baseline: boo
     ordinal: index + 1,
     duration,
   }));
-  const known = new Set((existing?.episodes || []).map((episode) => episode.ordinal));
+  const known = new Set(
+    (existing?.episodes || []).map((episode) => episode.ordinal),
+  );
   await saveAnime(anime, episodes);
   await rememberKodikSources(animeId, [item]);
   const access = await syncEpisodeAccess(
@@ -224,7 +247,9 @@ async function importItem(item: KodikResult, allowLookup: boolean, baseline: boo
   if (!baseline) {
     await queueEpisodeNotifications(
       animeId,
-      episodes.map((episode) => episode.ordinal).filter((episode) => !known.has(episode)),
+      episodes
+        .map((episode) => episode.ordinal)
+        .filter((episode) => !known.has(episode)),
       access,
     );
   }
@@ -233,18 +258,56 @@ async function importItem(item: KodikResult, allowLookup: boolean, baseline: boo
     : { skipped: 0, imported: 1, updated: 0 };
 }
 
+async function drainPendingMatches(limit = 10) {
+  const rows = await db()
+    .prepare(
+      `SELECT source_id,payload FROM kodik_match_queue
+       WHERE status='pending' AND reason='Ожидает автоматического сопоставления'
+       ORDER BY updated_at ASC LIMIT ?`,
+    )
+    .bind(Math.max(1, Math.min(25, limit)))
+    .all<{ source_id: string; payload: string }>();
+  const total = { imported: 0, updated: 0, skipped: 0 };
+  for (const row of rows.results) {
+    try {
+      const item = JSON.parse(row.payload) as KodikResult;
+      const result = await importItem(item, true, true);
+      total.imported += result.imported;
+      total.updated += result.updated;
+      total.skipped += result.skipped;
+      if (result.imported || result.updated) {
+        await db()
+          .prepare(
+            `UPDATE kodik_match_queue SET status='linked',matched_anime_id=?,updated_at=?
+             WHERE source_id=? AND status='pending'`,
+          )
+          .bind(Number(item.shikimori_id), now(), row.source_id)
+          .run();
+      }
+    } catch {
+      total.skipped++;
+    }
+  }
+  return total;
+}
+
 export async function linkQueuedKodik(sourceId: string, animeId: number) {
   const row = await db()
-    .prepare("SELECT payload FROM kodik_match_queue WHERE source_id=? AND status='pending'")
+    .prepare(
+      "SELECT payload FROM kodik_match_queue WHERE source_id=? AND status='pending'",
+    )
     .bind(sourceId)
     .first<{ payload: string }>();
   if (!row) throw new Error('Материал не найден в очереди');
   const item = JSON.parse(row.payload) as KodikResult;
   item.shikimori_id = animeId;
   const result = await importItem(item, false, true);
-  if (!result.imported && !result.updated) throw new Error('Материал не удалось связать');
+  if (!result.imported && !result.updated)
+    throw new Error('Материал не удалось связать');
   await db()
-    .prepare("UPDATE kodik_match_queue SET status='linked',matched_anime_id=?,updated_at=? WHERE source_id=?")
+    .prepare(
+      "UPDATE kodik_match_queue SET status='linked',matched_anime_id=?,updated_at=? WHERE source_id=?",
+    )
     .bind(animeId, now(), sourceId)
     .run();
   return result;
@@ -279,9 +342,12 @@ export async function runKodikSync(pageLimit = 5) {
   let imported = 0;
   let updated = 0;
   let skipped = 0;
-  let lookups = 0;
   let highWatermark = state.high_watermark;
   try {
+    const pending = await drainPendingMatches(10);
+    imported += pending.imported;
+    updated += pending.updated;
+    skipped += pending.skipped;
     let reachedWatermark = false;
     for (let page = 0; page < Math.max(1, Math.min(5, pageLimit)); page++) {
       const response = await kodikCatalogPage(
@@ -300,12 +366,7 @@ export async function runKodikSync(pageLimit = 5) {
           reachedWatermark = true;
           break;
         }
-        const allowLookup = !Number(item.shikimori_id) && lookups++ < 10;
-        const result = await importItem(
-          item,
-          allowLookup,
-          state.phase === 'initial',
-        );
+        const result = await importItem(item, false, state.phase === 'initial');
         imported += result.imported;
         updated += result.updated;
         skipped += result.skipped;
@@ -343,7 +404,9 @@ export async function runKodikSync(pageLimit = 5) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown';
     await db()
-      .prepare("UPDATE provider_sync_state SET last_error=? WHERE provider='kodik'")
+      .prepare(
+        "UPDATE provider_sync_state SET last_error=? WHERE provider='kodik'",
+      )
       .bind(message.slice(0, 500))
       .run();
     throw error;

@@ -4,10 +4,18 @@ export type ShikimoriAnimeCandidate = {
   name?: string | null;
   russian?: string | null;
   synonyms?: Array<string | null> | null;
+  kind?: string | null;
+  aired_on?: string | null;
   genres?: Array<{
     kind?: string | null;
     russian?: string | null;
   }> | null;
+};
+
+export type KodikCatalogIdentity = {
+  title: string;
+  year: number;
+  type: string;
 };
 
 export type AnimeTitleIdentity = {
@@ -63,6 +71,25 @@ export function exactShikimoriMatch<T extends ShikimoriAnimeCandidate>(
     return candidateTitles.some((title) => expectedTitles.has(title));
   });
   return exactMatches.length === 1 ? exactMatches[0] : undefined;
+}
+
+export function exactKodikCatalogMatch<T extends ShikimoriAnimeCandidate>(
+  candidates: T[],
+  item: KodikCatalogIdentity,
+) {
+  const wanted = normalizeMatchTitle(item.title);
+  const movie = item.type === 'anime' || item.type === 'movie';
+  if (!wanted || !Number.isInteger(item.year) || item.year < 1900) return;
+  const matches = candidates.filter((candidate) => {
+    const candidateMovie = candidate.kind === 'movie';
+    if (candidateMovie !== movie) return false;
+    if (Number(String(candidate.aired_on || '').slice(0, 4)) !== item.year)
+      return false;
+    return [candidate.name, candidate.russian, ...(candidate.synonyms || [])]
+      .map(normalizeMatchTitle)
+      .some((title) => title === wanted);
+  });
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 export function russianThemes(candidate: ShikimoriAnimeCandidate) {
