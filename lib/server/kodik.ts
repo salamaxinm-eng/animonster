@@ -1,4 +1,4 @@
-import type { Anime, Voiceover } from '@/lib/anime';
+import { kodikPlayerPath, type Anime, type Voiceover } from '@/lib/anime';
 import { db, now, runtime } from '@/lib/server/core';
 
 export type KodikMaterialData = {
@@ -323,10 +323,7 @@ async function storedKodikResults(animeId: number) {
   });
 }
 
-export async function kodikVoiceovers(
-  anime: Anime,
-  origin?: string,
-): Promise<{
+export async function kodikVoiceovers(anime: Anime): Promise<{
   voiceovers: Voiceover[];
   status: 'ready' | 'disabled' | 'unavailable';
 }> {
@@ -364,12 +361,7 @@ export async function kodikVoiceovers(
       const translation = voiceover.id.split(':').at(-1) || '';
       return {
         ...voiceover,
-        player_url: origin
-          ? new URL(
-              `/api/kodik/player?anime_id=${anime.id}&translation=${encodeURIComponent(translation)}`,
-              origin,
-            ).href
-          : voiceover.player_url,
+        player_url: kodikPlayerPath(anime.id, translation),
       };
     },
   );

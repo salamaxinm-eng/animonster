@@ -1,4 +1,5 @@
 import { ApiError, fail } from '@/lib/server/core';
+import { safeRemoteImageUrl } from '@/lib/server/images';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,21 +52,6 @@ function remember(url: string, image: CachedImage) {
     cacheState.bytes -= oldest[1].bytes.byteLength;
   }
 }
-const allowedHost = (hostname: string) =>
-  hostname === 'api.anilibria.app' ||
-  hostname === 'shikimori.one' ||
-  hostname === 'desu.shikimori.one' ||
-  hostname === 'st.kp.yandex.net' ||
-  hostname === 'avatars.mds.yandex.net' ||
-  hostname === 'image.openmoviedb.com';
-
-function safeImageUrl(value: string) {
-  const url = new URL(value);
-  if (url.protocol !== 'https:' || !allowedHost(url.hostname))
-    throw new ApiError('Недопустимый источник изображения', 400);
-  return url;
-}
-
 async function upstream(start: URL) {
   let url = start;
   for (let redirect = 0; redirect < 4; redirect++) {
@@ -82,14 +68,14 @@ async function upstream(start: URL) {
     const location = response.headers.get('location');
     await response.body?.cancel();
     if (!location) throw new ApiError('Неверный редирект изображения', 502);
-    url = safeImageUrl(new URL(location, url).href);
+    url = safeRemoteImageUrl(new URL(location, url).href);
   }
   throw new ApiError('Слишком много редиректов изображения', 502);
 }
 
 export async function GET(request: Request) {
   try {
-    const source = safeImageUrl(
+    const source = safeRemoteImageUrl(
       new URL(request.url).searchParams.get('url') || '',
     );
     const cacheKey = source.href;

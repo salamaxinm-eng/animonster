@@ -44,7 +44,9 @@ export function EpisodePlayer({
       ),
     ),
     [quality, setQuality] = useState('720'),
-    [voiceoverId, setVoiceoverId] = useState(() => voiceovers[0]?.id || 'aniliberty'),
+    [voiceoverId, setVoiceoverId] = useState(
+      () => voiceovers[0]?.id || 'aniliberty',
+    ),
     [error, setError] = useState(''),
     [playbackActive, setPlaybackActive] = useState(false),
     [currentTime, setCurrentTime] = useState(0),
@@ -442,7 +444,8 @@ export function EpisodePlayer({
   const iframeUrl = (() => {
     if (!isKodik || !voiceover.player_url || !episode) return '';
     try {
-      const url = new URL(voiceover.player_url);
+      const relative = voiceover.player_url.startsWith('/');
+      const url = new URL(voiceover.player_url, 'https://animonster.invalid');
       url.searchParams.set('episode', String(episode.ordinal));
       const requestedPosition =
         iframeSeek ??
@@ -454,7 +457,7 @@ export function EpisodePlayer({
           'start_from',
           String(Math.floor(requestedPosition)),
         );
-      return url.href;
+      return relative ? `${url.pathname}${url.search}${url.hash}` : url.href;
     } catch {
       return '';
     }

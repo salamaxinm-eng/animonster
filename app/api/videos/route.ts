@@ -91,7 +91,7 @@ export async function GET(request: Request) {
         'adult_confirmation_required',
       );
 
-    const kodik = await kodikVoiceovers(anime, new URL(request.url).origin);
+    const kodik = await kodikVoiceovers(anime);
     const kodikCount = Math.max(
       0,
       ...kodik.voiceovers.map((voiceover) => voiceover.episodes),

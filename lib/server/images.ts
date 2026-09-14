@@ -1,5 +1,29 @@
 import { ApiError } from './core';
 
+const REMOTE_IMAGE_HOSTS = new Set([
+  'api.anilibria.app',
+  'shikimori.one',
+  'desu.shikimori.one',
+  'shikimori.io',
+  'desu.shikimori.io',
+  'st.kp.yandex.net',
+  'avatars.mds.yandex.net',
+  'image.openmoviedb.com',
+]);
+
+export function safeRemoteImageUrl(value: string) {
+  const url = new URL(value);
+  if (
+    url.protocol !== 'https:' ||
+    url.username ||
+    url.password ||
+    url.port ||
+    !REMOTE_IMAGE_HOSTS.has(url.hostname.toLowerCase())
+  )
+    throw new ApiError('Недопустимый источник изображения', 400);
+  return url;
+}
+
 function contains(bytes: Uint8Array, text: string) {
   const needle = new TextEncoder().encode(text);
   outer: for (let index = 0; index <= bytes.length - needle.length; index++) {

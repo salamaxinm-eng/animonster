@@ -34,6 +34,11 @@ export function proxyImageUrl(source?: string) {
 }
 
 export const posterUrl = (anime: Anime) => proxyImageUrl(anime.image.original);
+
+export function kodikPlayerPath(animeId: number, translation: string) {
+  return `/api/kodik/player?anime_id=${animeId}&translation=${encodeURIComponent(translation)}`;
+}
+
 export type Episode = {
   id: string;
   ordinal: number;
