@@ -931,6 +931,121 @@
     padding: 25px 18px;
   }
 
+  .search-theme-filters {
+    margin-bottom: 25px;
+  }
+
+  .search-theme-toggle {
+    width: 100%;
+    min-height: 48px;
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 22px;
+    align-items: center;
+    gap: 10px;
+    padding: 0 13px;
+    border: 1px solid #2d3746;
+    border-radius: 12px;
+    background: #151b24;
+    color: #c3cfdd;
+    text-align: left;
+  }
+
+  .search-theme-toggle > svg:first-child,
+  .search-theme-toggle.active {
+    color: #b4ed50;
+  }
+
+  .search-theme-toggle span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .search-theme-toggle > svg:last-child {
+    color: #8793a1;
+    transition: transform 140ms ease;
+  }
+
+  .search-theme-toggle > svg.expanded {
+    transform: rotate(180deg);
+  }
+
+  .search-theme-panel {
+    margin-top: 10px;
+    padding: 13px;
+    border: 1px solid #26303d;
+    border-radius: 12px;
+    background: #10151d;
+  }
+
+  .search-theme-panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .mobile-search-results .search-theme-panel-heading h2 {
+    margin: 0;
+    color: #e8edf3;
+    font-size: 15px;
+  }
+
+  .search-theme-panel-heading button {
+    min-height: 36px;
+    color: #b4ed50;
+    font-size: 12px;
+  }
+
+  .search-theme-input {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 11px;
+    border: 1px solid #293241;
+    border-radius: 9px;
+    background: #171d26;
+    color: #7f8a98;
+  }
+
+  .search-theme-input input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #eef2f6;
+    font-size: 14px;
+  }
+
+  .search-theme-options {
+    max-height: 228px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    overflow-y: auto;
+    margin-top: 11px;
+    overscroll-behavior: contain;
+  }
+
+  .search-theme-options button {
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid #313d4c;
+    border-radius: 999px;
+    background: #171e28;
+    color: #bfc9d5;
+    font-size: 12px;
+  }
+
+  .search-theme-options button.selected {
+    border-color: #a5e63e;
+    background: #a5e63e18;
+    color: #d5f39c;
+  }
+
   .mobile-search-results h2,
   .recent-searches h1 {
     margin: 0 0 18px;

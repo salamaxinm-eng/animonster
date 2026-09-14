@@ -11,6 +11,7 @@ import {
   available,
   compactAnime,
 } from '@/lib/server/anime';
+import { animeWithTheme } from '@/lib/server/anime-themes';
 export async function GET(request: Request) {
   const p = new URL(request.url).searchParams,
     id = Number(p.get('anime_id'));
@@ -25,6 +26,20 @@ export async function GET(request: Request) {
     if (alias) {
       const result = await getAnimeByAlias(alias);
       return Response.json(result ? [result.anime] : []);
+    }
+    const tag = p.get('tag')?.trim() || '';
+    if (tag) {
+      if (tag.length > 80)
+        return Response.json({ error: 'Слишком длинный тег' }, { status: 400 });
+      const items = await animeWithTheme(tag, p.get('q') || '');
+      return Response.json(compactAnime(items), {
+        headers: {
+          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+          'X-Total-Count': String(items.length),
+          'X-Total-Pages': '1',
+          'X-Data-Source': 'theme',
+        },
+      });
     }
     const sorting: Record<string, string> = {
       fresh: 'FRESH_AT_DESC',
@@ -94,6 +109,11 @@ export async function GET(request: Request) {
     if (id || p.get('alias'))
       return Response.json(
         { error: 'Источник каталога временно недоступен' },
+        { status: 502 },
+      );
+    if (p.get('tag'))
+      return Response.json(
+        { error: 'Не удалось загрузить аниме по этой теме' },
         { status: 502 },
       );
     try {

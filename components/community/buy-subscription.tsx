@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { Sparkles, Bell, Library, Palette, Play, Heart } from 'lucide-react';
+import {
+  Sparkles,
+  Bell,
+  Library,
+  Palette,
+  Play,
+  Heart,
+  ExternalLink,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -133,26 +141,36 @@ export function BuySubscription({
               />{' '}
               <span>
                 Принимаю{' '}
-                <a href="/legal/offer" target="_blank" rel="noreferrer">
+                <a
+                  className="plus-agreement-link"
+                  href="/legal/offer"
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   условия оферты
                 </a>
               </span>
             </label>
-            <a href="/legal/requisites" target="_blank" rel="noreferrer">
-              Реквизиты продавца ↗
-            </a>
-            <a href="/legal/privacy" target="_blank" rel="noreferrer">
-              Политика конфиденциальности ↗
-            </a>
-            <a href="/legal/terms" target="_blank" rel="noreferrer">
-              Пользовательское соглашение ↗
-            </a>
-            <a href="/legal/prices" target="_blank" rel="noreferrer">
-              Цены и тарифы ↗
-            </a>
-            <a href="/legal/support" target="_blank" rel="noreferrer">
-              Поддержка ↗
-            </a>
+            <nav className="plus-legal-list" aria-label="Документы и поддержка">
+              {[
+                ['/legal/requisites', 'Реквизиты продавца'],
+                ['/legal/privacy', 'Политика конфиденциальности'],
+                ['/legal/terms', 'Пользовательское соглашение'],
+                ['/legal/prices', 'Цены и тарифы'],
+                ['/legal/support', 'Поддержка'],
+              ].map(([href, label]) => (
+                <a
+                  className="plus-legal-link"
+                  href={href}
+                  key={href}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>{label}</span>
+                  <ExternalLink size={14} aria-hidden="true" />
+                </a>
+              ))}
+            </nav>
           </div>
           <button
             className="primary plus-buy-button"

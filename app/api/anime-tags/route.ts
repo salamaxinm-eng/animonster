@@ -1,9 +1,28 @@
-import { animeThemes } from '@/lib/server/anime-themes';
+import {
+  animeThemeCatalog,
+  animeThemes,
+} from '@/lib/server/anime-themes';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
-  const id = Number(new URL(request.url).searchParams.get('anime_id'));
+  const params = new URL(request.url).searchParams;
+  if (params.get('list') === 'themes') {
+    try {
+      const themes = await animeThemeCatalog();
+      return Response.json(
+        { themes: themes.map((theme) => theme.russian) },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=3600, stale-while-revalidate=21600',
+          },
+        },
+      );
+    } catch {
+      return Response.json({ error: 'Темы временно недоступны' }, { status: 502 });
+    }
+  }
+  const id = Number(params.get('anime_id'));
   if (!Number.isInteger(id) || id < 1 || id > 999999999)
     return Response.json({ error: 'Некорректный тайтл' }, { status: 400 });
 

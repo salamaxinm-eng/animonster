@@ -25,7 +25,9 @@ export function AnimeThemes({ animeId }: { animeId: number }) {
       <h2>Темы</h2>
       <ul>
         {themes.map((theme) => (
-          <li key={theme}>{theme}</li>
+          <li key={theme}>
+            <a href={'/search?tag=' + encodeURIComponent(theme)}>{theme}</a>
+          </li>
         ))}
       </ul>
     </section>
