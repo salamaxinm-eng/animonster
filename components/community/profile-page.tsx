@@ -256,7 +256,7 @@ export function ProfilePage({
       ) || themes[0];
   return (
     <div
-      className="social-site"
+      className={`social-site account-page ${tab === 'settings' && data?.own ? 'account-editing' : ''}`}
       style={{ '--profile-accent': theme.color } as React.CSSProperties}
     >
       <CommunityHeader />
@@ -317,11 +317,10 @@ export function ProfilePage({
                 />
               </div>
               <p>
-                На AniMonster с{' '}
-                {new Date(data.user.created_at).toLocaleDateString('ru-RU', {
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {data.user.created_at &&
+                Number.isFinite(new Date(data.user.created_at).getTime())
+                  ? `На AniMonster с ${new Date(data.user.created_at).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}`
+                  : 'Участник AniMonster'}
                 {!!data.user.premium_until && (
                   <span className="plus-label"> PLUS</span>
                 )}
@@ -365,13 +364,15 @@ export function ProfilePage({
               )
             )}
           </section>
-          <ProfileJourney
-            id={data.user.id}
-            revision={
-              data.user.collection_public +
-              data.entries.filter((e) => e.favorite).length * 10
-            }
-          />
+          <div className="account-journey">
+            <ProfileJourney
+              id={data.user.id}
+              revision={
+                data.user.collection_public +
+                data.entries.filter((e) => e.favorite).length * 10
+              }
+            />
+          </div>
           <div className="profile-layout">
             <aside className="profile-sidebar">
               <section className="social-panel">
@@ -603,9 +604,11 @@ export function ProfilePage({
                   <TabsTrigger value="collection">Коллекция</TabsTrigger>
                   {data.own && (
                     <>
-                      <TabsTrigger value="settings">Оформление</TabsTrigger>
+                      <TabsTrigger value="settings">
+                        <Settings size={15} /> Настройки
+                      </TabsTrigger>
                       <TabsTrigger value="notifications">
-                        <Bell size={15} /> Ответы
+                        <Bell size={15} /> Уведомления
                       </TabsTrigger>
                       {c.moderator && (
                         <TabsTrigger value="moderation">
@@ -813,7 +816,23 @@ export function ProfilePage({
                     void act('profile', draft);
                   }}
                 >
-                  <h3>Профиль и оформление</h3>
+                  <div className="profile-editor-heading">
+                    <div>
+                      <h3>Настройки профиля</h3>
+                      <p className="muted">Сделай эту страницу своей.</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="outline-button"
+                      onClick={() => {
+                        setTab('wall');
+                        history.replaceState(null, '', '/profile');
+                        window.scrollTo({ top: 0, behavior: 'instant' });
+                      }}
+                    >
+                      К профилю
+                    </button>
+                  </div>
                   <label>
                     Ник
                     <input
@@ -1037,9 +1056,16 @@ export function ProfilePage({
                       Закрытый профиль — скрыть коллекцию и историю
                     </label>
                   </div>
-                  <button className="primary" disabled={busy}>
-                    {busy ? 'Сохраняем…' : 'Сохранить профиль'}
-                  </button>
+                  <div className="profile-save-bar">
+                    <span role="status">
+                      {busy
+                        ? 'Сохраняем изменения…'
+                        : notice || 'Изменения сохраняются по кнопке'}
+                    </span>
+                    <button className="primary" disabled={busy}>
+                      {busy ? 'Сохраняем…' : 'Сохранить профиль'}
+                    </button>
+                  </div>
                   <h3>Заблокированные пользователи</h3>
                   {blocks.length ? (
                     blocks.map((b) => (

@@ -10,6 +10,7 @@ import {
   Search,
   UserRound,
 } from 'lucide-react';
+import { BuySubscription } from '@/components/community/buy-subscription';
 import { useCommunity } from '@/components/community/context';
 
 type MobileNavItem = {
@@ -99,13 +100,16 @@ export function MobileNavigation() {
             </span>
           </a>
         )}
-        <a
-          className="mobile-search-button"
-          href="/search"
-          aria-label="Поиск аниме"
-        >
-          <Search aria-hidden="true" />
-        </a>
+        <div className="mobile-topbar-actions">
+          <BuySubscription compact className="mobile-plus-button" />
+          <a
+            className="mobile-search-button"
+            href="/search"
+            aria-label="Поиск аниме"
+          >
+            <Search aria-hidden="true" />
+          </a>
+        </div>
       </header>
       {pathname === '/profile' && (
         <nav className="mobile-legal" aria-label="Юридическая информация">

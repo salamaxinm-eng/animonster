@@ -2833,3 +2833,184 @@ button:disabled {
     max-width: 100%;
   }
 }
+/* Account and Plus refresh */
+.plus-dialog.sign-dialog {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 28px !important;
+  gap: 18px !important;
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at top right, #b4ed5014, transparent 45%), #11171e;
+}
+.plus-dialog [data-slot='dialog-close'] {
+  min-width: 44px;
+  min-height: 44px;
+}
+.plus-intro {
+  padding-right: 24px;
+}
+.plus-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #b4ed50;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.6px;
+  margin-bottom: 12px;
+}
+.plus-intro [data-slot='dialog-title'] {
+  font-size: 30px;
+  letter-spacing: -1px;
+}
+.plus-intro [data-slot='dialog-title'] span {
+  color: #b4ed50;
+}
+.plus-intro [data-slot='dialog-description'] {
+  margin: 8px 0 0;
+  color: #a9b4c1;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.plus-price-card {
+  padding: 18px 20px;
+  border: 1px solid #b4ed5033;
+  border-radius: 16px;
+  background: #b4ed500a;
+}
+.plus-price-card strong {
+  font-size: 38px;
+  letter-spacing: -1.5px;
+  color: #edf9db;
+}
+.plus-price-card span,
+.plus-price-card p {
+  color: #b3c1aa;
+  font-size: 13px;
+}
+.plus-price-card p {
+  margin: 4px 0 0;
+}
+.plus-dialog .plus-benefits {
+  gap: 14px;
+}
+.plus-dialog .plus-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+.plus-dialog .plus-benefits li::before {
+  content: none;
+}
+.plus-benefits li > svg {
+  color: #b4ed50;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.plus-benefits li strong,
+.plus-benefits li span {
+  display: block;
+}
+.plus-benefits li strong {
+  color: #f1f4f7;
+  font-size: 14px;
+  font-weight: 650;
+}
+.plus-benefits li span {
+  color: #99a6b5;
+  font-size: 12px;
+  margin-top: 3px;
+}
+.plus-dialog .plus-legal-links {
+  display: grid;
+  gap: 4px;
+  border-top: 1px solid #ffffff12;
+  padding-top: 10px;
+  font-size: 12px;
+}
+.plus-dialog .plus-legal-links label {
+  min-height: 44px;
+  gap: 10px;
+}
+.plus-dialog .plus-legal-links input {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+.plus-dialog .plus-buy-button {
+  min-height: 50px;
+  border-radius: 12px;
+  margin: 0;
+}
+.plus-renewal-note {
+  margin: -6px 0 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #99a6b5;
+}
+.profile-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.profile-editor-heading h3 {
+  margin: 0;
+}
+.profile-editor-heading p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+.account-editing .account-journey,
+.account-editing .profile-sidebar {
+  display: none;
+}
+.account-editing .profile-layout {
+  display: block;
+}
+.account-editing .profile-main {
+  max-width: 840px;
+  margin-inline: auto;
+}
+.profile-save-bar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid #354134;
+  border-radius: 14px;
+  background: #141d18;
+  box-shadow: 0 8px 32px #0006;
+}
+.profile-save-bar span {
+  font-size: 12px;
+  color: #b6c5b0;
+}
+.profile-editor .profile-save-bar .primary {
+  margin: 0;
+  min-height: 44px;
+}
+.plus-dialog.sign-dialog {
+  scrollbar-width: thin;
+  scrollbar-color: #46533c #11171e;
+}
+@media (min-width: 768px) {
+  .plus-dialog.sign-dialog {
+    width: min(100% - 32px, 640px) !important;
+    max-width: 640px !important;
+  }
+  .plus-dialog .plus-benefits {
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+}

@@ -1093,3 +1093,156 @@
     align-items: center;
   }
 }
+
+@media (max-width: 767px) {
+  .mobile-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .mobile-plus-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    min-height: 44px;
+    padding: 0 10px;
+    border: 1px solid #b4ed5040;
+    border-radius: 12px;
+    background: #b4ed5010;
+    color: #c3f16e;
+    font-size: 13px;
+    font-weight: 750;
+  }
+  .mobile-topbar-actions .mobile-search-button {
+    width: 40px;
+  }
+  .mobile-page-heading {
+    position: static;
+    transform: none;
+  }
+  .account-page .profile-cover {
+    height: 158px;
+  }
+  .account-page .profile-cover > span {
+    display: none;
+  }
+  .account-page .profile-identity {
+    padding: 0 16px 20px;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+  .account-page .profile-identity > .user-avatar {
+    width: 76px;
+    height: 76px;
+    flex: 0 0 76px;
+  }
+  .account-page .profile-name {
+    min-width: 0;
+    flex: 1;
+  }
+  .account-page .profile-title-row h1 {
+    font-size: 24px;
+    overflow-wrap: anywhere;
+  }
+  .account-page .profile-name p {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .account-page .profile-identity > .outline-button {
+    margin: 4px 0 0;
+    border-radius: 12px;
+    background: #1b232e;
+    color: #e5ebf1;
+    min-height: 46px;
+  }
+  .account-page .profile-layout {
+    gap: 20px;
+  }
+  .account-page .profile-main {
+    order: -1;
+  }
+  .account-page .profile-sidebar,
+  .account-page .profile-main {
+    padding-inline: 16px;
+  }
+  .account-page .social-panel {
+    border-radius: 16px;
+    padding: 18px;
+  }
+  .account-page .social-tabs {
+    width: calc(100% + 32px);
+    margin-left: -16px;
+    margin-bottom: 18px;
+    padding-inline: 16px !important;
+    gap: 6px;
+  }
+  .account-page .social-tabs button {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  .account-page .account-journey {
+    padding-inline: 16px;
+    margin-bottom: 16px;
+  }
+  .account-editing .profile-cover {
+    height: 90px;
+  }
+  .account-editing .profile-identity > .outline-button {
+    display: none;
+  }
+  .profile-editor-heading {
+    align-items: flex-start;
+  }
+  .profile-editor-heading .outline-button {
+    font-size: 12px;
+    min-height: 44px;
+    padding: 8px 10px;
+    flex-shrink: 0;
+  }
+  .account-page .profile-editor input:not([type='checkbox']):not([type='file']),
+  .account-page .profile-editor textarea {
+    font-size: 16px;
+    min-height: 44px;
+  }
+  .profile-save-bar {
+    bottom: calc(78px + env(safe-area-inset-bottom));
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+  }
+  .profile-save-bar .primary {
+    width: 100%;
+  }
+  .plus-dialog.sign-dialog {
+    width: calc(100% - 24px) !important;
+    max-height: calc(
+      100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px
+    );
+    padding: 22px !important;
+    border-radius: 20px;
+    gap: 16px !important;
+  }
+  .plus-intro [data-slot='dialog-title'] {
+    font-size: 28px;
+  }
+}
+@media (max-width: 359px) {
+  .mobile-brand {
+    font-size: 18px;
+    gap: 5px;
+  }
+  .mobile-brand svg {
+    width: 23px;
+  }
+  .mobile-topbar {
+    padding-inline: 12px;
+  }
+  .mobile-plus-button {
+    padding-inline: 8px;
+  }
+  .plus-dialog.sign-dialog {
+    padding: 18px !important;
+  }
+}

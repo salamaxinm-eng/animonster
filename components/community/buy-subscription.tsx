@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Sparkles, Bell, Library, Palette, Play, Heart } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -10,8 +11,10 @@ import {
 
 export function BuySubscription({
   className = 'outline-button',
+  compact = false,
 }: {
   className?: string;
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -48,20 +51,65 @@ export function BuySubscription({
   return (
     <>
       <button className={className} onClick={() => setOpen(true)}>
-        AniMonster Plus
+        <Sparkles size={16} aria-hidden="true" />{' '}
+        {compact ? 'Plus' : 'AniMonster Plus'}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sign-dialog plus-dialog">
-          <DialogTitle>AniMonster Plus · 89 ₽</DialogTitle>
-          <DialogDescription>
-            30 дней без автосписаний. Повторная покупка добавляет ещё 30 дней.
-          </DialogDescription>
+          <div className="plus-intro">
+            <span className="plus-eyebrow">
+              <Sparkles size={16} /> БОЛЬШЕ ВОЗМОЖНОСТЕЙ
+            </span>
+            <DialogTitle>
+              AniMonster <span>Plus</span>
+            </DialogTitle>
+            <DialogDescription>
+              Твой профиль. Твои коллекции. Ещё больше аниме.
+            </DialogDescription>
+          </div>
+          <div className="plus-price-card">
+            <div>
+              <strong>89 ₽</strong>
+              <span> / 30 дней</span>
+            </div>
+            <p>Без автосписаний. Продлеваешь, когда захочешь.</p>
+          </div>
           <ul className="plus-benefits">
-            <li>Новые серии сразу, без четырёхчасовой задержки</li>
-            <li>Telegram-уведомления по всем выбранным тайтлам</li>
-            <li>До 20 своих списков и оформление коллекций</li>
-            <li>Фон, рамка и расширенная витрина профиля</li>
-            <li>Фирменные реакции и бонусные подборки</li>
+            {[
+              {
+                icon: Play,
+                title: 'Ранний доступ',
+                text: 'Новые серии без четырёхчасового ожидания',
+              },
+              {
+                icon: Bell,
+                title: 'Уведомления в Telegram',
+                text: 'Все любимые тайтлы без лимита подписок',
+              },
+              {
+                icon: Library,
+                title: 'Коллекции по-твоему',
+                text: 'До 20 списков с обложками и описаниями',
+              },
+              {
+                icon: Palette,
+                title: 'Профиль с характером',
+                text: 'Аватар, фон, рамки и витрина любимого',
+              },
+              {
+                icon: Heart,
+                title: 'Особые бонусы',
+                text: 'Эксклюзивные реакции и авторские подборки',
+              },
+            ].map(({ icon: Icon, title, text }) => (
+              <li key={title}>
+                <Icon size={20} aria-hidden="true" />
+                <div>
+                  <strong>{title}</strong>
+                  <span>{text}</span>
+                </div>
+              </li>
+            ))}
           </ul>
           <a className="text-link" href="/plus">
             Посмотреть бонусные подборки →
@@ -73,18 +121,24 @@ export function BuySubscription({
               настраивается, Plus можно получить у администратора.
             </p>
           )}
-          <p className="plus-legal-links">
+          <div className="plus-legal-links">
             <label>
               <input
                 type="checkbox"
                 checked={accepted}
                 onChange={(event) => setAccepted(event.target.checked)}
               />{' '}
-              Принимаю{' '}
+              <span>
+                Принимаю{' '}
+                <a href="/legal/offer" target="_blank" rel="noreferrer">
+                  условия оферты
+                </a>
+              </span>
             </label>
-            <a href="/legal/offer">условия оферты</a>.{' '}
-            <a href="/legal/requisites">Реквизиты продавца</a>
-          </p>
+            <a href="/legal/requisites" target="_blank" rel="noreferrer">
+              Реквизиты продавца ↗
+            </a>
+          </div>
           <button
             className="primary plus-buy-button"
             type="button"
@@ -97,6 +151,9 @@ export function BuySubscription({
                 ? 'Оплата скоро появится'
                 : 'Купить на 30 дней · 89 ₽'}
           </button>
+          <p className="plus-renewal-note">
+            Уже есть Plus? Добавим 30 дней к оставшемуся сроку.
+          </p>
         </DialogContent>
       </Dialog>
     </>
