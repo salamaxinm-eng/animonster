@@ -15,6 +15,8 @@ export default function CatalogPage() {
   const [sort, setSort] = useState<'rating' | 'fresh'>('rating');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [initialized, setInitialized] = useState(false);
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     setTab(
@@ -22,10 +24,17 @@ export default function CatalogPage() {
         ? 'ongoing'
         : 'all',
     );
+    setInitialized(true);
   }, []);
 
   useEffect(() => {
+    if (!initialized) return;
     const controller = new AbortController();
+    let timedOut = false;
+    const timeout = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 15000);
     setLoading(true);
     setError('');
     fetch(
@@ -41,13 +50,22 @@ export default function CatalogPage() {
       })
       .then(setItems)
       .catch((reason) => {
-        if (!controller.signal.aborted) setError(reason.message);
+        if (timedOut)
+          setError(
+            'Каталог загружается дольше обычного. Проверьте соединение и попробуйте ещё раз.',
+          );
+        else if (!controller.signal.aborted) setError(reason.message);
       })
       .finally(() => {
+        window.clearTimeout(timeout);
         if (!controller.signal.aborted) setLoading(false);
+        else if (timedOut) setLoading(false);
       });
-    return () => controller.abort();
-  }, [tab, page, sort]);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [initialized, tab, page, sort, retry]);
 
   return (
     <div className="social-site mobile-catalog-page">
@@ -66,9 +84,12 @@ export default function CatalogPage() {
         {loading ? (
           <p role="status">Загружаем каталог…</p>
         ) : error ? (
-          <p className="error-msg" role="alert">
-            {error}
-          </p>
+          <div className="error-msg" role="alert">
+            <p>{error}</p>
+            <button onClick={() => setRetry((value) => value + 1)}>
+              Попробовать снова
+            </button>
+          </div>
         ) : (
           <AnimeGrid items={items} />
         )}

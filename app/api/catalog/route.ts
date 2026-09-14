@@ -4,6 +4,8 @@ import {
   getAnimeByAlias,
   rememberAnime,
   cachedCatalogPage,
+  getCatalogSnapshot,
+  saveCatalogSnapshot,
 } from '@/lib/server/library';
 import {
   liberty,
@@ -11,6 +13,48 @@ import {
   available,
   compactAnime,
 } from '@/lib/server/anime';
+import { after } from 'next/server';
+
+const refreshState = globalThis as typeof globalThis & {
+  __animonsterCatalogRefreshes?: Set<string>;
+};
+const catalogRefreshes = (refreshState.__animonsterCatalogRefreshes ??=
+  new Set());
+
+async function refreshCatalogSnapshot(
+  key: string,
+  options: { page: number; sort: string; genre: string; ongoing: boolean },
+) {
+  const sorting: Record<string, string> = {
+    fresh: 'FRESH_AT_DESC',
+    year: 'YEAR_DESC',
+    rating: 'RATING_DESC',
+  };
+  const query = new URLSearchParams({
+    limit: '24',
+    page: String(options.page),
+    'f[sorting]': sorting[options.sort] || 'RATING_DESC',
+  });
+  if (options.ongoing) query.set('f[publish_statuses]', 'IS_ONGOING');
+  if (options.genre) {
+    const genres = await genreList();
+    const genre = genres.find(
+      (item) => item.name.toLowerCase() === options.genre.toLowerCase(),
+    );
+    if (!genre) return;
+    query.set('f[genres]', String(genre.id));
+  }
+  const data = await liberty('/anime/catalog/releases?' + query);
+  const items = data.data.filter(available).map(normalize);
+  const pagination = data.meta.pagination;
+  await rememberAnime(items);
+  await saveCatalogSnapshot(key, {
+    items: compactAnime(items),
+    total: pagination.total,
+    pages: pagination.total_pages,
+  });
+}
+
 export async function GET(request: Request) {
   const p = new URL(request.url).searchParams,
     id = Number(p.get('anime_id'));
@@ -39,8 +83,47 @@ export async function GET(request: Request) {
     const search = p.get('q') || '';
     const genreName = p.get('genre') || '';
     const kind = p.get('kind') === 'movie' ? 'movie' : '';
-    const cacheFirst =
-      !search && sort === 'rating' && p.get('kind') !== 'ongoing' && page <= 20;
+    const ongoing = p.get('kind') === 'ongoing';
+    const snapshotKey = JSON.stringify({
+      page,
+      sort,
+      search: search.slice(0, 100),
+      genre: genreName.toLocaleLowerCase('ru-RU'),
+      kind: ongoing ? 'ongoing' : kind,
+    });
+    const snapshotCacheable = !search && (ongoing || !!genreName);
+    if (snapshotCacheable) {
+      const snapshot = await getCatalogSnapshot(snapshotKey).catch(() => null);
+      if (snapshot) {
+        const stale = Date.now() - snapshot.updatedAt >= 15 * 60 * 1000;
+        if (stale && !catalogRefreshes.has(snapshotKey)) {
+          catalogRefreshes.add(snapshotKey);
+          after(async () => {
+            try {
+              await refreshCatalogSnapshot(snapshotKey, {
+                page,
+                sort,
+                genre: genreName,
+                ongoing,
+              });
+            } catch {
+              // Keep serving the persisted snapshot when the upstream is down.
+            } finally {
+              catalogRefreshes.delete(snapshotKey);
+            }
+          });
+        }
+        return Response.json(snapshot.items, {
+          headers: {
+            'Cache-Control': 'public, max-age=60, stale-while-revalidate=900',
+            'X-Data-Source': stale ? 'snapshot-stale' : 'snapshot',
+            'X-Total-Count': String(snapshot.total),
+            'X-Total-Pages': String(snapshot.pages),
+          },
+        });
+      }
+    }
+    const cacheFirst = !search && sort === 'rating' && !ongoing && page <= 20;
     if (cacheFirst) {
       const cached = await cachedCatalogPage({
         genre: genreName,
@@ -66,8 +149,7 @@ export async function GET(request: Request) {
     });
     if (search) query.set('f[search]', search.slice(0, 100));
     if (p.get('kind') === 'movie') query.set('f[types]', 'MOVIE');
-    if (p.get('kind') === 'ongoing')
-      query.set('f[publish_statuses]', 'IS_ONGOING');
+    if (ongoing) query.set('f[publish_statuses]', 'IS_ONGOING');
     if (genreName) {
       const genres = await genreList();
       const genre = genres.find(
@@ -83,6 +165,12 @@ export async function GET(request: Request) {
     const items = data.data.filter(available).map(normalize);
     await rememberAnime(items);
     const pagination = data.meta.pagination;
+    if (snapshotCacheable)
+      await saveCatalogSnapshot(snapshotKey, {
+        items: compactAnime(items),
+        total: pagination.total,
+        pages: pagination.total_pages,
+      }).catch(() => {});
     return Response.json(compactAnime(items), {
       headers: {
         'Cache-Control': 'public, max-age=60',
@@ -98,6 +186,40 @@ export async function GET(request: Request) {
       );
     try {
       const page = Math.max(1, Math.floor(Number(p.get('page')) || 1));
+      const sort = p.get('sort') || 'rating';
+      const search = p.get('q') || '';
+      const genreName = p.get('genre') || '';
+      const ongoing = p.get('kind') === 'ongoing';
+      if (!search && (ongoing || genreName)) {
+        const snapshot = await getCatalogSnapshot(
+          JSON.stringify({
+            page,
+            sort,
+            search: '',
+            genre: genreName.toLocaleLowerCase('ru-RU'),
+            kind: ongoing
+              ? 'ongoing'
+              : p.get('kind') === 'movie'
+                ? 'movie'
+                : '',
+          }),
+        );
+        if (snapshot) {
+          return Response.json(snapshot.items, {
+            headers: {
+              'Cache-Control': 'public, max-age=30, stale-while-revalidate=300',
+              'X-Data-Source': 'snapshot-stale',
+              'X-Total-Count': String(snapshot.total),
+              'X-Total-Pages': String(snapshot.pages),
+            },
+          });
+        }
+      }
+      if (ongoing)
+        return Response.json(
+          { error: 'Не удалось загрузить онгоинги. Попробуйте ещё раз.' },
+          { status: 503 },
+        );
       const kind = p.get('kind') === 'movie' ? 'movie' : '';
       const cached = await cachedCatalogPage({
         genre: p.get('genre') || '',

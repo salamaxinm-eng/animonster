@@ -8,9 +8,15 @@ export function GenreCatalog({ genre }: { genre: string }) {
     [page, setPage] = useState(1),
     [pages, setPages] = useState(1),
     [loading, setLoading] = useState(true),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [retry, setRetry] = useState(0);
   useEffect(() => {
     const a = new AbortController();
+    let timedOut = false;
+    const timeout = window.setTimeout(() => {
+      timedOut = true;
+      a.abort();
+    }, 15000);
     setLoading(true);
     fetch('/api/catalog?genre=' + encodeURIComponent(genre) + '&page=' + page, {
       signal: a.signal,
@@ -22,16 +28,32 @@ export function GenreCatalog({ genre }: { genre: string }) {
         setError('');
       })
       .catch((e) => {
-        if (!a.signal.aborted) setError(e.message);
+        if (timedOut)
+          setError(
+            'Каталог загружается дольше обычного. Проверьте соединение и попробуйте ещё раз.',
+          );
+        else if (!a.signal.aborted) setError(e.message);
       })
       .finally(() => {
+        window.clearTimeout(timeout);
         if (!a.signal.aborted) setLoading(false);
+        else if (timedOut) setLoading(false);
       });
-    return () => a.abort();
-  }, [genre, page]);
+    return () => {
+      window.clearTimeout(timeout);
+      a.abort();
+    };
+  }, [genre, page, retry]);
   return (
     <>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <div role="alert">
+          <p>{error}</p>
+          <Button onClick={() => setRetry((value) => value + 1)}>
+            Попробовать снова
+          </Button>
+        </div>
+      )}
       {loading ? (
         <p role="status">Загрузка…</p>
       ) : items.length ? (
