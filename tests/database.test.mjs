@@ -429,6 +429,17 @@ test('Kodik repair migration retries missing posters and restores primary provid
     'kodik',
     'aniliberty',
   ]);
+  const counts = (
+    await databaseClient.query(
+      `SELECT count(DISTINCT anime_id) AS imported,
+       count(DISTINCT anime_id) FILTER (WHERE COALESCE((SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id),'[]'::jsonb) @> '["aniliberty"]'::jsonb) AS merged,
+       count(DISTINCT anime_id) FILTER (WHERE NOT (COALESCE((SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id),'[]'::jsonb) @> '["aniliberty"]'::jsonb)) AS kodik_only
+       FROM anime_sources WHERE provider='kodik' AND active=1`,
+    )
+  )[0];
+  assert.equal(Number(counts.imported), 1);
+  assert.equal(Number(counts.merged), 1);
+  assert.equal(Number(counts.kodik_only), 0);
   await databaseClient.close();
 });
 

@@ -134,8 +134,8 @@ export async function GET(r: Request) {
       db()
         .prepare(
           `SELECT count(DISTINCT anime_id) AS imported,
-           count(DISTINCT anime_id) FILTER (WHERE (SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id) ? 'aniliberty') AS merged,
-           count(DISTINCT anime_id) FILTER (WHERE NOT ((SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id) ? 'aniliberty')) AS kodik_only
+           count(DISTINCT anime_id) FILTER (WHERE COALESCE((SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id),'[]'::jsonb) @> '["aniliberty"]'::jsonb) AS merged,
+           count(DISTINCT anime_id) FILTER (WHERE NOT (COALESCE((SELECT data::jsonb->'providers' FROM anime_cache WHERE id=anime_sources.anime_id),'[]'::jsonb) @> '["aniliberty"]'::jsonb)) AS kodik_only
            FROM anime_sources WHERE provider='kodik' AND active=1`,
         )
         .first(),
