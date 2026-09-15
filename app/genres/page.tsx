@@ -111,7 +111,7 @@ const genreBackgrounds: Record<string, string> = {
   Сейнен: '/genres/seinen.jpg',
   Сёдзе: '/genres/shoujo.jpg',
   Сёнен: '/genres/shonen.jpg',
-  Повседневность: '/genres/slice-of-life.jpg',
+  Повседневность: '/genres/slice of life.jpg',
   Спорт: '/genres/sport.jpg',
   Мистика: '/genres/mystery.jpg',
   Триллер: '/genres/thriller.jpg',
