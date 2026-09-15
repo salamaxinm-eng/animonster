@@ -167,9 +167,73 @@ export async function kodikCatalogPage(
   };
 }
 
+const BLOCKED_KODIK_GENRES = new Set([
+  'hentai',
+  'хентай',
+  'erotica',
+  'эротика',
+  'ecchi',
+  'этти',
+
+  'yaoi',
+  'яой',
+  'boys love',
+  'boy love',
+  'shounen ai',
+  'shonen ai',
+  'сёнэн ай',
+  'сенен ай',
+
+  'yuri',
+  'юри',
+  'girls love',
+  'girl love',
+  'shoujo ai',
+  'shojo ai',
+  'сёдзё ай',
+  'седзе ай',
+
+  'lolicon',
+  'shotacon',
+  'лоликон',
+  'шотакон',
+]);
+
+const BLOCKED_KODIK_TEXT =
+  /(hentai|yaoi|yuri|erotica|ecchi|shou?nen[\s_-]*ai|shou?jo[\s_-]*ai|boys?[\s_-]*love|girls?[\s_-]*love|lolicon|shotacon|хентай|яой|юри|эротик[а-я]*|этти|с[её]н[её]н[\s_-]*ай|с[её]дз[её][\s_-]*ай|лоликон|шотакон)/iu;
+
+export function blockedKodikContent(item: KodikResult) {
+  const data = item.material_data;
+
+  const genres = [
+    ...(data?.anime_genres || []),
+    ...(data?.genres || []),
+  ].map((genre) => comparable(String(genre)));
+
+  if (genres.some((genre) => BLOCKED_KODIK_GENRES.has(genre))) {
+    return true;
+  }
+
+  const text = [
+    item.title,
+    item.title_orig,
+    data?.title,
+    data?.anime_title,
+    data?.title_en,
+    data?.description,
+    data?.anime_description,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return BLOCKED_KODIK_TEXT.test(text);
+}
+
 export function allowedKodikResult(item: KodikResult) {
   const translationType = item.translation?.type;
+
   return (
+    !blockedKodikContent(item) &&
     (item.type === 'anime' || item.type === 'anime-serial') &&
     (translationType === 'voice' || translationType === 'subtitles') &&
     !item.camrip &&
