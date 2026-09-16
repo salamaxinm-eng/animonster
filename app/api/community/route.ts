@@ -370,58 +370,109 @@ export async function POST(r: Request) {
       return json({ ok: true });
     }
     if (action === 'collection') {
-      const id = Number(b.anime_id);
-      if (!Number.isInteger(id) || id < 1 || id > 999999999)
-        throw new ApiError('Некорректный тайтл');
-      if (b.remove) {
-        await db().batch([
-          db()
-            .prepare(
-              'DELETE FROM collection_list_items WHERE anime_id=? AND list_id IN (SELECT id FROM collection_lists WHERE user_id=?)',
-            )
-            .bind(id, u.id),
-          db()
-            .prepare('DELETE FROM collection WHERE user_id=? AND anime_id=?')
-            .bind(u.id, id),
-        ]);
-        await markRecommendationsDirty(u.id);
-        return json({ ok: true });
-      }
-      if (!['planned', 'watching', 'completed', 'dropped'].includes(b.status))
-        throw new ApiError('Неизвестный статус');
-      const rating = Number(b.rating || 0);
-      if (!Number.isInteger(rating) || rating < 0 || rating > 10)
-        throw new ApiError('Оценка от 1 до 10');
-      const title = String(b.title || '')
-          .trim()
-          .slice(0, 200),
-        image = String(b.image || '');
-      if (
-        !title ||
-        !/^https:\/\/(shikimori\.one\/(system|assets)|api\.anilibria\.app\/storage)\//.test(
-          image,
-        )
-      )
-        throw new ApiError('Некорректный тайтл');
-      if (b.favorite) {
-        const count = await db()
-          .prepare(
-            'SELECT count(*) AS n FROM collection WHERE user_id=? AND favorite=1 AND anime_id<>?',
-          )
-          .bind(u.id, id)
-          .first<{ n: number }>();
-        if ((count?.n || 0) >= 5)
-          throw new ApiError('В витрине может быть пять любимых тайтлов');
-      }
-      await db()
+  const id = Number(b.anime_id);
+
+  if (!Number.isInteger(id) || id < 1 || id > 999999999)
+    throw new ApiError('Некорректный тайтл');
+
+  if (b.remove) {
+    await db().batch([
+      db()
         .prepare(
-          'INSERT INTO collection (user_id,anime_id,title,image,status,rating,favorite) VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id) DO UPDATE SET title=excluded.title,image=excluded.image,status=excluded.status,rating=excluded.rating,favorite=excluded.favorite',
+          'DELETE FROM collection_list_items WHERE anime_id=? AND list_id IN (SELECT id FROM collection_lists WHERE user_id=?)',
         )
-        .bind(u.id, id, title, image, b.status, rating, b.favorite ? 1 : 0)
-        .run();
-      await markRecommendationsDirty(u.id);
-      return json({ ok: true });
-    }
+        .bind(id, u.id),
+
+      db()
+        .prepare('DELETE FROM collection WHERE user_id=? AND anime_id=?')
+        .bind(u.id, id),
+    ]);
+
+    await markRecommendationsDirty(u.id);
+
+    return json({ ok: true });
+  }
+
+  if (!['planned', 'watching', 'completed', 'dropped'].includes(b.status))
+    throw new ApiError('Неизвестный статус');
+
+  const rating = Number(b.rating || 0);
+
+  if (!Number.isInteger(rating) || rating < 0 || rating > 10)
+    throw new ApiError('Оценка от 1 до 10');
+
+  /*
+   * Не доверяем title/image, которые прислал браузер.
+   * Берём канонические данные тайтла из нашего каталога.
+   */
+  const item = await getAnime(id);
+
+  if (!item)
+    throw new ApiError('Аниме не найдено', 404);
+
+  const title = String(
+    item.anime.russian || item.anime.name || '',
+  )
+    .trim()
+    .slice(0, 200);
+
+  if (!title)
+    throw new ApiError('Некорректное название тайтла');
+
+  /*
+   * Постеры могут приходить:
+   *
+   * /system/...
+   * //desu.shikimori.one/...
+   * https://shikimori.io/...
+   * https://api.anilibria.app/...
+   * и с других разрешённых источников.
+   */
+  let image = String(item.anime.image?.original || '').trim();
+
+  if (image.startsWith('//')) {
+    image = 'https:' + image;
+  } else if (image.startsWith('/')) {
+    image = 'https://shikimori.one' + image;
+  }
+
+  try {
+    image = safeRemoteImageUrl(image).href;
+  } catch {
+    throw new ApiError('Некорректная обложка тайтла');
+  }
+
+  if (b.favorite) {
+    const count = await db()
+      .prepare(
+        'SELECT count(*) AS n FROM collection WHERE user_id=? AND favorite=1 AND anime_id<>?',
+      )
+      .bind(u.id, id)
+      .first<{ n: number }>();
+
+    if ((count?.n || 0) >= 5)
+      throw new ApiError('В витрине может быть пять любимых тайтлов');
+  }
+
+  await db()
+    .prepare(
+      'INSERT INTO collection (user_id,anime_id,title,image,status,rating,favorite) VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id) DO UPDATE SET title=excluded.title,image=excluded.image,status=excluded.status,rating=excluded.rating,favorite=excluded.favorite',
+    )
+    .bind(
+      u.id,
+      id,
+      title,
+      image,
+      b.status,
+      rating,
+      b.favorite ? 1 : 0,
+    )
+    .run();
+
+  await markRecommendationsDirty(u.id);
+
+  return json({ ok: true });
+}
     if (action === 'list_create') {
       const name = String(b.name || '')
         .trim()
