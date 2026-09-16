@@ -21,6 +21,7 @@ import {
 import { themes, avatars, pins } from '@/lib/community';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
 import { plusEntitlements, profileFrames, reactions } from '@/lib/server/plus';
+import { safeRemoteImageUrl } from '@/lib/server/images';
 const validScope = (s: string) =>
   /^wall:[a-f0-9-]{36}$/.test(s) ||
   /^anime:\d{1,9}(?::episode:\d{1,5}|:video:\d{1,12})?$/.test(s);
