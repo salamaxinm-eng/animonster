@@ -525,7 +525,6 @@ export function EpisodePlayer({
               key={voiceover.id + ':' + episode.ordinal + ':' + iframeRevision}
               src={iframeUrl}
               title={`${animeTitle} — ${voiceover.title}, серия ${episode.ordinal}`}
-              referrerPolicy="origin"
               allow="autoplay *; fullscreen *; picture-in-picture *; encrypted-media *"
               allowFullScreen
               onError={() => {
