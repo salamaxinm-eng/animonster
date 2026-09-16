@@ -526,7 +526,7 @@ export function EpisodePlayer({
               src={iframeUrl}
               title={`${animeTitle} — ${voiceover.title}, серия ${episode.ordinal}`}
               referrerPolicy="origin"
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+              allow="autoplay *; fullscreen *; picture-in-picture *; encrypted-media *"
               allowFullScreen
               onError={() => {
                 const fallback = voiceovers.find(
