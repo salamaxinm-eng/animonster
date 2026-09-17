@@ -10,6 +10,7 @@ const SITE_URL = 'https://animonster.su';
 export const metadata: Metadata = {
   verification: {
     yandex: '187ee239c4a4b040',
+    google: '8Tus1LcrYSf-eIP4nAaWBcjSbwH6dEHDYjqGuCtQiXg',
   },
 
   metadataBase: new URL(SITE_URL),
