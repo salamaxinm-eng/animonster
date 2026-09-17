@@ -40,7 +40,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...staticPages,
       ...anime.map((item) => ({
         url: `${SITE_URL}/anime/${item.id}`,
-        lastModified: new Date(item.updated_at),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       })),
