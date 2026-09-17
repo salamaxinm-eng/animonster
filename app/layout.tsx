@@ -8,7 +8,12 @@ import './mobile.css';
 const SITE_URL = 'https://animonster.su';
 
 export const metadata: Metadata = {
+  verification: {
+    yandex: '187ee239c4a4b040',
+  },
+
   metadataBase: new URL(SITE_URL),
+
   title: {
     default: 'AniMonster — смотреть аниме онлайн',
     template: '%s | AniMonster',
