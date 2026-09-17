@@ -602,8 +602,7 @@ main {
   gap: 8px;
   margin-top: 13px;
 }
-.card-title button:first-child,
-.card-title > a:first-child {
+.card-title button:first-child {
   text-align: left;
   font-size: 14px;
   font-weight: 600;

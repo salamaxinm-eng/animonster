@@ -351,9 +351,9 @@ export default function Home() {
           <div className="cards">
             {shown.map((a, i) => (
               <article className="card" key={a.id}>
-                <a
+                <button
                   className="poster"
-                  href={'/anime/' + a.id}
+                  onClick={() => open(a)}
                   aria-label={'Открыть ' + a.russian}
                 >
                   <img
@@ -371,9 +371,9 @@ export default function Home() {
                       : `${a.episodes || '—'} СЕРИЙ`}
                     <ChevronRight size={17} />
                   </span>
-                </a>
+                </button>
                 <div className="card-title">
-                  <a href={'/anime/' + a.id}>{a.russian || a.name}</a>
+                  <button onClick={() => open(a)}>{a.russian || a.name}</button>
                   <button
                     className={has(a.id) ? 'saved' : ''}
                     onClick={() => toggle(a)}

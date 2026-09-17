@@ -21,24 +21,6 @@ export type CachedCatalogPage = {
   total: number;
 };
 
-export type SitemapAnimeEntry = {
-  id: number;
-  updated_at: number;
-};
-
-export async function sitemapAnime(
-  limit = 50000,
-): Promise<SitemapAnimeEntry[]> {
-  const safeLimit = Math.max(1, Math.min(50000, Math.floor(limit)));
-  const rows = await db()
-    .prepare(
-      'SELECT id,updated_at FROM anime_cache ORDER BY updated_at DESC LIMIT ?',
-    )
-    .bind(safeLimit)
-    .all<SitemapAnimeEntry>();
-  return rows.results;
-}
-
 export async function cachedCatalog({
   genre = '',
   kind = '',
