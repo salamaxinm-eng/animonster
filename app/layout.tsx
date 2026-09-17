@@ -4,11 +4,58 @@ import { CommunityProvider } from '@/components/community/context';
 import { MobileNavigation } from '@/components/mobile-navigation';
 import './community.css';
 import './mobile.css';
+
+const SITE_URL = 'https://animonster.su';
+
 export const metadata: Metadata = {
-  title: 'AniMonster — твоя территория аниме',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'AniMonster — смотреть аниме онлайн',
+    template: '%s | AniMonster',
+  },
   description:
-    'Смотри аниме, обсуждай серии и собирай свою коллекцию на AniMonster.',
+    'Смотри аниме онлайн на AniMonster: каталог сериалов и фильмов, новинки, рекомендации, коллекции, достижения и обсуждения.',
+  applicationName: 'AniMonster',
+  category: 'entertainment',
+  keywords: [
+    'аниме',
+    'смотреть аниме онлайн',
+    'аниме онлайн',
+    'аниме сериалы',
+    'аниме фильмы',
+    'AniMonster',
+  ],
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'ru_RU',
+    url: '/',
+    siteName: 'AniMonster',
+    title: 'AniMonster — смотреть аниме онлайн',
+    description:
+      'Каталог аниме, новинки, рекомендации, коллекции, достижения и обсуждения.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AniMonster — смотреть аниме онлайн',
+    description:
+      'Каталог аниме, новинки, рекомендации, коллекции, достижения и обсуждения.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+  },
 };
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
