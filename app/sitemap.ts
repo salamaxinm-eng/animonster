@@ -1,6 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { sitemapAnime } from '@/lib/server/library';
 
+export const dynamic = 'force-dynamic';
+
 const SITE_URL = 'https://animonster.su';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
