@@ -47,62 +47,6 @@ def main() -> int:
 
         text = replace_once(
             text,
-            """  const changeEpisode = useCallback(
-    (nextIndex: number, withoutReload = false) => {""",
-            """  const changeEpisode = useCallback(
-    (
-      nextIndex: number,
-      withoutReload = false,
-      autoplay = false,
-    ) => {""",
-            "changeEpisode signature",
-        )
-
-        text = replace_once(
-            text,
-            """      if (!nextEpisode || nextEpisode.plus_locked) return;
-      if (isKodik) {
-        if (withoutReload && frame.current?.contentWindow) {
-          frame.current.contentWindow.postMessage(
-            {
-              method: 'change_episode',
-              episode: nextEpisode.ordinal,
-              without_reload: true,
-            },
-            '*',
-          );
-        } else {""",
-            """      if (!nextEpisode || nextEpisode.plus_locked) return;
-      autoplayNextEpisode.current = autoplay;
-      if (isKodik) {
-        if (withoutReload && frame.current?.contentWindow) {
-          frame.current.contentWindow.postMessage(
-            {
-              key: 'kodik_player_api',
-              value: {
-                method: 'change_episode',
-                episode: nextEpisode.ordinal,
-                without_reload: true,
-              },
-            },
-            '*',
-          );
-          if (autoplay)
-            window.setTimeout(() => {
-              frame.current?.contentWindow?.postMessage(
-                {
-                  key: 'kodik_player_api',
-                  value: { method: 'play' },
-                },
-                '*',
-              );
-            }, 300);
-        } else {""",
-            "Kodik API payload + play",
-        )
-
-        text = replace_once(
-            text,
             """      autoNextRemaining >= 0 &&
       autoNextRemaining <= 5,""",
             """      autoNextRemaining >= 0 &&
@@ -112,25 +56,40 @@ def main() -> int:
 
         text = replace_once(
             text,
-            """    changeEpisode(index + 1, isKodik);""",
-            """    changeEpisode(index + 1, isKodik, true);""",
+            """    autoNextTriggered.current = key;
+    changeEpisode(index + 1, isKodik);
+  }, [""",
+            """    autoNextTriggered.current = key;
+    if (!isKodik) autoplayNextEpisode.current = true;
+    changeEpisode(index + 1, isKodik);
+  }, [""",
             "automatic transition autoplay",
         )
 
         text = replace_once(
             text,
-            """                  changeEpisode(index + 1, isKodik);""",
-            """                  changeEpisode(index + 1, isKodik, true);""",
+            """                  autoNextTriggered.current = key;
+                  changeEpisode(index + 1, isKodik);
+                }}
+              >""",
+            """                  autoNextTriggered.current = key;
+                  if (!isKodik) autoplayNextEpisode.current = true;
+                  changeEpisode(index + 1, isKodik);
+                }}
+              >""",
             "watch now autoplay",
         )
 
         text = replace_once(
             text,
-            """                  changeEpisode(index + 1);
+            """                  autoNextTriggered.current = key;
+                  changeEpisode(index + 1);
                 }
               }
             }}""",
-            """                  changeEpisode(index + 1, false, true);
+            """                  autoNextTriggered.current = key;
+                  autoplayNextEpisode.current = true;
+                  changeEpisode(index + 1);
                 }
               }
             }}""",
@@ -160,14 +119,11 @@ def main() -> int:
 
     except RuntimeError as exc:
         print(f"Патч не применён: {exc}", file=sys.stderr)
-        print(
-            "Похоже, components/episode-player.tsx отличается от версии после первого патча.",
-            file=sys.stderr,
-        )
+        print("Исходный файл не изменён.", file=sys.stderr)
         return 3
 
     if args.dry_run:
-        print("OK: v2-патч подходит. Файл не изменён.")
+        print("OK: исправленный v2-патч подходит. Файл не изменён.")
         return 0
 
     backup = player.with_suffix(player.suffix + ".v2.bak")
@@ -176,8 +132,10 @@ def main() -> int:
 
     print("Готово: auto-next v2 применён.")
     print("- окно появляется за 60 секунд до конца")
-    print("- Kodik переключается через kodik_player_api/change_episode")
-    print("- следующая серия запускается автоматически")
+    print("- отсчёт идёт от 60 до 1")
+    print("- Kodik использует change_episode + without_reload=true")
+    print("- Kodik должен сам начать следующую серию по своей API-команде")
+    print("- обычный video-плеер принудительно запускает следующую серию")
     print(f"- backup: {backup}")
     return 0
 
