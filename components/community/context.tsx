@@ -271,6 +271,9 @@ export function AccountNav() {
   const c = useCommunity();
   return (
     <div className="account-nav">
+      <a href="/referrals" className="referral-nav-button">
+        <Gem size={16} /> Пригласить друзей
+      </a>
       <a href="/pins" className="plus-link">
         <Gem size={17} /> Пины
       </a>

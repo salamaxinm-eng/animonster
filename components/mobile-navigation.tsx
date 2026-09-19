@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import {
   Bookmark,
   Ghost,
+  Gift,
   Home,
   LayoutGrid,
   Search,
@@ -101,6 +102,14 @@ export function MobileNavigation() {
           </a>
         )}
         <div className="mobile-topbar-actions">
+          <a
+            href="/referrals"
+            className="mobile-referral-button"
+            aria-label="Пригласить друзей"
+            aria-current={pathname === '/referrals' ? 'page' : undefined}
+          >
+            <Gift size={19} />
+          </a>
           <BuySubscription compact className="mobile-plus-button" />
           <a
             className="mobile-search-button"

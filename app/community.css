@@ -50,6 +50,32 @@
 .header .account-nav {
   margin-left: auto;
 }
+.referral-nav-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid #76549977;
+  border-radius: 9px;
+  background: #21172e;
+  color: #ceb6ed;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.mobile-referral-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #76549977;
+  border-radius: 9px;
+  background: #21172e;
+  color: #ceb6ed;
+}
+.mobile-referral-button[aria-current='page'] {
+  border-color: #b4ed50;
+  color: #b4ed50;
+}
 .user-avatar {
   width: 42px;
   height: 42px;
