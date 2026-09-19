@@ -12,6 +12,7 @@ import {
 import { actor } from '../activity/route';
 import { getAnime } from '@/lib/server/library';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
+import { evaluateUserAchievements } from '@/lib/server/achievements';
 
 const WATCHED_EPISODE_SECONDS = 12 * 60;
 
@@ -73,6 +74,14 @@ export async function POST(r: Request) {
       }
 
       const token = uid();
+      const previous = a.user
+        ? await db()
+            .prepare(
+              'SELECT watched_seconds FROM history WHERE user_id=? AND anime_id=? AND episode=?',
+            )
+            .bind(a.user.id, id, ep)
+            .first<{ watched_seconds: number }>()
+        : null;
 
       await db().batch([
         db()
@@ -81,7 +90,7 @@ export async function POST(r: Request) {
 
         db()
           .prepare(
-            'INSERT INTO watch_sessions(token,actor,user_id,anime_id,episode,duration,last_at,expires,provider,voiceover) VALUES (?,?,?,?,?,?,?,?,?,?)',
+            'INSERT INTO watch_sessions(token,actor,user_id,anime_id,episode,duration,last_at,watched,expires,provider,voiceover) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
           )
           .bind(
             token,
@@ -91,6 +100,7 @@ export async function POST(r: Request) {
             ep,
             episode.duration,
             n,
+            Math.min(episode.duration, Number(previous?.watched_seconds || 0)),
             n + 14400000,
             provider,
             voiceover,
@@ -193,6 +203,14 @@ export async function POST(r: Request) {
     }
 
     await db().batch(stmts);
+
+    if (
+      a.user &&
+      delta > 0 &&
+      s.watched < WATCHED_EPISODE_SECONDS &&
+      s.watched + delta >= WATCHED_EPISODE_SECONDS
+    )
+      await evaluateUserAchievements(a.user.id, s.anime_id);
 
     const nextWatched = s.watched + delta;
     const recommendationThresholds = [
