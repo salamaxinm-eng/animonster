@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { api, useCommunity, Avatar, Pin } from './context';
+import { api, useCommunity, Avatar, Pin, UserTag } from './context';
 type Comment = {
   id: string;
   scope: string;
@@ -32,6 +32,7 @@ type Comment = {
   avatar: string;
   theme: string;
   pin: string | null;
+  tag: string | null;
   like_count: number;
   vote: number;
   dislike_count: number;
@@ -229,6 +230,7 @@ export function Comments({
             <div className="comment-content">
               <div className="comment-meta">
                 <a href={'/members/' + c.author_id}>{c.nick}</a>
+                <UserTag id={c.tag} />
                 {c.plus && <span className="plus-comment-badge">PLUS</span>}
                 <Pin id={c.pin} />
                 <time>

@@ -13,15 +13,15 @@ import {
   ApiError,
   now,
   uid,
-  premium,
   inviteRequired,
   emailVerificationEnabled,
   type User,
 } from '@/lib/server/core';
-import { themes, avatars, pins } from '@/lib/community';
+import { themes, avatars } from '@/lib/community';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
-import { plusEntitlements, profileFrames, reactions } from '@/lib/server/plus';
+import { plusEntitlements, reactions } from '@/lib/server/plus';
 import { safeRemoteImageUrl } from '@/lib/server/images';
+import { validateEquippedCosmetic } from '@/lib/server/cosmetics';
 const validScope = (s: string) =>
   /^wall:[a-f0-9-]{36}$/.test(s) ||
   /^anime:\d{1,9}(?::episode:\d{1,5}|:video:\d{1,12})?$/.test(s);
@@ -156,9 +156,31 @@ export async function GET(r: Request) {
       const [rows, reactionRows] = await Promise.all([
         db()
           .prepare(
-            `SELECT c.*,u.nick,u.avatar,u.theme,EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?) AS plus,CASE WHEN EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?) THEN u.pin ELSE NULL END AS pin,(SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=1) AS like_count,(SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=-1) AS dislike_count,COALESCE((SELECT sum(value) FROM likes l WHERE l.comment_id=c.id),0) AS score,COALESCE((SELECT value FROM likes l WHERE l.comment_id=c.id AND l.user_id=?),0) AS vote FROM comments c JOIN users u ON u.id=c.author_id WHERE c.scope=? AND NOT EXISTS(SELECT 1 FROM blocks b WHERE (b.user_id=? AND b.target_id=c.author_id) OR (b.user_id=c.author_id AND b.target_id=?)) ORDER BY c.pinned DESC,${order} LIMIT 100`,
+            `SELECT c.*,u.nick,u.avatar,u.theme,
+             EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?) AS plus,
+             CASE WHEN EXISTS(SELECT 1 FROM cosmetics x WHERE x.slug=u.pin AND x.kind='pin' AND x.active=1 AND
+               (x.access_type='free' OR (x.access_type='plus' AND EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?)) OR
+               (x.access_type NOT IN ('free','plus') AND EXISTS(SELECT 1 FROM user_cosmetics uc WHERE uc.user_id=u.id AND uc.cosmetic_id=x.id)))) THEN u.pin ELSE NULL END AS pin,
+             CASE WHEN EXISTS(SELECT 1 FROM cosmetics x WHERE x.slug=u.tag AND x.kind='tag' AND x.active=1 AND
+               (x.access_type='free' OR (x.access_type='plus' AND EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?)) OR
+               (x.access_type NOT IN ('free','plus') AND EXISTS(SELECT 1 FROM user_cosmetics uc WHERE uc.user_id=u.id AND uc.cosmetic_id=x.id)))) THEN u.tag ELSE NULL END AS tag,
+             (SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=1) AS like_count,
+             (SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=-1) AS dislike_count,
+             COALESCE((SELECT sum(value) FROM likes l WHERE l.comment_id=c.id),0) AS score,
+             COALESCE((SELECT value FROM likes l WHERE l.comment_id=c.id AND l.user_id=?),0) AS vote
+             FROM comments c JOIN users u ON u.id=c.author_id WHERE c.scope=? AND
+             NOT EXISTS(SELECT 1 FROM blocks b WHERE (b.user_id=? AND b.target_id=c.author_id) OR (b.user_id=c.author_id AND b.target_id=?))
+             ORDER BY c.pinned DESC,${order} LIMIT 100`,
           )
-          .bind(now(), now(), u?.id || '', scope, u?.id || '', u?.id || '')
+          .bind(
+            now(),
+            now(),
+            now(),
+            u?.id || '',
+            scope,
+            u?.id || '',
+            u?.id || '',
+          )
           .all(),
         db()
           .prepare(
@@ -188,6 +210,7 @@ export async function GET(r: Request) {
                 ...c,
                 body: 'Комментарий удалён',
                 pin: null,
+                tag: null,
                 reaction_counts,
                 my_reactions,
               }
@@ -295,18 +318,16 @@ export async function POST(r: Request) {
         (!avatars.some((x) => x.id === avatar) && !customAvatar)
       )
         throw new ApiError('Неизвестное оформление');
-      const requestedPin = b.pin || null;
-      const pin = access.active ? requestedPin : u.pin;
-      if (
-        access.active &&
-        pin &&
-        (!pins.some((x) => x.id === pin) || !(await premium(u.id)))
-      )
-        throw new ApiError('Пины доступны по активной подписке', 403);
-      const requestedFrame = String(b.profile_frame || 'none');
-      const frame = access.active ? requestedFrame : u.profile_frame || 'none';
-      if (!profileFrames.includes(frame))
-        throw new ApiError('Неизвестная рамка профиля');
+      const [pin, frame, tag] = await Promise.all([
+        validateEquippedCosmetic(u.id, 'pin', b.pin, access.premiumUntil),
+        validateEquippedCosmetic(
+          u.id,
+          'frame',
+          b.profile_frame,
+          access.premiumUntil,
+        ),
+        validateEquippedCosmetic(u.id, 'tag', b.tag, access.premiumUntil),
+      ]);
       const autoSkipSegments =
         b.auto_skip_segments == null
           ? (u.auto_skip_segments ?? null)
@@ -315,7 +336,7 @@ export async function POST(r: Request) {
             : 0;
       await db()
         .prepare(
-          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,profile_frame=?,wall_open=?,collection_public=?,auto_skip_segments=? WHERE id=?',
+          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,profile_frame=?,tag=?,wall_open=?,collection_public=?,auto_skip_segments=? WHERE id=?',
         )
         .bind(
           nick,
@@ -324,6 +345,7 @@ export async function POST(r: Request) {
           avatar,
           pin,
           frame,
+          tag,
           b.wall_open ? 1 : 0,
           b.collection_public ? 1 : 0,
           autoSkipSegments,
@@ -371,109 +393,97 @@ export async function POST(r: Request) {
       return json({ ok: true });
     }
     if (action === 'collection') {
-  const id = Number(b.anime_id);
+      const id = Number(b.anime_id);
 
-  if (!Number.isInteger(id) || id < 1 || id > 999999999)
-    throw new ApiError('Некорректный тайтл');
+      if (!Number.isInteger(id) || id < 1 || id > 999999999)
+        throw new ApiError('Некорректный тайтл');
 
-  if (b.remove) {
-    await db().batch([
-      db()
+      if (b.remove) {
+        await db().batch([
+          db()
+            .prepare(
+              'DELETE FROM collection_list_items WHERE anime_id=? AND list_id IN (SELECT id FROM collection_lists WHERE user_id=?)',
+            )
+            .bind(id, u.id),
+
+          db()
+            .prepare('DELETE FROM collection WHERE user_id=? AND anime_id=?')
+            .bind(u.id, id),
+        ]);
+
+        await markRecommendationsDirty(u.id);
+
+        return json({ ok: true });
+      }
+
+      if (!['planned', 'watching', 'completed', 'dropped'].includes(b.status))
+        throw new ApiError('Неизвестный статус');
+
+      const rating = Number(b.rating || 0);
+
+      if (!Number.isInteger(rating) || rating < 0 || rating > 10)
+        throw new ApiError('Оценка от 1 до 10');
+
+      /*
+       * Не доверяем title/image, которые прислал браузер.
+       * Берём канонические данные тайтла из нашего каталога.
+       */
+      const item = await getAnime(id);
+
+      if (!item) throw new ApiError('Аниме не найдено', 404);
+
+      const title = String(item.anime.russian || item.anime.name || '')
+        .trim()
+        .slice(0, 200);
+
+      if (!title) throw new ApiError('Некорректное название тайтла');
+
+      /*
+       * Постеры могут приходить:
+       *
+       * /system/...
+       * //desu.shikimori.one/...
+       * https://shikimori.io/...
+       * https://api.anilibria.app/...
+       * и с других разрешённых источников.
+       */
+      let image = String(item.anime.image?.original || '').trim();
+
+      if (image.startsWith('//')) {
+        image = 'https:' + image;
+      } else if (image.startsWith('/')) {
+        image = 'https://shikimori.one' + image;
+      }
+
+      try {
+        image = safeRemoteImageUrl(image).href;
+      } catch {
+        throw new ApiError('Некорректная обложка тайтла');
+      }
+
+      if (b.favorite) {
+        const count = await db()
+          .prepare(
+            'SELECT count(*) AS n FROM collection WHERE user_id=? AND favorite=1 AND anime_id<>?',
+          )
+          .bind(u.id, id)
+          .first<{ n: number }>();
+
+        if ((count?.n || 0) >= 5)
+          throw new ApiError('В витрине может быть пять любимых тайтлов');
+      }
+
+      await db()
         .prepare(
-          'DELETE FROM collection_list_items WHERE anime_id=? AND list_id IN (SELECT id FROM collection_lists WHERE user_id=?)',
+          'INSERT INTO collection (user_id,anime_id,title,image,status,rating,favorite) VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id) DO UPDATE SET title=excluded.title,image=excluded.image,status=excluded.status,rating=excluded.rating,favorite=excluded.favorite',
         )
-        .bind(id, u.id),
+        .bind(u.id, id, title, image, b.status, rating, b.favorite ? 1 : 0)
+        .run();
 
-      db()
-        .prepare('DELETE FROM collection WHERE user_id=? AND anime_id=?')
-        .bind(u.id, id),
-    ]);
+      await markRecommendationsDirty(u.id);
 
-    await markRecommendationsDirty(u.id);
-
-    return json({ ok: true });
-  }
-
-  if (!['planned', 'watching', 'completed', 'dropped'].includes(b.status))
-    throw new ApiError('Неизвестный статус');
-
-  const rating = Number(b.rating || 0);
-
-  if (!Number.isInteger(rating) || rating < 0 || rating > 10)
-    throw new ApiError('Оценка от 1 до 10');
-
-  /*
-   * Не доверяем title/image, которые прислал браузер.
-   * Берём канонические данные тайтла из нашего каталога.
-   */
-  const item = await getAnime(id);
-
-  if (!item)
-    throw new ApiError('Аниме не найдено', 404);
-
-  const title = String(
-    item.anime.russian || item.anime.name || '',
-  )
-    .trim()
-    .slice(0, 200);
-
-  if (!title)
-    throw new ApiError('Некорректное название тайтла');
-
-  /*
-   * Постеры могут приходить:
-   *
-   * /system/...
-   * //desu.shikimori.one/...
-   * https://shikimori.io/...
-   * https://api.anilibria.app/...
-   * и с других разрешённых источников.
-   */
-  let image = String(item.anime.image?.original || '').trim();
-
-  if (image.startsWith('//')) {
-    image = 'https:' + image;
-  } else if (image.startsWith('/')) {
-    image = 'https://shikimori.one' + image;
-  }
-
-  try {
-    image = safeRemoteImageUrl(image).href;
-  } catch {
-    throw new ApiError('Некорректная обложка тайтла');
-  }
-
-  if (b.favorite) {
-    const count = await db()
-      .prepare(
-        'SELECT count(*) AS n FROM collection WHERE user_id=? AND favorite=1 AND anime_id<>?',
-      )
-      .bind(u.id, id)
-      .first<{ n: number }>();
-
-    if ((count?.n || 0) >= 5)
-      throw new ApiError('В витрине может быть пять любимых тайтлов');
-  }
-
-  await db()
-    .prepare(
-      'INSERT INTO collection (user_id,anime_id,title,image,status,rating,favorite) VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id) DO UPDATE SET title=excluded.title,image=excluded.image,status=excluded.status,rating=excluded.rating,favorite=excluded.favorite',
-    )
-    .bind(
-      u.id,
-      id,
-      title,
-      image,
-      b.status,
-      rating,
-      b.favorite ? 1 : 0,
-    )
-    .run();
-
-  await markRecommendationsDirty(u.id);
-
-  return json({ ok: true });
-}
+      return json({ ok: true });
+    }
     if (action === 'list_create') {
       const name = String(b.name || '')
         .trim()

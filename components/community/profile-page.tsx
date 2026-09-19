@@ -18,7 +18,14 @@ import {
   Bell,
   ImagePlus,
 } from 'lucide-react';
-import { api, useCommunity, CommunityHeader, Avatar, Pin } from './context';
+import {
+  api,
+  useCommunity,
+  CommunityHeader,
+  Avatar,
+  Pin,
+  UserTag,
+} from './context';
 import { Comments } from './comments';
 import {
   themes,
@@ -312,6 +319,7 @@ export function ProfilePage({
             <div className="profile-name">
               <div className="profile-title-row">
                 <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
+                <UserTag id={tab === 'settings' ? draft?.tag : data.user.tag} />
                 <Pin
                   id={tab === 'settings' ? draft?.pin || null : data.user.pin}
                 />

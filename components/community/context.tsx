@@ -193,6 +193,23 @@ export function Pin({ id }: { id: string | null }) {
     </span>
   ) : null;
 }
+const tagLabels: Record<string, string> = {
+  plus: 'PLUS',
+  supporter: 'Поддержал AniMonster',
+  'hundred-episodes': 'Сотня серий',
+  'binge-watcher': 'Запойный зритель',
+  'animonster-legend': 'Легенда AniMonster',
+  mugiwara: 'Мугивара',
+  recruiter: 'Вербовщик',
+};
+export function UserTag({ id }: { id?: string | null }) {
+  if (!id) return null;
+  return (
+    <span className={`user-tag user-tag-${id}`} title="Тег пользователя">
+      {tagLabels[id] || id.replaceAll('-', ' ')}
+    </span>
+  );
+}
 export function Avatar({
   avatar = 'moon',
   theme = 'neon',

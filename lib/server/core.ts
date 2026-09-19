@@ -287,6 +287,7 @@ export type User = {
   theme: string;
   avatar: string;
   pin: string | null;
+  tag?: string | null;
   wall_open: number;
   collection_public: number;
   adult_confirmed_at?: number | null;
@@ -367,6 +368,12 @@ export async function premium(id: string) {
 }
 export async function publicUser(u: User) {
   const until = await premium(u.id);
+  const { safeEquippedCosmetics } = await import('./cosmetics');
+  const cosmetics = await safeEquippedCosmetics(
+    u.id,
+    { tag: u.tag, pin: u.pin, frame: u.profile_frame },
+    until,
+  );
   const progress = await db()
     .prepare(
       'SELECT COALESCE(sum(completed),0) AS episodes FROM history WHERE user_id=?',
@@ -380,7 +387,8 @@ export async function publicUser(u: User) {
     bio: u.bio,
     theme: u.theme,
     avatar: u.avatar,
-    pin: until ? u.pin : null,
+    pin: cosmetics.pin,
+    tag: cosmetics.tag,
     wall_open: u.wall_open,
     collection_public: u.collection_public,
     created_at: u.created_at,
@@ -396,7 +404,7 @@ export async function publicUser(u: User) {
       early_access: !!until,
     },
     profile_background: until ? u.profile_background || null : null,
-    profile_frame: until ? u.profile_frame || 'none' : 'none',
+    profile_frame: cosmetics.frame,
     adult_confirmed: !!u.adult_confirmed_at,
     auto_skip_segments:
       u.auto_skip_segments == null ? null : !!u.auto_skip_segments,

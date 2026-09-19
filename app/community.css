@@ -98,6 +98,29 @@
   object-fit: cover;
   flex-shrink: 0;
 }
+.user-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 21px;
+  padding: 2px 7px;
+  border: 1px solid #8f72c766;
+  border-radius: 999px;
+  background: #1a1623;
+  box-shadow: 0 0 12px #7650ad24;
+  color: #d9caf1;
+  font-size: 10px;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.user-tag-supporter,
+.user-tag-hundred-episodes,
+.user-tag-mugiwara {
+  border-color: #a5e63e55;
+  background: #141b11;
+  color: #cfef99;
+  box-shadow: 0 0 12px #a5e63e1f;
+}
 .social-site {
   max-width: 1440px;
   margin: auto;
@@ -3073,6 +3096,29 @@ a.season-card:hover {
   box-shadow:
     0 0 0 3px #65d9ff,
     0 0 25px #65d9ff80;
+}
+.profile-frame-violet-neon .user-avatar {
+  box-shadow:
+    0 0 0 3px #9e7bf1,
+    0 0 28px #7650ad70;
+}
+.profile-frame-premium-glow .user-avatar {
+  box-shadow:
+    0 0 0 3px #b89cff,
+    0 0 30px #8f6cff80;
+  animation: premium-frame-glow 2.8s ease-in-out infinite alternate;
+}
+@keyframes premium-frame-glow {
+  to {
+    box-shadow:
+      0 0 0 3px #c8b4ff,
+      0 0 38px #9d7cffaa;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-frame-premium-glow .user-avatar {
+    animation: none;
+  }
 }
 .list-plus-editor {
   grid-column: 1 / -1;

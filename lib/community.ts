@@ -198,6 +198,7 @@ export type Profile = {
   theme: string;
   avatar: string;
   pin: string | null;
+  tag: string | null;
   wall_open: number;
   collection_public: number;
   created_at: number;
