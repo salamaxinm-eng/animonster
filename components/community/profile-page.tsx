@@ -3,6 +3,7 @@ import { ProfileJourney } from './profile-journey';
 import { BuySubscription } from './buy-subscription';
 import { AccountData } from './account-data';
 import { TelegramSettings } from './telegram-settings';
+import { RewardsPanel } from './rewards-panel';
 
 import { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -114,6 +115,7 @@ export function ProfilePage({
     if (q.get('tab') === 'moderation') setTab('moderation');
     if (q.get('tab') === 'collection') setTab('collection');
     if (q.get('tab') === 'settings') setTab('settings');
+    if (q.get('tab') === 'rewards') setTab('rewards');
     if (q.get('auth') === 'failed')
       setError('Вход через VK не завершился. Попробуйте ещё раз.');
     if (q.get('payment') === 'return')
@@ -627,6 +629,9 @@ export function ProfilePage({
                   <TabsTrigger value="collection">Коллекция</TabsTrigger>
                   {data.own && (
                     <>
+                      <TabsTrigger value="rewards">
+                        <Gem size={15} /> Награды
+                      </TabsTrigger>
                       <TabsTrigger value="settings">
                         <Settings size={15} /> Настройки
                       </TabsTrigger>
@@ -1147,6 +1152,7 @@ export function ProfilePage({
                   <AccountData />
                 </form>
               )}
+              {tab === 'rewards' && data.own && <RewardsPanel />}
               {tab === 'notifications' && data.own && (
                 <section className="social-panel">
                   <TelegramSettings />
