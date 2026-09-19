@@ -123,18 +123,23 @@ function normalizeKodikAnime(
   item: KodikResult,
   animeId: number,
   current?: Anime,
+  canonical?: ShikimoriCandidate,
 ): Anime | null {
   const data = item.material_data;
   const russian = String(
-    data?.anime_title || data?.title || item.title || '',
+    canonical?.russian || data?.anime_title || data?.title || item.title || '',
   ).trim();
-  const name = String(data?.title_en || item.title_orig || russian).trim();
-  const poster = String(
-    data?.anime_poster_url ||
+  const name = String(
+    canonical?.name || data?.title_en || item.title_orig || russian,
+  ).trim();
+  let poster = String(
+    canonical?.image?.original ||
+      data?.anime_poster_url ||
       data?.poster_url ||
       current?.image?.original ||
       '',
   ).trim();
+  if (poster.startsWith('/')) poster = 'https://shikimori.one' + poster;
   if (!russian || !name || !poster || !/^https:\/\//i.test(poster)) return null;
   const providers = [...new Set(['kodik', ...(current?.providers || [])])] as (
     | 'kodik'
@@ -147,14 +152,18 @@ function normalizeKodikAnime(
     russian,
     name,
     image: { original: poster },
-    score: String(data?.shikimori_rating || current?.score || '—'),
-    kind: kind(item),
+    score: String(
+      canonical?.score || data?.shikimori_rating || current?.score || '—',
+    ),
+    kind: canonical?.kind === 'movie' ? 'movie' : kind(item),
     episodes: Math.max(
       Number(item.episodes_count || item.last_episode) || 0,
       Number(data?.episodes_aired || data?.episodes_total) || 0,
       current?.episodes || 0,
     ),
-    aired_on: String(data?.year || item.year || current?.aired_on || ''),
+    aired_on: String(
+      canonical?.aired_on || data?.year || item.year || current?.aired_on || '',
+    ),
     description:
       data?.anime_description ||
       data?.description ||
@@ -219,7 +228,13 @@ async function importItem(
   }
   item.shikimori_id = animeId;
   const existing = await existingAnime(animeId);
-  const anime = normalizeKodikAnime(item, animeId, existing?.anime);
+  let canonical: ShikimoriCandidate | undefined;
+  if (!existing) {
+    try {
+      canonical = (await shikimori(`/animes/${animeId}`)) as ShikimoriCandidate;
+    } catch {}
+  }
+  const anime = normalizeKodikAnime(item, animeId, existing?.anime, canonical);
   if (!anime) {
     await queueMatch(
       item,

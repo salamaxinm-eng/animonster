@@ -1,11 +1,4 @@
-import {
-  ApiError,
-  db,
-  fail,
-  now,
-  premium,
-  viewer,
-} from '@/lib/server/core';
+import { ApiError, db, fail, now, premium, viewer } from '@/lib/server/core';
 import { safeKodikPlayerUrl } from '@/lib/server/kodik';
 
 export const dynamic = 'force-dynamic';
@@ -61,6 +54,8 @@ export async function GET(request: Request) {
     const start = Math.floor(Number(params.get('start_from')) || 0);
     if (start > 0 && start < 24 * 60 * 60)
       target.searchParams.set('start_from', String(start));
+    if (params.get('autoplay') === '1')
+      target.searchParams.set('autoplay', 'true');
     return Response.redirect(target.href, 302);
   } catch (error) {
     return fail(error);

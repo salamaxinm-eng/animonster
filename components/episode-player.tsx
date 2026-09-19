@@ -66,6 +66,8 @@ export function EpisodePlayer({
   const wakeLockRequesting = useRef(false);
   const wakeLockRetry = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playbackActiveRef = useRef(false);
+  const autoplayNext = useRef(false);
+  const advancedEpisode = useRef('');
   const community = useCommunity(),
     { user } = community;
   const skippedSegment = useRef('');
@@ -154,6 +156,15 @@ export function EpisodePlayer({
     },
     [requestWakeLock],
   );
+  const advanceToNext = useCallback(() => {
+    if (!episode || index >= lastVoiceoverIndex) return;
+    const key = `${voiceover?.id}:${episode.id}`;
+    if (advancedEpisode.current === key) return;
+    advancedEpisode.current = key;
+    autoplayNext.current = true;
+    setPlayback(false);
+    setIndex((value) => Math.min(value + 1, lastVoiceoverIndex));
+  }, [episode, index, lastVoiceoverIndex, setPlayback, voiceover?.id]);
   useEffect(() => {
     const restore = () => {
       if (document.visibilityState === 'visible') void requestWakeLock();
@@ -253,6 +264,7 @@ export function EpisodePlayer({
       cancelled = false,
       sending = false,
       idleTimer: ReturnType<typeof setTimeout> | undefined;
+    let knownDuration = 0;
     void fetch('/api/watch', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -324,12 +336,22 @@ export function EpisodePlayer({
         Number.isFinite(reportedDuration) &&
         reportedDuration >= 60 &&
         reportedDuration <= 24 * 60 * 60
-      )
+      ) {
+        knownDuration = reportedDuration;
         setKodikDuration(reportedDuration);
+      }
+      if (
+        payload?.key === 'kodik_player_video_ended' ||
+        payload?.kodik_player_video_ended === true
+      ) {
+        advanceToNext();
+        return;
+      }
       const next = Number(timeValue);
       if (!Number.isFinite(next) || next < 0 || next > 24 * 60 * 60) return;
       const delta = next - lastPosition;
       if (delta > 0 && delta < 10) {
+        autoplayNext.current = false;
         seconds += delta;
         setPlayback(true);
         clearTimeout(idleTimer);
@@ -338,6 +360,7 @@ export function EpisodePlayer({
       position = next;
       lastPosition = next;
       setCurrentTime(next);
+      if (knownDuration >= 60 && next >= knownDuration - 1.25) advanceToNext();
     };
     const timer = setInterval(flush, 15000);
     window.addEventListener('message', receive);
@@ -351,7 +374,15 @@ export function EpisodePlayer({
       window.removeEventListener('message', receive);
       window.removeEventListener('pagehide', flush);
     };
-  }, [animeId, episode?.id, user?.id, isKodik, voiceoverId, setPlayback]);
+  }, [
+    animeId,
+    episode?.id,
+    user?.id,
+    isKodik,
+    voiceoverId,
+    setPlayback,
+    advanceToNext,
+  ]);
   const stream = episode
     ? (quality === '1080'
         ? episode.hls_1080
@@ -370,7 +401,7 @@ export function EpisodePlayer({
     skippedSegment.current = '';
   }, [episode?.id, voiceover?.id, isKodik]);
   useEffect(() => {
-    if (!animeId || !episode) return;
+    if (!animeId || !episode || isKodik) return;
     const controller = new AbortController(),
       params = new URLSearchParams({
         anime_id: String(animeId),
@@ -457,6 +488,7 @@ export function EpisodePlayer({
           'start_from',
           String(Math.floor(requestedPosition)),
         );
+      if (autoplayNext.current) url.searchParams.set('autoplay', '1');
       return relative ? `${url.pathname}${url.search}${url.hash}` : url.href;
     } catch {
       return '';
@@ -502,7 +534,13 @@ export function EpisodePlayer({
       );
   };
   useEffect(() => {
-    if (!activeKind || !activeSegment || autoSkip !== true || !autoSkipAllowed)
+    if (
+      isKodik ||
+      !activeKind ||
+      !activeSegment ||
+      autoSkip !== true ||
+      !autoSkipAllowed
+    )
       return;
     const key = `${episode?.id}:${voiceover?.id}:${activeKind}:${activeSegment.stop}`;
     if (skippedSegment.current === key) return;
@@ -514,6 +552,7 @@ export function EpisodePlayer({
     autoSkipAllowed,
     episode?.id,
     voiceover?.id,
+    isKodik,
   ]);
   return (
     <div className="episode-view">
@@ -575,10 +614,12 @@ export function EpisodePlayer({
                 );
               }
             }}
-            onEnded={() => {
-              setPlayback(false);
-              if (index < episodes.length - 1) setIndex(index + 1);
+            onCanPlay={() => {
+              if (!autoplayNext.current || !video.current) return;
+              autoplayNext.current = false;
+              void video.current.play().catch(() => {});
             }}
+            onEnded={advanceToNext}
             onError={() => {
               setPlayback(false);
               setError('Не удалось воспроизвести видео. Обновите источник.');
@@ -586,7 +627,7 @@ export function EpisodePlayer({
             aria-label={'Серия ' + episode?.ordinal}
           />
         )}
-        {activeKind && activeSegment && !showAutoSkipQuestion && (
+        {!isKodik && activeKind && activeSegment && !showAutoSkipQuestion && (
           <button
             type="button"
             className="skip-segment-button"
@@ -595,7 +636,7 @@ export function EpisodePlayer({
             Пропустить {activeKind === 'opening' ? 'опенинг' : 'эндинг'}
           </button>
         )}
-        {showAutoSkipQuestion && activeSegment && (
+        {!isKodik && showAutoSkipQuestion && activeSegment && (
           <div
             className="auto-skip-question"
             role="dialog"

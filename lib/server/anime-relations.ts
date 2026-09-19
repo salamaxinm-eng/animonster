@@ -132,6 +132,28 @@ export async function ensureAnimeRelationsFresh(animeId: number) {
     await refreshOne(animeId);
 }
 
+async function ensureFranchiseRelationsFresh(animeId: number) {
+  const queue = [animeId];
+  const visited = new Set<number>();
+  while (queue.length && visited.size < 12) {
+    const current = queue.shift()!;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    await ensureAnimeRelationsFresh(current);
+    const rows = await db()
+      .prepare(
+        `SELECT DISTINCT r.related_anime_id FROM anime_relations r
+         JOIN anime_cache a ON a.id=r.related_anime_id
+         WHERE r.anime_id=? AND r.relation IN ('Prequel','Sequel')`,
+      )
+      .bind(current)
+      .all<{ related_anime_id: number }>();
+    for (const row of rows.results)
+      if (!visited.has(Number(row.related_anime_id)))
+        queue.push(Number(row.related_anime_id));
+  }
+}
+
 export async function refreshAnimeRelations(limit = 12) {
   const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
   const rows = await db()
@@ -215,7 +237,7 @@ async function availableGraph() {
 export async function animeRelations(
   animeId: number,
 ): Promise<AnimeRelationsResult> {
-  await ensureAnimeRelationsFresh(animeId);
+  await ensureFranchiseRelationsFresh(animeId);
   const { relations, anime } = await availableGraph();
   if (!anime.has(animeId)) return { mainline: [], branches: [], related: [] };
   const edges = normalizeRelationEdges(relations);

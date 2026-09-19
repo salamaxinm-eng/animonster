@@ -2414,6 +2414,9 @@ button:disabled {
   color: #d5e8b2;
 }
 .season-navigation {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
   display: grid;
   gap: 24px;
   margin: 18px 0 38px;
@@ -2435,6 +2438,9 @@ button:disabled {
   font-size: 19px;
 }
 .season-relation-row > div {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   gap: 10px;
   overflow-x: auto;

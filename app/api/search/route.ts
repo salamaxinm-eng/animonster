@@ -26,6 +26,7 @@ export async function GET(request: Request) {
     const kind = params.get('kind');
     const status = params.get('status');
     const page = Number(params.get('page')) || 1;
+    const limit = Number(params.get('limit')) || 24;
     return Response.json(
       await searchAnime({
         query,
@@ -34,6 +35,7 @@ export async function GET(request: Request) {
         kind: kind === 'tv' || kind === 'movie' ? kind : '',
         status: status === 'ongoing' || status === 'released' ? status : '',
         page,
+        limit,
       }),
       {
         headers: {

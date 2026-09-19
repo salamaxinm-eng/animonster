@@ -7,7 +7,10 @@ import {
 
 const ENDPOINT = 'https://shikimori.one/api/graphql';
 const QUERY = `query ($ids: String!) {
-  animes(ids: $ids, limit: 50) { id name russian synonyms genres { russian kind } }
+  animes(ids: $ids, limit: 50) {
+    id name russian synonyms airedOn { date } poster { originalUrl }
+    genres { russian kind }
+  }
 }`;
 
 export async function ensureSearchMetadata(anime: Anime) {
@@ -55,7 +58,7 @@ export async function refreshSearchMetadata(limit = 40) {
     .prepare(
       `SELECT m.anime_id,a.data FROM anime_search_metadata m
        JOIN anime_cache a ON a.id=m.anime_id
-       WHERE m.status='pending' OR (m.status='error' AND m.checked_at<?)
+       WHERE m.version<2 OR m.status='pending' OR (m.status='error' AND m.checked_at<?)
        ORDER BY m.checked_at,m.anime_id LIMIT ?`,
     )
     .bind(now() - 15 * 60 * 1000, safeLimit)
@@ -91,10 +94,34 @@ export async function refreshSearchMetadata(limit = 40) {
       const themes = (candidate?.genres || [])
         .filter((genre) => genre.kind === 'theme' && genre.russian?.trim())
         .map((genre) => genre.russian!.trim());
+      if (candidate) {
+        const repaired: Anime = {
+          ...identity.anime,
+          russian: candidate.russian?.trim() || identity.anime.russian,
+          name: candidate.name?.trim() || identity.anime.name,
+          aired_on: candidate.airedOn?.date?.trim() || identity.anime.aired_on,
+          image: {
+            original:
+              candidate.poster?.originalUrl?.trim() ||
+              identity.anime.image.original,
+          },
+        };
+        await db()
+          .prepare(
+            `UPDATE anime_cache SET data=?,search_text=?,year_index=? WHERE id=?`,
+          )
+          .bind(
+            JSON.stringify(repaired),
+            `${repaired.russian} ${repaired.name}`.toLocaleLowerCase('ru-RU'),
+            Number(String(repaired.aired_on || '').slice(0, 4)) || 0,
+            repaired.id,
+          )
+          .run();
+      }
       await db()
         .prepare(
           `UPDATE anime_search_metadata SET aliases=?::jsonb,normalized_aliases=?::text[],
-           normalized_titles=?,themes=?::jsonb,status=?,attempts=attempts+1,checked_at=?,last_error=NULL
+           normalized_titles=?,themes=?::jsonb,status=?,version=2,attempts=attempts+1,checked_at=?,last_error=NULL
            WHERE anime_id=?`,
         )
         .bind(
