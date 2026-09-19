@@ -149,7 +149,9 @@
     border-radius: 14px;
     background: #151b24;
     color: #7f8a98;
-    transition: border-color 160ms ease, box-shadow 160ms ease;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
   }
 
   .mobile-search-form label:focus-within {
@@ -364,6 +366,12 @@
 }
 .community-header .account-nav {
   margin-left: auto;
+}
+.community-header .global-search {
+  margin-left: auto;
+}
+.community-header .global-search + .account-nav {
+  margin-left: 0;
 }
 .community-links {
   display: flex;

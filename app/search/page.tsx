@@ -20,16 +20,21 @@ export default function SearchPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const initialQuery = params.get('q') || '';
-    const initialTheme = params.get('tag') || '';
-    setQuery(initialQuery);
-    setSelectedTheme(initialTheme);
-    setShowThemeFilters(!!initialTheme);
+    const syncFromUrl = () => {
+      const params = new URLSearchParams(location.search);
+      const initialQuery = params.get('q') || '';
+      const initialTheme = params.get('tag') || '';
+      setQuery(initialQuery);
+      setSelectedTheme(initialTheme);
+      setShowThemeFilters(!!initialTheme);
+    };
+    syncFromUrl();
+    addEventListener('popstate', syncFromUrl);
     try {
       setRecent(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
     } catch {}
     input.current?.focus();
+    return () => removeEventListener('popstate', syncFromUrl);
   }, []);
 
   useEffect(() => {
@@ -175,9 +180,9 @@ export default function SearchPage() {
               <div className="search-theme-options" aria-label="Выбрать тему">
                 {themes
                   .filter((theme) =>
-                    theme.toLocaleLowerCase('ru-RU').includes(
-                      themeSearch.trim().toLocaleLowerCase('ru-RU'),
-                    ),
+                    theme
+                      .toLocaleLowerCase('ru-RU')
+                      .includes(themeSearch.trim().toLocaleLowerCase('ru-RU')),
                   )
                   .map((theme) => (
                     <button

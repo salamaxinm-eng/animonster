@@ -231,6 +231,39 @@ footer .brand span {
 .header nav a:hover {
   color: #b4ed50;
 }
+.global-search {
+  width: clamp(190px, 19vw, 300px);
+  min-width: 180px;
+  height: 42px;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 5px 0 13px;
+  border: 1px solid #29313d;
+  border-radius: 11px;
+  background: #121720;
+  color: #778493;
+}
+.global-search:focus-within {
+  border-color: #a5e63e;
+  box-shadow: 0 0 0 3px #a5e63e12;
+}
+.global-search input {
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #eef2f6;
+  font-size: 14px;
+}
+.global-search button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  color: #7e8996;
+}
 .count {
   font-size: 12px;
   margin-left: 5px;
@@ -470,25 +503,6 @@ main {
 }
 .lime {
   color: #b4ed50;
-}
-.search {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid #282e38;
-  background: #141820;
-  border-radius: 8px;
-  padding: 13px 16px;
-  color: #73808e;
-  width: 310px;
-}
-.search input {
-  background: none;
-  border: 0;
-  outline: none;
-  width: 100%;
-  color: #e4e7ee;
-  font-size: 14px;
 }
 .filter-row {
   display: flex;
@@ -791,6 +805,9 @@ footer > span {
   .header nav {
     gap: 20px;
   }
+  .header .global-search {
+    width: 190px;
+  }
   .cards {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
@@ -802,6 +819,9 @@ footer > span {
   }
 }
 @media (max-width: 760px) {
+  .global-search {
+    display: none;
+  }
   .header {
     padding: 18px 5%;
     height: auto;

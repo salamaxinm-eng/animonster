@@ -14,6 +14,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { BuySubscription } from './buy-subscription';
+import { GlobalSearch } from '@/components/global-search';
 import { EmailForm } from './email-form';
 import { Input } from '@/components/ui/input';
 import { Ghost, Bell, Gem, ArrowLeft, MessageCircle } from 'lucide-react';
@@ -139,12 +140,25 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
             Сохраняй историю, собирай коллекцию и обсуждай серии.
           </DialogDescription>
           {me.vk_ready ? (
-            <form className="vk-login-form vk-login-primary" action="/api/auth/vk" method="get" target="_top">
+            <form
+              className="vk-login-form vk-login-primary"
+              action="/api/auth/vk"
+              method="get"
+              target="_top"
+            >
               <strong>Основной способ входа</strong>
               {me.invite_required && (
-                <Input name="invite" placeholder="Инвайт для первого входа" required minLength={8} maxLength={64} />
+                <Input
+                  name="invite"
+                  placeholder="Инвайт для первого входа"
+                  required
+                  minLength={8}
+                  maxLength={64}
+                />
               )}
-              <button className="vk-button" type="submit">Войти через VK ID</button>
+              <button className="vk-button" type="submit">
+                Войти через VK ID
+              </button>
             </form>
           ) : (
             <p className="setup-note">
@@ -231,15 +245,19 @@ export function AccountNav() {
           <a href="/profile?tab=notifications" aria-label="Уведомления">
             <Bell size={18} />
           </a>
-          {c.preview ? <span className="preview-label">Предпросмотр</span> : <button
-            className="text-link"
-            onClick={async () => {
-              await api('logout', {});
-              await c.refresh();
-            }}
-          >
-            Выйти
-          </button>}
+          {c.preview ? (
+            <span className="preview-label">Предпросмотр</span>
+          ) : (
+            <button
+              className="text-link"
+              onClick={async () => {
+                await api('logout', {});
+                await c.refresh();
+              }}
+            >
+              Выйти
+            </button>
+          )}
         </>
       ) : (
         <button className="vk-mini" onClick={c.login}>
@@ -270,8 +288,18 @@ export function CommunityHeader() {
           Рекомендации
         </a>
       </nav>
+      <GlobalSearch />
       <AccountNav />
-      {community.supportUrl && <a className="support-link" href={community.supportUrl} target="_blank" rel="noreferrer"><MessageCircle size={17} /> Поддержка</a>}
+      {community.supportUrl && (
+        <a
+          className="support-link"
+          href={community.supportUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <MessageCircle size={17} /> Поддержка
+        </a>
+      )}
     </header>
   );
 }

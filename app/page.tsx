@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
 import {
-  Search,
   Play,
   Bookmark,
   ArrowUpRight,
@@ -19,10 +18,10 @@ import { PopularHero } from '@/components/popular-hero';
 import { HomeDiscovery } from '@/components/home-discovery';
 import { posterUrl, type Anime } from '@/lib/anime';
 import { AccountNav, api, useCommunity } from '@/components/community/context';
+import { GlobalSearch } from '@/components/global-search';
 export default function Home() {
   const community = useCommunity();
   const [items, setItems] = useState<Anime[]>([]),
-    [query, setQuery] = useState(''),
     [tab, setTab] = useState('all'),
     [saved, setSaved] = useState<Anime[]>([]),
     [favoriteIds, setFavoriteIds] = useState<number[]>([]),
@@ -72,9 +71,7 @@ export default function Home() {
       setApiStatus('Обновляем каталог…');
       try {
         const r = await fetch(
-          '/api/catalog?q=' +
-            encodeURIComponent(query) +
-            '&kind=' +
+          '/api/catalog?kind=' +
             (tab === 'movies' ? 'movie' : tab === 'airing' ? 'ongoing' : '') +
             '&page=' +
             page +
@@ -100,7 +97,7 @@ export default function Home() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, tab, page, catalogSort]);
+  }, [tab, page, catalogSort]);
   function has(id: number) {
     return favoriteIds.includes(id);
   }
@@ -132,17 +129,7 @@ export default function Home() {
         '/anime/' + id + '?episode=' + (Number(p.get('episode')) || 1),
       );
   }, []);
-  const shown =
-    tab !== 'saved'
-      ? items
-      : saved.filter(
-          (a) =>
-            !query ||
-            [a.name, a.russian]
-              .join(' ')
-              .toLowerCase()
-              .includes(query.toLowerCase()),
-        );
+  const shown = tab !== 'saved' ? items : saved;
   return (
     <div className="site">
       <header className="header">
@@ -178,6 +165,7 @@ export default function Home() {
             Мой список <span className="count">{saved.length}</span>
           </button>
         </nav>
+        <GlobalSearch />
         <button
           className="random"
           onClick={() =>
@@ -202,29 +190,6 @@ export default function Home() {
                 <span className="lime">.</span>
               </h2>
             </div>
-            <label className="search">
-              <Search size={19} />
-              <input
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Название аниме…"
-                aria-label="Поиск аниме"
-              />
-              {query && (
-                <button
-                  onClick={() => {
-                    setQuery('');
-                    setPage(1);
-                  }}
-                  aria-label="Очистить поиск"
-                >
-                  ×
-                </button>
-              )}
-            </label>
           </div>
           <div className="filter-row">
             <nav className="mobile-catalog-tabs" aria-label="Разделы каталога">
@@ -431,7 +396,6 @@ export default function Home() {
               <button
                 className="primary"
                 onClick={() => {
-                  setQuery('');
                   setPage(1);
                   setTab('all');
                 }}
