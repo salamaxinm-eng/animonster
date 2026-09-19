@@ -6,7 +6,6 @@ import {
   useCommunity,
   Avatar,
   Pin,
-  api,
 } from '@/components/community/context';
 import { BuySubscription } from '@/components/community/buy-subscription';
 import { pins } from '@/lib/community';
@@ -61,7 +60,13 @@ export default function PinsPage() {
     if (!c.user) return;
     setBusy(true);
     try {
-      await api('profile', { ...c.user, pin: selected });
+      const response = await fetch('/api/cosmetics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'pin', slug: selected }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Пин недоступен');
       await c.refresh();
       setNotice('Пин установлен над твоим ником.');
       setError('');
@@ -95,7 +100,10 @@ export default function PinsPage() {
             <p className="platega-review-label" role="note">
               Platega test
             </p>
-            <nav className="payment-doc-links" aria-label="Документы и условия оплаты">
+            <nav
+              className="payment-doc-links"
+              aria-label="Документы и условия оплаты"
+            >
               <a href="/legal/prices">Цены и тарифы</a>
               <a href="/legal/offer">Публичная оферта</a>
               <a href="/legal/terms">Пользовательское соглашение</a>

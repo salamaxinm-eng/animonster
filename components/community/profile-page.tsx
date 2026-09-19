@@ -30,13 +30,20 @@ import { Comments } from './comments';
 import {
   themes,
   avatars,
-  pins,
   statuses,
   type Profile,
   type Entry,
   type CollectionList,
 } from '@/lib/community';
 import { proxyImageUrl } from '@/lib/anime';
+type CosmeticOption = {
+  id: string;
+  kind: 'tag' | 'pin' | 'frame';
+  slug: string;
+  name: string;
+  condition: string;
+  unlocked: boolean;
+};
 export function ProfilePage({
   id,
   initialTab = 'wall',
@@ -61,6 +68,7 @@ export function ProfilePage({
     [error, setError] = useState(''),
     [notice, setNotice] = useState(''),
     [busy, setBusy] = useState(false),
+    [cosmetics, setCosmetics] = useState<CosmeticOption[]>([]),
     [creatingList, setCreatingList] = useState(false),
     [newListName, setNewListName] = useState(''),
     [showcaseAnime, setShowcaseAnime] = useState(''),
@@ -147,6 +155,13 @@ export function ProfilePage({
         .then(setReports)
         .catch((e) => setError(e.message));
   }, [tab, c.user, c.moderator]);
+  useEffect(() => {
+    if (!data?.own) return;
+    fetch('/api/cosmetics')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((result) => setCosmetics(result?.cosmetics || []))
+      .catch(() => {});
+  }, [data?.own, data?.user.id]);
   useEffect(() => {
     if (tab !== 'settings' || !data) return;
     const frame = requestAnimationFrame(() => {
@@ -927,18 +942,48 @@ export function ProfilePage({
                     </div>
                     <NativeSelect
                       value={draft.profile_frame || 'none'}
-                      disabled={!data.user.premium_until}
                       onChange={(e) =>
                         setDraft({ ...draft, profile_frame: e.target.value })
                       }
                     >
                       <option value="none">Без рамки</option>
-                      <option value="lime">Лайм</option>
-                      <option value="violet">Фиолетовая</option>
-                      <option value="fire">Огненная</option>
-                      <option value="ice">Ледяная</option>
+                      {cosmetics
+                        .filter((item) => item.kind === 'frame')
+                        .map((item) => (
+                          <option
+                            key={item.id}
+                            value={item.slug}
+                            disabled={!item.unlocked}
+                          >
+                            {item.name}
+                            {item.unlocked ? '' : ` · ${item.condition}`}
+                          </option>
+                        ))}
                     </NativeSelect>
                   </fieldset>
+                  <label>
+                    Тег рядом с ником
+                    <NativeSelect
+                      value={draft.tag || ''}
+                      onChange={(event) =>
+                        setDraft({ ...draft, tag: event.target.value || null })
+                      }
+                    >
+                      <option value="">Без тега</option>
+                      {cosmetics
+                        .filter((item) => item.kind === 'tag')
+                        .map((item) => (
+                          <option
+                            key={item.id}
+                            value={item.slug}
+                            disabled={!item.unlocked}
+                          >
+                            {item.name}
+                            {item.unlocked ? '' : ` · ${item.condition}`}
+                          </option>
+                        ))}
+                    </NativeSelect>
+                  </label>
                   <fieldset>
                     <legend>Фон профиля · Plus</legend>
                     <label className="outline-button">
@@ -1017,17 +1062,23 @@ export function ProfilePage({
                     {data.user.premium_until ? '' : '· нужен Plus'}
                     <NativeSelect
                       value={draft.pin || ''}
-                      disabled={!data.user.premium_until}
                       onChange={(e) =>
                         setDraft({ ...draft, pin: e.target.value || null })
                       }
                     >
                       <option value="">Без пина</option>
-                      {pins.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
+                      {cosmetics
+                        .filter((item) => item.kind === 'pin')
+                        .map((item) => (
+                          <option
+                            key={item.id}
+                            value={item.slug}
+                            disabled={!item.unlocked}
+                          >
+                            {item.name}
+                            {item.unlocked ? '' : ` · ${item.condition}`}
+                          </option>
+                        ))}
                     </NativeSelect>
                   </label>
                   <a className="text-link" href="/pins">

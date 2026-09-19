@@ -3108,6 +3108,11 @@ a.season-card:hover {
     0 0 30px #8f6cff80;
   animation: premium-frame-glow 2.8s ease-in-out infinite alternate;
 }
+.profile-frame-one-piece-master .user-avatar {
+  box-shadow:
+    0 0 0 3px #e5b94f,
+    0 0 30px #d79a395c;
+}
 @keyframes premium-frame-glow {
   to {
     box-shadow:
