@@ -1,4 +1,6 @@
 import { base, cookie, db, now, uid } from './core';
+import { grantCosmetic } from './cosmetics';
+import { grantPlusDays } from './plus';
 
 const REFERRAL_COOKIE = 'am_referral';
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -82,14 +84,76 @@ export async function evaluateReferralQualification(referredUserId: string) {
   const won = await db()
     .prepare(
       `UPDATE referrals SET status='qualified',qualified_at=?
-       WHERE id=? AND status='pending' RETURNING referrer_id`,
+       WHERE id=? AND status='pending' RETURNING id,referrer_id`,
     )
     .bind(now(), referral.id)
-    .first<{ referrer_id: string }>();
+    .first<{ id: string; referrer_id: string }>();
+  if (won) {
+    await grantPlusDays(
+      referredUserId,
+      3,
+      `referral-friend:${won.id}`,
+      'Награда приглашённому после 60 минут просмотра',
+    );
+    await grantReferralRewards(won.referrer_id);
+  }
   return { qualified: !!won, seconds, referrerId: won?.referrer_id };
 }
 
+const MILESTONES = [
+  { count: 1, cosmetics: ['recruiter'], plusDays: 0 },
+  { count: 3, cosmetics: ['referral-scout'], plusDays: 0 },
+  { count: 5, cosmetics: ['referral-crew'], plusDays: 7 },
+  {
+    count: 10,
+    cosmetics: ['referral-master', 'referral-master-pin'],
+    plusDays: 0,
+  },
+  {
+    count: 25,
+    cosmetics: ['animonster-legend', 'referral-legend'],
+    plusDays: 30,
+  },
+] as const;
+
+export async function grantReferralRewards(userId: string) {
+  const row = await db()
+    .prepare(
+      `SELECT count(*) AS count FROM referrals WHERE referrer_id=? AND status='qualified'`,
+    )
+    .bind(userId)
+    .first<{ count: number }>();
+  const qualified = Number(row?.count || 0);
+  for (const milestone of MILESTONES) {
+    if (qualified < milestone.count) continue;
+    await db()
+      .prepare(
+        `INSERT INTO referral_reward_claims(user_id,milestone,created_at)
+         VALUES (?,?,?) ON CONFLICT DO NOTHING`,
+      )
+      .bind(userId, milestone.count, now())
+      .run();
+    for (const slug of milestone.cosmetics)
+      await grantCosmetic(
+        userId,
+        slug,
+        'referral',
+        `referral:${milestone.count}:${slug}`,
+        { milestone: milestone.count },
+      );
+    if (milestone.plusDays)
+      await grantPlusDays(
+        userId,
+        milestone.plusDays,
+        `referral-milestone:${milestone.count}`,
+        `Реферальная награда за ${milestone.count} друзей`,
+      );
+  }
+  return { qualified };
+}
+
 export async function referralDashboard(userId: string) {
+  await grantReferralRewards(userId);
   const code = await ensureReferralCode(userId);
   const [counts, friends] = await Promise.all([
     db()

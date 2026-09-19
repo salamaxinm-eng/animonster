@@ -182,7 +182,33 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   );
 }
 export function Pin({ id }: { id: string | null }) {
-  const p = pins.find((p) => p.id === id);
+  const referralPins = [
+    {
+      id: 'referral-scout',
+      name: 'Искатель',
+      label: 'Реферальная награда',
+      image: '/pins/referral-scout.svg',
+    },
+    {
+      id: 'referral-crew',
+      name: 'Команда',
+      label: 'Реферальная награда',
+      image: '/pins/referral-crew.svg',
+    },
+    {
+      id: 'referral-master-pin',
+      name: 'Капитан',
+      label: 'Реферальная награда',
+      image: '/pins/referral-master.svg',
+    },
+    {
+      id: 'referral-legend',
+      name: 'Легендарный проводник',
+      label: 'Реферальная награда',
+      image: '/pins/referral-legend.svg',
+    },
+  ];
+  const p = [...pins, ...referralPins].find((item) => item.id === id);
   return p ? (
     <span
       className="anime-pin"

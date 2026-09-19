@@ -38,3 +38,23 @@ export async function plusEntitlements(userId: string) {
 
 export const profileFrames = ['none', 'lime', 'violet', 'fire', 'ice'];
 export const reactions = ['fire', 'wow', 'laugh', 'cry', 'shock', 'heart'];
+
+export async function grantPlusDays(
+  userId: string,
+  days: number,
+  sourceKey: string,
+  reason: string,
+) {
+  const duration = Math.max(1, Math.floor(days)) * 86400000;
+  return db()
+    .prepare(
+      `INSERT INTO grants(order_id,user_id,starts_at,expires,created_by,reason)
+       SELECT ?,?,base,base+?,NULL,? FROM (
+         SELECT GREATEST(?,COALESCE(MAX(expires) FILTER(WHERE revoked_at IS NULL),0)) AS base
+         FROM grants WHERE user_id=?
+       ) current
+       ON CONFLICT(order_id) DO NOTHING RETURNING expires`,
+    )
+    .bind(`reward:${sourceKey}`, userId, duration, reason, now(), userId)
+    .first<{ expires: number }>();
+}

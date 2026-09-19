@@ -3113,6 +3113,11 @@ a.season-card:hover {
     0 0 0 3px #e5b94f,
     0 0 30px #d79a395c;
 }
+.profile-frame-referral-master .user-avatar {
+  box-shadow:
+    0 0 0 3px #9878df,
+    0 0 30px #7b59c766;
+}
 @keyframes premium-frame-glow {
   to {
     box-shadow:
