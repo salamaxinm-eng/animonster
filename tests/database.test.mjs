@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import postgres from 'postgres';
 import { PGlite } from '@electric-sql/pglite';
+import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 
 const sha = (value) => crypto.createHash('sha256').update(value).digest('hex');
 
@@ -15,7 +16,7 @@ async function database() {
       close: () => sql.end(),
     };
   }
-  const engine = new PGlite();
+  const engine = new PGlite({ extensions: { pg_trgm } });
   const migrations = (await fs.readdir('migrations/postgres'))
     .filter((name) => name.endsWith('.sql'))
     .sort();
@@ -475,5 +476,58 @@ test('free custom-list slots cannot exceed the server limit under concurrency', 
     [userId],
   );
   assert.ok(Number(rows[0].count) <= 3);
+  await databaseClient.close();
+});
+
+test('search metadata supports normalized aliases and typo ranking', async () => {
+  const databaseClient = await database();
+  const timestamp = Date.now();
+  const anime = {
+    id: 16498,
+    russian: 'Атака титанов',
+    name: 'Shingeki no Kyojin',
+    image: { original: '/poster.jpg' },
+    score: '8.5',
+    kind: 'tv',
+    status: 'released',
+    episodes: 25,
+    aired_on: '2013',
+  };
+  await databaseClient.query(
+    `INSERT INTO anime_cache(id,data,episodes,updated_at,search_text,kind_index,status_index,year_index,score_index)
+     VALUES ($1,$2,'[]',$3,$4,'tv','released',2013,8.5)`,
+    [
+      anime.id,
+      JSON.stringify(anime),
+      timestamp,
+      'атака титанов shingeki no kyojin',
+    ],
+  );
+  await databaseClient.query(
+    `INSERT INTO anime_search_metadata(anime_id,aliases,normalized_aliases,normalized_titles,status)
+     VALUES ($1,$2::jsonb,$3::text[],$4,'ok')`,
+    [
+      anime.id,
+      JSON.stringify([
+        'Атака титанов',
+        'Shingeki no Kyojin',
+        'Вторжение гигантов',
+      ]),
+      ['атака титанов', 'shingeki no kyojin', 'вторжение гигантов'],
+      'атака титанов shingeki no kyojin вторжение гигантов',
+    ],
+  );
+  const exact = await databaseClient.query(
+    `SELECT max(CASE WHEN alias=$1 THEN 1000 WHEN alias LIKE $2 THEN 800 ELSE similarity(alias,$1)*300 END) AS relevance
+     FROM anime_search_metadata,unnest(normalized_aliases) alias WHERE anime_id=$3`,
+    ['атака титанов', 'атака титанов%', anime.id],
+  );
+  const typo = await databaseClient.query(
+    `SELECT max(similarity(alias,$1)) AS relevance
+     FROM anime_search_metadata,unnest(normalized_aliases) alias WHERE anime_id=$2`,
+    ['атака титановв', anime.id],
+  );
+  assert.equal(Number(exact[0].relevance), 1000);
+  assert.ok(Number(typo[0].relevance) >= 0.28);
   await databaseClient.close();
 });

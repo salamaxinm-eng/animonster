@@ -7,6 +7,7 @@ import {
   type Release,
 } from './anime';
 import type { Anime, Episode } from '@/lib/anime';
+import { ensureSearchMetadata } from './search-metadata';
 type CachedCatalogOptions = {
   genre?: string;
   kind?: string;
@@ -137,6 +138,7 @@ export async function saveAnime(
       JSON.stringify(anime.genres || []),
     )
     .run();
+  await ensureSearchMetadata(anime);
 }
 export async function rememberAnime(items: Anime[]) {
   if (!items.length) return;

@@ -15,6 +15,8 @@ export default function SearchPage() {
   const [themeSearch, setThemeSearch] = useState('');
   const [showThemeFilters, setShowThemeFilters] = useState(false);
   const [items, setItems] = useState<Anime[]>([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
   const [recent, setRecent] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,8 +26,10 @@ export default function SearchPage() {
       const params = new URLSearchParams(location.search);
       const initialQuery = params.get('q') || '';
       const initialTheme = params.get('tag') || '';
+      const initialPage = Math.max(1, Number(params.get('page')) || 1);
       setQuery(initialQuery);
       setSelectedTheme(initialTheme);
+      setPage(initialPage);
       setShowThemeFilters(!!initialTheme);
     };
     syncFromUrl();
@@ -55,16 +59,33 @@ export default function SearchPage() {
       setLoading(true);
       setError('');
       try {
-        const params = new URLSearchParams({ sort: 'rating' });
+        const params = new URLSearchParams({ page: String(page) });
         if (query.trim()) params.set('q', query.trim());
-        if (selectedTheme) params.set('tag', selectedTheme);
-        const response = await fetch('/api/catalog?' + params.toString(), {
-          signal: controller.signal,
-        });
+        if (selectedTheme) {
+          params.set('tag', selectedTheme);
+          params.set('sort', 'rating');
+        }
+        const response = await fetch(
+          (selectedTheme ? '/api/catalog?' : '/api/search?') +
+            params.toString(),
+          {
+            signal: controller.signal,
+          },
+        );
         const result = await response.json();
         if (!response.ok)
           throw Error(result.error || 'Не удалось выполнить поиск');
-        setItems(result);
+        if (selectedTheme) {
+          setItems(result);
+          setPages(Number(response.headers.get('X-Total-Pages')) || 1);
+        } else {
+          setItems(
+            (result.results || [])
+              .filter((entry: { type: string }) => entry.type === 'anime')
+              .map((entry: { item: Anime }) => entry.item),
+          );
+          setPages(result.pagination?.pages || 1);
+        }
       } catch (reason) {
         if (!controller.signal.aborted) setError((reason as Error).message);
       } finally {
@@ -75,12 +96,13 @@ export default function SearchPage() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, selectedTheme]);
+  }, [query, selectedTheme, page]);
 
-  function updateUrl(nextQuery: string, nextTheme: string) {
+  function updateUrl(nextQuery: string, nextTheme: string, nextPage = 1) {
     const params = new URLSearchParams();
     if (nextQuery.trim()) params.set('q', nextQuery.trim());
     if (nextTheme) params.set('tag', nextTheme);
+    if (nextPage > 1) params.set('page', String(nextPage));
     history.replaceState(
       null,
       '',
@@ -101,19 +123,21 @@ export default function SearchPage() {
 
   function changeQuery(value: string) {
     setQuery(value);
-    updateUrl(value, selectedTheme);
+    setPage(1);
+    updateUrl(value, selectedTheme, 1);
   }
 
   function changeTheme(value: string) {
     const next = value === selectedTheme ? '' : value;
     setSelectedTheme(next);
-    updateUrl(query, next);
+    setPage(1);
+    updateUrl(query, next, 1);
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
     remember(query);
-    updateUrl(query, selectedTheme);
+    updateUrl(query, selectedTheme, page);
   }
 
   return (
@@ -243,7 +267,38 @@ export default function SearchPage() {
             {error}
           </p>
         ) : items.length ? (
-          <AnimeGrid items={items} />
+          <>
+            <AnimeGrid items={items} />
+            {pages > 1 && (
+              <nav className="catalog-pagination" aria-label="Страницы поиска">
+                <button
+                  className="primary"
+                  disabled={page <= 1}
+                  onClick={() => {
+                    const next = page - 1;
+                    setPage(next);
+                    updateUrl(query, selectedTheme, next);
+                  }}
+                >
+                  Назад
+                </button>
+                <span>
+                  Страница {page} из {pages}
+                </span>
+                <button
+                  className="primary"
+                  disabled={page >= pages}
+                  onClick={() => {
+                    const next = page + 1;
+                    setPage(next);
+                    updateUrl(query, selectedTheme, next);
+                  }}
+                >
+                  Далее
+                </button>
+              </nav>
+            )}
+          </>
         ) : (
           <div className="mobile-empty">
             <Search />

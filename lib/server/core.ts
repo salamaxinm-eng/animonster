@@ -94,13 +94,17 @@ class Database {
 
 let database: Database | undefined;
 async function localPostgres() {
-  const [{ PGlite }, { readFile, readdir, mkdir }, path] = await Promise.all([
-    import('@electric-sql/pglite'),
-    import('node:fs/promises'),
-    import('node:path'),
-  ]);
+  const [{ PGlite }, { pg_trgm }, { readFile, readdir, mkdir }, path] =
+    await Promise.all([
+      import('@electric-sql/pglite'),
+      import('@electric-sql/pglite/contrib/pg_trgm'),
+      import('node:fs/promises'),
+      import('node:path'),
+    ]);
   await mkdir('.data', { recursive: true });
-  const engine = new PGlite('.data/animonster');
+  const engine = new PGlite('.data/animonster', {
+    extensions: { pg_trgm },
+  });
   await engine.waitReady;
   const existing = await engine.query(
     "SELECT 1 FROM pg_tables WHERE schemaname='public' AND tablename='users'",
