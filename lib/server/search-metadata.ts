@@ -134,3 +134,33 @@ export async function refreshSearchMetadata(limit = 40) {
     };
   }
 }
+
+export async function searchMetadataStats() {
+  const row = await db()
+    .prepare(
+      `SELECT
+       (SELECT count(*) FROM anime_cache) AS catalog_total,
+       count(*) AS indexed_total,
+       count(*) FILTER (WHERE status='ok') AS completed,
+       count(*) FILTER (WHERE status='not_found') AS not_found,
+       count(*) FILTER (WHERE status='pending') AS pending,
+       count(*) FILTER (WHERE status='error') AS errors,
+       count(*) FILTER (WHERE jsonb_array_length(themes)>0) AS with_themes
+       FROM anime_search_metadata`,
+    )
+    .first<Record<string, number>>();
+  const catalog = Number(row?.catalog_total || 0);
+  const terminal = Number(row?.completed || 0) + Number(row?.not_found || 0);
+  return {
+    catalog,
+    indexed: Number(row?.indexed_total || 0),
+    completed: Number(row?.completed || 0),
+    not_found: Number(row?.not_found || 0),
+    pending: Number(row?.pending || 0),
+    errors: Number(row?.errors || 0),
+    with_themes: Number(row?.with_themes || 0),
+    coverage_percent: catalog
+      ? Math.round((terminal / catalog) * 10000) / 100
+      : 100,
+  };
+}

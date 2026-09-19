@@ -159,6 +159,36 @@ export async function refreshAnimeRelations(limit = 12) {
   };
 }
 
+export async function animeRelationStats() {
+  const row = await db()
+    .prepare(
+      `SELECT
+       (SELECT count(*) FROM anime_cache) AS catalog_total,
+       count(*) AS state_total,
+       count(*) FILTER (WHERE status='ok') AS completed,
+       count(*) FILTER (WHERE status='not_found') AS not_found,
+       count(*) FILTER (WHERE status='pending') AS pending,
+       count(*) FILTER (WHERE status='error') AS errors,
+       (SELECT count(*) FROM anime_relations) AS edges
+       FROM anime_relation_state`,
+    )
+    .first<Record<string, number>>();
+  const catalog = Number(row?.catalog_total || 0);
+  const terminal = Number(row?.completed || 0) + Number(row?.not_found || 0);
+  return {
+    catalog,
+    tracked: Number(row?.state_total || 0),
+    completed: Number(row?.completed || 0),
+    not_found: Number(row?.not_found || 0),
+    pending: Number(row?.pending || 0),
+    errors: Number(row?.errors || 0),
+    edges: Number(row?.edges || 0),
+    coverage_percent: catalog
+      ? Math.round((terminal / catalog) * 10000) / 100
+      : 100,
+  };
+}
+
 async function availableGraph() {
   const [relations, animeRows] = await Promise.all([
     db()

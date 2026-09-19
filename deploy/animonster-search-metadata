@@ -1,0 +1,15 @@
+#!/bin/sh
+set -eu
+
+APP_DIR="${ANIMONSTER_APP_DIR:-/root/animonster}"
+SECRET="$(sed -n 's/^RECOMMENDATION_CRON_SECRET=//p' "$APP_DIR/.env.production" | tail -n1)"
+[ -n "$SECRET" ]
+
+curl --resolve animonster.su:443:127.0.0.1 \
+  --max-time 240 \
+  --fail --silent --show-error \
+  --request POST \
+  --header "Authorization: Bearer $SECRET" \
+  --header 'Content-Type: application/json' \
+  --data '{"limit":40,"relation_limit":12}' \
+  https://animonster.su/api/internal/search-metadata

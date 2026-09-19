@@ -1,0 +1,9 @@
+[Unit]
+Description=AniMonster search metadata and franchise synchronization
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/animonster-search-metadata
+User=root
