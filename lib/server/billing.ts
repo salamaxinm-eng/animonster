@@ -8,9 +8,27 @@ type PlategaTransaction = {
   amount?: number;
   currency?: string;
   paymentDetails?: { amount?: number | string; currency?: string };
+  comission?: number;
+  commission?: number;
   payload?: string;
   externalId?: string;
 };
+
+function cents(value: number) {
+  return Number.isFinite(value) ? Math.round(value * 100) : null;
+}
+
+export function validPaymentAmount(
+  chargedAmount: number,
+  expectedAmount: number,
+  providerCommission = 0,
+) {
+  const charged = cents(chargedAmount);
+  const expected = cents(expectedAmount);
+  const commission = cents(providerCommission);
+  if (charged === null || expected === null || commission === null) return false;
+  return charged === expected || (commission >= 0 && charged - commission === expected);
+}
 
 export async function paymentFetch(path: string, init: RequestInit = {}) {
   const e = runtime();
@@ -47,6 +65,7 @@ export async function verifyPayment(providerId: string) {
   const paymentId = p.id || p.transactionId;
   const orderId = p.payload || p.externalId || '';
   const amount = Number(p.paymentDetails?.amount ?? p.amount);
+  const commission = Number(p.comission ?? p.commission ?? 0);
   const currency = p.paymentDetails?.currency || p.currency;
   const order = await db()
     .prepare('SELECT * FROM orders WHERE id=? AND provider=?')
@@ -61,7 +80,7 @@ export async function verifyPayment(providerId: string) {
     !order ||
     !paymentId ||
     paymentId !== providerId ||
-    amount !== Number(PLUS_PRICE) ||
+    !validPaymentAmount(amount, Number(PLUS_PRICE), commission) ||
     currency !== 'RUB'
   )
     throw new ApiError('Платёж не подтверждён', 400);
