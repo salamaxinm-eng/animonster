@@ -8,6 +8,7 @@ import {
 } from './anime';
 import type { Anime, Episode } from '@/lib/anime';
 import { ensureSearchMetadata } from './search-metadata';
+import { ensureRelationState } from './anime-relations';
 type CachedCatalogOptions = {
   genre?: string;
   kind?: string;
@@ -139,6 +140,7 @@ export async function saveAnime(
     )
     .run();
   await ensureSearchMetadata(anime);
+  await ensureRelationState(anime.id);
 }
 export async function rememberAnime(items: Anime[]) {
   if (!items.length) return;

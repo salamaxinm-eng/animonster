@@ -2,10 +2,17 @@ import type { Anime } from '@/lib/anime';
 import { db } from './core';
 import { compactAnime } from './anime';
 import { normalizeMatchTitle } from './shikimori-matching';
+import { groupSearchAnime, type RelationCard } from './anime-relations';
 
 export type SearchAnimeResult = { type: 'anime'; item: Anime };
+export type SearchFranchiseResult = {
+  type: 'franchise';
+  id: string;
+  title: string;
+  items: RelationCard[];
+};
 export type SearchResponse = {
-  results: SearchAnimeResult[];
+  results: (SearchAnimeResult | SearchFranchiseResult)[];
   pagination: { page: number; pages: number; total: number };
 };
 
@@ -113,8 +120,16 @@ export async function searchAnime({
     }),
   );
   const total = Number(count?.total || 0);
+  const grouped = normalized
+    ? await groupSearchAnime(items)
+    : { groups: [], standalone: items };
   return {
-    results: items.map((item) => ({ type: 'anime', item })),
+    results: [
+      ...grouped.groups,
+      ...grouped.standalone.map(
+        (item): SearchAnimeResult => ({ type: 'anime', item }),
+      ),
+    ],
     pagination: {
       page: safePage,
       pages: Math.max(1, Math.ceil(total / safeLimit)),

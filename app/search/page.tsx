@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronDown, Filter, Search, X } from 'lucide-react';
 import { AnimeGrid } from '@/components/anime-grid';
-import type { Anime } from '@/lib/anime';
+import { posterUrl, type Anime } from '@/lib/anime';
 
 const STORAGE_KEY = 'animonster-recent-searches';
 type Filters = {
@@ -17,6 +17,12 @@ type Facets = {
   themes: string[];
   kinds: { value: 'tv' | 'movie'; label: string }[];
   statuses: { value: 'ongoing' | 'released'; label: string }[];
+};
+type FranchiseGroup = {
+  type: 'franchise';
+  id: string;
+  title: string;
+  items: { item: Anime; label: string; branch?: boolean }[];
 };
 const EMPTY_FILTERS: Filters = { genres: [], themes: [], kind: '', status: '' };
 const EMPTY_FACETS: Facets = {
@@ -53,6 +59,7 @@ export default function SearchPage() {
   const [genreSearch, setGenreSearch] = useState('');
   const [themeSearch, setThemeSearch] = useState('');
   const [items, setItems] = useState<Anime[]>([]);
+  const [groups, setGroups] = useState<FranchiseGroup[]>([]);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -114,6 +121,11 @@ export default function SearchPage() {
           (result.results || [])
             .filter((entry: { type: string }) => entry.type === 'anime')
             .map((entry: { item: Anime }) => entry.item),
+        );
+        setGroups(
+          (result.results || []).filter(
+            (entry: { type: string }) => entry.type === 'franchise',
+          ),
         );
         setPages(result.pagination?.pages || 1);
         setTotal(result.pagination?.total || 0);
@@ -369,9 +381,12 @@ export default function SearchPage() {
           <p className="error-msg" role="alert">
             {error}
           </p>
-        ) : items.length ? (
+        ) : items.length || groups.length ? (
           <>
-            <AnimeGrid items={items} />
+            {groups.map((group) => (
+              <FranchiseSearchBlock key={group.id} group={group} />
+            ))}
+            {items.length > 0 && <AnimeGrid items={items} />}
             {pages > 1 && (
               <nav className="catalog-pagination" aria-label="Страницы поиска">
                 <button
@@ -514,5 +529,30 @@ function FilterChip({
     <button type="button" onClick={onRemove} title={`Убрать: ${label}`}>
       {label} <X size={13} />
     </button>
+  );
+}
+
+function FranchiseSearchBlock({ group }: { group: FranchiseGroup }) {
+  return (
+    <section className="search-franchise-block">
+      <header>
+        <span>Франшиза</span>
+        <h3>{group.title}</h3>
+      </header>
+      <div>
+        {group.items.map(({ item, label, branch }) => (
+          <a
+            className={branch ? 'branch' : ''}
+            href={'/anime/' + item.id}
+            key={item.id}
+          >
+            <img src={posterUrl(item)} alt="" />
+            <span>{label}</span>
+            <strong>{item.russian}</strong>
+            <small>{item.aired_on?.slice(0, 4) || '—'}</small>
+          </a>
+        ))}
+      </div>
+    </section>
   );
 }

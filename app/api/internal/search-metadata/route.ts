@@ -1,5 +1,6 @@
 import { ApiError, fail, json, runtime } from '@/lib/server/core';
 import { refreshSearchMetadata } from '@/lib/server/search-metadata';
+import { refreshAnimeRelations } from '@/lib/server/anime-relations';
 
 export async function POST(request: Request) {
   try {
@@ -10,7 +11,11 @@ export async function POST(request: Request) {
     )
       throw new ApiError('Не найдено', 404);
     const input = await request.json().catch(() => ({}));
-    return json(await refreshSearchMetadata(Number(input.limit) || 40));
+    const [metadata, relations] = await Promise.all([
+      refreshSearchMetadata(Number(input.limit) || 40),
+      refreshAnimeRelations(Number(input.relation_limit) || 12),
+    ]);
+    return json({ metadata, relations });
   } catch (error) {
     return fail(error);
   }

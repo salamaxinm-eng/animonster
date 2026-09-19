@@ -514,6 +514,67 @@
   color: #7f8a98;
   font-size: 13px;
 }
+.search-franchise-block {
+  margin-bottom: 34px;
+  padding: 18px;
+  border: 1px solid #2b3542;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #151c25, #0f141b);
+}
+.search-franchise-block > header {
+  margin-bottom: 15px;
+}
+.search-franchise-block > header span {
+  color: #b4ed50;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.search-franchise-block h3 {
+  margin: 4px 0 0;
+  font-size: 20px;
+}
+.search-franchise-block > div {
+  display: flex;
+  gap: 11px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.search-franchise-block a {
+  width: 150px;
+  flex: 0 0 150px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 9px;
+  border: 1px solid #2c3744;
+  border-radius: 11px;
+  background: #121820;
+}
+.search-franchise-block a.branch {
+  border-style: dashed;
+}
+.search-franchise-block img {
+  grid-row: 1 / 4;
+  width: 42px;
+  height: 59px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.search-franchise-block a span,
+.search-franchise-block a small {
+  color: #84909e;
+  font-size: 10px;
+}
+.search-franchise-block a strong {
+  overflow: hidden;
+  color: #e5eaf0;
+  font-size: 12px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .community-header .account-nav {
   margin-left: auto;
 }
