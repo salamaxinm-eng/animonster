@@ -53,6 +53,19 @@ test('branching and cyclic relation graphs stay deterministic', () => {
   );
   assert.deepEqual(branchResult.ordered, [1, 2, 3]);
   assert.equal(branchResult.branching, true);
+  assert.deepEqual(
+    graph.relationPathThrough(
+      2,
+      new Set([1, 2, 3]),
+      branches,
+      new Map([
+        [1, 2013],
+        [2, 2017],
+        [3, 2018],
+      ]),
+    ),
+    [1, 2],
+  );
 
   const cycleResult = graph.orderRelationIds(
     new Set([1, 2]),

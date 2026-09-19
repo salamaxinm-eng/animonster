@@ -83,3 +83,44 @@ export function orderRelationIds(
     if (!ordered.includes(id)) ordered.push(id);
   return { ordered, branching };
 }
+
+export function relationPathThrough(
+  current: number,
+  ids: Set<number>,
+  edges: RelationEdge[],
+  years = new Map<number, number>(),
+) {
+  const compare = (left: number, right: number) =>
+    (years.get(left) || 0) - (years.get(right) || 0) || left - right;
+  const incoming = new Map<number, number[]>();
+  const outgoing = new Map<number, number[]>();
+  for (const edge of edges) {
+    if (!ids.has(edge.from) || !ids.has(edge.to)) continue;
+    incoming.set(edge.to, [...(incoming.get(edge.to) || []), edge.from]);
+    outgoing.set(edge.from, [...(outgoing.get(edge.from) || []), edge.to]);
+  }
+  const before: number[] = [];
+  const seen = new Set([current]);
+  let cursor = current;
+  while (true) {
+    const candidates = (incoming.get(cursor) || [])
+      .filter((id) => !seen.has(id))
+      .sort(compare);
+    if (!candidates.length) break;
+    cursor = candidates[0];
+    seen.add(cursor);
+    before.unshift(cursor);
+  }
+  const after: number[] = [];
+  cursor = current;
+  while (true) {
+    const candidates = (outgoing.get(cursor) || [])
+      .filter((id) => !seen.has(id))
+      .sort(compare);
+    if (candidates.length !== 1) break;
+    cursor = candidates[0];
+    seen.add(cursor);
+    after.push(cursor);
+  }
+  return [...before, current, ...after];
+}

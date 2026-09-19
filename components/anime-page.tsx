@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { EpisodeNotifications } from '@/components/episode-notifications';
 import { AnimeThemes } from '@/components/anime-themes';
+import { SeasonNavigation } from '@/components/season-navigation';
 import {
   Dialog,
   DialogContent,
@@ -121,6 +122,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
             <EpisodeNotifications animeId={anime.id} title={anime.russian} />
           </div>
         </section>
+        <SeasonNavigation animeId={anime.id} />
         <section className="title-playback">
           <h2>Смотреть · серия {episode}</h2>
           {ageLocked ? (

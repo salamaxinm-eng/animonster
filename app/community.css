@@ -2413,6 +2413,87 @@ button:disabled {
   border-color: #a5e63e99;
   color: #d5e8b2;
 }
+.season-navigation {
+  display: grid;
+  gap: 24px;
+  margin: 18px 0 38px;
+  padding: 22px;
+  border: 1px solid #293442;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #121922, #0d1218);
+}
+.season-navigation.loading {
+  min-height: 90px;
+  place-items: center;
+  color: #84909e;
+}
+.season-relation-row h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  font-size: 19px;
+}
+.season-relation-row > div {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.season-card {
+  width: 190px;
+  min-height: 78px;
+  flex: 0 0 190px;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto;
+  column-gap: 11px;
+  padding: 9px;
+  border: 1px solid #303b49;
+  border-radius: 11px;
+  background: #161d26;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+a.season-card:hover {
+  border-color: #a5e63e80;
+  transform: translateY(-2px);
+}
+.season-card.active {
+  border-color: #a5e63e;
+  background: #a5e63e0e;
+}
+.season-card.branch {
+  border-style: dashed;
+}
+.season-card img {
+  grid-row: 1 / 4;
+  width: 48px;
+  height: 68px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+.season-card span {
+  color: #a9dc55;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.season-card strong {
+  align-self: center;
+  overflow: hidden;
+  color: #e7ecf2;
+  font-size: 13px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.season-card small {
+  color: #7f8b99;
+  font-size: 11px;
+}
 .title-playback {
   margin: 35px 0;
 }

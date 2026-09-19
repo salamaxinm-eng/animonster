@@ -5,6 +5,7 @@ import {
   connectedRelationIds,
   normalizeRelationEdges,
   orderRelationIds,
+  relationPathThrough,
 } from './relation-graph';
 
 const SHIKIMORI = 'https://shikimori.one/api/animes/';
@@ -114,6 +115,23 @@ async function refreshOne(animeId: number) {
   }
 }
 
+export async function ensureAnimeRelationsFresh(animeId: number) {
+  await ensureRelationState(animeId);
+  const state = await db()
+    .prepare(
+      'SELECT status,checked_at FROM anime_relation_state WHERE anime_id=?',
+    )
+    .bind(animeId)
+    .first<{ status: string; checked_at: number }>();
+  if (
+    !state ||
+    state.status === 'pending' ||
+    (state.status === 'error' && state.checked_at < now() - 15 * 60 * 1000) ||
+    state.checked_at < now() - RELATION_TTL
+  )
+    await refreshOne(animeId);
+}
+
 export async function refreshAnimeRelations(limit = 12) {
   const safeLimit = Math.max(1, Math.min(30, Math.floor(limit)));
   const rows = await db()
@@ -167,6 +185,7 @@ async function availableGraph() {
 export async function animeRelations(
   animeId: number,
 ): Promise<AnimeRelationsResult> {
+  await ensureAnimeRelationsFresh(animeId);
   const { relations, anime } = await availableGraph();
   if (!anime.has(animeId)) return { mainline: [], branches: [], related: [] };
   const edges = normalizeRelationEdges(relations);
@@ -178,16 +197,34 @@ export async function animeRelations(
     ]),
   );
   const { ordered, branching } = orderRelationIds(ids, edges, years);
-  const mainline = ordered.map((id, index) => ({
+  const path = branching
+    ? relationPathThrough(animeId, ids, edges, years)
+    : ordered;
+  const pathSet = new Set(path);
+  const currentIndex = path.indexOf(animeId);
+  const mainline = path.map((id, index) => ({
     item: compactAnime([anime.get(id)!])[0],
     label: branching
       ? id === animeId
         ? 'Текущая часть'
-        : 'Продолжение'
-      : `Сезон ${index + 1}`,
+        : index < currentIndex
+          ? 'Предыдущая часть'
+          : 'Продолжение'
+      : anime.get(id)?.kind === 'movie'
+        ? 'Фильм-продолжение'
+        : `Сезон ${index + 1}`,
     active: id === animeId,
-    branch: branching && index > 0,
+    branch: false,
   }));
+  const branches = branching
+    ? ordered
+        .filter((id) => !pathSet.has(id))
+        .map((id) => ({
+          item: compactAnime([anime.get(id)!])[0],
+          label: 'Альтернативное продолжение',
+          branch: true,
+        }))
+    : [];
   const related = relations
     .filter((row) => row.anime_id === animeId && !MAINLINE.has(row.relation))
     .map((row) => ({
@@ -198,15 +235,7 @@ export async function animeRelations(
       (card, index, all) =>
         all.findIndex((other) => other.item.id === card.item.id) === index,
     );
-  return {
-    mainline: branching
-      ? mainline.filter((card) => !card.branch || card.active)
-      : mainline,
-    branches: branching
-      ? mainline.filter((card) => card.branch && !card.active)
-      : [],
-    related,
-  };
+  return { mainline, branches, related };
 }
 
 export async function groupSearchAnime(items: Anime[]) {
