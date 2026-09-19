@@ -529,5 +529,29 @@ test('search metadata supports normalized aliases and typo ranking', async () =>
   );
   assert.equal(Number(exact[0].relevance), 1000);
   assert.ok(Number(typo[0].relevance) >= 0.28);
+
+  await databaseClient.query(
+    `UPDATE anime_cache SET genres_index=$1::jsonb WHERE id=$2`,
+    [JSON.stringify(['Экшен', 'Драма']), anime.id],
+  );
+  await databaseClient.query(
+    `UPDATE anime_search_metadata SET themes=$1::jsonb WHERE anime_id=$2`,
+    [JSON.stringify(['Военное', 'Выживание']), anime.id],
+  );
+  const filtered = await databaseClient.query(
+    `SELECT count(*) AS total FROM anime_cache a
+     JOIN anime_search_metadata m ON m.anime_id=a.id
+     WHERE a.genres_index @> $1::jsonb AND m.themes @> $2::jsonb
+     AND a.kind_index='tv' AND a.status_index='released'`,
+    [JSON.stringify(['Экшен', 'Драма']), JSON.stringify(['Военное'])],
+  );
+  const missingCombination = await databaseClient.query(
+    `SELECT count(*) AS total FROM anime_cache a
+     JOIN anime_search_metadata m ON m.anime_id=a.id
+     WHERE a.genres_index @> $1::jsonb AND m.themes @> $2::jsonb`,
+    [JSON.stringify(['Экшен', 'Комедия']), JSON.stringify(['Военное'])],
+  );
+  assert.equal(Number(filtered[0].total), 1);
+  assert.equal(Number(missingCombination[0].total), 0);
   await databaseClient.close();
 });

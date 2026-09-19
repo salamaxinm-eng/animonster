@@ -1,22 +1,61 @@
 'use client';
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Search, X, Tags, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Filter, Search, X } from 'lucide-react';
 import { AnimeGrid } from '@/components/anime-grid';
 import type { Anime } from '@/lib/anime';
 
 const STORAGE_KEY = 'animonster-recent-searches';
+type Filters = {
+  genres: string[];
+  themes: string[];
+  kind: '' | 'tv' | 'movie';
+  status: '' | 'ongoing' | 'released';
+};
+type Facets = {
+  genres: string[];
+  themes: string[];
+  kinds: { value: 'tv' | 'movie'; label: string }[];
+  statuses: { value: 'ongoing' | 'released'; label: string }[];
+};
+const EMPTY_FILTERS: Filters = { genres: [], themes: [], kind: '', status: '' };
+const EMPTY_FACETS: Facets = {
+  genres: [],
+  themes: [],
+  kinds: [],
+  statuses: [],
+};
+
+function filtersFromUrl(params: URLSearchParams): Filters {
+  const kind = params.get('kind');
+  const status = params.get('status');
+  return {
+    genres: [...new Set(params.getAll('genre').filter(Boolean))],
+    themes: [
+      ...new Set(
+        [
+          ...params.getAll('theme'),
+          ...(params.get('tag') ? [params.get('tag')!] : []),
+        ].filter(Boolean),
+      ),
+    ],
+    kind: kind === 'tv' || kind === 'movie' ? kind : '',
+    status: status === 'ongoing' || status === 'released' ? status : '',
+  };
+}
 
 export default function SearchPage() {
   const input = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
-  const [selectedTheme, setSelectedTheme] = useState('');
-  const [themes, setThemes] = useState<string[]>([]);
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [facets, setFacets] = useState<Facets>(EMPTY_FACETS);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [genreSearch, setGenreSearch] = useState('');
   const [themeSearch, setThemeSearch] = useState('');
-  const [showThemeFilters, setShowThemeFilters] = useState(false);
   const [items, setItems] = useState<Anime[]>([]);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [recent, setRecent] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -24,13 +63,18 @@ export default function SearchPage() {
   useEffect(() => {
     const syncFromUrl = () => {
       const params = new URLSearchParams(location.search);
-      const initialQuery = params.get('q') || '';
-      const initialTheme = params.get('tag') || '';
-      const initialPage = Math.max(1, Number(params.get('page')) || 1);
-      setQuery(initialQuery);
-      setSelectedTheme(initialTheme);
-      setPage(initialPage);
-      setShowThemeFilters(!!initialTheme);
+      const nextFilters = filtersFromUrl(params);
+      setQuery(params.get('q') || '');
+      setFilters(nextFilters);
+      setPage(Math.max(1, Number(params.get('page')) || 1));
+      setFiltersOpen(
+        !!(
+          nextFilters.genres.length ||
+          nextFilters.themes.length ||
+          nextFilters.kind ||
+          nextFilters.status
+        ),
+      );
     };
     syncFromUrl();
     addEventListener('popstate', syncFromUrl);
@@ -43,12 +87,12 @@ export default function SearchPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/anime-tags?list=themes', { signal: controller.signal })
+    fetch('/api/search/facets', { signal: controller.signal })
       .then(async (response) => {
-        if (!response.ok) throw new Error('Не удалось загрузить темы');
-        return (await response.json()) as { themes?: string[] };
+        if (!response.ok) throw new Error();
+        return (await response.json()) as Facets;
       })
-      .then((result) => setThemes(result.themes || []))
+      .then(setFacets)
       .catch(() => {});
     return () => controller.abort();
   }, []);
@@ -59,33 +103,20 @@ export default function SearchPage() {
       setLoading(true);
       setError('');
       try {
-        const params = new URLSearchParams({ page: String(page) });
-        if (query.trim()) params.set('q', query.trim());
-        if (selectedTheme) {
-          params.set('tag', selectedTheme);
-          params.set('sort', 'rating');
-        }
-        const response = await fetch(
-          (selectedTheme ? '/api/catalog?' : '/api/search?') +
-            params.toString(),
-          {
-            signal: controller.signal,
-          },
-        );
+        const params = buildParams(query, filters, page);
+        const response = await fetch('/api/search?' + params.toString(), {
+          signal: controller.signal,
+        });
         const result = await response.json();
         if (!response.ok)
           throw Error(result.error || 'Не удалось выполнить поиск');
-        if (selectedTheme) {
-          setItems(result);
-          setPages(Number(response.headers.get('X-Total-Pages')) || 1);
-        } else {
-          setItems(
-            (result.results || [])
-              .filter((entry: { type: string }) => entry.type === 'anime')
-              .map((entry: { item: Anime }) => entry.item),
-          );
-          setPages(result.pagination?.pages || 1);
-        }
+        setItems(
+          (result.results || [])
+            .filter((entry: { type: string }) => entry.type === 'anime')
+            .map((entry: { item: Anime }) => entry.item),
+        );
+        setPages(result.pagination?.pages || 1);
+        setTotal(result.pagination?.total || 0);
       } catch (reason) {
         if (!controller.signal.aborted) setError((reason as Error).message);
       } finally {
@@ -96,13 +127,10 @@ export default function SearchPage() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, selectedTheme, page]);
+  }, [query, filters, page]);
 
-  function updateUrl(nextQuery: string, nextTheme: string, nextPage = 1) {
-    const params = new URLSearchParams();
-    if (nextQuery.trim()) params.set('q', nextQuery.trim());
-    if (nextTheme) params.set('tag', nextTheme);
-    if (nextPage > 1) params.set('page', String(nextPage));
+  function writeUrl(nextQuery: string, nextFilters: Filters, nextPage = 1) {
+    const params = buildParams(nextQuery, nextFilters, nextPage);
     history.replaceState(
       null,
       '',
@@ -124,21 +152,37 @@ export default function SearchPage() {
   function changeQuery(value: string) {
     setQuery(value);
     setPage(1);
-    updateUrl(value, selectedTheme, 1);
+    writeUrl(value, filters);
   }
 
-  function changeTheme(value: string) {
-    const next = value === selectedTheme ? '' : value;
-    setSelectedTheme(next);
+  function changeFilters(next: Filters) {
+    setFilters(next);
     setPage(1);
-    updateUrl(query, next, 1);
+    writeUrl(query, next);
+  }
+
+  function toggleList(key: 'genres' | 'themes', value: string) {
+    const current = filters[key];
+    changeFilters({
+      ...filters,
+      [key]: current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
+    });
   }
 
   function submit(event: FormEvent) {
     event.preventDefault();
     remember(query);
-    updateUrl(query, selectedTheme, page);
+    writeUrl(query, filters, page);
   }
+
+  const activeCount =
+    filters.genres.length +
+    filters.themes.length +
+    Number(!!filters.kind) +
+    Number(!!filters.status);
+  const hasSearch = !!query.trim() || activeCount > 0;
 
   return (
     <div className="mobile-search-page social-site">
@@ -167,63 +211,119 @@ export default function SearchPage() {
         </label>
       </form>
       <main className="mobile-search-results">
-        <section className="search-theme-filters">
+        <div className="search-filter-toolbar">
           <button
-            className={'search-theme-toggle' + (selectedTheme ? ' active' : '')}
+            className={'search-filter-toggle' + (activeCount ? ' active' : '')}
             type="button"
-            aria-expanded={showThemeFilters}
-            onClick={() => setShowThemeFilters((open) => !open)}
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((open) => !open)}
           >
-            <Tags size={17} aria-hidden="true" />
-            <span>{selectedTheme || 'Фильтр по темам'}</span>
-            <ChevronDown
-              className={showThemeFilters ? 'expanded' : ''}
-              size={17}
-              aria-hidden="true"
-            />
+            <Filter size={17} /> Фильтры
+            {activeCount > 0 && <span>{activeCount}</span>}
+            <ChevronDown className={filtersOpen ? 'expanded' : ''} size={16} />
           </button>
-          {showThemeFilters && (
-            <div className="search-theme-panel">
-              <div className="search-theme-panel-heading">
-                <h2>Темы аниме</h2>
-                {selectedTheme && (
-                  <button type="button" onClick={() => changeTheme('')}>
-                    Сбросить
-                  </button>
-                )}
-              </div>
-              <label className="search-theme-input">
-                <Search size={16} aria-hidden="true" />
-                <input
-                  value={themeSearch}
-                  onChange={(event) => setThemeSearch(event.target.value)}
-                  placeholder="Найти тему"
-                  aria-label="Найти тему"
-                />
-              </label>
-              <div className="search-theme-options" aria-label="Выбрать тему">
-                {themes
-                  .filter((theme) =>
-                    theme
-                      .toLocaleLowerCase('ru-RU')
-                      .includes(themeSearch.trim().toLocaleLowerCase('ru-RU')),
-                  )
-                  .map((theme) => (
-                    <button
-                      className={selectedTheme === theme ? 'selected' : ''}
-                      type="button"
-                      key={theme}
-                      aria-pressed={selectedTheme === theme}
-                      onClick={() => changeTheme(theme)}
-                    >
-                      {theme}
-                    </button>
-                  ))}
-              </div>
-            </div>
+          {activeCount > 0 && (
+            <button
+              type="button"
+              className="search-filter-reset"
+              onClick={() => changeFilters(EMPTY_FILTERS)}
+            >
+              Сбросить всё
+            </button>
           )}
-        </section>
-        {!query && !selectedTheme && recent.length > 0 && (
+        </div>
+
+        {filtersOpen && (
+          <section className="search-filter-panel" aria-label="Фильтры поиска">
+            <header>
+              <div>
+                <strong>Фильтры</strong>
+                <span>Жанры и темы сочетаются по принципу «все выбранные»</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                aria-label="Закрыть фильтры"
+              >
+                <X />
+              </button>
+            </header>
+            <FilterOptions
+              title="Жанры"
+              values={facets.genres}
+              selected={filters.genres}
+              search={genreSearch}
+              onSearch={setGenreSearch}
+              onToggle={(value) => toggleList('genres', value)}
+            />
+            <FilterOptions
+              title="Темы"
+              values={facets.themes}
+              selected={filters.themes}
+              search={themeSearch}
+              onSearch={setThemeSearch}
+              onToggle={(value) => toggleList('themes', value)}
+            />
+            <SingleOptions
+              title="Тип"
+              values={facets.kinds}
+              selected={filters.kind}
+              onChange={(kind) =>
+                changeFilters({ ...filters, kind: kind as Filters['kind'] })
+              }
+            />
+            <SingleOptions
+              title="Статус"
+              values={facets.statuses}
+              selected={filters.status}
+              onChange={(status) =>
+                changeFilters({
+                  ...filters,
+                  status: status as Filters['status'],
+                })
+              }
+            />
+          </section>
+        )}
+
+        {activeCount > 0 && (
+          <div className="search-filter-chips" aria-label="Выбранные фильтры">
+            {filters.genres.map((value) => (
+              <FilterChip
+                key={'genre-' + value}
+                label={value}
+                onRemove={() => toggleList('genres', value)}
+              />
+            ))}
+            {filters.themes.map((value) => (
+              <FilterChip
+                key={'theme-' + value}
+                label={value}
+                onRemove={() => toggleList('themes', value)}
+              />
+            ))}
+            {filters.kind && (
+              <FilterChip
+                label={
+                  facets.kinds.find((item) => item.value === filters.kind)
+                    ?.label || filters.kind
+                }
+                onRemove={() => changeFilters({ ...filters, kind: '' })}
+              />
+            )}
+            {filters.status && (
+              <FilterChip
+                label={
+                  facets.statuses.find((item) => item.value === filters.status)
+                    ?.label || filters.status
+                }
+                onRemove={() => changeFilters({ ...filters, status: '' })}
+              />
+            )}
+          </div>
+        )}
+
+        {!hasSearch && recent.length > 0 && (
           <section className="recent-searches">
             <div>
               <h1>Недавние запросы</h1>
@@ -251,15 +351,18 @@ export default function SearchPage() {
             </nav>
           </section>
         )}
-        <h2>
-          {selectedTheme
-            ? query
-              ? `«${selectedTheme}» · «${query}»`
-              : `Аниме с темой «${selectedTheme}»`
-            : query
+        <div className="search-results-heading">
+          <h2>
+            {query
               ? `Результаты по запросу «${query}»`
-              : 'Популярное сейчас'}
-        </h2>
+              : activeCount
+                ? 'Результаты по фильтрам'
+                : 'Популярное сейчас'}
+          </h2>
+          {!loading && !error && (
+            <span>{total.toLocaleString('ru-RU')} тайтлов</span>
+          )}
+        </div>
         {loading ? (
           <p role="status">Ищем аниме…</p>
         ) : error ? (
@@ -277,7 +380,7 @@ export default function SearchPage() {
                   onClick={() => {
                     const next = page - 1;
                     setPage(next);
-                    updateUrl(query, selectedTheme, next);
+                    writeUrl(query, filters, next);
                   }}
                 >
                   Назад
@@ -291,7 +394,7 @@ export default function SearchPage() {
                   onClick={() => {
                     const next = page + 1;
                     setPage(next);
-                    updateUrl(query, selectedTheme, next);
+                    writeUrl(query, filters, next);
                   }}
                 >
                   Далее
@@ -303,14 +406,113 @@ export default function SearchPage() {
           <div className="mobile-empty">
             <Search />
             <h3>Ничего не найдено</h3>
-            <p>
-              {selectedTheme
-                ? 'В каталоге пока нет доступных аниме с этой темой.'
-                : 'Проверь название или попробуй другой запрос.'}
-            </p>
+            <p>Измени запрос или убери часть фильтров.</p>
           </div>
         )}
       </main>
     </div>
+  );
+}
+
+function buildParams(query: string, filters: Filters, page: number) {
+  const params = new URLSearchParams();
+  if (query.trim()) params.set('q', query.trim());
+  filters.genres.forEach((value) => params.append('genre', value));
+  filters.themes.forEach((value) => params.append('theme', value));
+  if (filters.kind) params.set('kind', filters.kind);
+  if (filters.status) params.set('status', filters.status);
+  if (page > 1) params.set('page', String(page));
+  return params;
+}
+
+function FilterOptions({
+  title,
+  values,
+  selected,
+  search,
+  onSearch,
+  onToggle,
+}: {
+  title: string;
+  values: string[];
+  selected: string[];
+  search: string;
+  onSearch: (value: string) => void;
+  onToggle: (value: string) => void;
+}) {
+  const normalized = search.trim().toLocaleLowerCase('ru-RU');
+  const shown = values.filter((value) =>
+    value.toLocaleLowerCase('ru-RU').includes(normalized),
+  );
+  return (
+    <div className="search-filter-group">
+      <strong>{title}</strong>
+      <label className="search-filter-input">
+        <Search size={15} />
+        <input
+          value={search}
+          onChange={(event) => onSearch(event.target.value)}
+          placeholder={`Найти: ${title.toLocaleLowerCase('ru-RU')}`}
+        />
+      </label>
+      <div className="search-filter-options">
+        {shown.map((value) => (
+          <button
+            key={value}
+            type="button"
+            className={selected.includes(value) ? 'selected' : ''}
+            aria-pressed={selected.includes(value)}
+            onClick={() => onToggle(value)}
+          >
+            {selected.includes(value) && <Check size={14} />} {value}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SingleOptions({
+  title,
+  values,
+  selected,
+  onChange,
+}: {
+  title: string;
+  values: { value: string; label: string }[];
+  selected: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="search-filter-group compact">
+      <strong>{title}</strong>
+      <div className="search-filter-options">
+        {values.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            className={selected === item.value ? 'selected' : ''}
+            aria-pressed={selected === item.value}
+            onClick={() => onChange(selected === item.value ? '' : item.value)}
+          >
+            {selected === item.value && <Check size={14} />} {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FilterChip({
+  label,
+  onRemove,
+}: {
+  label: string;
+  onRemove: () => void;
+}) {
+  return (
+    <button type="button" onClick={onRemove} title={`Убрать: ${label}`}>
+      {label} <X size={13} />
+    </button>
   );
 }

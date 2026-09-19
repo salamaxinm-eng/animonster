@@ -9,10 +9,22 @@ export type SearchResponse = {
   pagination: { page: number; pages: number; total: number };
 };
 
-type SearchOptions = { query?: string; page?: number; limit?: number };
+type SearchOptions = {
+  query?: string;
+  genres?: string[];
+  themes?: string[];
+  kind?: 'tv' | 'movie' | '';
+  status?: 'ongoing' | 'released' | '';
+  page?: number;
+  limit?: number;
+};
 
 export async function searchAnime({
   query = '',
+  genres = [],
+  themes = [],
+  kind = '',
+  status = '',
   page = 1,
   limit = 24,
 }: SearchOptions = {}): Promise<SearchResponse> {
@@ -21,16 +33,37 @@ export async function searchAnime({
   const safeLimit = Math.max(1, Math.min(48, Math.floor(limit)));
   const offset = (safePage - 1) * safeLimit;
   const fuzzy = normalized.length >= 3;
-  const where = normalized
-    ? fuzzy
-      ? `(m.normalized_titles LIKE ? OR similarity(m.normalized_titles,?) >= 0.28)`
-      : `EXISTS(SELECT 1 FROM unnest(m.normalized_aliases) alias WHERE alias=? OR alias LIKE ?)`
-    : '';
-  const values: unknown[] = normalized
-    ? fuzzy
-      ? [`%${normalized}%`, normalized]
-      : [normalized, `${normalized}%`]
-    : [];
+  const where: string[] = [];
+  const values: unknown[] = [];
+  if (normalized) {
+    if (fuzzy) {
+      where.push(
+        `(m.normalized_titles LIKE ? OR similarity(m.normalized_titles,?) >= 0.28)`,
+      );
+      values.push(`%${normalized}%`, normalized);
+    } else {
+      where.push(
+        `EXISTS(SELECT 1 FROM unnest(m.normalized_aliases) alias WHERE alias=? OR alias LIKE ?)`,
+      );
+      values.push(normalized, `${normalized}%`);
+    }
+  }
+  if (genres.length) {
+    where.push('a.genres_index @> ?::jsonb');
+    values.push(JSON.stringify(genres));
+  }
+  if (themes.length) {
+    where.push('m.themes @> ?::jsonb');
+    values.push(JSON.stringify(themes));
+  }
+  if (kind) {
+    where.push('a.kind_index=?');
+    values.push(kind);
+  }
+  if (status) {
+    where.push('a.status_index=?');
+    values.push(status);
+  }
   const score = normalized
     ? `COALESCE((SELECT max(CASE
         WHEN alias=? THEN 1000
@@ -49,7 +82,7 @@ export async function searchAnime({
         normalized,
       ]
     : [];
-  const filter = where ? `WHERE ${where}` : '';
+  const filter = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const [rows, count] = await Promise.all([
     db()
       .prepare(
