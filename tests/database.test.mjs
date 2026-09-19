@@ -555,3 +555,216 @@ test('search metadata supports normalized aliases and typo ranking', async () =>
   assert.equal(Number(missingCombination[0].total), 0);
   await databaseClient.close();
 });
+
+test('achievements unlock once at 100 episodes including One Piece', async () => {
+  const databaseClient = await database();
+  const userId = crypto.randomUUID();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `ach_${userId.slice(0, 8)}`, timestamp],
+  );
+  await databaseClient.query(
+    `INSERT INTO history(user_id,anime_id,episode,duration,watched_seconds,completed,updated_at)
+     SELECT $1,21,episode,1440,720,1,$2 FROM generate_series(1,99) episode`,
+    [userId, timestamp],
+  );
+  const evaluate = () =>
+    databaseClient.query(
+      `INSERT INTO user_achievements(user_id,achievement_id,unlocked_at)
+       SELECT $1,a.id,$2 FROM achievements a WHERE a.active=1 AND
+       CASE WHEN a.metric='anime_completed_episodes' THEN
+         (SELECT COALESCE(sum(completed),0) FROM history WHERE user_id=$1 AND anime_id=a.anime_id)
+       ELSE (SELECT COALESCE(sum(completed),0) FROM history WHERE user_id=$1) END >= a.threshold
+       ON CONFLICT DO NOTHING`,
+      [userId, timestamp],
+    );
+  await evaluate();
+  let rows = await databaseClient.query(
+    `SELECT count(*) AS count FROM user_achievements ua JOIN achievements a ON a.id=ua.achievement_id
+     WHERE ua.user_id=$1 AND a.slug IN ('episodes-100','one-piece-100')`,
+    [userId],
+  );
+  assert.equal(Number(rows[0].count), 0);
+  await databaseClient.query(
+    `INSERT INTO history(user_id,anime_id,episode,duration,watched_seconds,completed,updated_at)
+     VALUES ($1,21,100,1440,720,1,$2)`,
+    [userId, timestamp],
+  );
+  await evaluate();
+  await evaluate();
+  rows = await databaseClient.query(
+    `SELECT count(*) AS count FROM user_achievements ua JOIN achievements a ON a.id=ua.achievement_id
+     WHERE ua.user_id=$1 AND a.slug IN ('episodes-100','one-piece-100')`,
+    [userId],
+  );
+  assert.equal(Number(rows[0].count), 2);
+  await databaseClient.close();
+});
+
+test('cosmetic access separates Plus from permanent achievement rewards', async () => {
+  const databaseClient = await database();
+  const userId = crypto.randomUUID();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `cos_${userId.slice(0, 8)}`, timestamp],
+  );
+  const allowed = async (slug) => {
+    const rows = await databaseClient.query(
+      `SELECT EXISTS(SELECT 1 FROM cosmetics c WHERE c.slug=$1 AND c.active=1 AND
+       (c.access_type='free' OR (c.access_type='plus' AND EXISTS(
+         SELECT 1 FROM grants g WHERE g.user_id=$2 AND g.revoked_at IS NULL AND g.expires>$3
+       )) OR EXISTS(SELECT 1 FROM user_cosmetics uc WHERE uc.user_id=$2 AND uc.cosmetic_id=c.id))) AS allowed`,
+      [slug, userId, timestamp],
+    );
+    return !!rows[0].allowed;
+  };
+  assert.equal(await allowed('one-piece'), false);
+  assert.equal(await allowed('hundred-episodes'), false);
+  await databaseClient.query(
+    `INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key)
+     VALUES ($1,'tag:hundred-episodes',$2,'achievement','test-achievement')`,
+    [userId, timestamp],
+  );
+  assert.equal(await allowed('hundred-episodes'), true);
+  await databaseClient.query(
+    `INSERT INTO grants(order_id,user_id,starts_at,expires,reason)
+     VALUES ('expired',$1,$2,$3,'expired')`,
+    [userId, timestamp - 2000, timestamp - 1000],
+  );
+  assert.equal(await allowed('one-piece'), false);
+  assert.equal(await allowed('hundred-episodes'), true);
+  await databaseClient.query(
+    `INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key)
+     VALUES ($1,'pin:referral-scout',$2,'referral','test-referral')`,
+    [userId, timestamp],
+  );
+  assert.equal(await allowed('referral-scout'), true);
+  await databaseClient.close();
+});
+
+test('referral qualification changes once at 3600 server seconds', async () => {
+  const databaseClient = await database();
+  const referrer = crypto.randomUUID();
+  const friend = crypto.randomUUID();
+  const timestamp = Date.now();
+  for (const [id, prefix] of [
+    [referrer, 'owner'],
+    [friend, 'friend'],
+  ])
+    await databaseClient.query(
+      'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+      [id, `test:${id}`, `${prefix}_${id.slice(0, 8)}`, timestamp],
+    );
+  await databaseClient.query(
+    'INSERT INTO referral_codes(user_id,code,created_at) VALUES ($1,$2,$3)',
+    [referrer, 'TESTCODE', timestamp],
+  );
+  await databaseClient.query(
+    `INSERT INTO referrals(id,referrer_id,referred_user_id,code,registered_at,created_at)
+     VALUES ($1,$2,$3,'TESTCODE',$4,$4)`,
+    [crypto.randomUUID(), referrer, friend, timestamp],
+  );
+  await databaseClient.query(
+    `INSERT INTO history(user_id,anime_id,episode,duration,watched_seconds,completed,updated_at)
+     VALUES ($1,21,1,7200,3599,1,$2)`,
+    [friend, timestamp],
+  );
+  const qualify = () =>
+    databaseClient.query(
+      `UPDATE referrals SET status='qualified',qualified_at=$2 WHERE referred_user_id=$1 AND status='pending'
+       AND (SELECT COALESCE(sum(watched_seconds),0) FROM history WHERE user_id=$1)>=3600 RETURNING id`,
+      [friend, timestamp],
+    );
+  assert.equal((await qualify()).length, 0);
+  await databaseClient.query(
+    'UPDATE history SET watched_seconds=3600 WHERE user_id=$1 AND anime_id=21 AND episode=1',
+    [friend],
+  );
+  assert.equal((await qualify()).length, 1);
+  assert.equal((await qualify()).length, 0);
+  await assert.rejects(() =>
+    databaseClient.query(
+      `INSERT INTO referrals(id,referrer_id,referred_user_id,code,registered_at,created_at)
+       VALUES ($1,$2,$2,'TESTCODE',$3,$3)`,
+      [crypto.randomUUID(), referrer, timestamp],
+    ),
+  );
+  await databaseClient.close();
+});
+
+test('referral Plus grants sum and remain idempotent', async () => {
+  const databaseClient = await database();
+  const userId = crypto.randomUUID();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `plus_${userId.slice(0, 8)}`, timestamp],
+  );
+  const grant = (key, days) =>
+    databaseClient.query(
+      `INSERT INTO grants(order_id,user_id,starts_at,expires,reason)
+       SELECT $1,$2,base,base+$3,'referral test' FROM (
+         SELECT GREATEST($4,COALESCE(MAX(expires) FILTER(WHERE revoked_at IS NULL),0)) AS base
+         FROM grants WHERE user_id=$2
+       ) current ON CONFLICT(order_id) DO NOTHING RETURNING expires`,
+      [`reward:${key}`, userId, days * 86400000, timestamp],
+    );
+  await grant('five', 7);
+  await grant('five', 7);
+  await grant('twenty-five', 30);
+  const rows = await databaseClient.query(
+    'SELECT MAX(expires) AS expires,count(*) AS count FROM grants WHERE user_id=$1',
+    [userId],
+  );
+  assert.equal(Number(rows[0].count), 2);
+  assert.equal(Number(rows[0].expires), timestamp + 37 * 86400000);
+  await databaseClient.close();
+});
+
+test('five qualified friends claim the milestone exactly once', async () => {
+  const databaseClient = await database();
+  const owner = crypto.randomUUID();
+  const timestamp = Date.now();
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [owner, `test:${owner}`, `owner_${owner.slice(0, 8)}`, timestamp],
+  );
+  for (let index = 0; index < 5; index++) {
+    const friend = crypto.randomUUID();
+    await databaseClient.query(
+      'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+      [friend, `test:${friend}`, `friend_${friend.slice(0, 8)}`, timestamp],
+    );
+    await databaseClient.query(
+      `INSERT INTO referrals(id,referrer_id,referred_user_id,code,status,registered_at,qualified_at,created_at)
+       VALUES ($1,$2,$3,'FIVE','qualified',$4,$4,$4)`,
+      [crypto.randomUUID(), owner, friend, timestamp],
+    );
+  }
+  const claim = async () => {
+    await databaseClient.query(
+      `INSERT INTO referral_reward_claims(user_id,milestone,created_at)
+       SELECT $1,5,$2 WHERE (SELECT count(*) FROM referrals WHERE referrer_id=$1 AND status='qualified')>=5
+       ON CONFLICT DO NOTHING`,
+      [owner, timestamp],
+    );
+    await databaseClient.query(
+      `INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key)
+       VALUES ($1,'pin:referral-crew',$2,'referral','referral:5:referral-crew')
+       ON CONFLICT DO NOTHING`,
+      [owner, timestamp],
+    );
+  };
+  await Promise.all([claim(), claim()]);
+  const rows = await databaseClient.query(
+    `SELECT
+       (SELECT count(*) FROM referral_reward_claims WHERE user_id=$1 AND milestone=5) AS claims,
+       (SELECT count(*) FROM user_cosmetics WHERE user_id=$1 AND cosmetic_id='pin:referral-crew') AS cosmetics`,
+    [owner],
+  );
+  assert.equal(Number(rows[0].claims), 1);
+  assert.equal(Number(rows[0].cosmetics), 1);
+  await databaseClient.close();
+});
