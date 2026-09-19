@@ -52,6 +52,63 @@ async function fetchCandidates(ids: number[]) {
   return payload.data?.animes || [];
 }
 
+function identitySignature(anime: Anime) {
+  return `${anime.image?.original || ''}|${String(anime.aired_on || '').slice(0, 4)}`;
+}
+
+export async function canonicalizeAnimeIdentities(items: Anime[]) {
+  if (items.length < 2) return items;
+  const signatures = new Map<string, number>();
+  for (const item of items) {
+    const signature = identitySignature(item);
+    signatures.set(signature, (signatures.get(signature) || 0) + 1);
+  }
+  if (![...signatures.values()].some((count) => count > 1)) return items;
+  const ids = [
+    ...new Set(
+      items
+        .map((item) => item.shikimori_id || (item.id < 100000000 ? item.id : 0))
+        .filter(Boolean),
+    ),
+  ];
+  if (!ids.length) return items;
+  try {
+    const candidates = await fetchCandidates(ids.slice(0, 50));
+    const byId = new Map(candidates.map((item) => [Number(item.id), item]));
+    return await Promise.all(
+      items.map(async (anime) => {
+        const candidate = byId.get(anime.shikimori_id || anime.id);
+        if (!candidate) return anime;
+        const repaired: Anime = {
+          ...anime,
+          russian: candidate.russian?.trim() || anime.russian,
+          name: candidate.name?.trim() || anime.name,
+          aired_on: candidate.airedOn?.date?.trim() || anime.aired_on,
+          image: {
+            original:
+              candidate.poster?.originalUrl?.trim() || anime.image.original,
+          },
+        };
+        if (identitySignature(repaired) !== identitySignature(anime))
+          await db()
+            .prepare(
+              `UPDATE anime_cache SET data=?,search_text=?,year_index=? WHERE id=?`,
+            )
+            .bind(
+              JSON.stringify(repaired),
+              `${repaired.russian} ${repaired.name}`.toLocaleLowerCase('ru-RU'),
+              Number(String(repaired.aired_on || '').slice(0, 4)) || 0,
+              repaired.id,
+            )
+            .run();
+        return repaired;
+      }),
+    );
+  } catch {
+    return items;
+  }
+}
+
 export async function refreshSearchMetadata(limit = 40) {
   const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)));
   const rows = await db()

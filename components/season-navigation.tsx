@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { GitBranch } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, GitBranch } from 'lucide-react';
 import { posterUrl, type Anime } from '@/lib/anime';
 
 type RelationCard = {
@@ -86,12 +86,68 @@ function RelationRow({
   items: RelationCard[];
   icon?: React.ReactNode;
 }) {
+  const track = useRef<HTMLDivElement>(null);
+  const [scroll, setScroll] = useState({ left: false, right: false });
+  useEffect(() => {
+    const element = track.current;
+    if (!element) return;
+    const update = () =>
+      setScroll({
+        left: element.scrollLeft > 2,
+        right:
+          element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
+      });
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    element.addEventListener('scroll', update, { passive: true });
+    return () => {
+      observer.disconnect();
+      element.removeEventListener('scroll', update);
+    };
+  }, [items.length]);
+  const move = (direction: -1 | 1) =>
+    track.current?.scrollBy({
+      left: direction * Math.max(220, track.current.clientWidth * 0.72),
+      behavior: 'smooth',
+    });
   return (
     <div className="season-relation-row">
-      <h2 id={id}>
-        {icon} {title}
-      </h2>
-      <div>
+      <div className="season-relation-heading">
+        <h2 id={id}>
+          {icon} {title}
+        </h2>
+        {(scroll.left || scroll.right) && (
+          <div className="season-scroll-buttons" aria-label="Прокрутка списка">
+            <button
+              type="button"
+              disabled={!scroll.left}
+              onClick={() => move(-1)}
+              aria-label="Показать предыдущие карточки"
+            >
+              <ChevronLeft />
+            </button>
+            <button
+              type="button"
+              disabled={!scroll.right}
+              onClick={() => move(1)}
+              aria-label="Показать следующие карточки"
+            >
+              <ChevronRight />
+            </button>
+          </div>
+        )}
+      </div>
+      <div
+        ref={track}
+        className="season-relation-track"
+        onWheel={(event) => {
+          const element = event.currentTarget;
+          if (element.scrollWidth <= element.clientWidth) return;
+          event.preventDefault();
+          element.scrollLeft += event.deltaY || event.deltaX;
+        }}
+      >
         {items.map((card) => {
           const content = (
             <>

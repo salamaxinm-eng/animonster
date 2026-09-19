@@ -3,6 +3,7 @@ import { db } from './core';
 import { compactAnime } from './anime';
 import { normalizeMatchTitle } from './shikimori-matching';
 import { groupSearchAnime, type RelationCard } from './anime-relations';
+import { canonicalizeAnimeIdentities } from './search-metadata';
 
 export type SearchAnimeResult = { type: 'anime'; item: Anime };
 export type SearchFranchiseResult = {
@@ -110,14 +111,16 @@ export async function searchAnime({
       .bind(...values)
       .first<{ total: number }>(),
   ]);
-  const items = compactAnime(
-    rows.results.flatMap((row) => {
-      try {
-        return [JSON.parse(row.data) as Anime];
-      } catch {
-        return [];
-      }
-    }),
+  const items = await canonicalizeAnimeIdentities(
+    compactAnime(
+      rows.results.flatMap((row) => {
+        try {
+          return [JSON.parse(row.data) as Anime];
+        } catch {
+          return [];
+        }
+      }),
+    ),
   );
   const total = Number(count?.total || 0);
   const grouped = normalized

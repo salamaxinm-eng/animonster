@@ -7,6 +7,7 @@ import {
   orderRelationIds,
   relationPathThrough,
 } from './relation-graph';
+import { canonicalizeAnimeIdentities } from './search-metadata';
 
 const SHIKIMORI = 'https://shikimori.one/api/animes/';
 const RELATION_TTL = 30 * 24 * 60 * 60 * 1000;
@@ -242,6 +243,10 @@ export async function animeRelations(
   if (!anime.has(animeId)) return { mainline: [], branches: [], related: [] };
   const edges = normalizeRelationEdges(relations);
   const ids = connectedRelationIds(animeId, edges);
+  const repaired = await canonicalizeAnimeIdentities(
+    [...ids].flatMap((id) => (anime.has(id) ? [anime.get(id)!] : [])),
+  );
+  for (const item of repaired) anime.set(item.id, item);
   const years = new Map(
     [...anime].map(([id, item]) => [
       id,

@@ -675,6 +675,10 @@
     font-size: 18px;
   }
 
+  .season-scroll-buttons {
+    display: none;
+  }
+
   .season-card {
     width: 175px;
     flex-basis: 175px;
