@@ -13,6 +13,7 @@ import { actor } from '../activity/route';
 import { getAnime } from '@/lib/server/library';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
 import { evaluateUserAchievements } from '@/lib/server/achievements';
+import { evaluateReferralQualification } from '@/lib/server/referrals';
 
 const WATCHED_EPISODE_SECONDS = 12 * 60;
 
@@ -211,6 +212,13 @@ export async function POST(r: Request) {
       s.watched + delta >= WATCHED_EPISODE_SECONDS
     )
       await evaluateUserAchievements(a.user.id, s.anime_id);
+
+    if (
+      a.user &&
+      delta > 0 &&
+      Math.floor((s.watched + delta) / 60) > Math.floor(s.watched / 60)
+    )
+      await evaluateReferralQualification(a.user.id);
 
     const nextWatched = s.watched + delta;
     const recommendationThresholds = [

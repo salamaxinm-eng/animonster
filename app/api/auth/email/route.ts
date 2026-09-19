@@ -14,6 +14,7 @@ import {
   inviteRequired,
 } from '@/lib/server/core';
 import { sendMail } from '@/lib/server/email';
+import { attachReferralForNewUser } from '@/lib/server/referrals';
 
 const validEmail = (value: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
@@ -61,9 +62,7 @@ async function verification(
   const token = uid() + uid();
 
   await db()
-    .prepare(
-      'DELETE FROM email_tokens WHERE user_id=? AND purpose=?',
-    )
+    .prepare('DELETE FROM email_tokens WHERE user_id=? AND purpose=?')
     .bind(userId, 'verify')
     .run();
 
@@ -71,12 +70,7 @@ async function verification(
     .prepare(
       'INSERT INTO email_tokens(hash,user_id,purpose,expires_at) VALUES (?,?,?,?)',
     )
-    .bind(
-      await hash(token),
-      userId,
-      'verify',
-      now() + 86400000,
-    )
+    .bind(await hash(token), userId, 'verify', now() + 86400000)
     .run();
 
   try {
@@ -134,15 +128,9 @@ export async function POST(r: Request) {
      * Если подтверждение email временно выключено,
      * автоматически подтверждаем существующие старые аккаунты.
      */
-    if (
-      !emailVerificationEnabled() &&
-      account &&
-      !account.email_verified
-    ) {
+    if (!emailVerificationEnabled() && account && !account.email_verified) {
       await db()
-        .prepare(
-          'UPDATE users SET email_verified=1 WHERE id=?',
-        )
+        .prepare('UPDATE users SET email_verified=1 WHERE id=?')
         .bind(account.id)
         .run();
 
@@ -171,9 +159,7 @@ export async function POST(r: Request) {
     }
 
     if (!validPassword(password)) {
-      throw new ApiError(
-        'Пароль: от 10 символов, не длиннее 72 байт.',
-      );
+      throw new ApiError('Пароль: от 10 символов, не длиннее 72 байт.');
     }
 
     /*
@@ -194,9 +180,7 @@ export async function POST(r: Request) {
         .toUpperCase();
 
       if (!/^[\p{L}\p{N}_-]{3,24}$/u.test(nick)) {
-        throw new ApiError(
-          'Ник: 3–24 буквы, цифры, дефис или подчёркивание.',
-        );
+        throw new ApiError('Ник: 3–24 буквы, цифры, дефис или подчёркивание.');
       }
 
       if (inviteRequired() && !/^[A-Z0-9-]{8,64}$/.test(invite)) {
@@ -270,6 +254,8 @@ export async function POST(r: Request) {
         );
       }
 
+      await attachReferralForNewUser(r, id);
+
       account = {
         id,
         password_hash: '',
@@ -282,11 +268,7 @@ export async function POST(r: Request) {
       let delivered = false;
 
       if (emailVerificationEnabled()) {
-        delivered = await verification(
-          id,
-          email,
-          true,
-        );
+        delivered = await verification(id, email, true);
       }
 
       /*
@@ -302,23 +284,15 @@ export async function POST(r: Request) {
         .bind(
           await hash(session),
           id,
-          r.headers
-            .get('user-agent')
-            ?.slice(0, 250) || '',
-          await hash(
-            r.headers.get('x-forwarded-for') ||
-              'local',
-          ),
+          r.headers.get('user-agent')?.slice(0, 250) || '',
+          await hash(r.headers.get('x-forwarded-for') || 'local'),
           n,
           n,
           n + 2592000000,
         )
         .run();
 
-      const secure =
-        new URL(r.url).protocol === 'https:'
-          ? '; Secure'
-          : '';
+      const secure = new URL(r.url).protocol === 'https:' ? '; Secure' : '';
 
       /*
        * Проверка email включена.
@@ -385,10 +359,7 @@ export async function POST(r: Request) {
     /*
      * Требуем подтверждение только если оно включено.
      */
-    if (
-      emailVerificationEnabled() &&
-      !account.email_verified
-    ) {
+    if (emailVerificationEnabled() && !account.email_verified) {
       throw new ApiError(
         'Сначала подтвердите email. Письмо можно отправить повторно.',
         403,
@@ -400,11 +371,7 @@ export async function POST(r: Request) {
     const n = now();
 
     await db().batch([
-      db()
-        .prepare(
-          'DELETE FROM sessions WHERE expires<?',
-        )
-        .bind(n),
+      db().prepare('DELETE FROM sessions WHERE expires<?').bind(n),
 
       db()
         .prepare(
@@ -413,23 +380,15 @@ export async function POST(r: Request) {
         .bind(
           await hash(token),
           account.id,
-          r.headers
-            .get('user-agent')
-            ?.slice(0, 250) || '',
-          await hash(
-            r.headers.get('x-forwarded-for') ||
-              'local',
-          ),
+          r.headers.get('user-agent')?.slice(0, 250) || '',
+          await hash(r.headers.get('x-forwarded-for') || 'local'),
           n,
           n,
           n + 2592000000,
         ),
     ]);
 
-    const secure =
-      new URL(r.url).protocol === 'https:'
-        ? '; Secure'
-        : '';
+    const secure = new URL(r.url).protocol === 'https:' ? '; Secure' : '';
 
     return new Response(
       JSON.stringify({
