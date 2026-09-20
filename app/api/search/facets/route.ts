@@ -9,12 +9,14 @@ export async function GET() {
         .prepare(
           `SELECT DISTINCT jsonb_array_elements_text(genres_index) AS name FROM anime_cache`,
         )
-        .all<{ name: string }>(),
+        .all<{ name: string }>()
+        .catch(() => ({ results: [] as { name: string }[] })),
       db()
         .prepare(
           `SELECT DISTINCT jsonb_array_elements_text(themes) AS name FROM anime_search_metadata`,
         )
-        .all<{ name: string }>(),
+        .all<{ name: string }>()
+        .catch(() => ({ results: [] as { name: string }[] })),
     ]);
     let genres = genreRows.results.map((item) => item.name).filter(Boolean);
     let themes = themeRows.results.map((item) => item.name).filter(Boolean);

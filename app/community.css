@@ -498,6 +498,10 @@
   grid-template-columns: 70px minmax(0, 1fr);
   align-items: center;
 }
+.search-filter-hint {
+  color: #738091;
+  font-size: 11px;
+}
 .search-filter-input {
   height: 38px;
   display: flex;

@@ -25,11 +25,24 @@ type FranchiseGroup = {
   items: { item: Anime; label: string; branch?: boolean }[];
 };
 const EMPTY_FILTERS: Filters = { genres: [], themes: [], kind: '', status: '' };
-const EMPTY_FACETS: Facets = {
-  genres: [],
-  themes: [],
-  kinds: [],
-  statuses: [],
+const DEFAULT_FACETS: Facets = {
+  genres: [
+    'Экшен', 'Приключения', 'Комедия', 'Драма', 'Фэнтези', 'Романтика',
+    'Фантастика', 'Триллер', 'Ужасы', 'Детектив', 'Повседневность', 'Спорт',
+  ],
+  themes: [
+    'Школа', 'Магия', 'Военное', 'Исторический', 'Психологическое',
+    'Путешествие во времени', 'Исекай', 'Музыка', 'Мифология', 'Самураи',
+    'Суперспособности', 'Выживание',
+  ],
+  kinds: [
+    { value: 'tv', label: 'Сериал' },
+    { value: 'movie', label: 'Фильм' },
+  ],
+  statuses: [
+    { value: 'ongoing', label: 'Онгоинг' },
+    { value: 'released', label: 'Завершён' },
+  ],
 };
 
 function filtersFromUrl(params: URLSearchParams): Filters {
@@ -54,10 +67,8 @@ export default function SearchPage() {
   const input = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [facets, setFacets] = useState<Facets>(EMPTY_FACETS);
+  const [facets, setFacets] = useState<Facets>(DEFAULT_FACETS);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [genreSearch, setGenreSearch] = useState('');
-  const [themeSearch, setThemeSearch] = useState('');
   const [items, setItems] = useState<Anime[]>([]);
   const [groups, setGroups] = useState<FranchiseGroup[]>([]);
   const [page, setPage] = useState(1);
@@ -99,7 +110,16 @@ export default function SearchPage() {
         if (!response.ok) throw new Error();
         return (await response.json()) as Facets;
       })
-      .then(setFacets)
+      .then((result) =>
+        setFacets({
+          genres: result.genres?.length ? result.genres : DEFAULT_FACETS.genres,
+          themes: result.themes?.length ? result.themes : DEFAULT_FACETS.themes,
+          kinds: result.kinds?.length ? result.kinds : DEFAULT_FACETS.kinds,
+          statuses: result.statuses?.length
+            ? result.statuses
+            : DEFAULT_FACETS.statuses,
+        }),
+      )
       .catch(() => {});
     return () => controller.abort();
   }, []);
@@ -264,16 +284,12 @@ export default function SearchPage() {
               title="Жанры"
               values={facets.genres}
               selected={filters.genres}
-              search={genreSearch}
-              onSearch={setGenreSearch}
               onToggle={(value) => toggleList('genres', value)}
             />
             <FilterOptions
               title="Темы"
               values={facets.themes}
               selected={filters.themes}
-              search={themeSearch}
-              onSearch={setThemeSearch}
               onToggle={(value) => toggleList('themes', value)}
             />
             <SingleOptions
@@ -444,34 +460,19 @@ function FilterOptions({
   title,
   values,
   selected,
-  search,
-  onSearch,
   onToggle,
 }: {
   title: string;
   values: string[];
   selected: string[];
-  search: string;
-  onSearch: (value: string) => void;
   onToggle: (value: string) => void;
 }) {
-  const normalized = search.trim().toLocaleLowerCase('ru-RU');
-  const shown = values.filter((value) =>
-    value.toLocaleLowerCase('ru-RU').includes(normalized),
-  );
   return (
     <div className="search-filter-group">
       <strong>{title}</strong>
-      <label className="search-filter-input">
-        <Search size={15} />
-        <input
-          value={search}
-          onChange={(event) => onSearch(event.target.value)}
-          placeholder={`Найти: ${title.toLocaleLowerCase('ru-RU')}`}
-        />
-      </label>
-      <div className="search-filter-options">
-        {shown.map((value) => (
+      <span className="search-filter-hint">Можно выбрать несколько</span>
+      <div className="search-filter-options" role="group" aria-label={title}>
+        {values.map((value) => (
           <button
             key={value}
             type="button"
