@@ -46,9 +46,12 @@ export async function searchAnime({
   if (normalized) {
     if (fuzzy) {
       where.push(
-        `(m.normalized_titles LIKE ? OR similarity(m.normalized_titles,?) >= 0.28)`,
+        `(m.normalized_titles LIKE ? OR EXISTS (
+          SELECT 1 FROM unnest(m.normalized_aliases) alias
+          WHERE similarity(alias,?) >= 0.28 OR replace(alias,' ','') LIKE ?
+        ))`,
       );
-      values.push(`%${normalized}%`, normalized);
+      values.push(`%${normalized}%`, normalized, `%${normalized.replaceAll(' ', '')}%`);
     } else {
       where.push(
         `EXISTS(SELECT 1 FROM unnest(m.normalized_aliases) alias WHERE alias=? OR alias LIKE ?)`,
@@ -75,6 +78,7 @@ export async function searchAnime({
   const score = normalized
     ? `COALESCE((SELECT max(CASE
         WHEN alias=? THEN 1000
+        WHEN replace(alias,' ','')=? THEN 980
         WHEN alias LIKE ? THEN 800
         WHEN alias LIKE ? THEN 620
         WHEN alias LIKE ? THEN 450
@@ -84,6 +88,7 @@ export async function searchAnime({
   const scoreValues = normalized
     ? [
         normalized,
+        normalized.replaceAll(' ', ''),
         `${normalized}%`,
         `% ${normalized}%`,
         `%${normalized}%`,

@@ -6,6 +6,7 @@ export type CosmeticAccess =
   | 'plus'
   | 'achievement'
   | 'referral'
+  | 'purchase'
   | 'admin';
 
 export type Cosmetic = {
@@ -77,6 +78,8 @@ export async function cosmeticsCatalog(userId?: string) {
             ? 'Награда за достижение'
             : item.access_type === 'referral'
               ? 'Награда за приглашённых друзей'
+              : item.access_type === 'purchase'
+                ? 'Покупка годового AniMonster Plus'
               : item.access_type === 'admin'
                 ? 'Выдаётся администрацией'
                 : 'Доступно всем',

@@ -14,7 +14,13 @@ import {
   Users,
 } from 'lucide-react';
 import './referrals.css';
-import { CommunityHeader, useCommunity } from '@/components/community/context';
+import {
+  Avatar,
+  UserTag,
+  CommunityHeader,
+  useCommunity,
+} from '@/components/community/context';
+import { referralMilestones as milestones } from '@/lib/referral-rewards';
 
 type Dashboard = {
   code: string;
@@ -23,27 +29,46 @@ type Dashboard = {
   qualified: number;
   friends: { nick: string; status: string }[];
 };
-const milestones = [
-  { count: 1, title: 'Вербовщик', detail: 'Эксклюзивный тег' },
-  { count: 3, title: 'Искатель', detail: 'Редкий коллекционный пин' },
-  { count: 5, title: 'Команда', detail: 'Пин команды и 7 дней Plus' },
-  { count: 10, title: 'Капитан', detail: 'Рамка и эксклюзивный пин' },
-  { count: 25, title: 'Легенда', detail: 'Тег, легендарный пин и 30 дней Plus' },
-];
 
 const profileStyles = [
-  { name: 'Искатель', tone: 'lime', pin: 'scout', tag: 'Вербовщик', description: 'Любимые истории объединяют.', count: '3 друга' },
-  { name: 'Капитан', tone: 'violet', pin: 'master', tag: 'Вербовщик', description: 'Собираю свою команду.', count: '10 друзей' },
-  { name: 'Легенда', tone: 'gold', pin: 'legend', tag: 'Легенда AniMonster', description: 'Больше друзей. Больше аниме.', count: '25 друзей' },
+  {
+    name: 'Искатель',
+    tone: 'lime',
+    pin: 'scout',
+    tag: 'Вербовщик',
+    description: 'Любимые истории объединяют.',
+    count: '3 друга',
+  },
+  {
+    name: 'Капитан',
+    tone: 'violet',
+    pin: 'master',
+    tag: 'Вербовщик',
+    description: 'Собираю свою команду.',
+    count: '10 друзей',
+  },
+  {
+    name: 'Легенда',
+    tone: 'gold',
+    pin: 'legend',
+    tag: 'Легенда AniMonster',
+    description: 'Больше друзей. Больше аниме.',
+    count: '25 друзей',
+  },
 ];
 
 function ProfilePortrait({ tone = 'violet' }: { tone?: string }) {
-  return <div className={`referral-portrait portrait-${tone}`}>
-    <img src="/hero.png" alt="" />
-    <span className="portrait-corner corner-one" /><span className="portrait-corner corner-two" />
-    <span className="portrait-corner corner-three" /><span className="portrait-corner corner-four" />
-    <Crown className="portrait-crown" size={24} />
-  </div>;
+  const frame =
+    tone === 'lime'
+      ? 'referral-wings'
+      : tone === 'gold'
+        ? 'referral-phoenix'
+        : 'referral-master';
+  return (
+    <div className={`referral-framed-avatar profile-frame-${frame}`}>
+      <Avatar large />
+    </div>
+  );
 }
 
 export default function ReferralsPage() {
@@ -131,9 +156,7 @@ export default function ReferralsPage() {
               </span>
             </div>
             <strong>{community.user?.nick || 'Твой ник'}</strong>
-            <span className="referral-demo-tag">
-              <Sparkles size={13} /> Легенда AniMonster
-            </span>
+            <UserTag id="animonster-legend" />
             <small>Оформление за 25 друзей</small>
             <div className="referral-mini-loot">
               <span>
@@ -244,21 +267,21 @@ export default function ReferralsPage() {
               key={item.count}
             >
               <div className={'referral-loot-art loot-' + item.count}>
-                {item.count === 1 ? (
-                  <span className="referral-demo-tag">
-                    <Users size={16} /> Вербовщик
-                  </span>
-                ) : (
+                <div
+                  className={`referral-framed-avatar profile-frame-${item.frame}`}
+                >
+                  <Avatar large avatar={community.user?.avatar} />
+                </div>
+                {item.pin ? (
                   <img
-                    src={
-                      '/pins/referral-' +
-                      ({ 3: 'scout', 5: 'crew', 10: 'master', 25: 'legend' }[
-                        item.count
-                      ] || 'scout') +
-                      '.svg'
-                    }
-                    alt={item.title}
+                    className="referral-reward-pin"
+                    src={`/pins/${item.pin}.svg`}
+                    alt={`Пин «${item.title}»`}
                   />
+                ) : (
+                  <div className="referral-reward-tag">
+                    <UserTag id="recruiter" />
+                  </div>
                 )}
                 {(item.count === 5 || item.count === 25) && (
                   <span className="referral-days">
@@ -288,26 +311,59 @@ export default function ReferralsPage() {
             </article>
           ))}
         </section>
-        <section className="referral-profile-gallery" aria-labelledby="profile-gallery-title">
+        <section
+          className="referral-profile-gallery"
+          aria-labelledby="profile-gallery-title"
+        >
           <div className="referral-section-title">
             <div>
-              <span className="referral-eyebrow">ТВОЙ ПРОФИЛЬ — ТВОЙ ХАРАКТЕР</span>
+              <span className="referral-eyebrow">
+                ТВОЙ ПРОФИЛЬ — ТВОЙ ХАРАКТЕР
+              </span>
               <h2 id="profile-gallery-title">Собери свой стиль</h2>
             </div>
-            <p>Сочетай аватар, рамку, тег и пин.<br />Вот как может выглядеть твой профиль.</p>
+            <p>
+              Сочетай аватар, рамку, тег и пин.
+              <br />
+              Вот как может выглядеть твой профиль.
+            </p>
           </div>
           <div className="referral-profile-examples">
-            {profileStyles.map((style) => <article key={style.name} className={`referral-profile-example example-${style.tone}`}>
-              <div className="referral-example-heading"><span>ПРИМЕР ОФОРМЛЕНИЯ</span><span>{style.count}</span></div>
-              <div className="referral-example-identity">
-                <ProfilePortrait tone={style.tone} />
-                <div><h3>{style.name}</h3><span className="referral-demo-tag"><Sparkles size={12} />{style.tag}</span></div>
-                <img className="referral-example-pin" src={`/pins/referral-${style.pin}.svg`} alt={`Пин «${style.name}»`} />
-              </div>
-              <p>{style.description}</p>
-            </article>)}
+            {profileStyles.map((style) => (
+              <article
+                key={style.name}
+                className={`referral-profile-example example-${style.tone}`}
+              >
+                <div className="referral-example-heading">
+                  <span>ПРИМЕР ОФОРМЛЕНИЯ</span>
+                  <span>{style.count}</span>
+                </div>
+                <div className="referral-example-identity">
+                  <ProfilePortrait tone={style.tone} />
+                  <div>
+                    <h3>{style.name}</h3>
+                    <UserTag
+                      id={
+                        style.tone === 'gold'
+                          ? 'animonster-legend'
+                          : 'recruiter'
+                      }
+                    />
+                  </div>
+                  <img
+                    className="referral-example-pin"
+                    src={`/pins/referral-${style.pin}.svg`}
+                    alt={`Пин «${style.name}»`}
+                  />
+                </div>
+                <p>{style.description}</p>
+              </article>
+            ))}
           </div>
-          <p className="referral-gallery-note">Примеры сочетаний. Состав наград каждого этапа указан выше; полученное оформление можно выбрать в профиле.</p>
+          <p className="referral-gallery-note">
+            Примеры сочетаний. Состав наград каждого этапа указан выше;
+            полученное оформление можно выбрать в профиле.
+          </p>
         </section>
         <section className="referral-how">
           <div>

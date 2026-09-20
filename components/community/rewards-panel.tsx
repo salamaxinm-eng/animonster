@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, Lock } from 'lucide-react';
 import { Avatar, UserTag, useCommunity } from './context';
 
 type Achievement = {
@@ -11,6 +10,8 @@ type Achievement = {
   threshold: number;
   progress: number;
   completed: boolean;
+  anime_id: number | null;
+  rewards: { kind: string; slug: string; name: string; image: string | null }[];
 };
 type Cosmetic = {
   id: string;
@@ -38,12 +39,19 @@ export function RewardsPanel({
   const [pending, setPending] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   const [kind, setKind] = useState<Cosmetic['kind']>('frame');
+  const [source, setSource] = useState('all');
 
   useEffect(() => {
-    void Promise.all([
-      fetch('/api/achievements').then((response) => response.json()),
-      fetch('/api/cosmetics').then((response) => response.json()),
-    ])
+    async function loadRewards() {
+      // Achievement evaluation grants rewards before the inventory is read.
+      const progressResponse = await fetch('/api/achievements');
+      if (!progressResponse.ok) throw new Error('Achievements unavailable');
+      const progress = await progressResponse.json();
+      const catalogResponse = await fetch('/api/cosmetics');
+      if (!catalogResponse.ok) throw new Error('Cosmetics unavailable');
+      return [progress, await catalogResponse.json()];
+    }
+    void loadRewards()
       .then(([progress, catalog]) => {
         setAchievements(progress.achievements || []);
         setCosmetics(catalog.cosmetics || []);
@@ -72,7 +80,7 @@ export function RewardsPanel({
       }
       await community.refresh();
       await onEquipped?.();
-      setNotice(`${item.name} установлено`);
+      setNotice(`Установлено: ${item.name}`);
     } catch (error) {
       setFailed(true);
       setNotice(
@@ -95,7 +103,10 @@ export function RewardsPanel({
       <header>
         <div>
           <h2>Награды</h2>
-          <p>Достижения и редкая косметика AniMonster.</p>
+          <p>
+            Любимые истории становятся частью твоего профиля. Награды за
+            достижения и друзей — навсегда.
+          </p>
         </div>
         <a href="/referrals">Пригласить друзей</a>
       </header>
@@ -114,10 +125,27 @@ export function RewardsPanel({
             className={item.completed ? 'reward-card unlocked' : 'reward-card'}
             key={item.id}
           >
-            <span>{item.completed ? <Check /> : <Lock />}</span>
+            <div className="achievement-loot">
+              {item.rewards?.map((reward) =>
+                reward.kind === 'frame' ? (
+                  <span
+                    key={reward.slug}
+                    className={`achievement-frame-preview profile-frame-${reward.slug}`}
+                    title={reward.name}
+                  >
+                    <Avatar avatar={community.user?.avatar} />
+                  </span>
+                ) : reward.kind === 'pin' && reward.image ? (
+                  <img key={reward.slug} src={reward.image} alt={reward.name} />
+                ) : (
+                  <UserTag key={reward.slug} id={reward.slug} />
+                ),
+              )}
+            </div>
             <strong>{item.name}</strong>
             <p>{item.description}</p>
             <progress
+              aria-label={`Прогресс: ${item.name}`}
               max={item.threshold}
               value={Math.min(item.progress, item.threshold)}
             />
@@ -126,6 +154,14 @@ export function RewardsPanel({
                 ? 'Получено'
                 : `${item.progress} / ${item.threshold} серий`}
             </small>
+            <small className="achievement-reward-names">
+              Награда: {item.rewards?.map((reward) => reward.name).join(' + ')}
+            </small>
+            {item.anime_id && !item.completed && (
+              <a className="achievement-watch" href={`/anime/${item.anime_id}`}>
+                Смотреть аниме →
+              </a>
+            )}
           </article>
         ))}
       </div>
@@ -148,9 +184,31 @@ export function RewardsPanel({
           </button>
         ))}
       </nav>
+      <nav className="reward-source-tabs" aria-label="Как получить украшение">
+        {[
+          ['all', 'Все'],
+          ['achievement', 'За аниме'],
+          ['referral', 'За друзей'],
+            ['plus', 'Plus'],
+            ['purchase', 'Годовой Plus'],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={source === value}
+            onClick={() => setSource(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       <div className="reward-grid cosmetics-reward-grid">
         {cosmetics
-          .filter((item) => item.kind === kind)
+          .filter(
+            (item) =>
+              item.kind === kind &&
+              (source === 'all' || item.source === source),
+          )
           .map((item) => (
             <article
               className={`reward-card cosmetic-card rarity-${item.rarity} ${item.unlocked ? 'unlocked' : ''}`}
@@ -180,7 +238,9 @@ export function RewardsPanel({
               <strong>{item.name}</strong>
               <p>{item.description || item.condition}</p>
               <small>
-                {item.unlocked ? `Получено · ${item.source}` : item.condition}
+                {item.unlocked
+                  ? `Доступно · ${{ achievement: 'за достижение', referral: 'за друзей', plus: 'Plus', free: 'для всех', admin: 'награда' }[item.source] || 'награда'}`
+                  : item.condition}
               </small>
               {item.unlocked && (
                 <button

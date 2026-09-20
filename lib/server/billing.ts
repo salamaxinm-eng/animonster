@@ -1,5 +1,4 @@
 import { db, runtime, ApiError, now } from './core';
-import { PLUS_DURATION_MS, PLUS_PRICE } from './plus';
 
 type PlategaTransaction = {
   id?: string;
@@ -75,12 +74,15 @@ export async function verifyPayment(providerId: string) {
       user_id: string;
       provider: string;
       provider_id: string | null;
+      plan: 'monthly' | 'annual';
+      amount: string | number;
+      duration_days: number;
     }>();
   if (
     !order ||
     !paymentId ||
     paymentId !== providerId ||
-    !validPaymentAmount(amount, Number(PLUS_PRICE), commission) ||
+    !validPaymentAmount(amount, Number(order.amount), commission) ||
     currency !== 'RUB'
   )
     throw new ApiError('Платёж не подтверждён', 400);
@@ -88,12 +90,14 @@ export async function verifyPayment(providerId: string) {
     throw new ApiError('Платёж не совпадает', 400);
   if (p.status === 'CONFIRMED') {
     await db().batch([
+      // Serialize extensions for this account, including distinct concurrent orders.
+      db().prepare('SELECT id FROM users WHERE id=? FOR UPDATE').bind(order.user_id),
       db()
-        .prepare('UPDATE orders SET status=?,provider_id=? WHERE id=?')
+        .prepare("UPDATE orders SET status=?,provider_id=? WHERE id=? AND status<>'chargebacked'")
         .bind('succeeded', paymentId, order.id),
       db()
         .prepare(
-          'INSERT OR IGNORE INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=? AND revoked_at IS NULL),0))+?',
+          "INSERT INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=? AND revoked_at IS NULL),0))+? WHERE EXISTS(SELECT 1 FROM orders WHERE id=? AND status='succeeded') ON CONFLICT(order_id) DO NOTHING",
         )
         .bind(
           order.id,
@@ -101,15 +105,23 @@ export async function verifyPayment(providerId: string) {
           now(),
           now(),
           order.user_id,
-          PLUS_DURATION_MS,
+          Number(order.duration_days) * 86400000,
+          order.id,
         ),
+      ...(order.plan === 'annual' ? [db().prepare(
+        `INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata)
+         SELECT ?,'tag:eternal-nakama',?,'purchase','annual-plus',jsonb_build_object('order_id',?::text)
+         WHERE EXISTS(SELECT 1 FROM orders WHERE id=? AND status='succeeded')
+         ON CONFLICT(user_id,cosmetic_id) DO NOTHING`,
+      ).bind(order.user_id,now(),order.id,order.id)] : []),
     ]);
   } else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED') {
     const status = p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled';
     await db().batch([
+      db().prepare('SELECT id FROM users WHERE id=? FOR UPDATE').bind(order.user_id),
       db()
-        .prepare('UPDATE orders SET status=? WHERE id=?')
-        .bind(status, order.id),
+        .prepare("UPDATE orders SET status=? WHERE id=? AND (status NOT IN ('succeeded','chargebacked') OR ?='chargebacked')")
+        .bind(status, order.id, status),
       ...(p.status === 'CHARGEBACKED'
         ? [
             db()
@@ -117,9 +129,13 @@ export async function verifyPayment(providerId: string) {
                 'UPDATE grants SET revoked_at=? WHERE order_id=? AND revoked_at IS NULL',
               )
               .bind(now(), order.id),
+            db().prepare(`DELETE FROM user_cosmetics WHERE user_id=? AND cosmetic_id='tag:eternal-nakama' AND source='purchase'
+              AND NOT EXISTS(SELECT 1 FROM orders WHERE user_id=? AND plan='annual' AND status='succeeded')`)
+              .bind(order.user_id,order.user_id),
           ]
         : []),
     ]);
   }
-  return p.status?.toLowerCase() || 'unknown';
+  const saved = await db().prepare('SELECT status FROM orders WHERE id=?').bind(order.id).first<{status:string}>();
+  return saved?.status || 'pending';
 }

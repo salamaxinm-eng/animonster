@@ -77,6 +77,17 @@ export async function evaluateUserAchievements(
 }
 
 export async function userAchievementProgress(userId: string) {
+  const rewards = await db()
+    .prepare(`SELECT ar.achievement_id,c.kind,c.slug,c.name,c.image
+      FROM achievement_rewards ar JOIN cosmetics c ON c.id=ar.cosmetic_id
+      WHERE c.active=1 ORDER BY c.kind,c.sort_order`)
+    .all<{
+      achievement_id: string;
+      kind: string;
+      slug: string;
+      name: string;
+      image: string | null;
+    }>();
   const rows = await db()
     .prepare(
       `SELECT a.id,a.slug,a.name,a.description,a.category,a.metric,a.threshold,a.anime_id,a.sort_order,
@@ -100,6 +111,9 @@ export async function userAchievementProgress(userId: string) {
       ...item,
       progress,
       completed: !!item.unlocked_at,
+      rewards: rewards.results.filter(
+        (reward) => reward.achievement_id === item.id,
+      ),
     });
   }
   return { completed_episodes: overall, achievements };

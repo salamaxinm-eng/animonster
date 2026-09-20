@@ -197,6 +197,7 @@ export async function GET(request: Request) {
             provider: 'aniliberty' as const,
             translation_type: 'voice' as const,
             episodes: nativeEpisodes.length,
+            episode_ordinals: nativeEpisodes.map(episode => episode.ordinal),
           },
         ]
       : [];

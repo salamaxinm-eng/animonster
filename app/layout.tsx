@@ -4,6 +4,7 @@ import { CommunityProvider } from '@/components/community/context';
 import { MobileNavigation } from '@/components/mobile-navigation';
 import './community.css';
 import './mobile.css';
+import './rewards.css';
 
 const SITE_URL = 'https://animonster.su';
 

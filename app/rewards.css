@@ -1,0 +1,346 @@
+/* Shared reward art: the inventory, referrals and equipped profile use the same assets. */
+.user-tag.user-tag-eternal-nakama {
+  --tag-color: #ffdb86; --tag-light: #f5ffff; --tag-end: #77bfff;
+  --tag-icon: url('/pins/eternal-nakama.svg');
+  border-width: 2px;
+  background: linear-gradient(115deg, #131931, #272039, #0e2030) padding-box, linear-gradient(110deg, #fff1b5, #ffbd5b, #b7a4ff, #7ee9ff, #fff1b5) border-box;
+  box-shadow: 0 0 0 2px #121522, 0 0 18px #ffbd5b40, inset 0 0 12px #83c8ff20;
+}
+.plus-plan-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.plus-plan-options button { display: grid; gap: 7px; text-align: left; background: #151723; border: 1px solid #3d3b50; padding: 14px; border-radius: 12px; color: #bdb7cb; cursor: pointer; }
+.plus-plan-options button[aria-pressed='true'] { border-color: #ccacff; background: #30203e; color: #fff; box-shadow: inset 0 0 18px #ac7aff15; }
+.plus-plan-options button:focus-visible { outline: 2px solid #c1ff79; outline-offset: 3px; }
+.plus-plan-options b { color: #c5ff87; font-size: 11px; }
+.plus-plan-options strong { font-size: 23px; }
+.plus-plan-options small { font-size: 11px; }
+.annual-tag-offer { padding: 16px; text-align: center; border: 1px solid #d5b66a55; border-radius: 12px; background: radial-gradient(ellipse at 50% 0, #dca35420, transparent), #151724; }
+.annual-tag-offer p { color: #cec7dc; font-size: 12px; line-height: 1.6; margin: 12px 0 8px; }
+.annual-tag-offer small { color: #c1a77f; font-size: 11px; }
+.profile-frame-lime > .user-avatar {
+  --frame-art: url('/frames/lime.svg');
+  --frame-accent: #8fea62;
+}
+.profile-frame-violet > .user-avatar {
+  --frame-art: url('/frames/violet.svg');
+  --frame-accent: #ff85bc;
+}
+.profile-frame-fire > .user-avatar {
+  --frame-art: url('/frames/fire.svg');
+  --frame-accent: #ff8c52;
+}
+.profile-frame-ice > .user-avatar {
+  --frame-art: url('/frames/ice.svg');
+  --frame-accent: #7edcff;
+}
+.profile-frame-violet-neon > .user-avatar {
+  --frame-art: url('/frames/violet-neon.svg');
+  --frame-accent: #b185ff;
+}
+.profile-frame-premium-glow > .user-avatar {
+  --frame-art: url('/frames/premium-glow.svg');
+  --frame-accent: #ffd97a;
+}
+.profile-frame-one-piece-master > .user-avatar {
+  --frame-art: url('/frames/one-piece-master.svg');
+  --frame-accent: #67d9ff;
+}
+.profile-frame-referral-bloom > .user-avatar {
+  --frame-art: url('/frames/referral-bloom.svg');
+  --frame-accent: #ff85bc;
+}
+.profile-frame-referral-wings > .user-avatar {
+  --frame-art: url('/frames/referral-wings.svg');
+  --frame-accent: #8fea62;
+}
+.profile-frame-referral-tide > .user-avatar {
+  --frame-art: url('/frames/referral-tide.svg');
+  --frame-accent: #67d9ff;
+}
+.profile-frame-referral-master > .user-avatar {
+  --frame-art: url('/frames/referral-master.svg');
+  --frame-accent: #ffd97a;
+}
+.profile-frame-referral-phoenix > .user-avatar {
+  --frame-art: url('/frames/referral-phoenix.svg');
+  --frame-accent: #ff8c52;
+}
+.profile-frame-plus-sakura > .user-avatar {
+  --frame-art: url('/frames/plus-sakura.svg');
+  --frame-accent: #ff85bc;
+}
+.profile-frame-plus-illusion > .user-avatar {
+  --frame-art: url('/frames/plus-illusion.svg');
+  --frame-accent: #b185ff;
+}
+.profile-frame-plus-crystal > .user-avatar {
+  --frame-art: url('/frames/plus-crystal.svg');
+  --frame-accent: #aaff6b;
+}
+.profile-frame-achievement-shinobi > .user-avatar {
+  --frame-art: url('/frames/achievement-shinobi.svg');
+  --frame-accent: #ff85bc;
+}
+.profile-frame-achievement-scout > .user-avatar {
+  --frame-art: url('/frames/achievement-scout.svg');
+  --frame-accent: #8fea62;
+}
+.profile-frame-achievement-oni > .user-avatar {
+  --frame-art: url('/frames/achievement-oni.svg');
+  --frame-accent: #ff6b99;
+}
+.profile-frame-achievement-mage > .user-avatar {
+  --frame-art: url('/frames/achievement-mage.svg');
+  --frame-accent: #b185ff;
+}
+.profile-frame-achievement-alchemist > .user-avatar {
+  --frame-art: url('/frames/achievement-alchemist.svg');
+  --frame-accent: #ffd97a;
+}
+.user-tag {
+  --tag-light: #f1dbff;
+  --tag-color: #b873ff;
+  --tag-end: #735cff;
+  overflow: visible;
+  gap: 6px;
+  padding: 5px 10px 5px 6px;
+  min-height: 27px;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(110deg, #161121, #231830, #110f1d) padding-box,
+    linear-gradient(
+        120deg,
+        var(--tag-light),
+        var(--tag-color) 35%,
+        var(--tag-end) 65%,
+        var(--tag-light)
+      )
+      border-box;
+  color: #fff5ff;
+  box-shadow:
+    0 0 0 2px #0e101d,
+    0 0 12px color-mix(in srgb, var(--tag-color) 38%, transparent),
+    inset 0 0 9px color-mix(in srgb, var(--tag-color) 15%, transparent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--tag-color) 65%, transparent);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.user-tag::before {
+  content: '';
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  background: var(--tag-icon, url('/pins/referral-master.svg')) center / contain
+    no-repeat;
+  filter: drop-shadow(0 0 4px var(--tag-color));
+}
+.user-tag::after {
+  inset: -5px;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 18% 0, #fff 0 1px, transparent 2px),
+    radial-gradient(circle at 83% 100%, var(--tag-light) 0 1px, transparent 2px);
+  transform: none;
+  animation: reward-sparkle 3.8s ease-in-out infinite alternate;
+}
+.user-tag-plus {
+  --tag-color: #b7ff64;
+  --tag-end: #37cfab;
+  --tag-light: #eeffc9;
+  --tag-icon: url('/frames/plus-crystal.svg');
+}
+.user-tag-supporter {
+  --tag-color: #ff81bd;
+  --tag-end: #b569e5;
+  --tag-light: #ffe6f4;
+  --tag-icon: url('/frames/plus-sakura.svg');
+}
+.user-tag-hundred-episodes {
+  --tag-color: #69dfff;
+  --tag-end: #5278ed;
+  --tag-light: #d9ffff;
+  --tag-icon: url('/pins/referral-crew.svg');
+}
+.user-tag-binge-watcher {
+  --tag-icon: url('/frames/plus-illusion.svg');
+}
+.user-tag-animonster-legend {
+  --tag-color: #ffb44b;
+  --tag-end: #ed5471;
+  --tag-light: #fff3b2;
+  --tag-icon: url('/pins/referral-legend.svg');
+}
+.user-tag-mugiwara {
+  --tag-color: #ffd46e;
+  --tag-end: #df6556;
+  --tag-light: #fff5ce;
+  --tag-icon: url('/pins/achievement-one-piece.svg');
+}
+.user-tag-recruiter {
+  --tag-color: #8fee6f;
+  --tag-end: #27bca7;
+  --tag-light: #e9ffc5;
+  --tag-icon: url('/pins/referral-scout.svg');
+}
+
+[class*='profile-frame-']:not(.profile-frame-none) > .user-avatar {
+  overflow: visible;
+  position: relative;
+  border-color: transparent !important;
+  box-shadow: none;
+  animation: none;
+  padding: 0;
+}
+[class*='profile-frame-']:not(.profile-frame-none) > .user-avatar::after {
+  content: '';
+  inset: -25%;
+  border: 0;
+  border-radius: 0;
+  background: var(--frame-art) center / contain no-repeat;
+  filter: drop-shadow(0 0 4px var(--frame-accent));
+  transform: none;
+  animation: reward-aura 4s ease-in-out infinite alternate;
+  z-index: 2;
+}
+.cosmetic-preview {
+  min-height: 180px;
+  padding: 32px 12px;
+}
+.cosmetic-preview > img {
+  width: 112px;
+  height: 112px;
+  filter: drop-shadow(0 7px 16px #0008);
+}
+.cosmetic-preview .user-tag {
+  padding: 7px 10px 7px 6px;
+  white-space: normal;
+}
+.cosmetic-preview .user-avatar {
+  width: 88px;
+  height: 88px;
+}
+.rewards-panel .reward-grid {
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 16px;
+}
+.rewards-panel .reward-card {
+  border-radius: 16px;
+  padding: 20px;
+  background:
+    radial-gradient(ellipse at 50% 0, #ad78ff12, transparent 65%), #11141f;
+}
+.rewards-panel .reward-card strong {
+  color: #f3edff;
+  font-size: 15px;
+}
+.rewards-panel .reward-card p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.rewards-panel .reward-card small {
+  font-size: 11px;
+  line-height: 1.6;
+}
+.achievement-loot {
+  min-height: 112px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 14px 0;
+}
+.achievement-loot > img {
+  width: 78px;
+  height: 78px;
+}
+.achievement-frame-preview {
+  padding: 10px;
+  display: inline-flex;
+}
+.achievement-frame-preview > .user-avatar {
+  width: 56px;
+  height: 56px;
+}
+.achievement-frame-preview .user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
+}
+.achievement-reward-names {
+  color: #c4afd9;
+}
+.achievement-watch {
+  color: #c4f78e;
+  font-size: 12px;
+  padding-top: 6px;
+}
+.reward-source-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.reward-source-tabs button {
+  border: 1px solid #363049;
+  color: #a9a1b8;
+  background: #14111e;
+  border-radius: 999px;
+  min-height: 38px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.reward-source-tabs button[aria-pressed='true'] {
+  border-color: #c7a0ff;
+  color: #efdeff;
+  background: #30203f;
+}
+.reward-source-tabs button:focus-visible,
+.achievement-watch:focus-visible {
+  outline: 2px solid #c5ff85;
+  outline-offset: 4px;
+}
+.anime-pin:has(img[src$='.svg']) {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.anime-pin img[src$='.svg'] {
+  width: 34px;
+  height: 34px;
+  border-radius: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px #b27dff40);
+}
+@keyframes reward-aura {
+  from {
+    opacity: 0.88;
+  }
+  to {
+    opacity: 1;
+    filter: drop-shadow(0 0 7px var(--frame-accent));
+  }
+}
+@keyframes reward-sparkle {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (max-width: 480px) {
+  .rewards-panel .reward-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .user-tag {
+    font-size: 10px;
+    max-width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*='profile-frame-']:not(.profile-frame-none) > .user-avatar::after,
+  .user-tag::after {
+    animation: none;
+    opacity: 1;
+  }
+}

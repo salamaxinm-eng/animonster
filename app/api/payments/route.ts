@@ -11,7 +11,7 @@ import {
   runtime,
 } from '@/lib/server/core';
 import { paymentFetch, verifyPayment } from '@/lib/server/billing';
-import { PLUS_PRICE } from '@/lib/server/plus';
+import { subscriptionPlan } from '@/lib/subscription-plans';
 export async function POST(r: Request) {
   try {
     sameOrigin(r);
@@ -44,21 +44,23 @@ export async function POST(r: Request) {
     // Platega does not document an idempotency header for transaction creation.
     // Give each checkout a distinct order so independent successful payments
     // are never collapsed into one order/grant.
+    const plan = subscriptionPlan(b.plan ?? 'monthly');
+    if (!plan) throw new ApiError('Неизвестный тариф', 400);
     const id = uid();
     await db()
       .prepare(
-        'INSERT INTO orders(id,user_id,created_at,provider) VALUES (?,?,?,?)',
+        'INSERT INTO orders(id,user_id,created_at,provider,plan,amount,duration_days) VALUES (?,?,?,?,?,?,?)',
       )
-      .bind(id, u.id, now(), 'platega')
+      .bind(id, u.id, now(), 'platega', plan.id, plan.price, plan.days)
       .run();
     const p = await paymentFetch('v2/transaction/process', {
       method: 'POST',
       body: JSON.stringify({
         paymentDetails: {
-          amount: Number(PLUS_PRICE),
+          amount: Number(plan.price),
           currency: 'RUB',
         },
-        description: 'AniMonster Plus — 1 месяц',
+        description: `AniMonster Plus — ${plan.label}`,
         return: `${runtime().SITE_URL || new URL(r.url).origin}/pins?payment=return`,
         failedUrl: `${runtime().SITE_URL || new URL(r.url).origin}/pins?payment=failed`,
         payload: id,

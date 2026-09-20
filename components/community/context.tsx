@@ -26,6 +26,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
+import { earnedPins } from '@/lib/earned-pins';
 export async function api(action: string, data?: Record<string, unknown>) {
   const r = await fetch(
     data ? '/api/community' : '/api/community?action=' + action,
@@ -215,7 +216,7 @@ export function Pin({ id }: { id: string | null }) {
       image: '/pins/referral-legend.svg',
     },
   ];
-  const p = [...pins, ...referralPins].find((item) => item.id === id);
+  const p = [...pins, ...earnedPins, ...referralPins].find((item) => item.id === id);
   return p ? (
     <span
       className="anime-pin"
@@ -227,6 +228,7 @@ export function Pin({ id }: { id: string | null }) {
   ) : null;
 }
 const tagLabels: Record<string, string> = {
+  'eternal-nakama': 'Вечный накама',
   plus: 'PLUS',
   supporter: 'Поддержал AniMonster',
   'hundred-episodes': 'Сотня серий',

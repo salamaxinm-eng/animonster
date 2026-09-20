@@ -58,6 +58,21 @@ export type Voiceover = {
   title: string;
   provider: 'aniliberty' | 'kodik';
   episodes: number;
+  episode_ordinals?: number[];
   player_url?: string;
   translation_type?: 'voice' | 'subtitles';
 };
+
+export function voiceoverEpisodeIndices(episodes: Episode[], voiceover?: Voiceover) {
+  const ordinals = voiceover?.episode_ordinals ? new Set(voiceover.episode_ordinals) : null;
+  return episodes.flatMap((episode, index) =>
+    (ordinals ? ordinals.has(episode.ordinal) : episode.ordinal <= (voiceover?.episodes || 0)) ? [index] : [],
+  );
+}
+
+export function initialVoiceover(voiceovers: Voiceover[], episode: number) {
+  const available = (v: Voiceover) => v.episode_ordinals ? v.episode_ordinals.includes(episode) : v.episodes >= episode;
+  return [...voiceovers].sort((a,b) => Number(available(b))-Number(available(a)) ||
+    (b.episode_ordinals?.length ?? b.episodes)-(a.episode_ordinals?.length ?? a.episodes) ||
+    Number(a.translation_type==='subtitles')-Number(b.translation_type==='subtitles'))[0];
+}

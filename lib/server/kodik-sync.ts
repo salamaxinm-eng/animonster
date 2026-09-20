@@ -6,6 +6,7 @@ import { queueEpisodeNotifications } from './episode-notifications';
 import { exactKodikCatalogMatch } from './shikimori-matching';
 import {
   allowedKodikResult,
+  kodikLastEpisode,
   kodikCatalogPage,
   rememberKodikSources,
   type KodikMaterialData,
@@ -157,7 +158,7 @@ function normalizeKodikAnime(
     ),
     kind: canonical?.kind === 'movie' ? 'movie' : kind(item),
     episodes: Math.max(
-      Number(item.episodes_count || item.last_episode) || 0,
+      kodikLastEpisode(item),
       Number(data?.episodes_aired || data?.episodes_total) || 0,
       current?.episodes || 0,
     ),

@@ -3772,7 +3772,6 @@ a.season-card:hover {
   --cosmetic-accent: #b4ed50;
 }
 [class*='profile-frame-']:not(.profile-frame-none) > .user-avatar {
-  --frame-accent: #b79aff;
   position: relative;
   overflow: visible;
   isolation: isolate;

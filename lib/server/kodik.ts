@@ -53,6 +53,14 @@ type KodikResponse = {
   next_page?: string | null;
 };
 
+export function kodikEpisodeOrdinals(item: KodikResult) {
+  return [...new Set(Object.values(item.seasons || {}).flatMap(season => Object.keys(season.episodes || {}).map(Number)))]
+    .filter(n => Number.isInteger(n) && n > 0 && n <= 100000).sort((a,b)=>a-b);
+}
+export function kodikLastEpisode(item: KodikResult) {
+  return Math.max(1, Number(item.episodes_count) || 0, Number(item.last_episode) || 0, ...kodikEpisodeOrdinals(item));
+}
+
 export const KODIK_PLAYER_HOSTS = [
   'kodik.info',
   'kodik.biz',
@@ -283,10 +291,8 @@ export function normalizeKodikVoiceovers(
       title: type === 'subtitles' ? `Субтитры · ${title}` : title,
       provider: 'kodik',
       translation_type: type,
-      episodes: Math.max(
-        1,
-        Number(item.episodes_count || item.last_episode) || anime.episodes || 1,
-      ),
+      episodes: kodikLastEpisode(item),
+      episode_ordinals: kodikEpisodeOrdinals(item).length ? kodikEpisodeOrdinals(item) : undefined,
       player_url: player,
     };
     const current = byTranslation.get(id);
@@ -330,7 +336,7 @@ export async function rememberKodikSources(
           String(item.translation?.title || ''),
           item.translation?.type === 'subtitles' ? 'subtitles' : 'voice',
           safeKodikPlayerUrl(item.link || '') || null,
-          Math.max(1, Number(item.episodes_count || item.last_episode) || 1),
+          kodikLastEpisode(item),
           JSON.stringify(item),
           Date.parse(item.updated_at || '') || timestamp,
           timestamp,
@@ -408,7 +414,10 @@ export async function kodikVoiceovers(anime: Anime): Promise<{
     else params.set('title', anime.name || anime.russian);
     const data = await kodikRequest('search', params);
     if (data.results?.length) {
-      results = data.results;
+      // A response can contain only a subset of translations; retain other stored sources.
+      const sources = new Map(results.map(item => [String(item.id), item]));
+      for (const item of data.results) sources.set(String(item.id), item);
+      results = [...sources.values()];
       await rememberKodikSources(anime.id, results);
     }
   } catch (error) {

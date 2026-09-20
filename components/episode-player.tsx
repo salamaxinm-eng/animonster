@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import type { Episode, SkipSegment, Voiceover } from '@/lib/anime';
+import { initialVoiceover, voiceoverEpisodeIndices, type Episode, type SkipSegment, type Voiceover } from '@/lib/anime';
 import { api, useCommunity } from '@/components/community/context';
 
 type SkipTimes = {
@@ -51,7 +51,7 @@ export function EpisodePlayer({
     ),
     [quality, setQuality] = useState('720'),
     [voiceoverId, setVoiceoverId] = useState(
-      () => voiceovers[0]?.id || 'aniliberty',
+      () => initialVoiceover(voiceovers, initialEpisode)?.id || 'aniliberty',
     ),
     [error, setError] = useState(''),
     [playbackActive, setPlaybackActive] = useState(false),
@@ -81,15 +81,14 @@ export function EpisodePlayer({
   const voiceover =
     voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
   const isKodik = voiceover?.provider === 'kodik';
-  const lastVoiceoverIndex = Math.max(
-    0,
-    episodes.findLastIndex(
-      (item) => item.ordinal <= (voiceover?.episodes || 1),
-    ),
-  );
+  const availableIndices = voiceoverEpisodeIndices(episodes, voiceover);
+  const firstVoiceoverIndex = availableIndices[0] ?? 0;
+  const lastVoiceoverIndex = availableIndices.at(-1) ?? 0;
+  const nextIndex = availableIndices.find(value => value > index);
+  const previousIndex = availableIndices.findLast(value => value < index);
   useEffect(() => {
-    if (index > lastVoiceoverIndex) setIndex(lastVoiceoverIndex);
-  }, [voiceoverId, lastVoiceoverIndex]);
+    if (!availableIndices.includes(index)) setIndex(firstVoiceoverIndex);
+  }, [voiceoverId, firstVoiceoverIndex, lastVoiceoverIndex, index]);
   useEffect(() => {
     if (!community.loaded) return;
     let local: boolean | null = null;
@@ -163,14 +162,14 @@ export function EpisodePlayer({
     [requestWakeLock],
   );
   const advanceToNext = useCallback(() => {
-    if (!episode || index >= lastVoiceoverIndex) return;
+    if (!episode || nextIndex === undefined) return;
     const key = `${voiceover?.id}:${episode.id}`;
     if (advancedEpisode.current === key) return;
     advancedEpisode.current = key;
     autoplayNext.current = true;
     setPlayback(false);
-    setIndex((value) => Math.min(value + 1, lastVoiceoverIndex));
-  }, [episode, index, lastVoiceoverIndex, setPlayback, voiceover?.id]);
+    setIndex(nextIndex);
+  }, [episode, nextIndex, setPlayback, voiceover?.id]);
   useEffect(() => {
     const restore = () => {
       if (document.visibilityState === 'visible') void requestWakeLock();
@@ -692,7 +691,7 @@ export function EpisodePlayer({
           >
             {voiceovers.map((item) => (
               <option value={item.id} key={item.id}>
-                {item.title} · {item.episodes} серий
+                {item.title} · {item.episode_ordinals?.length ?? item.episodes} серий
               </option>
             ))}
           </NativeSelect>
@@ -703,14 +702,14 @@ export function EpisodePlayer({
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
         >
-          {episodes.slice(0, lastVoiceoverIndex + 1).map((e, i) => (
+          {availableIndices.map((i) => { const e = episodes[i]; return (
             <option value={i} key={e.id}>
               Серия {e.ordinal} · {e.name}
               {e.plus_locked
                 ? ` · Plus до ${new Date(e.free_at || 0).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
                 : ''}
             </option>
-          ))}
+          ); })}
         </NativeSelect>
         {!isKodik && (
           <NativeSelect
@@ -737,15 +736,15 @@ export function EpisodePlayer({
           </NativeSelect>
         )}
         <button
-          disabled={index === 0}
-          onClick={() => setIndex(index - 1)}
+          disabled={previousIndex === undefined}
+          onClick={() => previousIndex !== undefined && setIndex(previousIndex)}
           aria-label="Предыдущая серия"
         >
           <ChevronLeft size={20} />
         </button>
         <button
-          disabled={index >= lastVoiceoverIndex}
-          onClick={() => setIndex(index + 1)}
+          disabled={nextIndex === undefined}
+          onClick={() => nextIndex !== undefined && setIndex(nextIndex)}
           aria-label="Следующая серия"
         >
           <ChevronRight size={20} />
@@ -753,7 +752,7 @@ export function EpisodePlayer({
       </div>
       <p className="source-note">
         Озвучка: {voiceover?.title || 'AniLiberty'} ·{' '}
-        {voiceover?.episodes || episodes.length} серий доступно
+        {availableIndices.length} серий доступно
       </p>
     </div>
   );

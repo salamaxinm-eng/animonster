@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { subscriptionPlans, type SubscriptionPlan } from '@/lib/subscription-plans';
 import {
   Sparkles,
   Bell,
@@ -29,6 +30,8 @@ export function BuySubscription({
   const [error, setError] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [paymentUnavailable, setPaymentUnavailable] = useState(false);
+  const [planId, setPlanId] = useState<SubscriptionPlan>('monthly');
+  const plan = subscriptionPlans[planId];
 
   async function buy() {
     setBusy(true);
@@ -37,7 +40,7 @@ export function BuySubscription({
       const response = await fetch('/api/payments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create' }),
+        body: JSON.stringify({ action: 'create', plan: planId }),
       });
       const result = await response.json();
       if (!response.ok && response.status === 503) {
@@ -75,13 +78,24 @@ export function BuySubscription({
               Твой профиль. Твои коллекции. Ещё больше аниме.
             </DialogDescription>
           </div>
+          <div className="plus-plan-options" role="group" aria-label="Срок подписки">
+            {Object.values(subscriptionPlans).map(option => <button type="button" key={option.id} aria-pressed={planId === option.id} disabled={busy} onClick={() => setPlanId(option.id)}>
+              <span>{option.id === 'annual' ? 'На год' : 'На месяц'} {option.discount > 0 && <b>−10%</b>}</span>
+              <strong>{option.priceLabel}</strong><small>{option.label}</small>
+            </button>)}
+          </div>
           <div className="plus-price-card">
             <div>
-              <strong>89 ₽</strong>
-              <span> / 30 дней</span>
+              <strong>{plan.priceLabel}</strong>
+              <span> / {plan.label}</span>
             </div>
             <p>Без автосписаний. Продлеваешь, когда захочешь.</p>
           </div>
+          {planId === 'annual' && <div className="annual-tag-offer">
+            <span className="user-tag user-tag-eternal-nakama">Вечный накама</span>
+            <p>Твой знак верности AniMonster. Уникальный тег останется навсегда после подтверждённой годовой покупки.</p>
+            <small><s>1 068 ₽</s> · Экономия 106,80 ₽ относительно 12 покупок по 89 ₽.</small>
+          </div>}
           <span className="platega-review-label" role="note">
             Platega test
           </span>
@@ -182,10 +196,10 @@ export function BuySubscription({
               ? 'Переходим к оплате…'
               : paymentUnavailable
                 ? 'Оплата скоро появится'
-                : 'Купить на 30 дней · 89 ₽'}
+                : `Купить · ${plan.priceLabel}`}
           </button>
           <p className="plus-renewal-note">
-            Уже есть Plus? Добавим 30 дней к оставшемуся сроку.
+            Уже есть Plus? Добавим {plan.label} к оставшемуся сроку.
           </p>
         </DialogContent>
       </Dialog>

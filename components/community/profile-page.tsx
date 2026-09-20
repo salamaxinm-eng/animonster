@@ -128,7 +128,7 @@ export function ProfilePage({
           const result = await response.json();
           if (!response.ok) throw new Error(result.error);
           if (result.status === 'succeeded') {
-            setNotice('AniMonster Plus активирован на 30 дней');
+            setNotice('AniMonster Plus активирован. Срок подписки обновлён.');
             await c.refresh();
             await load();
           } else if (result.status === 'canceled')

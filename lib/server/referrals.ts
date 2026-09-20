@@ -1,6 +1,7 @@
 import { base, cookie, db, now, uid } from './core';
 import { grantCosmetic } from './cosmetics';
 import { grantPlusDays } from './plus';
+import { referralMilestones as MILESTONES } from '../referral-rewards';
 
 const REFERRAL_COOKIE = 'am_referral';
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -99,22 +100,6 @@ export async function evaluateReferralQualification(referredUserId: string) {
   }
   return { qualified: !!won, seconds, referrerId: won?.referrer_id };
 }
-
-const MILESTONES = [
-  { count: 1, cosmetics: ['recruiter'], plusDays: 0 },
-  { count: 3, cosmetics: ['referral-scout'], plusDays: 0 },
-  { count: 5, cosmetics: ['referral-crew'], plusDays: 7 },
-  {
-    count: 10,
-    cosmetics: ['referral-master', 'referral-master-pin'],
-    plusDays: 0,
-  },
-  {
-    count: 25,
-    cosmetics: ['animonster-legend', 'referral-legend'],
-    plusDays: 30,
-  },
-] as const;
 
 export async function grantReferralRewards(userId: string) {
   const row = await db()
