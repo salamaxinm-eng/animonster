@@ -17,7 +17,14 @@ import { BuySubscription } from './buy-subscription';
 import { GlobalSearch } from '@/components/global-search';
 import { EmailForm } from './email-form';
 import { Input } from '@/components/ui/input';
-import { Ghost, Bell, Gem, ArrowLeft, MessageCircle } from 'lucide-react';
+import {
+  Ghost,
+  Bell,
+  Gem,
+  ArrowLeft,
+  MessageCircle,
+  UsersRound,
+} from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
 export async function api(action: string, data?: Record<string, unknown>) {
   const r = await fetch(
@@ -269,8 +276,32 @@ export function Avatar({
 }
 export function AccountNav() {
   const c = useCommunity();
+  const [activeParty, setActiveParty] = useState<{
+    code: string;
+    anime_title: string;
+    episode: number;
+  } | null>(null);
+  useEffect(() => {
+    if (!c.user) {
+      setActiveParty(null);
+      return;
+    }
+    void fetch('/api/watch-parties')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((result) => setActiveParty(result?.active || null))
+      .catch(() => {});
+  }, [c.user?.id]);
   return (
     <div className="account-nav">
+      {activeParty && (
+        <a
+          href={`/watch/${activeParty.code}`}
+          className="active-party-link"
+          title={`${activeParty.anime_title} · серия ${activeParty.episode}`}
+        >
+          <UsersRound size={16} /> Вернуться в комнату
+        </a>
+      )}
       <a href="/referrals" className="referral-nav-button">
         <Gem size={16} /> Пригласить друзей
       </a>

@@ -25,6 +25,7 @@ export function EpisodePlayer({
   releaseId,
   initialPosition = 0,
   onEpisodeChange,
+  onPlaybackSelectionChange,
   onRetry,
 }: {
   episodes: Episode[];
@@ -35,6 +36,11 @@ export function EpisodePlayer({
   releaseId?: number;
   initialPosition?: number;
   onEpisodeChange: (n: number) => void;
+  onPlaybackSelectionChange?: (selection: {
+    episode: number;
+    provider: 'aniliberty' | 'kodik';
+    voiceover: string;
+  }) => void;
   onRetry: () => void;
 }) {
   const [index, setIndex] = useState(() =>
@@ -423,6 +429,14 @@ export function EpisodePlayer({
   useEffect(() => {
     if (episode) onEpisodeChange(episode.ordinal);
   }, [episode?.id]);
+  useEffect(() => {
+    if (!episode || !voiceover) return;
+    onPlaybackSelectionChange?.({
+      episode: episode.ordinal,
+      provider: voiceover.provider,
+      voiceover: voiceover.id,
+    });
+  }, [episode?.id, voiceover?.id, onPlaybackSelectionChange]);
   useEffect(() => {
     setError('');
     if (isKodik || !stream || !video.current) return;

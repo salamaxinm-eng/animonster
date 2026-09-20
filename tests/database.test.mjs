@@ -768,3 +768,101 @@ test('five qualified friends claim the milestone exactly once', async () => {
   assert.equal(Number(rows[0].cosmetics), 1);
   await databaseClient.close();
 });
+
+test('watch-party free quota charges exactly ten unique episodes under concurrency', async () => {
+  const databaseClient = await database();
+  const userId = crypto.randomUUID();
+  const timestamp = Date.now();
+  const week = '2026-09-14';
+  await databaseClient.query(
+    'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+    [userId, `test:${userId}`, `party_${userId.slice(0, 8)}`, timestamp],
+  );
+  await databaseClient.query(
+    'INSERT INTO watch_party_weekly_quotas(user_id,week_start,used,updated_at) VALUES ($1,$2,0,$3)',
+    [userId, week, timestamp],
+  );
+  for (let episode = 1; episode <= 11; episode++)
+    await databaseClient.query(
+      `INSERT INTO watch_party_episode_usage(user_id,week_start,anime_id,episode,watched_seconds,updated_at)
+       VALUES ($1,$2,16498,$3,299,$4)`,
+      [userId, week, episode, timestamp],
+    );
+  const charge = (episode) =>
+    databaseClient.query(
+      `WITH current_usage AS (
+         SELECT charged_at,watched_seconds FROM watch_party_episode_usage
+         WHERE user_id=$1 AND week_start=$2 AND anime_id=16498 AND episode=$3 FOR UPDATE
+       ), charged AS (
+         UPDATE watch_party_weekly_quotas SET used=used+1,updated_at=$4
+         WHERE user_id=$1 AND week_start=$2 AND used<10
+           AND EXISTS (SELECT 1 FROM current_usage WHERE charged_at IS NULL AND watched_seconds+1>=300)
+         RETURNING used
+       )
+       UPDATE watch_party_episode_usage SET
+         watched_seconds=LEAST(300,watched_seconds+1),
+         charged_at=CASE WHEN charged_at IS NULL AND watched_seconds+1>=300 AND EXISTS(SELECT 1 FROM charged) THEN $4 ELSE charged_at END,
+         updated_at=$4
+       WHERE user_id=$1 AND week_start=$2 AND anime_id=16498 AND episode=$3
+       RETURNING charged_at`,
+      [userId, week, episode, timestamp],
+    );
+  await Promise.all(
+    Array.from({ length: 11 }, (_, index) => charge(index + 1)),
+  );
+  const result = (
+    await databaseClient.query(
+      `SELECT
+       (SELECT used FROM watch_party_weekly_quotas WHERE user_id=$1 AND week_start=$2) AS used,
+       count(*) FILTER (WHERE charged_at IS NOT NULL) AS charged
+       FROM watch_party_episode_usage WHERE user_id=$1 AND week_start=$2`,
+      [userId, week],
+    )
+  )[0];
+  assert.equal(Number(result.used), 10);
+  assert.equal(Number(result.charged), 10);
+  await databaseClient.close();
+});
+
+test('watch-party membership, bans and active room cascade safely', async () => {
+  const databaseClient = await database();
+  const host = crypto.randomUUID();
+  const guest = crypto.randomUUID();
+  const party = crypto.randomUUID();
+  const timestamp = Date.now();
+  for (const id of [host, guest])
+    await databaseClient.query(
+      'INSERT INTO users(id,identity,nick,created_at) VALUES ($1,$2,$3,$4)',
+      [id, `test:${id}`, `party_${id.slice(0, 8)}`, timestamp],
+    );
+  await databaseClient.query(
+    `INSERT INTO watch_parties(id,code,host_user_id,anime_id,anime_title,episode,provider,voiceover,state_updated_at,created_at,expires_at)
+     VALUES ($1,'PARTYTEST123',$2,16498,'Атака титанов',1,'aniliberty','aniliberty',$3,$3,$4)`,
+    [party, host, timestamp, timestamp + 3600000],
+  );
+  await databaseClient.query(
+    `INSERT INTO watch_party_members(party_id,user_id,role,joined_at,last_seen_at)
+     VALUES ($1,$2,'host',$4,$4),($1,$3,'member',$4,$4)`,
+    [party, host, guest, timestamp],
+  );
+  await databaseClient.query(
+    'INSERT INTO watch_party_active_users(user_id,party_id,updated_at) VALUES ($1,$2,$3)',
+    [guest, party, timestamp],
+  );
+  await databaseClient.query(
+    'INSERT INTO watch_party_bans(party_id,user_id,created_by,created_at) VALUES ($1,$2,$3,$4)',
+    [party, guest, host, timestamp],
+  );
+  await databaseClient.query('DELETE FROM watch_parties WHERE id=$1', [party]);
+  const rows = await databaseClient.query(
+    `SELECT
+     (SELECT count(*) FROM watch_party_members WHERE party_id=$1) AS members,
+     (SELECT count(*) FROM watch_party_bans WHERE party_id=$1) AS bans,
+     (SELECT count(*) FROM watch_party_active_users WHERE party_id=$1) AS active`,
+    [party],
+  );
+  assert.equal(Number(rows[0].members), 0);
+  assert.equal(Number(rows[0].bans), 0);
+  assert.equal(Number(rows[0].active), 0);
+  await databaseClient.close();
+});

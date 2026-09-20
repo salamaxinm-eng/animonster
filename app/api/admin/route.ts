@@ -17,6 +17,7 @@ import {
 import { dashboard } from '@/lib/server/admin';
 import { validSegment } from '@/lib/server/skip-times';
 import { linkQueuedKodik, runKodikSync } from '@/lib/server/kodik-sync';
+import { watchPartyMetrics } from '@/lib/server/watch-parties';
 
 async function moderator(r: Request) {
   const user = await viewer(r);
@@ -58,6 +59,7 @@ export async function GET(r: Request) {
       kodikCounts,
       payments,
       plusState,
+      partyMetrics,
     ] = await Promise.all([
       db()
         .prepare(
@@ -151,6 +153,7 @@ export async function GET(r: Request) {
           "SELECT value,updated_at FROM plus_system_state WHERE key='episode_bootstrap'",
         )
         .first(),
+      watchPartyMetrics(),
     ]);
     return json({
       can_manage_roles: actor.role === 'admin',
@@ -175,6 +178,7 @@ export async function GET(r: Request) {
       kodik_queue: kodikQueue.results,
       kodik_queue_counts: kodikQueueCounts,
       kodik_counts: kodikCounts,
+      watch_parties: partyMetrics,
     });
   } catch (e) {
     return fail(e);

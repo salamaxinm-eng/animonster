@@ -281,6 +281,27 @@ export function AdminTools() {
         )}
       </section>
       <section className="social-panel">
+        <h2>Совместный просмотр</h2>
+        <div className="dashboard-cards compact">
+          <div>
+            <strong>{Number(data.watch_parties?.active_rooms || 0)}</strong>
+            <span>активных комнат</span>
+          </div>
+          <div>
+            <strong>{Number(data.watch_parties?.active_members || 0)}</strong>
+            <span>участников онлайн</span>
+          </div>
+          <div>
+            <strong>{Number(data.watch_parties?.quota_denials || 0)}</strong>
+            <span>отказов по лимиту · 24 ч</span>
+          </div>
+          <div>
+            <strong>{Number(data.watch_parties?.open_reports || 0)}</strong>
+            <span>открытых жалоб</span>
+          </div>
+        </div>
+      </section>
+      <section className="social-panel">
         <h2>Plus: серии и Telegram</h2>
         <p>
           Первичная синхронизация:{' '}

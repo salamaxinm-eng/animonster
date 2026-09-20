@@ -6,6 +6,7 @@ import {
 } from './episode-access';
 import { liberty, normalize, type Release } from './anime';
 import { queueEpisodeNotifications } from './episode-notifications';
+import { cleanupWatchParties } from './watch-parties';
 
 async function telegram(chatId: number, text: string) {
   const response = await fetch(
@@ -25,6 +26,7 @@ async function telegram(chatId: number, text: string) {
 }
 
 export async function runPlusWorker(limit = 20) {
+  const partyCleanup = await cleanupWatchParties();
   if (!(await earlyAccessInitialized())) await bootstrapEpisodes();
   const [subscribedRows, recentRows] = await Promise.all([
     db()
@@ -80,11 +82,7 @@ export async function runPlusWorker(limit = 20) {
       );
       const newEpisodes = ordinals.filter((number) => !known.has(number));
       discovered += newEpisodes.length;
-      await queueEpisodeNotifications(
-        normalized.id,
-        newEpisodes,
-        access,
-      );
+      await queueEpisodeNotifications(normalized.id, newEpisodes, access);
     } catch (error) {
       scanFailed++;
       console.error(
@@ -159,5 +157,6 @@ export async function runPlusWorker(limit = 20) {
     scan_failed: scanFailed,
     sent,
     failed,
+    watch_parties: partyCleanup,
   };
 }

@@ -407,6 +407,539 @@
     margin: 0;
   }
 }
+
+/* Совместный просмотр */
+.title-playback-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.active-party-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid #70508c;
+  border-radius: 9px;
+  background: #21162b;
+  color: #dabdf1;
+  white-space: nowrap;
+}
+.title-playback-heading h2 {
+  margin: 0;
+}
+.title-playback-heading button {
+  border-color: #7752a8;
+  background: linear-gradient(135deg, #241b32, #141a21);
+  color: #dfc4ff;
+}
+.watch-party-site {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 0%, #43246022, transparent 35%),
+    radial-gradient(circle at 90% 25%, #a8ef3920, transparent 30%), #090e13;
+}
+.watch-party-page {
+  width: min(1500px, 94%);
+  margin: 0 auto;
+  padding: 26px 0 60px;
+}
+.party-loading,
+.party-gate {
+  width: min(600px, 90%);
+  margin: 12vh auto;
+  padding: 40px;
+  border: 1px solid #303b47;
+  border-radius: 22px;
+  background: #111820;
+  text-align: center;
+}
+.party-gate > svg {
+  color: #b4ed50;
+}
+.party-gate h1 {
+  margin: 16px 0 8px;
+}
+.party-gate p {
+  color: #99a8b8;
+}
+.party-topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 22px;
+  margin-bottom: 20px;
+}
+.party-topbar h1 {
+  margin: 8px 0 3px;
+  font-size: clamp(24px, 3vw, 38px);
+}
+.party-topbar p,
+.party-topbar .muted {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  color: #91a0af;
+}
+.party-top-actions {
+  display: flex;
+  gap: 10px;
+}
+.party-alert,
+.party-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 14px;
+  padding: 12px 15px;
+  border: 1px solid #663946;
+  border-radius: 12px;
+  background: #2a151c;
+  color: #ffc4d0;
+}
+.party-notice {
+  border-color: #4f6636;
+  background: #172315;
+  color: #cdec9d;
+}
+.party-alert button {
+  color: inherit;
+}
+.watch-party-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 18px;
+  align-items: start;
+}
+.party-stage,
+.party-sidebar {
+  min-width: 0;
+  border: 1px solid #2b3743;
+  border-radius: 18px;
+  background: #10171f;
+  box-shadow: 0 22px 55px #0004;
+}
+.party-player {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  border-radius: 17px 17px 0 0;
+  background: #05080b;
+}
+.party-player video,
+.party-player iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  object-fit: contain;
+  background: #000;
+}
+.party-connect {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px;
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 20%, #68449b44, transparent 45%), #090d12;
+}
+.party-connect > svg {
+  color: #b4ed50;
+}
+.party-connect h2,
+.party-connect p {
+  margin: 0;
+}
+.party-connect p {
+  max-width: 520px;
+  color: #9aa7b5;
+}
+.party-limit-card {
+  display: grid;
+  gap: 6px;
+  max-width: 440px;
+  margin-top: 8px;
+  padding: 14px 18px;
+  border: 1px solid #6a4b87;
+  border-radius: 14px;
+  background: #21172b;
+}
+.party-limit-card span {
+  color: #b5a7c2;
+  font-size: 13px;
+}
+.party-limit-card a {
+  color: #b4ed50;
+}
+.party-soft-sync {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 7px 10px;
+  border: 1px solid #6e5687;
+  border-radius: 999px;
+  background: #17101fe8;
+  color: #dbc2f6;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+}
+.party-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: #070b10d9;
+  backdrop-filter: blur(9px);
+}
+.party-countdown strong {
+  font-size: clamp(22px, 4vw, 40px);
+}
+.party-floating-reactions {
+  position: absolute;
+  right: 20px;
+  bottom: 15%;
+  z-index: 5;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.party-floating-reactions span {
+  font-size: clamp(28px, 4vw, 48px);
+  filter: drop-shadow(0 3px 8px #000);
+  animation: party-reaction-float 3.2s ease-out forwards;
+}
+@keyframes party-reaction-float {
+  from {
+    transform: translateY(30px) scale(0.7);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-130px) scale(1.15) rotate(8deg);
+    opacity: 0;
+  }
+}
+.party-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px;
+  border-top: 1px solid #222d38;
+  overflow-x: auto;
+}
+.party-controls select {
+  min-width: 120px;
+  max-width: 240px;
+}
+.party-status-strip {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 15px 13px;
+  color: #9eacba;
+  font-size: 13px;
+}
+.party-status-strip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.party-status-strip button {
+  margin-left: auto;
+  color: #baa0d3;
+}
+.party-reaction-bar {
+  display: flex;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
+.party-reaction-bar button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 38px;
+  border: 1px solid #303c48;
+  border-radius: 11px;
+  background: #151e27;
+  font-size: 19px;
+}
+.party-reaction-bar button:hover {
+  border-color: #8c67ad;
+  transform: translateY(-2px);
+}
+.party-sidebar {
+  position: sticky;
+  top: 12px;
+  display: grid;
+  grid-template-rows: auto auto auto minmax(220px, 1fr) auto;
+  height: min(780px, calc(100vh - 30px));
+  overflow: hidden;
+}
+.party-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid #27323d;
+}
+.party-sidebar-head div {
+  display: grid;
+  gap: 2px;
+}
+.party-sidebar-head span {
+  color: #8e9ba8;
+  font-size: 12px;
+}
+.party-mobile-close {
+  display: none;
+}
+.party-invite-code {
+  display: flex;
+  justify-content: space-between;
+  margin: 12px;
+  padding: 10px 12px;
+  border: 1px dashed #684b83;
+  border-radius: 11px;
+  background: #1b1423;
+  color: #d7b9f3;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.party-members {
+  display: flex;
+  gap: 8px;
+  padding: 0 12px 12px;
+  overflow-x: auto;
+}
+.party-members > div {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(75px, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  min-width: 150px;
+  padding: 8px;
+  border: 1px solid #2b3742;
+  border-radius: 11px;
+  background: #141d25;
+}
+.party-members > div.offline {
+  opacity: 0.55;
+}
+.party-member-avatar {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #624287;
+  font-weight: 800;
+}
+.party-members strong,
+.party-members small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.party-members small {
+  color: #81909f;
+  font-size: 10px;
+}
+.party-member-actions {
+  position: absolute;
+  right: 5px;
+  bottom: -7px;
+  display: none;
+  gap: 3px;
+}
+.party-members > div:hover .party-member-actions {
+  display: flex;
+}
+.party-member-actions button {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  border: 1px solid #4a3840;
+  border-radius: 7px;
+  background: #23171c;
+  color: #eaa4b5;
+}
+.party-chat {
+  min-height: 0;
+  padding: 4px 13px 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.party-chat article {
+  padding: 9px 4px;
+  border-bottom: 1px solid #202b35;
+}
+.party-chat article > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.party-chat time {
+  color: #71808e;
+  font-size: 10px;
+}
+.party-chat p {
+  margin: 5px 0 0;
+  color: #d2dae2;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.party-message-actions {
+  display: flex;
+  gap: 9px;
+  margin-top: 4px;
+}
+.party-message-actions button {
+  color: #82909e;
+  font-size: 10px;
+}
+.party-chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 7px;
+  padding: 12px;
+  border-top: 1px solid #27323d;
+}
+.party-chat-form input {
+  min-width: 0;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #33404c;
+  border-radius: 11px;
+  background: #0c1218;
+  color: #f3f6f8;
+}
+.party-chat-form button {
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: #b4ed50;
+  color: #10150b;
+}
+.party-chat-form button:disabled {
+  opacity: 0.4;
+}
+.party-mobile-chat {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .watch-party-page {
+    width: min(100% - 24px, 760px);
+    padding-top: 16px;
+  }
+  .watch-party-layout {
+    display: block;
+  }
+  .party-sidebar {
+    position: fixed;
+    z-index: 70;
+    inset: auto 0 0;
+    top: 12vh;
+    height: 88dvh;
+    border-radius: 22px 22px 0 0;
+    transform: translateY(105%);
+    transition: transform 0.25s ease;
+  }
+  .party-sidebar.open {
+    transform: translateY(0);
+  }
+  .party-mobile-close,
+  .party-mobile-chat {
+    display: grid;
+  }
+  .party-mobile-chat {
+    position: fixed;
+    z-index: 60;
+    right: 18px;
+    bottom: 18px;
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 17px;
+    border-radius: 999px;
+    background: #b4ed50;
+    color: #11170b;
+    box-shadow: 0 10px 30px #0008;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 620px) {
+  .title-playback-heading,
+  .party-topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .title-playback-heading button,
+  .party-top-actions > button {
+    flex: 1;
+  }
+  .party-player {
+    margin-inline: -1px;
+    border-radius: 14px 14px 0 0;
+  }
+  .party-connect {
+    padding: 18px;
+  }
+  .party-connect > svg {
+    width: 32px;
+    height: 32px;
+  }
+  .party-connect h2 {
+    font-size: 18px;
+  }
+  .party-connect p {
+    font-size: 12px;
+  }
+  .party-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .party-controls select,
+  .party-controls button {
+    width: 100%;
+    max-width: none;
+  }
+  .party-status-strip {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .party-status-strip button {
+    margin-left: 0;
+  }
+  .party-reaction-bar {
+    justify-content: space-between;
+    overflow-x: auto;
+  }
+  .party-reaction-bar button {
+    flex: 0 0 40px;
+  }
+}
 .community-header {
   display: flex;
   align-items: center;

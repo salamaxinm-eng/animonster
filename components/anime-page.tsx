@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   CommunityHeader,
   useCommunity,
@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { EpisodeNotifications } from '@/components/episode-notifications';
 import { AnimeThemes } from '@/components/anime-themes';
 import { SeasonNavigation } from '@/components/season-navigation';
+import { UsersRound } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,13 @@ export function AnimePage({ anime }: { anime: Anime }) {
     [ageBusy, setAgeBusy] = useState(false),
     [ageError, setAgeError] = useState(''),
     [loading, setLoading] = useState(true),
+    [partyBusy, setPartyBusy] = useState(false),
+    [partyError, setPartyError] = useState(''),
+    [partySelection, setPartySelection] = useState<{
+      episode: number;
+      provider: 'aniliberty' | 'kodik';
+      voiceover: string;
+    }>({ episode: 1, provider: 'aniliberty', voiceover: 'aniliberty' }),
     [version, setVersion] = useState(0);
   const community = useCommunity();
   const { user } = community;
@@ -84,6 +92,37 @@ export function AnimePage({ anime }: { anime: Anime }) {
     }
     void load();
   }, [anime.id, user?.id, user?.adult_confirmed, ageLocked]);
+  const updatePartySelection = useCallback(
+    (selection: typeof partySelection) => setPartySelection(selection),
+    [],
+  );
+  async function createWatchParty() {
+    if (!user) {
+      community.login();
+      return;
+    }
+    setPartyBusy(true);
+    setPartyError('');
+    try {
+      const response = await fetch('/api/watch-parties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anime_id: anime.id,
+          release_id: anime.release_id,
+          ...partySelection,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok)
+        throw new Error(result.error || 'Не удалось создать комнату');
+      location.href = `/watch/${result.code}`;
+    } catch (reason) {
+      setPartyError((reason as Error).message);
+    } finally {
+      setPartyBusy(false);
+    }
+  }
   return (
     <div className="social-site">
       <CommunityHeader />
@@ -124,7 +163,22 @@ export function AnimePage({ anime }: { anime: Anime }) {
         </section>
         <SeasonNavigation animeId={anime.id} />
         <section className="title-playback">
-          <h2>Смотреть · серия {episode}</h2>
+          <div className="title-playback-heading">
+            <h2>Смотреть · серия {episode}</h2>
+            <Button
+              variant="outline"
+              disabled={partyBusy || loading || !!error || ageLocked}
+              onClick={() => void createWatchParty()}
+            >
+              <UsersRound size={18} />
+              {partyBusy ? 'Создаём…' : 'Смотреть вместе'}
+            </Button>
+          </div>
+          {partyError && (
+            <p className="error-msg" role="alert">
+              {partyError}
+            </p>
+          )}
           {ageLocked ? (
             <div className="playback-error">
               {ageRejected
@@ -148,6 +202,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
               animeTitle={anime.russian}
               initialEpisode={start.episode}
               initialPosition={start.position}
+              onPlaybackSelectionChange={updatePartySelection}
               onEpisodeChange={(n) => {
                 setEpisode(n);
                 window.history.replaceState(

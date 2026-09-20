@@ -27,6 +27,7 @@ export type Runtime = {
   MEDIA_PROXY_ENABLED?: string;
   MEDIA_PROXY_SECRET?: string;
   MEDIA_PROXY_HOSTS?: string;
+  WATCH_PARTIES_ENABLED?: string;
 };
 
 export const runtime = () => process.env as Runtime;
