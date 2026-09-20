@@ -27,6 +27,7 @@ export async function dashboard() {
     dailyActivity,
     topAnime,
     providers,
+    paymentStats,
   ] = await Promise.all([
     db()
       .prepare('SELECT count(*) AS n FROM daily_activity WHERE day=?')
@@ -127,6 +128,13 @@ export async function dashboard() {
         'SELECT provider,status,latency_ms,error,checked_at FROM provider_health ORDER BY provider',
       )
       .all(),
+    db()
+      .prepare(`SELECT
+      count(*) FILTER (WHERE status='succeeded') AS paid,
+      count(*) FILTER (WHERE status='pending' AND created_at<?) AS pending,
+      count(*) AS total FROM orders WHERE created_at>=?`)
+      .bind(timestamp - 3600000, timestamp - 30 * 86400000)
+      .first<{ paid: number; pending: number; total: number }>(),
   ]);
   const activityByDay = new Map(
     dailyActivity.results.map((item: any) => [
@@ -180,5 +188,12 @@ export async function dashboard() {
       };
     }),
     providers: providers.results,
+    paidOrders30d: Number(paymentStats?.paid || 0),
+    pendingOrders30d: Number(paymentStats?.pending || 0),
+    paymentConversion30d: paymentStats?.total
+      ? Math.round(
+          (Number(paymentStats.paid) / Number(paymentStats.total)) * 100,
+        )
+      : null,
   };
 }

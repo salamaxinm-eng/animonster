@@ -3730,6 +3730,234 @@ a.season-card:hover {
   display: grid;
   gap: 20px;
 }
+.user-tag {
+  --cosmetic-accent: #bd9bff;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--cosmetic-accent);
+  background: linear-gradient(120deg, #171321, #332045, #171321);
+  color: #f6ebff;
+  box-shadow: 0 0 14px
+    color-mix(in srgb, var(--cosmetic-accent) 22%, transparent);
+  text-shadow: 0 0 9px var(--cosmetic-accent);
+}
+.user-tag::after {
+  content: '';
+  position: absolute;
+  inset: -60% -30%;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 40%,
+    #ffffff50 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  animation: cosmetic-shimmer 6s ease-in-out infinite;
+}
+.user-tag-animonster-legend,
+.user-tag-mugiwara {
+  --cosmetic-accent: #ffd578;
+  background: linear-gradient(120deg, #251b0c, #57401b, #251b0c);
+  color: #fff0c7;
+}
+.user-tag-supporter {
+  --cosmetic-accent: #ff8fc7;
+}
+.user-tag-hundred-episodes {
+  --cosmetic-accent: #70d9ff;
+}
+.user-tag-recruiter {
+  --cosmetic-accent: #b4ed50;
+}
+[class*='profile-frame-']:not(.profile-frame-none) > .user-avatar {
+  --frame-accent: #b79aff;
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+}
+.profile-frame-fire > .user-avatar {
+  --frame-accent: #ff865b;
+}
+.profile-frame-ice > .user-avatar {
+  --frame-accent: #72e1ff;
+}
+.profile-frame-lime > .user-avatar {
+  --frame-accent: #b4ed50;
+}
+.profile-frame-one-piece-master > .user-avatar {
+  --frame-accent: #ffd36e;
+}
+[class*='profile-frame-']:not(.profile-frame-none) > .user-avatar::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--frame-accent);
+  border-bottom-color: color-mix(in srgb, var(--frame-accent) 35%, transparent);
+  filter: drop-shadow(0 0 5px var(--frame-accent));
+  pointer-events: none;
+  animation: cosmetic-orbit 9s linear infinite;
+}
+.profile-frame-fire > .user-avatar::after {
+  animation-duration: 5s;
+  border-style: dashed;
+}
+.profile-frame-ice > .user-avatar::after {
+  border-style: dotted;
+  animation-direction: reverse;
+}
+.profile-frame-one-piece-master > .user-avatar::after,
+.profile-frame-referral-master > .user-avatar::after {
+  inset: -11px;
+  border-width: 3px;
+  border-left-color: var(--frame-accent);
+}
+.cosmetic-card {
+  --rarity-color: #9caebb;
+  position: relative;
+  background:
+    radial-gradient(ellipse at 50% 5%, #a687e51a, transparent 70%), #10161e;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+.cosmetic-card.rarity-rare {
+  --rarity-color: #70d9ff;
+}
+.cosmetic-card.rarity-epic {
+  --rarity-color: #c293ff;
+}
+.cosmetic-card.rarity-legendary {
+  --rarity-color: #ffd578;
+  background:
+    radial-gradient(ellipse at 50% 5%, #ffd57822, transparent 70%), #171710;
+}
+.cosmetic-card:hover,
+.cosmetic-card:focus-within {
+  border-color: var(--rarity-color);
+  transform: translateY(-3px);
+}
+.cosmetic-rarity {
+  color: var(--rarity-color);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+.cosmetic-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 145px;
+  padding: 18px 4px;
+}
+.cosmetic-preview .user-avatar {
+  width: 88px;
+  height: 88px;
+  flex: 0 0 88px;
+}
+.cosmetic-preview .user-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+  image-rendering: auto;
+}
+.cosmetic-preview .user-tag {
+  max-width: 100%;
+  padding: 8px 12px;
+  text-align: center;
+}
+.cosmetic-card button {
+  position: relative;
+  z-index: 1;
+  min-height: 44px;
+  cursor: pointer;
+  border: 1px solid #9576be;
+}
+.cosmetic-card button:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+.cosmetic-card button:focus-visible {
+  outline: 2px solid #b4ed50;
+  outline-offset: 3px;
+}
+.cosmetic-card.unlocked {
+  border-color: color-mix(in srgb, var(--rarity-color) 40%, #26303d);
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      color-mix(in srgb, var(--rarity-color) 13%, transparent),
+      transparent 65%
+    ),
+    #10161e;
+  color: #e0e5ef;
+}
+[class*='profile-frame-']:not(.profile-frame-none) > .user-avatar {
+  border-color: var(--frame-accent) !important;
+}
+.profile-frame-premium-glow > .user-avatar::after {
+  border-style: double;
+  border-width: 5px;
+  inset: -13px;
+}
+.rewards-panel > .admin-tool-tabs {
+  margin: 0;
+}
+.admin-tool-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 24px 0;
+}
+.admin-tool-tabs button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid #34404d;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.admin-tool-tabs button[aria-pressed='true'] {
+  background: #b4ed50;
+  color: #10170b;
+}
+.admin-tools > [hidden] {
+  display: none;
+}
+@keyframes cosmetic-shimmer {
+  0%,
+  55% {
+    transform: translateX(-100%);
+  }
+  85%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+@keyframes cosmetic-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .user-tag::after,
+  [class*='profile-frame-'] > .user-avatar::after {
+    animation: none;
+  }
+  .user-tag::after {
+    display: none;
+  }
+  .cosmetic-card {
+    transition: none;
+  }
+  .cosmetic-card:hover,
+  .cosmetic-card:focus-within {
+    transform: none;
+  }
+}
 .rewards-panel > header {
   display: flex;
   justify-content: space-between;

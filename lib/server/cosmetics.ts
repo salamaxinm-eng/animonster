@@ -64,7 +64,7 @@ export async function cosmeticsCatalog(userId?: string) {
     const unlocked =
       item.access_type === 'free' ||
       (item.access_type === 'plus' && premiumUntil > now()) ||
-      !!grant;
+      (item.access_type !== 'plus' && !!grant);
     return {
       ...item,
       unlocked,

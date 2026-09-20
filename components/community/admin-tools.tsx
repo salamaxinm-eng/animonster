@@ -26,6 +26,7 @@ function commentLocation(scope: string, commentId: string) {
 }
 
 export function AdminTools() {
+  const [section, setSection] = useState('health');
   const [data, setData] = useState<any>({
     can_manage_roles: false,
     invite_required: false,
@@ -142,8 +143,25 @@ export function AdminTools() {
   }
   return (
     <div className="admin-tools">
+      <nav className="admin-tool-tabs" aria-label="Управление сайтом">
+        {[
+          ['health', 'Работа сайта'],
+          ['users', 'Пользователи и Plus'],
+          ['moderation', 'Модерация'],
+          ['catalog', 'Каталог'],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            aria-pressed={section === id}
+            onClick={() => setSection(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       {data.invite_required && (
-        <section className="social-panel">
+        <section className="social-panel" hidden={section !== 'users'}>
           <h2>Приглашения в бету</h2>
           <form className="admin-inline-form" onSubmit={createInvite}>
             <Input name="label" placeholder="Для кого" maxLength={80} />
@@ -168,7 +186,7 @@ export function AdminTools() {
           </p>
         </section>
       )}
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'catalog'}>
         <h2>Таймкоды заставок</h2>
         <p className="muted">
           Ручная корректировка имеет приоритет над AniLiberty и AniSkip.
@@ -280,7 +298,10 @@ export function AdminTools() {
           </div>
         )}
       </section>
-      <section className="social-panel">
+      <section
+        className="social-panel"
+        hidden={section !== 'health' && section !== 'moderation'}
+      >
         <h2>Совместный просмотр</h2>
         <div className="dashboard-cards compact">
           <div>
@@ -373,7 +394,7 @@ export function AdminTools() {
           </div>
         )}
       </section>
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'health'}>
         <h2>Plus: серии и Telegram</h2>
         <p>
           Первичная синхронизация:{' '}
@@ -406,7 +427,7 @@ export function AdminTools() {
           </p>
         )}
       </section>
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'catalog'}>
         <h2>Каталог Kodik</h2>
         <p>
           Синхронизация:{' '}
@@ -523,7 +544,7 @@ export function AdminTools() {
           </div>
         )}
       </section>
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'catalog'}>
         <h2>Авторские Plus-подборки</h2>
         <form className="admin-skip-form" onSubmit={saveEditorial}>
           <Input name="title" placeholder="Название" maxLength={120} required />
@@ -617,7 +638,7 @@ export function AdminTools() {
           </div>
         )}
       </section>
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'catalog'}>
         <h2>Справочник персонажей</h2>
         <form className="admin-skip-form" onSubmit={saveCharacter}>
           <Input
@@ -705,7 +726,7 @@ export function AdminTools() {
           </div>
         )}
       </section>
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'users'}>
         <h2>Платежи Plus</h2>
         {data.payments?.length ? (
           <div className="admin-table-wrap">
@@ -744,7 +765,7 @@ export function AdminTools() {
           <p className="muted">Платежей пока нет.</p>
         )}
       </section>
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'moderation'}>
         <h2>Последние комментарии</h2>
         {data.comments.length ? (
           <div className="admin-table-wrap">
@@ -791,7 +812,7 @@ export function AdminTools() {
           <p className="muted">Комментариев пока нет.</p>
         )}
       </section>
-      <section className="social-panel">
+      <section className="social-panel" hidden={section !== 'users'}>
         <h2>Пользователи</h2>
         {message && (
           <p role="status" className="success-msg">

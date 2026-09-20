@@ -4,38 +4,33 @@ import { CommunityHeader } from '@/components/community/context';
 import { AdminTools } from '@/components/community/admin-tools';
 export default async function Page() {
   const h = await headers();
-  const host = h.get('host');
-  if (!host) notFound();
-  const origin =
-    process.env.SITE_URL ||
-    `${host.startsWith('localhost') ? 'http' : 'https'}://${host}`;
+  const host = h.get('host') || '';
+  const local =
+    process.env.NODE_ENV !== 'production' && /^localhost(?::\d+)?$/.test(host);
+  const origin = local ? `http://${host}` : process.env.SITE_URL;
+  if (!origin) notFound();
   const response = await fetch(`${origin}/api/admin`, {
     cache: 'no-store',
     headers: { cookie: h.get('cookie') || '' },
-  }).catch(() => null);
-  if (!response) notFound();
-  if (!response.ok) notFound();
+  });
+  if (
+    response.status === 401 ||
+    response.status === 403 ||
+    response.status === 404
+  )
+    notFound();
+  if (!response.ok)
+    throw new Error('Не удалось загрузить статистику администратора');
   const { dashboard: d } = await response.json();
   const metrics: [string, number][] = [
     ['DAU · сегодня', d.dau],
     ['MAU · 30 дней', d.mau],
-    ['Входы · последние 15 мин', d.recentLogins],
-    ['Аккаунты', d.users],
     ['Регистрации · 7 дней', d.signups7d],
-    ['Регистрации · 30 дней', d.signups30d],
     ['Активный AniMonster Plus', d.premiumUsers],
-    ['Просмотры · 7 дней', d.views7d],
     ['Просмотры · 30 дней', d.views30d],
-    ['Просмотры · всего', d.views],
-    ['Просмотрено серий', d.completedEpisodes],
-    ['Часы просмотра', d.watchHours],
-    ['Записей в истории', d.trackedEpisodes],
-    ['Избранное', d.favorites],
-    ['Комментарии · 30 дней', d.comments30d],
+    ['Успешные оплаты · 30 дней', d.paidOrders30d],
+    ['Оплаты в ожидании более часа · 30 дней', d.pendingOrders30d],
     ['Жалобы на проверке', d.openReports],
-    ['Тайтлы в каталоге', d.catalogTitles],
-    ['Готовые рекомендации', d.recommendationCount],
-    ['Пользователи с рекомендациями', d.recommendationUsers],
   ];
   return (
     <div className="social-site">
@@ -57,8 +52,8 @@ export default async function Page() {
           один раз для серии и зрителя за день. В профиле серия считается
           просмотренной после 12 минут фактического просмотра.
         </p>
-        <section className="social-panel">
-          <h2>Активность за 30 дней</h2>
+        <details className="social-panel">
+          <summary>Активность за 30 дней — по дням</summary>
           {d.daily.length ? (
             <div className="admin-table-wrap">
               <table className="admin-table">
@@ -85,7 +80,7 @@ export default async function Page() {
           ) : (
             <p>Просмотров пока нет.</p>
           )}
-        </section>
+        </details>
         <section className="social-panel">
           <h2>Популярные тайтлы · 30 дней</h2>
           {d.topAnime.length ? (

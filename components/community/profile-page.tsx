@@ -1152,7 +1152,9 @@ export function ProfilePage({
                   <AccountData />
                 </form>
               )}
-              {tab === 'rewards' && data.own && <RewardsPanel />}
+              {tab === 'rewards' && data.own && (
+                <RewardsPanel onEquipped={load} />
+              )}
               {tab === 'notifications' && data.own && (
                 <section className="social-panel">
                   <TelegramSettings />
