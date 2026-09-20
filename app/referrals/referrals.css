@@ -103,6 +103,45 @@
     0 0 0 7px #9e7bf110,
     0 0 40px #9e7bf133;
 }
+.referral-portrait {
+  --portrait-color: #b49af2;
+  position: relative;
+  width: 104px;
+  height: 104px;
+  padding: 5px;
+  flex-shrink: 0;
+  border: 2px solid var(--portrait-color);
+  border-radius: 24px 9px;
+  background: #10131c;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--portrait-color) 25%, transparent), inset 0 0 12px #b49af233;
+}
+.portrait-lime { --portrait-color: #b4ed50; }
+.portrait-gold { --portrait-color: #f4ce78; }
+.referral-portrait > img { width: 100%; height: 100%; object-fit: cover; object-position: 72% center; border-radius: 17px 5px; }
+.portrait-corner { position: absolute; width: 12px; height: 12px; background: var(--portrait-color); transform: rotate(45deg); box-shadow: 0 0 12px var(--portrait-color); border: 3px solid #171523; }
+.corner-one { top: -5px; left: 12px; }
+.corner-two { top: 12px; right: -5px; }
+.corner-three { bottom: -5px; right: 12px; }
+.corner-four { bottom: 12px; left: -5px; }
+.portrait-crown { position: absolute; top: -17px; left: calc(50% - 16px); width: 32px; color: var(--portrait-color); fill: #171523; background: #171523; padding: 3px; border-radius: 5px; }
+.referral-orbit .referral-portrait { width: 116px; height: 116px; }
+.referral-showcase { background: radial-gradient(ellipse at 50% 30%, #68419635, transparent 65%), #11131f; }
+.referral-profile-gallery { margin-top: 44px; }
+.referral-profile-gallery .referral-section-title > p { color: #929aaa; font-size: 12px; line-height: 1.7; }
+.referral-profile-examples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.referral-profile-example { min-width: 0; border: 1px solid #423253; border-radius: 16px; padding: 20px; background: radial-gradient(ellipse at 10% 70%, #9e7bf11c, transparent 75%), #11151e; }
+.example-lime { border-color: #b4ed5033; }
+.example-gold { border-color: #f4ce7844; }
+.referral-example-heading { display: flex; justify-content: space-between; gap: 8px; color: #9693aa; font-size: 8px; letter-spacing: .08em; margin-bottom: 28px; }
+.referral-example-identity { display: flex; align-items: center; gap: 14px; position: relative; }
+.referral-example-identity .referral-portrait { width: 76px; height: 76px; }
+.referral-example-identity h3 { margin: 0 0 9px; font-size: 17px; }
+.referral-example-identity .referral-demo-tag { font-size: 9px; padding: 6px; }
+.referral-example-pin { position: absolute; width: 34px; height: 34px; left: 53px; bottom: -9px; filter: drop-shadow(0 2px 5px #000); }
+.referral-profile-example > p { margin: 25px 0 0; padding-top: 14px; border-top: 1px solid #ffffff0c; font-size: 11px; color: #a6a0b9; }
+.referral-gallery-note { font-size: 11px; line-height: 1.7; color: #929aaa; margin-top: 14px; }
+.referral-hero-cta:focus-visible, .referrals-page button:focus-visible, .referrals-page a:focus-visible { outline: 2px solid #b4ed50; outline-offset: 4px; }
+@media (max-width: 1000px) { .referral-profile-examples { grid-template-columns: 1fr; } .referral-example-identity .referral-portrait { width: 88px; height: 88px; } .referral-example-pin { left: 65px; } }
 .referral-orbit-pin {
   position: absolute;
   bottom: -6px;

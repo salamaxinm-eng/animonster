@@ -7,7 +7,6 @@ import {
   Copy,
   Crown,
   Gift,
-  Ghost,
   Lock,
   Play,
   Share2,
@@ -26,11 +25,26 @@ type Dashboard = {
 };
 const milestones = [
   { count: 1, title: 'Вербовщик', detail: 'Эксклюзивный тег' },
-  { count: 3, title: 'Искатель', detail: 'Редкий pixel pin' },
-  { count: 5, title: 'Команда', detail: 'Pixel pin и 7 дней Plus' },
-  { count: 10, title: 'Капитан', detail: 'Рамка и эксклюзивный pin' },
-  { count: 25, title: 'Легенда', detail: 'Тег, legendary pin и 30 дней Plus' },
+  { count: 3, title: 'Искатель', detail: 'Редкий коллекционный пин' },
+  { count: 5, title: 'Команда', detail: 'Пин команды и 7 дней Plus' },
+  { count: 10, title: 'Капитан', detail: 'Рамка и эксклюзивный пин' },
+  { count: 25, title: 'Легенда', detail: 'Тег, легендарный пин и 30 дней Plus' },
 ];
+
+const profileStyles = [
+  { name: 'Искатель', tone: 'lime', pin: 'scout', tag: 'Вербовщик', description: 'Любимые истории объединяют.', count: '3 друга' },
+  { name: 'Капитан', tone: 'violet', pin: 'master', tag: 'Вербовщик', description: 'Собираю свою команду.', count: '10 друзей' },
+  { name: 'Легенда', tone: 'gold', pin: 'legend', tag: 'Легенда AniMonster', description: 'Больше друзей. Больше аниме.', count: '25 друзей' },
+];
+
+function ProfilePortrait({ tone = 'violet' }: { tone?: string }) {
+  return <div className={`referral-portrait portrait-${tone}`}>
+    <img src="/hero.png" alt="" />
+    <span className="portrait-corner corner-one" /><span className="portrait-corner corner-two" />
+    <span className="portrait-corner corner-three" /><span className="portrait-corner corner-four" />
+    <Crown className="portrait-crown" size={24} />
+  </div>;
+}
 
 export default function ReferralsPage() {
   const community = useCommunity();
@@ -111,7 +125,7 @@ export default function ReferralsPage() {
               ТВОЙ ПРОФИЛЬ. ТВОЯ ИСТОРИЯ.
             </span>
             <div className="referral-orbit">
-              <Ghost size={74} strokeWidth={1.3} />
+              <ProfilePortrait tone="gold" />
               <span className="referral-orbit-pin">
                 <img src="/pins/referral-legend.svg" alt="Легендарный пин" />
               </span>
@@ -273,6 +287,27 @@ export default function ReferralsPage() {
               </span>
             </article>
           ))}
+        </section>
+        <section className="referral-profile-gallery" aria-labelledby="profile-gallery-title">
+          <div className="referral-section-title">
+            <div>
+              <span className="referral-eyebrow">ТВОЙ ПРОФИЛЬ — ТВОЙ ХАРАКТЕР</span>
+              <h2 id="profile-gallery-title">Собери свой стиль</h2>
+            </div>
+            <p>Сочетай аватар, рамку, тег и пин.<br />Вот как может выглядеть твой профиль.</p>
+          </div>
+          <div className="referral-profile-examples">
+            {profileStyles.map((style) => <article key={style.name} className={`referral-profile-example example-${style.tone}`}>
+              <div className="referral-example-heading"><span>ПРИМЕР ОФОРМЛЕНИЯ</span><span>{style.count}</span></div>
+              <div className="referral-example-identity">
+                <ProfilePortrait tone={style.tone} />
+                <div><h3>{style.name}</h3><span className="referral-demo-tag"><Sparkles size={12} />{style.tag}</span></div>
+                <img className="referral-example-pin" src={`/pins/referral-${style.pin}.svg`} alt={`Пин «${style.name}»`} />
+              </div>
+              <p>{style.description}</p>
+            </article>)}
+          </div>
+          <p className="referral-gallery-note">Примеры сочетаний. Состав наград каждого этапа указан выше; полученное оформление можно выбрать в профиле.</p>
         </section>
         <section className="referral-how">
           <div>
