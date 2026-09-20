@@ -856,7 +856,7 @@
   }
   .party-sidebar {
     position: fixed;
-    z-index: 70;
+    z-index: 110;
     inset: auto 0 0;
     top: 12vh;
     height: 88dvh;
@@ -873,9 +873,11 @@
   }
   .party-mobile-chat {
     position: fixed;
-    z-index: 60;
+    z-index: 105;
     right: 18px;
-    bottom: 18px;
+    bottom: calc(
+      var(--mobile-nav-height, 68px) + env(safe-area-inset-bottom) + 14px
+    );
     grid-auto-flow: column;
     align-items: center;
     gap: 7px;

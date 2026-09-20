@@ -60,6 +60,7 @@ export async function GET(r: Request) {
       payments,
       plusState,
       partyMetrics,
+      partyReports,
     ] = await Promise.all([
       db()
         .prepare(
@@ -154,6 +155,17 @@ export async function GET(r: Request) {
         )
         .first(),
       watchPartyMetrics(),
+      db()
+        .prepare(
+          `SELECT r.id,r.party_id,r.message_id,r.reason,r.status,r.created_at,
+                  reporter.nick AS reporter,message.body,message.author_id,author.nick AS author
+             FROM watch_party_reports r
+             JOIN users reporter ON reporter.id=r.reporter_id
+             JOIN watch_party_messages message ON message.id=r.message_id
+             JOIN users author ON author.id=message.author_id
+             ORDER BY CASE WHEN r.status='open' THEN 0 ELSE 1 END,r.created_at DESC LIMIT 100`,
+        )
+        .all(),
     ]);
     return json({
       can_manage_roles: actor.role === 'admin',
@@ -179,6 +191,7 @@ export async function GET(r: Request) {
       kodik_queue_counts: kodikQueueCounts,
       kodik_counts: kodikCounts,
       watch_parties: partyMetrics,
+      watch_party_reports: partyReports.results,
     });
   } catch (e) {
     return fail(e);
@@ -297,6 +310,29 @@ export async function POST(r: Request) {
         undefined,
         '',
         JSON.stringify(existingOverride),
+      );
+      return json({ ok: true });
+    }
+    if (
+      action === 'watch_party_report_resolve' ||
+      action === 'watch_party_report_reject'
+    ) {
+      const id = String(b.id || '');
+      const status =
+        action === 'watch_party_report_resolve' ? 'resolved' : 'rejected';
+      const updated = await db()
+        .prepare(
+          `UPDATE watch_party_reports SET status=?,resolved_at=? WHERE id=? AND status='open' RETURNING id`,
+        )
+        .bind(status, now(), id)
+        .first();
+      if (!updated) throw new ApiError('Жалоба не найдена', 404);
+      await audit(
+        actor.id,
+        `watch_party.report.${status}`,
+        undefined,
+        '',
+        JSON.stringify({ id }),
       );
       return json({ ok: true });
     }

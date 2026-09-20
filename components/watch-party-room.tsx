@@ -120,7 +120,6 @@ export function WatchPartyRoom({ code }: { code: string }) {
   const player = useRef<HTMLDivElement>(null);
   const applyingRemote = useRef(false);
   const kodikPosition = useRef(0);
-  const kodikPlayingUntil = useRef(0);
   const kodikReloadAt = useRef(0);
   const [kodikRevision, setKodikRevision] = useState(0);
   const [kodikSeek, setKodikSeek] = useState(0);
@@ -205,7 +204,6 @@ export function WatchPartyRoom({ code }: { code: string }) {
         refreshSoon();
       } catch {}
     };
-    source.onerror = () => source.close();
     return () => source.close();
   }, [code, !!snapshot, hideReactions, refreshSoon]);
 
@@ -378,7 +376,6 @@ export function WatchPartyRoom({ code }: { code: string }) {
           const delta = time - kodikPosition.current;
           partySeconds.current += delta;
           watchSeconds.current += delta;
-          kodikPlayingUntil.current = Date.now() + 12_000;
         }
         kodikPosition.current = time;
       }
@@ -403,6 +400,11 @@ export function WatchPartyRoom({ code }: { code: string }) {
         Date.now() - kodikReloadAt.current > 15_000
       ) {
         kodikReloadAt.current = Date.now();
+        void fetch(`/api/watch-parties/${encodeURIComponent(code)}/progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seconds: 0, telemetry: 'kodik_desync' }),
+        }).catch(() => {});
         setKodikSeek(target);
         setKodikRevision((value) => value + 1);
       }
@@ -412,6 +414,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
     return () => clearInterval(timer);
   }, [
     connected,
+    code,
     isKodik,
     snapshot?.party.state_version,
     snapshot?.playback_allowed,
@@ -932,6 +935,18 @@ export function WatchPartyRoom({ code }: { code: string }) {
                     </option>
                   ))}
                 </NativeSelect>
+              )}
+              {snapshot.me.host && connected && isKodik && (
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    void command(snapshot.party.playing ? 'pause' : 'play')
+                  }
+                >
+                  {snapshot.party.playing
+                    ? 'Пауза для всех'
+                    : 'Продолжить для всех'}
+                </Button>
               )}
               {!snapshot.me.host && connected && !isKodik && (
                 <Button

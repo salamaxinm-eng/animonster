@@ -1,5 +1,9 @@
 import { fail, requireUser } from '@/lib/server/core';
-import { partyEvents, requirePartyMember } from '@/lib/server/watch-parties';
+import {
+  partyEvents,
+  recordPartyTelemetry,
+  requirePartyMember,
+} from '@/lib/server/watch-parties';
 
 export const dynamic = 'force-dynamic';
 
@@ -49,6 +53,7 @@ export async function GET(
                 encoder.encode(`: heartbeat ${Date.now()}\n\n`),
               );
           } catch {
+            void recordPartyTelemetry(code, user, 'sse_error').catch(() => {});
             return close();
           }
           if (Date.now() - started >= 55_000) return close();

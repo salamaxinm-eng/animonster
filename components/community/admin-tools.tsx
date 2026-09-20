@@ -292,6 +292,18 @@ export function AdminTools() {
             <span>участников онлайн</span>
           </div>
           <div>
+            <strong>{Number(data.watch_parties?.connections || 0)}</strong>
+            <span>подключений · 24 ч</span>
+          </div>
+          <div>
+            <strong>{Number(data.watch_parties?.sse_errors || 0)}</strong>
+            <span>ошибок синхронизации · 24 ч</span>
+          </div>
+          <div>
+            <strong>{Number(data.watch_parties?.kodik_desyncs || 0)}</strong>
+            <span>коррекций Kodik · 24 ч</span>
+          </div>
+          <div>
             <strong>{Number(data.watch_parties?.quota_denials || 0)}</strong>
             <span>отказов по лимиту · 24 ч</span>
           </div>
@@ -300,6 +312,66 @@ export function AdminTools() {
             <span>открытых жалоб</span>
           </div>
         </div>
+        {!!data.watch_party_reports?.length && (
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Сообщение</th>
+                  <th>Жалоба</th>
+                  <th>Статус</th>
+                  <th aria-label="Действия" />
+                </tr>
+              </thead>
+              <tbody>
+                {data.watch_party_reports.map((item: any) => (
+                  <tr key={item.id}>
+                    <td>
+                      <strong>{item.author}</strong>: {item.body}
+                      <small>Комната {item.party_id}</small>
+                    </td>
+                    <td>
+                      {item.reason}
+                      <small>От {item.reporter}</small>
+                    </td>
+                    <td>{item.status}</td>
+                    <td>
+                      {item.status === 'open' && (
+                        <div className="admin-inline-form">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() =>
+                              void mutate({
+                                action: 'watch_party_report_resolve',
+                                id: item.id,
+                              })
+                            }
+                          >
+                            Закрыть
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              void mutate({
+                                action: 'watch_party_report_reject',
+                                id: item.id,
+                              })
+                            }
+                          >
+                            Отклонить
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
       <section className="social-panel">
         <h2>Plus: серии и Telegram</h2>

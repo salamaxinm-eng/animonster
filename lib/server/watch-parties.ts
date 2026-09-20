@@ -428,7 +428,6 @@ export async function joinParty(codeValue: string, user: User) {
     if (Number(count?.count || 0) >= PARTY_CAPACITY)
       throw new ApiError('В комнате уже 10 участников', 409, 'party_full');
   }
-  await contentAccess(user, party.anime_id, party.episode);
   const timestamp = now();
   await db().batch([
     db()
@@ -784,6 +783,25 @@ export async function recordPartyProgress(
   return { ...next, allowed: !blocked && next.allowed };
 }
 
+export async function recordPartyTelemetry(
+  codeValue: string,
+  user: User,
+  typeValue: unknown,
+) {
+  const type = String(typeValue || '');
+  if (!['sse_error', 'kodik_desync'].includes(type))
+    throw new ApiError('Неизвестное событие телеметрии');
+  const { party } = await requirePartyMember(codeValue, user);
+  const recent = await db()
+    .prepare(
+      'SELECT id FROM watch_party_events WHERE party_id=? AND actor_id=? AND event_type=? AND created_at>? LIMIT 1',
+    )
+    .bind(party.id, user.id, type, now() - 10_000)
+    .first();
+  if (!recent) await event(party.id, type, {}, user.id);
+  return { ok: true };
+}
+
 export async function sendPartyChat(
   codeValue: string,
   user: User,
@@ -976,11 +994,21 @@ export async function watchPartyMetrics() {
       `SELECT
        count(*) FILTER (WHERE status='active' AND expires_at>?) AS active_rooms,
        (SELECT count(*) FROM watch_party_members m JOIN watch_parties p ON p.id=m.party_id WHERE p.status='active' AND m.left_at IS NULL AND m.kicked_at IS NULL AND m.last_seen_at>?) AS active_members,
+       (SELECT count(*) FROM watch_party_events WHERE event_type IN ('member_joined','member_returned') AND created_at>?) AS connections,
+       (SELECT count(*) FROM watch_party_events WHERE event_type='sse_error' AND created_at>?) AS sse_errors,
+       (SELECT count(*) FROM watch_party_events WHERE event_type='kodik_desync' AND created_at>?) AS kodik_desyncs,
        (SELECT count(*) FROM watch_party_events WHERE event_type='quota_denied' AND created_at>?) AS quota_denials,
        (SELECT count(*) FROM watch_party_reports WHERE status='open') AS open_reports
        FROM watch_parties`,
     )
-    .bind(now(), now() - PRESENCE_WINDOW, now() - 86400000)
+    .bind(
+      now(),
+      now() - PRESENCE_WINDOW,
+      now() - 86400000,
+      now() - 86400000,
+      now() - 86400000,
+      now() - 86400000,
+    )
     .first<Record<string, number>>();
   return Object.fromEntries(
     Object.entries(row || {}).map(([key, value]) => [key, Number(value || 0)]),
