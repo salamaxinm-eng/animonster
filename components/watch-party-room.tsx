@@ -276,8 +276,9 @@ export function WatchPartyRoom({ code }: { code: string }) {
     videos.voiceovers.find((item) => item.id === snapshot?.party.voiceover) ||
     videos.voiceovers.find(
       (item) => item.provider === snapshot?.party.provider,
-    );
-  const isKodik = snapshot?.party.provider === 'kodik';
+    ) ||
+    videos.voiceovers[0];
+  const isKodik = selectedVoiceover?.provider === 'kodik';
   const stream = selectedEpisode
     ? (quality === '1080'
         ? selectedEpisode.hls_1080
@@ -860,8 +861,8 @@ export function WatchPartyRoom({ code }: { code: string }) {
                           anime_id: item.id,
                           release_id: item.release_id,
                           episode: 1,
-                          provider: 'aniliberty',
-                          voiceover: 'aniliberty',
+                          provider: 'kodik',
+                          voiceover: 'kodik',
                         });
                     }}
                   >
@@ -900,7 +901,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
                   </NativeSelect>
                   <NativeSelect
                     aria-label="Выбор озвучки"
-                    value={snapshot.party.voiceover}
+                    value={selectedVoiceover?.id || snapshot.party.voiceover}
                     onChange={(event) => {
                       const voiceover = videos.voiceovers.find(
                         (item) => item.id === event.target.value,

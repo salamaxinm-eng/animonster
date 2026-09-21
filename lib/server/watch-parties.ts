@@ -349,7 +349,7 @@ export async function createParty(
   const timestamp = now();
   const partyId = uid();
   const partyCode = code();
-  const provider = input.provider === 'kodik' ? 'kodik' : 'aniliberty';
+  const provider = 'kodik';
   await db().batch([
     db()
       .prepare(
@@ -664,7 +664,7 @@ export async function commandParty(
     animeTitle = cached.anime.russian || cached.anime.name;
     releaseId = Number(input.release_id || cached.anime.release_id) || null;
     episode = nextEpisode;
-    provider = input.provider === 'kodik' ? 'kodik' : 'aniliberty';
+    provider = 'kodik';
     voiceover = String(input.voiceover || provider).slice(0, 120);
     position = 0;
     playing = false;

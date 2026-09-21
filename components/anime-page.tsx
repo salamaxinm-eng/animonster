@@ -42,7 +42,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
       episode: number;
       provider: 'aniliberty' | 'kodik';
       voiceover: string;
-    }>({ episode: 1, provider: 'aniliberty', voiceover: 'aniliberty' });
+    }>({ episode: 1, provider: 'kodik', voiceover: 'kodik' });
   const community = useCommunity();
   const { user } = community;
   const ageLocked = !!anime.is_adult && !user?.adult_confirmed;

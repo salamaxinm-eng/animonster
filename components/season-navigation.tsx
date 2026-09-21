@@ -87,7 +87,6 @@ function RelationRow({
   icon?: React.ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
-  const touchStart = useRef<number | null>(null);
   const [scroll, setScroll] = useState({ left: false, right: false });
   useEffect(() => {
     const element = track.current;
@@ -142,19 +141,7 @@ function RelationRow({
         <div
           ref={track}
           className="season-relation-track"
-          tabIndex={0}
           style={{ touchAction: 'pan-x' }}
-          onTouchStart={(event) => {
-            touchStart.current = event.touches[0]?.clientX ?? null;
-          }}
-          onTouchEnd={(event) => {
-            const start = touchStart.current;
-            touchStart.current = null;
-            const end = event.changedTouches[0]?.clientX;
-            if (start == null || end == null || Math.abs(end - start) < 35)
-              return;
-            move(end < start ? 1 : -1);
-          }}
           onWheel={(event) => {
             const element = event.currentTarget;
             if (element.scrollWidth <= element.clientWidth) return;
@@ -190,9 +177,19 @@ function RelationRow({
             );
           })}
         </div>
-        {items.length > 1 && (
+        {scroll.left && (
           <button
-            className="season-next-overlay"
+            className="season-edge-button previous"
+            type="button"
+            onClick={() => move(-1)}
+            aria-label="Показать предыдущие карточки"
+          >
+            <ChevronLeft />
+          </button>
+        )}
+        {scroll.right && (
+          <button
+            className="season-edge-button next"
             type="button"
             onClick={() => move(1)}
             aria-label="Показать следующие карточки"

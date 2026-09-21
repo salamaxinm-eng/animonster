@@ -9,11 +9,7 @@ import {
 } from '@/lib/server/anime';
 import { ApiError, fail, json, viewer, premium } from '@/lib/server/core';
 import { kodikVoiceovers } from '@/lib/server/kodik';
-import { mediaProxyEnabled, mediaProxyUrl } from '@/lib/server/media';
-import { validSegment } from '@/lib/server/skip-times';
 import { syncEpisodeAccess } from '@/lib/server/episode-access';
-
-type NativeEpisode = Episode & { native: boolean };
 
 export async function GET(request: Request) {
   try {
@@ -32,7 +28,6 @@ export async function GET(request: Request) {
       throw new ApiError('Некорректный релиз');
     if (!releaseId && !anime) releaseId = (await findRelease(id))?.id;
 
-    let nativeEpisodes: NativeEpisode[] = [];
     if (releaseId) {
       try {
         const release: Release = await liberty('/anime/releases/' + releaseId);
@@ -52,29 +47,12 @@ export async function GET(request: Request) {
                 ],
               }
             : normalized;
-          nativeEpisodes = (release.episodes || [])
-            .filter((episode) =>
-              Boolean(episode.hls_480 || episode.hls_720 || episode.hls_1080),
-            )
-            .map((episode) => ({
-              id: episode.id,
-              ordinal: episode.ordinal,
-              name: episode.name || 'Серия ' + episode.ordinal,
-              duration: episode.duration,
-              opening: validSegment(episode.opening, episode.duration),
-              ending: validSegment(episode.ending, episode.duration),
-              hls_480: episode.hls_480,
-              hls_720: episode.hls_720,
-              hls_1080: episode.hls_1080,
-              native: true,
-            }))
-            .sort((left, right) => left.ordinal - right.ordinal);
           await cacheAnime(anime!, release.episodes);
         }
       } catch (error) {
         if (!anime)
           console.error(
-            'AniLiberty playback failed',
+            'AniLiberty metadata failed',
             error instanceof Error ? error.message : 'unknown',
           );
       }
@@ -92,6 +70,16 @@ export async function GET(request: Request) {
       );
 
     const kodik = await kodikVoiceovers(anime);
+    if (!kodik.voiceovers.length)
+      return json({
+        episodes: [],
+        anime,
+        message:
+          kodik.message ||
+          'Kodik пока не нашёл доступный плеер для этого аниме.',
+        voiceovers_status: kodik.status,
+        voiceovers_message: kodik.message,
+      });
     const kodikCount = Math.max(
       0,
       ...kodik.voiceovers.map((voiceover) => voiceover.episodes),
@@ -106,18 +94,10 @@ export async function GET(request: Request) {
         return [];
       }
     })();
-    const nativeByOrdinal = new Map(
-      nativeEpisodes.map((episode) => [episode.ordinal, episode]),
-    );
     const cachedByOrdinal = new Map(
       cachedEpisodes.map((episode) => [Number(episode.ordinal), episode]),
     );
-    const episodeCount = Math.max(
-      nativeEpisodes.at(-1)?.ordinal || 0,
-      cachedEpisodes.at(-1)?.ordinal || 0,
-      kodikCount,
-      anime.episodes || 0,
-    );
+    const episodeCount = Math.max(kodikCount);
     if (!episodeCount)
       return json({
         episodes: [],
@@ -126,12 +106,10 @@ export async function GET(request: Request) {
         voiceovers_status: kodik.status,
         voiceovers_message: kodik.message,
       });
-    const episodes: NativeEpisode[] = Array.from(
+    const episodes: Episode[] = Array.from(
       { length: episodeCount },
       (_, index) => {
         const ordinal = index + 1;
-        const native = nativeByOrdinal.get(ordinal);
-        if (native) return native;
         return {
           id: `kodik:${anime!.id}:${ordinal}`,
           ordinal,
@@ -140,73 +118,30 @@ export async function GET(request: Request) {
           hls_480: null,
           hls_720: null,
           hls_1080: null,
-          native: false,
         };
       },
     );
-    let access = await syncEpisodeAccess(
+    const access = await syncEpisodeAccess(
       anime.id,
-      nativeEpisodes.length ? 'aniliberty' : 'kodik',
+      'kodik',
       episodes.map((episode) => episode.ordinal),
     );
-    if (kodikCount)
-      access = await syncEpisodeAccess(
-        anime.id,
-        'kodik',
-        Array.from({ length: kodikCount }, (_, index) => index + 1),
-      );
     const premiumUntil = currentUser ? await premium(currentUser.id) : 0;
-    const proxiedEpisodes = await Promise.all(
-      episodes.map(async (episode) => {
-        const availability = access.get(episode.ordinal);
-        const freeAt = availability?.freeAt || 0;
-        const locked = freeAt > Date.now() && !premiumUntil;
-        if (
-          episode.native &&
-          freeAt > Date.now() &&
-          premiumUntil &&
-          !mediaProxyEnabled()
-        )
-          throw new ApiError('Медиашлюз раннего доступа не настроен.', 503);
-        const tokenAccess =
-          freeAt > Date.now() ? { userId: currentUser?.id, freeAt } : undefined;
-        const { native: _native, ...publicEpisode } = episode;
-        return {
-          ...publicEpisode,
-          free_at: freeAt,
-          plus_locked: locked,
-          hls_480:
-            !locked && episode.hls_480
-              ? await mediaProxyUrl(episode.hls_480, undefined, tokenAccess)
-              : null,
-          hls_720:
-            !locked && episode.hls_720
-              ? await mediaProxyUrl(episode.hls_720, undefined, tokenAccess)
-              : null,
-          hls_1080:
-            !locked && episode.hls_1080
-              ? await mediaProxyUrl(episode.hls_1080, undefined, tokenAccess)
-              : null,
-        };
-      }),
-    );
-    const anilibertyVoiceover = nativeEpisodes.length
-      ? [
-          {
-            id: 'aniliberty',
-            title: 'AniLiberty',
-            provider: 'aniliberty' as const,
-            translation_type: 'voice' as const,
-            episodes: nativeEpisodes.length,
-            episode_ordinals: nativeEpisodes.map((episode) => episode.ordinal),
-          },
-        ]
-      : [];
+    const publicEpisodes = episodes.map((episode) => {
+      const availability = access.get(episode.ordinal);
+      const freeAt = availability?.freeAt || 0;
+      const locked = freeAt > Date.now() && !premiumUntil;
+      return {
+        ...episode,
+        free_at: freeAt,
+        plus_locked: locked,
+      };
+    });
     return json({
-      episodes: proxiedEpisodes,
+      episodes: publicEpisodes,
       anime,
-      source: kodik.voiceovers.length ? 'Kodik' : 'AniLiberty',
-      voiceovers: [...kodik.voiceovers, ...anilibertyVoiceover],
+      source: 'Kodik',
+      voiceovers: kodik.voiceovers,
       voiceovers_status: kodik.status,
       voiceovers_message: kodik.message,
     });

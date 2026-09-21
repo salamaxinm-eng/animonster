@@ -3080,9 +3080,8 @@ button:disabled {
   position: relative;
   min-width: 0;
 }
-.season-next-overlay {
+.season-edge-button {
   position: absolute;
-  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   width: 38px;
@@ -3094,15 +3093,23 @@ button:disabled {
   background: #111a22ef;
   color: #c7f66a;
   box-shadow: 0 4px 16px #0008;
+  cursor: pointer;
+  z-index: 2;
+}
+.season-edge-button.previous {
+  left: 8px;
+}
+.season-edge-button.next {
+  right: 8px;
 }
 .season-scroll-buttons button:last-child,
-.season-next-overlay {
+.season-edge-button {
   border-color: #a5e63e;
   background: #a5e63e;
   color: #10160d;
   opacity: 1;
 }
-.season-next-overlay svg {
+.season-edge-button svg {
   width: 20px;
 }
 .season-relation-track:focus-visible {

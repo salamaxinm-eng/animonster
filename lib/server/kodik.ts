@@ -423,7 +423,7 @@ export async function kodikVoiceovers(anime: Anime): Promise<{
     return {
       voiceovers: [],
       status: 'disabled',
-      message: 'Дополнительные озвучки Kodik сейчас не подключены.',
+      message: 'Плеер Kodik сейчас не подключён.',
     };
   }
   try {
@@ -455,7 +455,7 @@ export async function kodikVoiceovers(anime: Anime): Promise<{
       return {
         voiceovers: [],
         status: 'unavailable',
-        message: 'Дополнительные озвучки Kodik временно недоступны.',
+        message: 'Плеер Kodik временно недоступен.',
       };
     }
   }

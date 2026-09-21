@@ -62,9 +62,11 @@ export function EpisodePlayer({
     [quality, setQuality] = useState('720'),
     [voiceoverId, setVoiceoverId] = useState(
       () =>
-        initialVoiceoverId ||
+        (voiceovers.some((item) => item.id === initialVoiceoverId)
+          ? initialVoiceoverId
+          : '') ||
         initialVoiceover(voiceovers, initialEpisode)?.id ||
-        'aniliberty',
+        'kodik',
     ),
     [error, setError] = useState(''),
     [playbackActive, setPlaybackActive] = useState(false),
@@ -90,7 +92,9 @@ export function EpisodePlayer({
   const community = useCommunity(),
     { user } = community;
   const skippedSegment = useRef('');
-  const voiceoverUserSelected = useRef(Boolean(initialVoiceoverId));
+  const voiceoverUserSelected = useRef(
+    voiceovers.some((item) => item.id === initialVoiceoverId),
+  );
   const episode = episodes[Math.min(index, episodes.length - 1)];
   const voiceover =
     voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
@@ -655,14 +659,9 @@ export function EpisodePlayer({
               allow="autoplay *; fullscreen *; picture-in-picture *; encrypted-media *"
               allowFullScreen
               onError={() => {
-                const fallback = voiceovers.find(
-                  (item) => item.provider === 'aniliberty',
+                setError(
+                  'Kodik временно недоступен. Повторите загрузку плеера.',
                 );
-                if (fallback) setVoiceoverId(fallback.id);
-                else
-                  setError(
-                    'Kodik временно недоступен. Повторите загрузку плеера.',
-                  );
               }}
             />
           ) : (
@@ -753,7 +752,7 @@ export function EpisodePlayer({
           <NativeSelect
             className="voiceover-select"
             aria-label="Выбор озвучки"
-            value={voiceover?.id || 'aniliberty'}
+            value={voiceover?.id || 'kodik'}
             onChange={(e) => {
               voiceoverUserSelected.current = true;
               setVoiceoverId(e.target.value);
@@ -831,8 +830,8 @@ export function EpisodePlayer({
         </button>
       </div>
       <p className="source-note">
-        Озвучка: {voiceover?.title || 'AniLiberty'} · {availableIndices.length}{' '}
-        серий доступно
+        Озвучка: {voiceover?.title || 'Kodik'} · {availableIndices.length} серий
+        доступно
       </p>
     </div>
   );

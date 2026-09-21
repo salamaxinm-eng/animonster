@@ -679,6 +679,10 @@
     display: none;
   }
 
+  .season-edge-button {
+    display: none;
+  }
+
   .season-card {
     width: 175px;
     flex-basis: 175px;
