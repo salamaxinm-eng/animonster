@@ -59,6 +59,6 @@ test('cached Kodik source remains available when only the sync worker has a toke
   assert.deepEqual(result.voiceovers[0].episode_ordinals, [1, 1176]);
   assert.equal(
     result.voiceovers[0].player_url,
-    '/api/kodik/player?anime_id=21&translation=91',
+    'https://kodik.info/serial/one-piece',
   );
 });

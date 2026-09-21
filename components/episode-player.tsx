@@ -582,7 +582,15 @@ export function EpisodePlayer({
         </p>
       )}
       <div className="player" data-keep-awake={playbackActive || undefined}>
-        {isKodik ? (
+        {episode?.plus_locked ? (
+          <div className="plus-episode-lock">
+            <strong>Ранний доступ AniMonster Plus</strong>
+            <span>
+              Бесплатный просмотр откроется{' '}
+              {new Date(episode.free_at || 0).toLocaleString('ru-RU')}
+            </span>
+          </div>
+        ) : isKodik ? (
           iframeUrl ? (
             <iframe
               ref={frame}
@@ -605,14 +613,6 @@ export function EpisodePlayer({
           ) : (
             <p>Эта озвучка временно недоступна.</p>
           )
-        ) : episode?.plus_locked ? (
-          <div className="plus-episode-lock">
-            <strong>Ранний доступ AniMonster Plus</strong>
-            <span>
-              Бесплатный просмотр откроется{' '}
-              {new Date(episode.free_at || 0).toLocaleString('ru-RU')}
-            </span>
-          </div>
         ) : (
           <video
             ref={video}

@@ -1,4 +1,4 @@
-import { kodikPlayerPath, type Anime, type Voiceover } from '@/lib/anime';
+import type { Anime, Voiceover } from '@/lib/anime';
 import { db, now, runtime } from '@/lib/server/core';
 
 export type KodikMaterialData = {
@@ -407,13 +407,7 @@ async function storedKodikResults(animeId: number) {
 }
 
 function publicKodikVoiceovers(results: KodikResult[], anime: Anime) {
-  return normalizeKodikVoiceovers(results, anime).map((voiceover) => {
-    const translation = voiceover.id.split(':').at(-1) || '';
-    return {
-      ...voiceover,
-      player_url: kodikPlayerPath(anime.id, translation),
-    };
-  });
+  return normalizeKodikVoiceovers(results, anime);
 }
 
 export async function kodikVoiceovers(anime: Anime): Promise<{
