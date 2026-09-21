@@ -9,8 +9,7 @@ export async function GET() {
     const rows = await db()
       .prepare(
         `SELECT anime_id, SUM(n) AS n FROM (
-           SELECT anime_id, count(*) * 5 AS n FROM daily_views
-             WHERE day >= CURRENT_DATE - INTERVAL '30 days' GROUP BY anime_id
+           SELECT anime_id, count(*) * 5 AS n FROM daily_views GROUP BY anime_id
            UNION ALL
            SELECT anime_id, count(*) * 2 AS n FROM collection WHERE favorite=1 GROUP BY anime_id
            UNION ALL
