@@ -2,7 +2,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import { initialVoiceover, voiceoverEpisodeIndices, type Episode, type SkipSegment, type Voiceover } from '@/lib/anime';
+import {
+  initialVoiceover,
+  voiceoverEpisodeIndices,
+  type Episode,
+  type SkipSegment,
+  type Voiceover,
+} from '@/lib/anime';
 import { api, useCommunity } from '@/components/community/context';
 
 type SkipTimes = {
@@ -19,6 +25,7 @@ const AUTO_SKIP_KEY = 'animonster-auto-skip-segments-v1';
 export function EpisodePlayer({
   episodes,
   voiceovers,
+  voiceoversMessage,
   animeTitle,
   initialEpisode = 1,
   animeId,
@@ -30,6 +37,7 @@ export function EpisodePlayer({
 }: {
   episodes: Episode[];
   voiceovers: Voiceover[];
+  voiceoversMessage?: string;
   animeTitle: string;
   initialEpisode?: number;
   animeId?: number;
@@ -83,12 +91,11 @@ export function EpisodePlayer({
   const isKodik = voiceover?.provider === 'kodik';
   const availableIndices = voiceoverEpisodeIndices(episodes, voiceover);
   const firstVoiceoverIndex = availableIndices[0] ?? 0;
-  const lastVoiceoverIndex = availableIndices.at(-1) ?? 0;
-  const nextIndex = availableIndices.find(value => value > index);
-  const previousIndex = availableIndices.findLast(value => value < index);
+  const nextIndex = availableIndices.find((value) => value > index);
+  const previousIndex = availableIndices.findLast((value) => value < index);
   useEffect(() => {
     if (!availableIndices.includes(index)) setIndex(firstVoiceoverIndex);
-  }, [voiceoverId, firstVoiceoverIndex, lastVoiceoverIndex, index]);
+  }, [voiceoverId, firstVoiceoverIndex, index]);
   useEffect(() => {
     if (!community.loaded) return;
     let local: boolean | null = null;
@@ -569,6 +576,11 @@ export function EpisodePlayer({
   ]);
   return (
     <div className="episode-view">
+      {voiceoversMessage && (
+        <p className="muted" role="status">
+          {voiceoversMessage}
+        </p>
+      )}
       <div className="player" data-keep-awake={playbackActive || undefined}>
         {isKodik ? (
           iframeUrl ? (
@@ -691,7 +703,8 @@ export function EpisodePlayer({
           >
             {voiceovers.map((item) => (
               <option value={item.id} key={item.id}>
-                {item.title} · {item.episode_ordinals?.length ?? item.episodes} серий
+                {item.title} · {item.episode_ordinals?.length ?? item.episodes}{' '}
+                серий
               </option>
             ))}
           </NativeSelect>
@@ -702,14 +715,17 @@ export function EpisodePlayer({
           value={index}
           onChange={(e) => setIndex(Number(e.target.value))}
         >
-          {availableIndices.map((i) => { const e = episodes[i]; return (
-            <option value={i} key={e.id}>
-              Серия {e.ordinal} · {e.name}
-              {e.plus_locked
-                ? ` · Plus до ${new Date(e.free_at || 0).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
-                : ''}
-            </option>
-          ); })}
+          {availableIndices.map((i) => {
+            const e = episodes[i];
+            return (
+              <option value={i} key={e.id}>
+                Серия {e.ordinal} · {e.name}
+                {e.plus_locked
+                  ? ` · Plus до ${new Date(e.free_at || 0).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                  : ''}
+              </option>
+            );
+          })}
         </NativeSelect>
         {!isKodik && (
           <NativeSelect
@@ -751,8 +767,8 @@ export function EpisodePlayer({
         </button>
       </div>
       <p className="source-note">
-        Озвучка: {voiceover?.title || 'AniLiberty'} ·{' '}
-        {availableIndices.length} серий доступно
+        Озвучка: {voiceover?.title || 'AniLiberty'} · {availableIndices.length}{' '}
+        серий доступно
       </p>
     </div>
   );

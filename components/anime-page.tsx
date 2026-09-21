@@ -28,6 +28,7 @@ import {
 export function AnimePage({ anime }: { anime: Anime }) {
   const [episodes, setEpisodes] = useState<Episode[]>([]),
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
+    [voiceoversMessage, setVoiceoversMessage] = useState(''),
     [episode, setEpisode] = useState(1),
     [start, setStart] = useState({ episode: 1, position: 0 }),
     [error, setError] = useState(''),
@@ -78,6 +79,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
       setEpisode(selected);
       setEpisodes(x.episodes);
       setVoiceovers(x.voiceovers || []);
+      setVoiceoversMessage(x.voiceovers_message || '');
       setVersion((v) => v + 1);
     } catch (e) {
       setError((e as Error).message);
@@ -199,6 +201,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
               releaseId={anime.release_id}
               episodes={episodes}
               voiceovers={voiceovers}
+              voiceoversMessage={voiceoversMessage}
               animeTitle={anime.russian}
               initialEpisode={start.episode}
               initialPosition={start.position}

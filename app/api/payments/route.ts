@@ -72,7 +72,8 @@ export async function POST(r: Request) {
       .prepare('UPDATE orders SET provider_id=? WHERE id=?')
       .bind(providerId || null, id)
       .run();
-    const paymentUrl = (p as typeof p & { url?: string; redirect?: string }).url ||
+    const paymentUrl =
+      (p as typeof p & { url?: string; redirect?: string }).url ||
       (p as typeof p & { redirect?: string }).redirect;
     if (!providerId || !paymentUrl)
       throw new ApiError('Не получена ссылка на оплату', 502);

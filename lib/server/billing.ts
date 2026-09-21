@@ -25,8 +25,12 @@ export function validPaymentAmount(
   const charged = cents(chargedAmount);
   const expected = cents(expectedAmount);
   const commission = cents(providerCommission);
-  if (charged === null || expected === null || commission === null) return false;
-  return charged === expected || (commission >= 0 && charged - commission === expected);
+  if (charged === null || expected === null || commission === null)
+    return false;
+  return (
+    charged === expected ||
+    (commission >= 0 && charged - commission === expected)
+  );
 }
 
 export async function paymentFetch(path: string, init: RequestInit = {}) {
@@ -91,9 +95,13 @@ export async function verifyPayment(providerId: string) {
   if (p.status === 'CONFIRMED') {
     await db().batch([
       // Serialize extensions for this account, including distinct concurrent orders.
-      db().prepare('SELECT id FROM users WHERE id=? FOR UPDATE').bind(order.user_id),
       db()
-        .prepare("UPDATE orders SET status=?,provider_id=? WHERE id=? AND status<>'chargebacked'")
+        .prepare('SELECT id FROM users WHERE id=? FOR UPDATE')
+        .bind(order.user_id),
+      db()
+        .prepare(
+          "UPDATE orders SET status=?,provider_id=? WHERE id=? AND status<>'chargebacked'",
+        )
         .bind('succeeded', paymentId, order.id),
       db()
         .prepare(
@@ -108,19 +116,29 @@ export async function verifyPayment(providerId: string) {
           Number(order.duration_days) * 86400000,
           order.id,
         ),
-      ...(order.plan === 'annual' ? [db().prepare(
-        `INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata)
+      ...(order.plan === 'annual'
+        ? [
+            db()
+              .prepare(
+                `INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata)
          SELECT ?,'tag:eternal-nakama',?,'purchase','annual-plus',jsonb_build_object('order_id',?::text)
          WHERE EXISTS(SELECT 1 FROM orders WHERE id=? AND status='succeeded')
          ON CONFLICT(user_id,cosmetic_id) DO NOTHING`,
-      ).bind(order.user_id,now(),order.id,order.id)] : []),
+              )
+              .bind(order.user_id, now(), order.id, order.id),
+          ]
+        : []),
     ]);
   } else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED') {
     const status = p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled';
     await db().batch([
-      db().prepare('SELECT id FROM users WHERE id=? FOR UPDATE').bind(order.user_id),
       db()
-        .prepare("UPDATE orders SET status=? WHERE id=? AND (status NOT IN ('succeeded','chargebacked') OR ?='chargebacked')")
+        .prepare('SELECT id FROM users WHERE id=? FOR UPDATE')
+        .bind(order.user_id),
+      db()
+        .prepare(
+          "UPDATE orders SET status=? WHERE id=? AND (status NOT IN ('succeeded','chargebacked') OR ?='chargebacked')",
+        )
         .bind(status, order.id, status),
       ...(p.status === 'CHARGEBACKED'
         ? [
@@ -129,13 +147,17 @@ export async function verifyPayment(providerId: string) {
                 'UPDATE grants SET revoked_at=? WHERE order_id=? AND revoked_at IS NULL',
               )
               .bind(now(), order.id),
-            db().prepare(`DELETE FROM user_cosmetics WHERE user_id=? AND cosmetic_id='tag:eternal-nakama' AND source='purchase'
+            db()
+              .prepare(`DELETE FROM user_cosmetics WHERE user_id=? AND cosmetic_id='tag:eternal-nakama' AND source='purchase'
               AND NOT EXISTS(SELECT 1 FROM orders WHERE user_id=? AND plan='annual' AND status='succeeded')`)
-              .bind(order.user_id,order.user_id),
+              .bind(order.user_id, order.user_id),
           ]
         : []),
     ]);
   }
-  const saved = await db().prepare('SELECT status FROM orders WHERE id=?').bind(order.id).first<{status:string}>();
+  const saved = await db()
+    .prepare('SELECT status FROM orders WHERE id=?')
+    .bind(order.id)
+    .first<{ status: string }>();
   return saved?.status || 'pending';
 }

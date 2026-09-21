@@ -20,3 +20,25 @@ test('Kodik player path stays on the public site origin', () => {
     'https://animonster.su',
   );
 });
+
+test('a source can expose non-contiguous Kodik episodes', () => {
+  const episodes = [1, 2, 3, 4].map((ordinal) => ({ ordinal }));
+  const source = {
+    id: 'kodik:voice:42',
+    provider: 'kodik',
+    episodes: 4,
+    episode_ordinals: [1, 3, 4],
+  };
+  assert.deepEqual(anime.voiceoverEpisodeIndices(episodes, source), [0, 2, 3]);
+});
+
+test('the source with the requested episode and largest catalogue is selected', () => {
+  const selected = anime.initialVoiceover(
+    [
+      { id: 'aniliberty', provider: 'aniliberty', episodes: 11 },
+      { id: 'kodik:voice:7', provider: 'kodik', episodes: 1176 },
+    ],
+    1,
+  );
+  assert.equal(selected.id, 'kodik:voice:7');
+});

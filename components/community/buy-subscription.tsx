@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { subscriptionPlans, type SubscriptionPlan } from '@/lib/subscription-plans';
+import {
+  subscriptionPlans,
+  type SubscriptionPlan,
+} from '@/lib/subscription-plans';
 import {
   Sparkles,
   Bell,
@@ -78,11 +81,27 @@ export function BuySubscription({
               Твой профиль. Твои коллекции. Ещё больше аниме.
             </DialogDescription>
           </div>
-          <div className="plus-plan-options" role="group" aria-label="Срок подписки">
-            {Object.values(subscriptionPlans).map(option => <button type="button" key={option.id} aria-pressed={planId === option.id} disabled={busy} onClick={() => setPlanId(option.id)}>
-              <span>{option.id === 'annual' ? 'На год' : 'На месяц'} {option.discount > 0 && <b>−10%</b>}</span>
-              <strong>{option.priceLabel}</strong><small>{option.label}</small>
-            </button>)}
+          <div
+            className="plus-plan-options"
+            role="group"
+            aria-label="Срок подписки"
+          >
+            {Object.values(subscriptionPlans).map((option) => (
+              <button
+                type="button"
+                key={option.id}
+                aria-pressed={planId === option.id}
+                disabled={busy}
+                onClick={() => setPlanId(option.id)}
+              >
+                <span>
+                  {option.id === 'annual' ? 'На год' : 'На месяц'}{' '}
+                  {option.discount > 0 && <b>−10%</b>}
+                </span>
+                <strong>{option.priceLabel}</strong>
+                <small>{option.label}</small>
+              </button>
+            ))}
           </div>
           <div className="plus-price-card">
             <div>
@@ -91,11 +110,21 @@ export function BuySubscription({
             </div>
             <p>Без автосписаний. Продлеваешь, когда захочешь.</p>
           </div>
-          {planId === 'annual' && <div className="annual-tag-offer">
-            <span className="user-tag user-tag-eternal-nakama">Вечный накама</span>
-            <p>Твой знак верности AniMonster. Уникальный тег останется навсегда после подтверждённой годовой покупки.</p>
-            <small><s>1 068 ₽</s> · Экономия 106,80 ₽ относительно 12 покупок по 89 ₽.</small>
-          </div>}
+          {planId === 'annual' && (
+            <div className="annual-tag-offer">
+              <span className="user-tag user-tag-eternal-nakama">
+                Вечный накама
+              </span>
+              <p>
+                Твой знак верности AniMonster. Уникальный тег останется навсегда
+                после подтверждённой годовой покупки.
+              </p>
+              <small>
+                <s>1 068 ₽</s> · Экономия 106,80 ₽ относительно 12 покупок по 89
+                ₽.
+              </small>
+            </div>
+          )}
           <span className="platega-review-label" role="note">
             Platega test
           </span>

@@ -124,6 +124,7 @@ export async function GET(request: Request) {
         anime,
         message: 'Серии временно недоступны.',
         voiceovers_status: kodik.status,
+        voiceovers_message: kodik.message,
       });
     const episodes: NativeEpisode[] = Array.from(
       { length: episodeCount },
@@ -197,7 +198,7 @@ export async function GET(request: Request) {
             provider: 'aniliberty' as const,
             translation_type: 'voice' as const,
             episodes: nativeEpisodes.length,
-            episode_ordinals: nativeEpisodes.map(episode => episode.ordinal),
+            episode_ordinals: nativeEpisodes.map((episode) => episode.ordinal),
           },
         ]
       : [];
@@ -207,6 +208,7 @@ export async function GET(request: Request) {
       source: kodik.voiceovers.length ? 'Kodik' : 'AniLiberty',
       voiceovers: [...kodik.voiceovers, ...anilibertyVoiceover],
       voiceovers_status: kodik.status,
+      voiceovers_message: kodik.message,
     });
   } catch (error) {
     return fail(error);

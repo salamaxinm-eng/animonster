@@ -23,6 +23,11 @@ export const metadata: Metadata = {
   description:
     'Смотри аниме онлайн на AniMonster: каталог сериалов и фильмов, новинки, рекомендации, коллекции, достижения и обсуждения.',
   applicationName: 'AniMonster',
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icon.png', sizes: '192x192', type: 'image/png' }],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   category: 'entertainment',
   keywords: [
     'аниме',

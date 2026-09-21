@@ -54,11 +54,23 @@ type KodikResponse = {
 };
 
 export function kodikEpisodeOrdinals(item: KodikResult) {
-  return [...new Set(Object.values(item.seasons || {}).flatMap(season => Object.keys(season.episodes || {}).map(Number)))]
-    .filter(n => Number.isInteger(n) && n > 0 && n <= 100000).sort((a,b)=>a-b);
+  return [
+    ...new Set(
+      Object.values(item.seasons || {}).flatMap((season) =>
+        Object.keys(season.episodes || {}).map(Number),
+      ),
+    ),
+  ]
+    .filter((n) => Number.isInteger(n) && n > 0 && n <= 100000)
+    .sort((a, b) => a - b);
 }
 export function kodikLastEpisode(item: KodikResult) {
-  return Math.max(1, Number(item.episodes_count) || 0, Number(item.last_episode) || 0, ...kodikEpisodeOrdinals(item));
+  return Math.max(
+    1,
+    Number(item.episodes_count) || 0,
+    Number(item.last_episode) || 0,
+    ...kodikEpisodeOrdinals(item),
+  );
 }
 
 export const KODIK_PLAYER_HOSTS = [
@@ -213,10 +225,9 @@ const BLOCKED_KODIK_TEXT =
 export function blockedKodikContent(item: KodikResult) {
   const data = item.material_data;
 
-  const genres = [
-    ...(data?.anime_genres || []),
-    ...(data?.genres || []),
-  ].map((genre) => comparable(String(genre)));
+  const genres = [...(data?.anime_genres || []), ...(data?.genres || [])].map(
+    (genre) => comparable(String(genre)),
+  );
 
   if (genres.some((genre) => BLOCKED_KODIK_GENRES.has(genre))) {
     return true;
@@ -292,7 +303,9 @@ export function normalizeKodikVoiceovers(
       provider: 'kodik',
       translation_type: type,
       episodes: kodikLastEpisode(item),
-      episode_ordinals: kodikEpisodeOrdinals(item).length ? kodikEpisodeOrdinals(item) : undefined,
+      episode_ordinals: kodikEpisodeOrdinals(item).length
+        ? kodikEpisodeOrdinals(item)
+        : undefined,
       player_url: player,
     };
     const current = byTranslation.get(id);
@@ -393,13 +406,32 @@ async function storedKodikResults(animeId: number) {
   });
 }
 
+function publicKodikVoiceovers(results: KodikResult[], anime: Anime) {
+  return normalizeKodikVoiceovers(results, anime).map((voiceover) => {
+    const translation = voiceover.id.split(':').at(-1) || '';
+    return {
+      ...voiceover,
+      player_url: kodikPlayerPath(anime.id, translation),
+    };
+  });
+}
+
 export async function kodikVoiceovers(anime: Anime): Promise<{
   voiceovers: Voiceover[];
-  status: 'ready' | 'disabled' | 'unavailable';
+  status: 'ready' | 'disabled' | 'unavailable' | 'empty';
+  message?: string;
 }> {
   const token = runtime().KODIK_API_TOKEN?.trim();
-  if (!token) return { voiceovers: [], status: 'disabled' };
   let results = await storedKodikResults(anime.id);
+  if (!token) {
+    const voiceovers = publicKodikVoiceovers(results, anime);
+    if (voiceovers.length) return { voiceovers, status: 'ready' };
+    return {
+      voiceovers: [],
+      status: 'disabled',
+      message: 'Дополнительные озвучки Kodik сейчас не подключены.',
+    };
+  }
   try {
     const params = new URLSearchParams({
       types: 'anime,anime-serial',
@@ -415,7 +447,7 @@ export async function kodikVoiceovers(anime: Anime): Promise<{
     const data = await kodikRequest('search', params);
     if (data.results?.length) {
       // A response can contain only a subset of translations; retain other stored sources.
-      const sources = new Map(results.map(item => [String(item.id), item]));
+      const sources = new Map(results.map((item) => [String(item.id), item]));
       for (const item of data.results) sources.set(String(item.id), item);
       results = [...sources.values()];
       await rememberKodikSources(anime.id, results);
@@ -426,17 +458,19 @@ export async function kodikVoiceovers(anime: Anime): Promise<{
         'Kodik request failed',
         error instanceof Error ? error.message : 'unknown',
       );
-      return { voiceovers: [], status: 'unavailable' };
+      return {
+        voiceovers: [],
+        status: 'unavailable',
+        message: 'Дополнительные озвучки Kodik временно недоступны.',
+      };
     }
   }
-  const voiceovers = normalizeKodikVoiceovers(results, anime).map(
-    (voiceover) => {
-      const translation = voiceover.id.split(':').at(-1) || '';
-      return {
-        ...voiceover,
-        player_url: kodikPlayerPath(anime.id, translation),
-      };
-    },
-  );
+  const voiceovers = publicKodikVoiceovers(results, anime);
+  if (!voiceovers.length)
+    return {
+      voiceovers,
+      status: 'empty',
+      message: 'Kodik не вернул доступных озвучек для этого аниме.',
+    };
   return { voiceovers, status: 'ready' };
 }
