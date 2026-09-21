@@ -89,6 +89,7 @@ export function initialVoiceover(voiceovers: Voiceover[], episode: number) {
   return [...voiceovers].sort(
     (a, b) =>
       Number(available(b)) - Number(available(a)) ||
+      Number(b.provider === 'kodik') - Number(a.provider === 'kodik') ||
       (b.episode_ordinals?.length ?? b.episodes) -
         (a.episode_ordinals?.length ?? a.episodes) ||
       Number(a.translation_type === 'subtitles') -
