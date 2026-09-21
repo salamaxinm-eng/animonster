@@ -111,6 +111,45 @@ export default async function Page() {
           )}
         </section>
         <section className="social-panel">
+          <h2>Топ-10 по активности</h2>
+          <p className="muted">Количество полностью просмотренных серий.</p>
+          {d.topUsers.length ? (
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Место</th>
+                    <th>Пользователь</th>
+                    <th>Просмотрено серий</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.topUsers.map(
+                    (
+                      item: {
+                        id: string;
+                        nick: string;
+                        watchedEpisodes: number;
+                      },
+                      index: number,
+                    ) => (
+                      <tr key={item.id}>
+                        <td>{index + 1}</td>
+                        <td>
+                          <a href={`/members/${item.id}`}>{item.nick}</a>
+                        </td>
+                        <td>{item.watchedEpisodes}</td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>Данных о просмотренных сериях пока нет.</p>
+          )}
+        </section>
+        <section className="social-panel">
           <h2>Состояние источников</h2>
           {d.providers.length ? (
             <div className="admin-table-wrap">

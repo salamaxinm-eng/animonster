@@ -26,6 +26,7 @@ export async function dashboard() {
     recommendationStats,
     dailyActivity,
     topAnime,
+    topUsers,
     providers,
     paymentStats,
   ] = await Promise.all([
@@ -124,6 +125,16 @@ export async function dashboard() {
       .bind(month)
       .all(),
     db()
+      .prepare(`SELECT u.id,u.nick,
+        COALESCE(SUM(CASE WHEN h.completed=1 THEN 1 ELSE 0 END),0) AS watched_episodes,
+        COUNT(h.episode) AS tracked_episodes
+        FROM users u LEFT JOIN history h ON h.user_id=u.id
+        WHERE u.deleted_at IS NULL AND u.identity NOT LIKE 'preview:%'
+        GROUP BY u.id,u.nick
+        HAVING COUNT(h.episode)>0
+        ORDER BY watched_episodes DESC,tracked_episodes DESC,u.nick ASC LIMIT 10`)
+      .all(),
+    db()
       .prepare(
         'SELECT provider,status,latency_ms,error,checked_at FROM provider_health ORDER BY provider',
       )
@@ -187,6 +198,12 @@ export async function dashboard() {
         views: Number(item.views),
       };
     }),
+    topUsers: topUsers.results.map((item: any) => ({
+      id: String(item.id),
+      nick: String(item.nick || 'Без имени'),
+      watchedEpisodes: Number(item.watched_episodes || 0),
+      trackedEpisodes: Number(item.tracked_episodes || 0),
+    })),
     providers: providers.results,
     paidOrders30d: Number(paymentStats?.paid || 0),
     pendingOrders30d: Number(paymentStats?.pending || 0),
