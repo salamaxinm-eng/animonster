@@ -5,6 +5,8 @@ import { MobileNavigation } from '@/components/mobile-navigation';
 import './community.css';
 import './mobile.css';
 import './rewards.css';
+import { Suspense } from "react";
+import YandexMetrika from "@/components/yandex-metrika";
 
 const SITE_URL = 'https://animonster.su';
 
@@ -76,8 +78,10 @@ export default function RootLayout({
       <body>
         <CommunityProvider>
           {children}
+
           <footer className="site-footer">
             <span>© AniMonster</span>
+
             <nav>
               <a href="/legal/privacy">Конфиденциальность</a>
               <a href="/legal/terms">Пользовательское соглашение</a>
@@ -88,8 +92,13 @@ export default function RootLayout({
               <a href="/legal/requisites">Реквизиты</a>
             </nav>
           </footer>
+
           <MobileNavigation />
         </CommunityProvider>
+
+        <Suspense fallback={null}>
+          <YandexMetrika />
+        </Suspense>
       </body>
     </html>
   );
