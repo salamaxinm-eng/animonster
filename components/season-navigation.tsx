@@ -117,7 +117,7 @@ function RelationRow({
         <h2 id={id}>
           {icon} {title}
         </h2>
-        {(scroll.left || scroll.right) && (
+        {items.length > 1 && (
           <div className="season-scroll-buttons" aria-label="Прокрутка списка">
             <button
               type="button"
@@ -141,6 +141,8 @@ function RelationRow({
       <div
         ref={track}
         className="season-relation-track"
+        tabIndex={0}
+        style={{ touchAction: 'pan-x' }}
         onWheel={(event) => {
           const element = event.currentTarget;
           if (element.scrollWidth <= element.clientWidth) return;

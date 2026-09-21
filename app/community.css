@@ -3064,6 +3064,8 @@ button:disabled {
   display: flex;
   gap: 10px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
   padding: 2px 2px 9px;
   overscroll-behavior-inline: contain;
   scrollbar-color: #536274 #151b23;
