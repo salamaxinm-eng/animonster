@@ -138,45 +138,57 @@ function RelationRow({
           </div>
         )}
       </div>
-      <div
-        ref={track}
-        className="season-relation-track"
-        tabIndex={0}
-        style={{ touchAction: 'pan-x' }}
-        onWheel={(event) => {
-          const element = event.currentTarget;
-          if (element.scrollWidth <= element.clientWidth) return;
-          event.preventDefault();
-          element.scrollLeft += event.deltaY || event.deltaX;
-        }}
-      >
-        {items.map((card) => {
-          const content = (
-            <>
-              <img src={posterUrl(card.item)} alt="" loading="lazy" />
-              <span>{card.label}</span>
-              <strong>{card.item.russian}</strong>
-              <small>{card.item.aired_on?.slice(0, 4) || '—'}</small>
-            </>
-          );
-          return card.active ? (
-            <div
-              className="season-card active"
-              aria-current="page"
-              key={card.item.id}
-            >
-              {content}
-            </div>
-          ) : (
-            <a
-              className={'season-card' + (card.branch ? ' branch' : '')}
-              href={`/anime/${card.item.id}`}
-              key={card.item.id}
-            >
-              {content}
-            </a>
-          );
-        })}
+      <div className="season-relation-scroller">
+        <div
+          ref={track}
+          className="season-relation-track"
+          tabIndex={0}
+          style={{ touchAction: 'pan-x' }}
+          onWheel={(event) => {
+            const element = event.currentTarget;
+            if (element.scrollWidth <= element.clientWidth) return;
+            event.preventDefault();
+            element.scrollLeft += event.deltaY || event.deltaX;
+          }}
+        >
+          {items.map((card) => {
+            const content = (
+              <>
+                <img src={posterUrl(card.item)} alt="" loading="lazy" />
+                <span>{card.label}</span>
+                <strong>{card.item.russian}</strong>
+                <small>{card.item.aired_on?.slice(0, 4) || '—'}</small>
+              </>
+            );
+            return card.active ? (
+              <div
+                className="season-card active"
+                aria-current="page"
+                key={card.item.id}
+              >
+                {content}
+              </div>
+            ) : (
+              <a
+                className={'season-card' + (card.branch ? ' branch' : '')}
+                href={`/anime/${card.item.id}`}
+                key={card.item.id}
+              >
+                {content}
+              </a>
+            );
+          })}
+        </div>
+        {scroll.right && (
+          <button
+            className="season-next-overlay"
+            type="button"
+            onClick={() => move(1)}
+            aria-label="Показать следующие карточки"
+          >
+            <ChevronRight />
+          </button>
+        )}
       </div>
     </div>
   );

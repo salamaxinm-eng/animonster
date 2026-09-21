@@ -9,7 +9,10 @@ export async function GET() {
     const rows = await db()
       .prepare(
         `SELECT anime_id, SUM(n) AS n FROM (
-           SELECT anime_id, count(*) * 4 AS n FROM collection GROUP BY anime_id
+           SELECT anime_id, count(*) * 5 AS n FROM daily_views
+             WHERE day >= CURRENT_DATE - INTERVAL '30 days' GROUP BY anime_id
+           UNION ALL
+           SELECT anime_id, count(*) * 2 AS n FROM collection WHERE favorite=1 GROUP BY anime_id
            UNION ALL
            SELECT anime_id, count(*) AS n FROM history GROUP BY anime_id
          ) site_activity GROUP BY anime_id ORDER BY n DESC,anime_id LIMIT 50`,
@@ -43,6 +46,6 @@ export async function GET() {
         ? 'Топ AniMonster'
         : 'Топ сайта',
     },
-    { headers: { 'Cache-Control': 'public, max-age=60' } },
+    { headers: { 'Cache-Control': 'no-store' } },
   );
 }

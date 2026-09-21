@@ -3072,6 +3072,28 @@ button:disabled {
   scrollbar-width: thin;
   scroll-snap-type: x proximity;
 }
+.season-relation-scroller {
+  position: relative;
+  min-width: 0;
+}
+.season-next-overlay {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #a5e63e99;
+  border-radius: 50%;
+  background: #111a22ef;
+  color: #c7f66a;
+  box-shadow: 0 4px 16px #0008;
+}
+.season-next-overlay svg {
+  width: 20px;
+}
 .season-relation-track:focus-visible {
   outline: 2px solid #a5e63e66;
   outline-offset: 4px;
