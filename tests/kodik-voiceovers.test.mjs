@@ -17,6 +17,11 @@ const stored = {
   translation: { id: 91, title: 'Kodik Voice', type: 'voice' },
   link: 'https://kodik.info/serial/one-piece',
   episodes_count: 1176,
+  material_data: {
+    anime_genres: ['Приключения', 'Сёнен', 'Фэнтези', 'Экшен'],
+    anime_description:
+      'Тысячи авантюристов устремились на поиски легендарного сокровища.',
+  },
   seasons: {
     1: {
       episodes: {

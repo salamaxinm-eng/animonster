@@ -220,7 +220,7 @@ const BLOCKED_KODIK_GENRES = new Set([
 ]);
 
 const BLOCKED_KODIK_TEXT =
-  /(hentai|yaoi|yuri|erotica|ecchi|shou?nen[\s_-]*ai|shou?jo[\s_-]*ai|boys?[\s_-]*love|girls?[\s_-]*love|lolicon|shotacon|хентай|яой|юри|эротик[а-я]*|этти|с[её]н[её]н[\s_-]*ай|с[её]дз[её][\s_-]*ай|лоликон|шотакон)/iu;
+  /(?<![\p{L}\p{N}])(?:hentai|yaoi|yuri|erotica|ecchi|shou?nen[\s_-]*ai|shou?jo[\s_-]*ai|boys?[\s_-]*love|girls?[\s_-]*love|lolicon|shotacon|хентай|яой|юри|эротик[а-яё]*|этти|с[её]н[её]н[\s_-]*ай|с[её]дз[её][\s_-]*ай|лоликон|шотакон)(?![\p{L}\p{N}])/iu;
 
 export function blockedKodikContent(item: KodikResult) {
   const data = item.material_data;
