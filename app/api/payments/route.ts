@@ -11,7 +11,11 @@ import {
   runtime,
 } from '@/lib/server/core';
 import { paymentFetch, verifyPayment } from '@/lib/server/billing';
-import { subscriptionPlan } from '@/lib/subscription-plans';
+import {
+  SUPPORT_PLAN,
+  subscriptionPlan,
+  supportAmount,
+} from '@/lib/subscription-plans';
 export async function POST(r: Request) {
   try {
     sameOrigin(r);
@@ -44,8 +48,23 @@ export async function POST(r: Request) {
     // Platega does not document an idempotency header for transaction creation.
     // Give each checkout a distinct order so independent successful payments
     // are never collapsed into one order/grant.
-    const plan = subscriptionPlan(b.plan ?? 'monthly');
-    if (!plan) throw new ApiError('Неизвестный тариф', 400);
+    const requestedPlan = b.plan ?? 'monthly';
+    const fixedPlan = subscriptionPlan(requestedPlan);
+    const chosenAmount =
+      requestedPlan === SUPPORT_PLAN ? supportAmount(b.amount) : null;
+    if (!fixedPlan && chosenAmount === null)
+      throw new ApiError(
+        requestedPlan === SUPPORT_PLAN
+          ? 'Выберите целую сумму от 90 до 100 000 ₽'
+          : 'Неизвестный тариф',
+        400,
+      );
+    const plan = fixedPlan || {
+      id: SUPPORT_PLAN,
+      label: '30 дней · свой тариф',
+      days: 30,
+      price: chosenAmount!.toFixed(2),
+    };
     const id = uid();
     await db()
       .prepare(
@@ -60,7 +79,10 @@ export async function POST(r: Request) {
           amount: Number(plan.price),
           currency: 'RUB',
         },
-        description: `AniMonster Plus — ${plan.label}`,
+        description:
+          plan.id === SUPPORT_PLAN
+            ? `Поддержка AniMonster · Plus на ${plan.days} дней`
+            : `AniMonster Plus — ${plan.label}`,
         return: `${runtime().SITE_URL || new URL(r.url).origin}/pins?payment=return`,
         failedUrl: `${runtime().SITE_URL || new URL(r.url).origin}/pins?payment=failed`,
         payload: id,

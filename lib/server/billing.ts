@@ -1,4 +1,5 @@
 import { db, runtime, ApiError, now } from './core';
+import { refreshSupporterChampion } from './supporters';
 
 type PlategaTransaction = {
   id?: string;
@@ -78,7 +79,7 @@ export async function verifyPayment(providerId: string) {
       user_id: string;
       provider: string;
       provider_id: string | null;
-      plan: 'monthly' | 'annual';
+      plan: 'monthly' | 'annual' | 'support';
       amount: string | number;
       duration_days: number;
     }>();
@@ -129,6 +130,7 @@ export async function verifyPayment(providerId: string) {
           ]
         : []),
     ]);
+    if (order.plan === 'support') await refreshSupporterChampion();
   } else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED') {
     const status = p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled';
     await db().batch([
@@ -154,6 +156,8 @@ export async function verifyPayment(providerId: string) {
           ]
         : []),
     ]);
+    if (order.plan === 'support' && p.status === 'CHARGEBACKED')
+      await refreshSupporterChampion();
   }
   const saved = await db()
     .prepare('SELECT status FROM orders WHERE id=?')

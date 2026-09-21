@@ -12,10 +12,16 @@ const plans = await import(
     Buffer.from(stripTypeScriptTypes(source)).toString('base64')
 );
 
-test('annual Plus is 365 days with a ten percent discount', () => {
+test('Plus prices include annual discount and a validated custom tier', () => {
   assert.equal(plans.subscriptionPlans.annual.days, 365);
+  assert.equal(plans.subscriptionPlans.monthly.price, '89.00');
   assert.equal(plans.subscriptionPlans.annual.price, '961.20');
   assert.equal(plans.subscriptionPlans.annual.discount, 10);
   assert.equal(plans.subscriptionPlan('annual').id, 'annual');
   assert.equal(plans.subscriptionPlan('unknown'), null);
+  assert.equal(plans.supportAmount(90), 90);
+  assert.equal(plans.supportAmount('1000'), 1000);
+  assert.equal(plans.supportAmount(89), null);
+  assert.equal(plans.supportAmount(90.5), null);
+  assert.equal(plans.supportAmount(100001), null);
 });

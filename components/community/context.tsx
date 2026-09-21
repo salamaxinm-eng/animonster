@@ -216,7 +216,9 @@ export function Pin({ id }: { id: string | null }) {
       image: '/pins/referral-legend.svg',
     },
   ];
-  const p = [...pins, ...earnedPins, ...referralPins].find((item) => item.id === id);
+  const p = [...pins, ...earnedPins, ...referralPins].find(
+    (item) => item.id === id,
+  );
   return p ? (
     <span
       className="anime-pin"
@@ -229,6 +231,7 @@ export function Pin({ id }: { id: string | null }) {
 }
 const tagLabels: Record<string, string> = {
   'eternal-nakama': 'Вечный накама',
+  'number-one': 'Номер 1',
   plus: 'PLUS',
   supporter: 'Поддержал AniMonster',
   'hundred-episodes': 'Сотня серий',

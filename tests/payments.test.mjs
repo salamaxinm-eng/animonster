@@ -11,6 +11,10 @@ const source = (
     'const db = () => { throw new Error("not used"); }; const runtime = () => ({}); class ApiError extends Error {}; const now = () => 0;',
   )
   .replace(
+    "import { refreshSupporterChampion } from './supporters';",
+    'const refreshSupporterChampion = async () => {};',
+  )
+  .replace(
     "import { PLUS_DURATION_MS, PLUS_PRICE } from './plus';",
     "const PLUS_DURATION_MS = 0; const PLUS_PRICE = '89.00';",
   );

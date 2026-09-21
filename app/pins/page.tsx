@@ -97,7 +97,9 @@ export default function PinsPage() {
             <div className="subscription-price">
               89 ₽ <span>/ 30 дней</span>
             </div>
-            <p className="annual-pins-price">Или 961,20 ₽ / год · −10% и тег «Вечный накама» навсегда</p>
+            <p className="annual-pins-price">
+              Или 961,20 ₽ / год · −10% и тег «Вечный накама» навсегда
+            </p>
             <p className="platega-review-label" role="note">
               Platega test
             </p>
@@ -112,8 +114,8 @@ export default function PinsPage() {
               <a href="/legal/support">Поддержка</a>
             </nav>
             <p className="billing-note">
-              Доступ на 30 или 365 дней ко всей коллекции Plus. Продление вручную, без
-              автоматических списаний.
+              Доступ на 30 или 365 дней ко всей коллекции Plus. Продление
+              вручную, без автоматических списаний.
             </p>
             {c.user?.premium_until ? (
               <>

@@ -79,10 +79,12 @@ export async function cosmeticsCatalog(userId?: string) {
             : item.access_type === 'referral'
               ? 'Награда за приглашённых друзей'
               : item.access_type === 'purchase'
-                ? 'Покупка годового AniMonster Plus'
-              : item.access_type === 'admin'
-                ? 'Выдаётся администрацией'
-                : 'Доступно всем',
+                ? item.slug === 'number-one'
+                  ? 'Текущий лидер рейтинга поддержки'
+                  : 'Покупка годового AniMonster Plus'
+                : item.access_type === 'admin'
+                  ? 'Выдаётся администрацией'
+                  : 'Доступно всем',
     };
   });
 }
