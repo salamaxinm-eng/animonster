@@ -31,13 +31,16 @@ export async function refreshSupporterChampion() {
       "SELECT id FROM cosmetics WHERE id='tag:number-one' FOR UPDATE",
     ),
     db().prepare(
-      "DELETE FROM user_cosmetics WHERE cosmetic_id='tag:number-one' AND source='purchase'",
+      `DELETE FROM user_cosmetics
+       WHERE cosmetic_id IN ('tag:number-one','frame:champion-gold','pin:champion-crown')
+         AND source='purchase'`,
     ),
     db()
       .prepare(
         `INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata)
-         SELECT leader.user_id,'tag:number-one',?,'purchase','supporter-leader',
-                jsonb_build_object('amount',leader.amount)
+         SELECT leader.user_id,reward.cosmetic_id,?,'purchase',
+                'supporter-leader:' || reward.slug,
+                jsonb_build_object('amount',leader.amount,'rank',1)
          FROM (
            SELECT o.user_id,SUM(o.amount) AS amount
            FROM orders o JOIN users u ON u.id=o.user_id
@@ -46,6 +49,11 @@ export async function refreshSupporterChampion() {
            ORDER BY SUM(o.amount) DESC,MIN(o.created_at),o.user_id
            LIMIT 1
          ) leader
+         CROSS JOIN (VALUES
+           ('tag:number-one','number-one'),
+           ('frame:champion-gold','champion-gold'),
+           ('pin:champion-crown','champion-crown')
+         ) reward(cosmetic_id,slug)
          ON CONFLICT(user_id,cosmetic_id) DO UPDATE SET
            unlocked_at=excluded.unlocked_at,source=excluded.source,
            source_key=excluded.source_key,metadata=excluded.metadata`,

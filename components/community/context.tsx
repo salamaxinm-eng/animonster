@@ -215,6 +215,12 @@ export function Pin({ id }: { id: string | null }) {
       label: 'Реферальная награда',
       image: '/pins/referral-legend.svg',
     },
+    {
+      id: 'champion-crown',
+      name: 'Корона лидера',
+      label: 'Награда № 1 рейтинга поддержки',
+      image: '/pins/champion-crown.svg',
+    },
   ];
   const p = [...pins, ...earnedPins, ...referralPins].find(
     (item) => item.id === id,

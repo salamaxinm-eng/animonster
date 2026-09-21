@@ -79,7 +79,9 @@ export async function cosmeticsCatalog(userId?: string) {
             : item.access_type === 'referral'
               ? 'Награда за приглашённых друзей'
               : item.access_type === 'purchase'
-                ? item.slug === 'number-one'
+                ? ['number-one', 'champion-gold', 'champion-crown'].includes(
+                    item.slug,
+                  )
                   ? 'Текущий лидер рейтинга поддержки'
                   : 'Покупка годового AniMonster Plus'
                 : item.access_type === 'admin'

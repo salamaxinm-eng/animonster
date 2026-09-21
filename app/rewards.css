@@ -14,11 +14,38 @@
   border-width: 2px;
   background:
     linear-gradient(112deg, #201406, #35230b 48%, #190f08) padding-box,
-    linear-gradient(110deg, #fff5ac, #ffbd35, #ff7657, #fff5ac) border-box;
+    linear-gradient(
+        110deg,
+        #fffbd4,
+        #ffb71b 22%,
+        #fff5a6 38%,
+        #d57808 56%,
+        #fffbd4 74%,
+        #ff9e1b
+      )
+      border-box;
+  background-size:
+    100% 100%,
+    260% 100%;
+  color: #fff8cf;
   box-shadow:
     0 0 0 2px #11151d,
-    0 0 20px #ffb22e55,
-    inset 0 0 14px #fff2a018;
+    0 0 24px #ffb22e88,
+    0 0 45px #ffcb422b,
+    inset 0 0 14px #fff2a02c;
+  text-shadow:
+    0 0 5px #fff,
+    0 0 13px #ffb51f;
+  animation: champion-tag-shimmer 2.8s linear infinite;
+}
+.user-tag.user-tag-number-one::after {
+  inset: -7px;
+  background:
+    radial-gradient(circle at 7% 18%, #fff 0 1px, #ffcf42 2px, transparent 3px),
+    radial-gradient(circle at 92% 22%, #fff 0 1px, #ffcf42 2px, transparent 3px),
+    radial-gradient(circle at 18% 92%, #fff 0 1px, transparent 3px),
+    radial-gradient(circle at 80% 86%, #fff3a0 0 1px, transparent 3px);
+  animation: champion-tag-sparks 1.9s ease-in-out infinite alternate;
 }
 .plus-plan-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
 .plus-plan-options button { display: grid; gap: 7px; text-align: left; background: #151723; border: 1px solid #3d3b50; padding: 14px; border-radius: 12px; color: #bdb7cb; cursor: pointer; }
@@ -304,6 +331,29 @@
   font-size: 11px;
   line-height: 1.55;
 }
+.champion-reward-set {
+  display: flex;
+  gap: 7px;
+}
+.champion-reward-set > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid #ffd86d38;
+  border-radius: 999px;
+  background: #ffd35b0b;
+  color: #e9d69b;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.champion-reward-set img {
+  width: 25px;
+  height: 25px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px #ffc83e9c);
+}
 .plus-feature-strip {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -443,6 +493,10 @@
   --frame-art: url('/frames/plus-crystal.svg');
   --frame-accent: #aaff6b;
 }
+.profile-frame-champion-gold > .user-avatar {
+  --frame-art: url('/frames/champion-gold.svg');
+  --frame-accent: #ffd34d;
+}
 .profile-frame-achievement-shinobi > .user-avatar {
   --frame-art: url('/frames/achievement-shinobi.svg');
   --frame-accent: #ff85bc;
@@ -568,6 +622,10 @@
   animation: reward-aura 4s ease-in-out infinite alternate;
   z-index: 2;
 }
+.profile-frame-champion-gold > .user-avatar::after {
+  inset: -34%;
+  animation: champion-frame-shimmer 2.6s ease-in-out infinite;
+}
 .cosmetic-preview {
   min-height: 180px;
   padding: 32px 12px;
@@ -678,6 +736,57 @@
   object-fit: contain;
   filter: drop-shadow(0 0 5px #b27dff40);
 }
+.anime-pin img[src$='champion-crown.svg'] {
+  filter:
+    drop-shadow(0 0 4px #fff1a0)
+    drop-shadow(0 0 10px #ffae2f);
+  animation: champion-pin-glow 2.2s ease-in-out infinite alternate;
+}
+@keyframes champion-tag-shimmer {
+  to {
+    background-position:
+      0 0,
+      -260% 0;
+  }
+}
+@keyframes champion-tag-sparks {
+  0% {
+    opacity: 0.35;
+    filter: brightness(0.8);
+  }
+  55% {
+    opacity: 1;
+    filter: brightness(1.45);
+  }
+  100% {
+    opacity: 0.7;
+    filter: brightness(1.1);
+  }
+}
+@keyframes champion-frame-shimmer {
+  0%,
+  100% {
+    opacity: 0.9;
+    filter: drop-shadow(0 0 5px #ffb51f) brightness(0.95);
+    transform: scale(0.99);
+  }
+  48% {
+    opacity: 1;
+    filter:
+      drop-shadow(0 0 8px #fff2a5)
+      drop-shadow(0 0 15px #ff9d19)
+      brightness(1.22);
+    transform: scale(1.035) rotate(0.5deg);
+  }
+}
+@keyframes champion-pin-glow {
+  to {
+    filter:
+      drop-shadow(0 0 7px #fff7c0)
+      drop-shadow(0 0 15px #ff9d1b);
+    transform: translateY(-1px) scale(1.05);
+  }
+}
 @keyframes reward-aura {
   from {
     opacity: 0.88;
@@ -706,7 +815,9 @@
 }
 @media (prefers-reduced-motion: reduce) {
   [class*='profile-frame-']:not(.profile-frame-none) > .user-avatar::after,
-  .user-tag::after {
+  .user-tag::after,
+  .user-tag.user-tag-number-one,
+  .anime-pin img[src$='champion-crown.svg'] {
     animation: none;
     opacity: 1;
   }

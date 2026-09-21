@@ -247,10 +247,18 @@ export function BuySubscription({
                 })}
               </ol>
               <div className="champion-tag-card">
+                <div className="champion-reward-set">
+                  <span>
+                    <img src="/frames/champion-gold.svg" alt="" /> Рамка
+                  </span>
+                  <span>
+                    <img src="/pins/champion-crown.svg" alt="" /> Пин
+                  </span>
+                </div>
                 <span className="user-tag user-tag-number-one">Номер 1</span>
                 <p>
-                  Переходящий тег получает лидер. Обгони его — и знак станет
-                  твоим.
+                  Весь золотой комплект получает лидер. Обгони его — рамка, пин
+                  и тег станут твоими.
                 </p>
               </div>
             </aside>
