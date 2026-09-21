@@ -3035,6 +3035,8 @@ button:disabled {
 .season-scroll-buttons {
   display: flex;
   gap: 7px;
+  flex-shrink: 0;
+  visibility: visible !important;
 }
 .season-scroll-buttons button {
   width: 34px;
@@ -3045,6 +3047,8 @@ button:disabled {
   border-radius: 8px;
   background: #18212c;
   color: #d8e2ed;
+  cursor: pointer;
+  visibility: visible !important;
 }
 .season-scroll-buttons button:hover:not(:disabled) {
   border-color: #a5e63e88;
@@ -3090,6 +3094,13 @@ button:disabled {
   background: #111a22ef;
   color: #c7f66a;
   box-shadow: 0 4px 16px #0008;
+}
+.season-scroll-buttons button:last-child,
+.season-next-overlay {
+  border-color: #a5e63e;
+  background: #a5e63e;
+  color: #10160d;
+  opacity: 1;
 }
 .season-next-overlay svg {
   width: 20px;
