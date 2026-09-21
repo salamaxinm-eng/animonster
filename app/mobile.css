@@ -679,13 +679,8 @@
     display: none;
   }
 
-  .season-edge-button {
-    display: none;
-  }
-
-  .season-card {
-    width: 175px;
-    flex-basis: 175px;
+  .season-relation-track {
+    grid-auto-columns: 175px;
   }
 
   .title-playback > h2,

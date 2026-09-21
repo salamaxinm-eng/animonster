@@ -62,3 +62,29 @@ test('cached Kodik source remains available when only the sync worker has a toke
     'https://kodik.info/serial/one-piece',
   );
 });
+
+test('AniLibria remains available as a voiceover inside the Kodik player', () => {
+  const voiceovers = kodik.normalizeKodikVoiceovers(
+    [
+      {
+        ...stored,
+        id: 'one-piece-anilibria',
+        translation: { id: 92, title: 'AniLibria.TV', type: 'voice' },
+      },
+    ],
+    {
+      id: 21,
+      name: 'One Piece',
+      russian: 'Ван-Пис',
+      image: { original: '' },
+      score: '0',
+      kind: 'tv',
+      episodes: 1176,
+      aired_on: '1999-10-20',
+    },
+  );
+
+  assert.equal(voiceovers.length, 1);
+  assert.equal(voiceovers[0].title, 'AniLibria.TV');
+  assert.equal(voiceovers[0].provider, 'kodik');
+});

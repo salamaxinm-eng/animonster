@@ -87,6 +87,13 @@ function RelationRow({
   icon?: React.ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
+  const drag = useRef<{
+    pointerId: number;
+    startX: number;
+    startLeft: number;
+    moved: boolean;
+  } | null>(null);
+  const suppressClick = useRef(false);
   const [scroll, setScroll] = useState({ left: false, right: false });
   useEffect(() => {
     const element = track.current;
@@ -106,11 +113,16 @@ function RelationRow({
       element.removeEventListener('scroll', update);
     };
   }, [items.length]);
-  const move = (direction: -1 | 1) =>
-    track.current?.scrollBy({
-      left: direction * Math.max(220, track.current.clientWidth * 0.72),
+  const move = (direction: -1 | 1) => {
+    const element = track.current;
+    if (!element) return;
+    element.scrollTo({
+      left:
+        element.scrollLeft +
+        direction * Math.max(220, element.clientWidth * 0.72),
       behavior: 'smooth',
     });
+  };
   return (
     <div className="season-relation-row">
       <div className="season-relation-heading">
@@ -141,7 +153,42 @@ function RelationRow({
         <div
           ref={track}
           className="season-relation-track"
-          style={{ touchAction: 'pan-x' }}
+          onPointerDown={(event) => {
+            if (event.pointerType === 'mouse') return;
+            drag.current = {
+              pointerId: event.pointerId,
+              startX: event.clientX,
+              startLeft: event.currentTarget.scrollLeft,
+              moved: false,
+            };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            const current = drag.current;
+            if (!current || current.pointerId !== event.pointerId) return;
+            const distance = event.clientX - current.startX;
+            if (Math.abs(distance) > 5) current.moved = true;
+            event.currentTarget.scrollLeft = current.startLeft - distance;
+          }}
+          onPointerUp={(event) => {
+            const current = drag.current;
+            if (!current || current.pointerId !== event.pointerId) return;
+            suppressClick.current = current.moved;
+            drag.current = null;
+            if (event.currentTarget.hasPointerCapture(event.pointerId))
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            setTimeout(() => {
+              suppressClick.current = false;
+            }, 0);
+          }}
+          onPointerCancel={() => {
+            drag.current = null;
+          }}
+          onClickCapture={(event) => {
+            if (!suppressClick.current) return;
+            event.preventDefault();
+            event.stopPropagation();
+          }}
           onWheel={(event) => {
             const element = event.currentTarget;
             if (element.scrollWidth <= element.clientWidth) return;
@@ -177,17 +224,18 @@ function RelationRow({
             );
           })}
         </div>
-        {scroll.left && (
+        {items.length > 1 && (
           <button
             className="season-edge-button previous"
             type="button"
+            disabled={!scroll.left}
             onClick={() => move(-1)}
             aria-label="Показать предыдущие карточки"
           >
             <ChevronLeft />
           </button>
         )}
-        {scroll.right && (
+        {items.length > 1 && (
           <button
             className="season-edge-button next"
             type="button"

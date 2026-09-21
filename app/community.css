@@ -3062,14 +3062,18 @@ button:disabled {
   width: 18px;
 }
 .season-relation-track {
+  box-sizing: border-box;
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 190px;
+  justify-content: start;
   gap: 10px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
+  touch-action: pan-y;
   padding: 2px 2px 9px;
   overscroll-behavior-inline: contain;
   scrollbar-color: #536274 #151b23;
@@ -3078,7 +3082,9 @@ button:disabled {
 }
 .season-relation-scroller {
   position: relative;
+  width: 100%;
   min-width: 0;
+  overflow: hidden;
 }
 .season-edge-button {
   position: absolute;
@@ -3112,6 +3118,10 @@ button:disabled {
 .season-edge-button svg {
   width: 20px;
 }
+.season-edge-button:disabled {
+  pointer-events: none;
+  opacity: 0.3;
+}
 .season-relation-track:focus-visible {
   outline: 2px solid #a5e63e66;
   outline-offset: 4px;
@@ -3120,9 +3130,8 @@ button:disabled {
   scroll-snap-align: start;
 }
 .season-card {
-  width: 190px;
+  width: 100%;
   min-height: 78px;
-  flex: 0 0 190px;
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;

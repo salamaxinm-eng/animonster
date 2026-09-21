@@ -290,9 +290,7 @@ export function normalizeKodikVoiceovers(
       (exactId && remoteId !== anime.id) ||
       (!exactId &&
         (!exactFallbackTitle ||
-          (item.year != null &&
-            Number(item.year) !== Number(anime.aired_on)))) ||
-      /anilibr(?:ia|ity)/i.test(title)
+          (item.year != null && Number(item.year) !== Number(anime.aired_on))))
     )
       continue;
     const type = translation?.type === 'subtitles' ? 'subtitles' : 'voice';
