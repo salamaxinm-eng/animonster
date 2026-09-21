@@ -30,7 +30,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
     [voiceoversMessage, setVoiceoversMessage] = useState(''),
     [episode, setEpisode] = useState(1),
-    [start, setStart] = useState({ episode: 1, position: 0 }),
+    [start, setStart] = useState({ episode: 1, position: 0, voiceover: '' }),
     [error, setError] = useState(''),
     [ageRejected, setAgeRejected] = useState(false),
     [ageBusy, setAgeBusy] = useState(false),
@@ -59,21 +59,36 @@ export function AnimePage({ anime }: { anime: Anime }) {
         fetch('/api/watch?anime=' + anime.id),
       ]);
       const x = (await r.json()) as any,
-        history = (await h.json()) as { episode: number; position: number }[];
+        history = (await h.json()) as {
+          episode: number;
+          position: number;
+          voiceover?: string;
+        }[];
       if (!r.ok || !x.episodes?.length)
         throw Error(x.error || x.message || 'Серии временно недоступны.');
+      let saved: { episode?: number; position?: number; voiceover?: string } =
+        {};
+      try {
+        saved = JSON.parse(
+          localStorage.getItem('animonster-playback-' + anime.id) || '{}',
+        );
+      } catch {}
       const wanted = retry
         ? episode
         : Number(new URLSearchParams(location.search).get('episode')) ||
           history[0]?.episode ||
+          saved.episode ||
           1;
       const selected = x.episodes.some((e: Episode) => e.ordinal === wanted)
         ? wanted
         : x.episodes[0].ordinal;
+      const savedHistory = history.find((e: any) => e.episode === selected);
       setStart({
         episode: selected,
         position:
-          history.find((e: any) => e.episode === selected)?.position || 0,
+          savedHistory?.position ||
+          (saved.episode === selected ? saved.position || 0 : 0),
+        voiceover: savedHistory?.voiceover || saved.voiceover || '',
       });
       setEpisode(selected);
       setEpisodes(x.episodes);
@@ -203,6 +218,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
               animeTitle={anime.russian}
               initialEpisode={start.episode}
               initialPosition={start.position}
+              initialVoiceoverId={start.voiceover}
               onPlaybackSelectionChange={updatePartySelection}
               onEpisodeChange={(n) => {
                 setEpisode(n);

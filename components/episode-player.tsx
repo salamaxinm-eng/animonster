@@ -31,6 +31,7 @@ export function EpisodePlayer({
   animeId,
   releaseId,
   initialPosition = 0,
+  initialVoiceoverId = '',
   onEpisodeChange,
   onPlaybackSelectionChange,
   onRetry,
@@ -43,6 +44,7 @@ export function EpisodePlayer({
   animeId?: number;
   releaseId?: number;
   initialPosition?: number;
+  initialVoiceoverId?: string;
   onEpisodeChange: (n: number) => void;
   onPlaybackSelectionChange?: (selection: {
     episode: number;
@@ -59,7 +61,10 @@ export function EpisodePlayer({
     ),
     [quality, setQuality] = useState('720'),
     [voiceoverId, setVoiceoverId] = useState(
-      () => initialVoiceover(voiceovers, initialEpisode)?.id || 'aniliberty',
+      () =>
+        initialVoiceoverId ||
+        initialVoiceover(voiceovers, initialEpisode)?.id ||
+        'aniliberty',
     ),
     [error, setError] = useState(''),
     [playbackActive, setPlaybackActive] = useState(false),
@@ -93,6 +98,29 @@ export function EpisodePlayer({
   const firstVoiceoverIndex = availableIndices[0] ?? 0;
   const nextIndex = availableIndices.find((value) => value > index);
   const previousIndex = availableIndices.findLast((value) => value < index);
+  const selectEpisode = useCallback(
+    (ordinal: number) => {
+      const next = episodes.findIndex((item) => item.ordinal === ordinal);
+      if (next < 0 || !availableIndices.includes(next)) return;
+      setIndex(next);
+      onEpisodeChange(ordinal);
+    },
+    [episodes, availableIndices, onEpisodeChange],
+  );
+  useEffect(() => {
+    if (!episode || !voiceover || !animeId) return;
+    try {
+      localStorage.setItem(
+        'animonster-playback-' + animeId,
+        JSON.stringify({
+          episode: episode.ordinal,
+          voiceover: voiceover.id,
+          position: currentTime,
+          updatedAt: Date.now(),
+        }),
+      );
+    } catch {}
+  }, [animeId, episode?.ordinal, voiceover?.id, currentTime]);
   useEffect(() => {
     if (!availableIndices.includes(index)) setIndex(firstVoiceoverIndex);
   }, [voiceoverId, firstVoiceoverIndex, index]);
@@ -360,6 +388,26 @@ export function EpisodePlayer({
         return;
       }
       const next = Number(timeValue);
+      const episodeValue =
+        payload?.episode ??
+        payload?.episode_number ??
+        payload?.episodeNumber ??
+        payload?.current_episode ??
+        payload?.data?.episode;
+      const episodeNumber = Number(episodeValue);
+      const episodeSignal =
+        payload?.event === 'change_episode' ||
+        payload?.type === 'episode' ||
+        payload?.key === 'kodik_player_episode_changed' ||
+        episodeValue != null;
+      if (
+        episodeSignal &&
+        Number.isInteger(episodeNumber) &&
+        episodeNumber > 0
+      ) {
+        selectEpisode(episodeNumber);
+        return;
+      }
       if (!Number.isFinite(next) || next < 0 || next > 24 * 60 * 60) return;
       const delta = next - lastPosition;
       if (delta > 0 && delta < 10) {
@@ -394,6 +442,7 @@ export function EpisodePlayer({
     voiceoverId,
     setPlayback,
     advanceToNext,
+    selectEpisode,
   ]);
   const stream = episode
     ? (quality === '1080'
@@ -434,7 +483,7 @@ export function EpisodePlayer({
   }, [animeId, releaseId, episode?.id, voiceover?.id, isKodik, kodikDuration]);
   useEffect(() => {
     if (episode) onEpisodeChange(episode.ordinal);
-  }, [episode?.id]);
+  }, [episode?.id, onEpisodeChange]);
   useEffect(() => {
     if (!episode || !voiceover) return;
     onPlaybackSelectionChange?.({
@@ -713,7 +762,7 @@ export function EpisodePlayer({
           className="episode-select"
           aria-label="Выбор серии"
           value={index}
-          onChange={(e) => setIndex(Number(e.target.value))}
+          onChange={(e) => selectEpisode(Number(e.target.value))}
         >
           {availableIndices.map((i) => {
             const e = episodes[i];
@@ -753,14 +802,20 @@ export function EpisodePlayer({
         )}
         <button
           disabled={previousIndex === undefined}
-          onClick={() => previousIndex !== undefined && setIndex(previousIndex)}
+          onClick={() =>
+            previousIndex !== undefined &&
+            selectEpisode(episodes[previousIndex].ordinal)
+          }
           aria-label="Предыдущая серия"
         >
           <ChevronLeft size={20} />
         </button>
         <button
           disabled={nextIndex === undefined}
-          onClick={() => nextIndex !== undefined && setIndex(nextIndex)}
+          onClick={() =>
+            nextIndex !== undefined &&
+            selectEpisode(episodes[nextIndex].ordinal)
+          }
           aria-label="Следующая серия"
         >
           <ChevronRight size={20} />
