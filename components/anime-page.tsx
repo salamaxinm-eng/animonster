@@ -42,8 +42,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
       episode: number;
       provider: 'aniliberty' | 'kodik';
       voiceover: string;
-    }>({ episode: 1, provider: 'aniliberty', voiceover: 'aniliberty' }),
-    [version, setVersion] = useState(0);
+    }>({ episode: 1, provider: 'aniliberty', voiceover: 'aniliberty' });
   const community = useCommunity();
   const { user } = community;
   const ageLocked = !!anime.is_adult && !user?.adult_confirmed;
@@ -80,7 +79,6 @@ export function AnimePage({ anime }: { anime: Anime }) {
       setEpisodes(x.episodes);
       setVoiceovers(x.voiceovers || []);
       setVoiceoversMessage(x.voiceovers_message || '');
-      setVersion((v) => v + 1);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -88,12 +86,13 @@ export function AnimePage({ anime }: { anime: Anime }) {
     }
   }
   useEffect(() => {
+    if (!community.loaded) return;
     if (ageLocked) {
       setLoading(false);
       return;
     }
     void load();
-  }, [anime.id, user?.id, user?.adult_confirmed, ageLocked]);
+  }, [anime.id, user?.id, user?.adult_confirmed, ageLocked, community.loaded]);
   const updatePartySelection = useCallback(
     (selection: typeof partySelection) => setPartySelection(selection),
     [],
@@ -196,7 +195,6 @@ export function AnimePage({ anime }: { anime: Anime }) {
             </div>
           ) : (
             <EpisodePlayer
-              key={version}
               animeId={anime.id}
               releaseId={anime.release_id}
               episodes={episodes}
