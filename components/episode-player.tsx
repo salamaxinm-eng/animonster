@@ -90,6 +90,7 @@ export function EpisodePlayer({
   const community = useCommunity(),
     { user } = community;
   const skippedSegment = useRef('');
+  const voiceoverUserSelected = useRef(Boolean(initialVoiceoverId));
   const episode = episodes[Math.min(index, episodes.length - 1)];
   const voiceover =
     voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
@@ -98,6 +99,11 @@ export function EpisodePlayer({
   const firstVoiceoverIndex = availableIndices[0] ?? 0;
   const nextIndex = availableIndices.find((value) => value > index);
   const previousIndex = availableIndices.findLast((value) => value < index);
+  useEffect(() => {
+    if (voiceoverUserSelected.current || !voiceovers.length) return;
+    const preferred = initialVoiceover(voiceovers, initialEpisode);
+    if (preferred && preferred.id !== voiceoverId) setVoiceoverId(preferred.id);
+  }, [voiceovers, initialEpisode, voiceoverId]);
   const selectEpisode = useCallback(
     (ordinal: number) => {
       const next = episodes.findIndex((item) => item.ordinal === ordinal);
@@ -748,7 +754,10 @@ export function EpisodePlayer({
             className="voiceover-select"
             aria-label="Выбор озвучки"
             value={voiceover?.id || 'aniliberty'}
-            onChange={(e) => setVoiceoverId(e.target.value)}
+            onChange={(e) => {
+              voiceoverUserSelected.current = true;
+              setVoiceoverId(e.target.value);
+            }}
           >
             {voiceovers.map((item) => (
               <option value={item.id} key={item.id}>
