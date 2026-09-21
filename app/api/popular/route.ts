@@ -8,7 +8,11 @@ export async function GET() {
   try {
     const rows = await db()
       .prepare(
-        'SELECT anime_id,count(*) AS n FROM collection GROUP BY anime_id ORDER BY n DESC,anime_id LIMIT 20',
+        `SELECT anime_id, SUM(n) AS n FROM (
+           SELECT anime_id, count(*) * 4 AS n FROM collection GROUP BY anime_id
+           UNION ALL
+           SELECT anime_id, count(*) AS n FROM history GROUP BY anime_id
+         ) site_activity GROUP BY anime_id ORDER BY n DESC,anime_id LIMIT 50`,
       )
       .all<{ anime_id: number; n: number }>();
     counts = Object.fromEntries(rows.results.map((x) => [x.anime_id, x.n]));
@@ -35,10 +39,9 @@ export async function GET() {
   return Response.json(
     {
       items: ranked.slice(0, 5),
-      source:
-        candidates.filter((a) => counts[a.id]).length >= 5
-          ? 'Популярно на AniMonster'
-          : 'Популярное в каталоге',
+      source: candidates.filter((a) => counts[a.id]).length
+        ? 'Топ AniMonster'
+        : 'Топ сайта',
     },
     { headers: { 'Cache-Control': 'public, max-age=60' } },
   );
