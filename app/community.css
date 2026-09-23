@@ -3043,10 +3043,10 @@ button:disabled {
   height: 34px;
   display: grid;
   place-items: center;
-  border: 1px solid #354252;
+  border: 1px solid #465465;
   border-radius: 8px;
   background: #18212c;
-  color: #d8e2ed;
+  color: #eef3f8;
   cursor: pointer;
   visibility: visible !important;
 }
@@ -3056,7 +3056,7 @@ button:disabled {
 }
 .season-scroll-buttons button:disabled {
   cursor: default;
-  opacity: 0.3;
+  opacity: 0.35;
 }
 .season-scroll-buttons svg {
   width: 18px;
@@ -3085,36 +3085,6 @@ button:disabled {
   width: 100%;
   min-width: 0;
   overflow: hidden;
-}
-.season-edge-button {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #536274;
-  border-radius: 50%;
-  background: #18212cef;
-  color: #d8e2ed;
-  box-shadow: 0 4px 16px #0008;
-  cursor: pointer;
-  z-index: 2;
-}
-.season-edge-button.next {
-  right: 8px;
-}
-.season-edge-button:hover:not(:disabled) {
-  border-color: #8d9daf;
-  background: #222e3b;
-}
-.season-edge-button svg {
-  width: 20px;
-}
-.season-edge-button:disabled {
-  pointer-events: none;
-  opacity: 0.3;
 }
 .season-relation-track:focus-visible {
   outline: 2px solid #a5e63e66;

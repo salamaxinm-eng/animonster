@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, GitBranch } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GitBranch } from 'lucide-react';
 import { posterUrl, type Anime } from '@/lib/anime';
 
 type RelationCard = {
@@ -87,14 +87,16 @@ function RelationRow({
   icon?: React.ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [scroll, setScroll] = useState({ left: false, right: false });
   useEffect(() => {
     const element = track.current;
     if (!element) return;
     const update = () =>
-      setCanScrollRight(
-        element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
-      );
+      setScroll({
+        left: element.scrollLeft > 2,
+        right:
+          element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
+      });
     update();
     const observer = new ResizeObserver(update);
     observer.observe(element);
@@ -104,11 +106,13 @@ function RelationRow({
       element.removeEventListener('scroll', update);
     };
   }, [items.length]);
-  const moveNext = () => {
+  const move = (direction: -1 | 1) => {
     const element = track.current;
     if (!element) return;
     element.scrollTo({
-      left: element.scrollLeft + Math.max(220, element.clientWidth * 0.72),
+      left:
+        element.scrollLeft +
+        direction * Math.max(200, element.clientWidth * 0.72),
       behavior: 'smooth',
     });
   };
@@ -118,6 +122,26 @@ function RelationRow({
         <h2 id={id}>
           {icon} {title}
         </h2>
+        {items.length > 1 && (
+          <div className="season-scroll-buttons" aria-label="Прокрутка списка">
+            <button
+              type="button"
+              disabled={!scroll.left}
+              onClick={() => move(-1)}
+              aria-label="Показать предыдущие карточки"
+            >
+              <ChevronLeft />
+            </button>
+            <button
+              type="button"
+              disabled={!scroll.right}
+              onClick={() => move(1)}
+              aria-label="Показать следующие карточки"
+            >
+              <ChevronRight />
+            </button>
+          </div>
+        )}
       </div>
       <div className="season-relation-scroller">
         <div
@@ -158,17 +182,6 @@ function RelationRow({
             );
           })}
         </div>
-        {items.length > 1 && (
-          <button
-            className="season-edge-button next"
-            type="button"
-            disabled={!canScrollRight}
-            onClick={moveNext}
-            aria-label="Показать следующие карточки"
-          >
-            <ChevronRight />
-          </button>
-        )}
       </div>
     </div>
   );
