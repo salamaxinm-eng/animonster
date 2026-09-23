@@ -64,7 +64,9 @@ export async function searchAnime({
     values.push(JSON.stringify(genres));
   }
   if (themes.length) {
-    where.push('m.themes @> ?::jsonb');
+    where.push(
+      `(m.themes || COALESCE(t.themes::jsonb,'[]'::jsonb) || a.genres_index) @> ?::jsonb`,
+    );
     values.push(JSON.stringify(themes));
   }
   if (kind) {
@@ -102,6 +104,7 @@ export async function searchAnime({
         `SELECT a.data,${score} AS relevance
          FROM anime_cache a
          JOIN anime_search_metadata m ON m.anime_id=a.id
+         LEFT JOIN anime_themes_cache t ON t.anime_id=a.id
          ${filter}
          ORDER BY relevance DESC,a.score_index DESC,a.year_index DESC,a.id
          LIMIT ? OFFSET ?`,
@@ -110,8 +113,9 @@ export async function searchAnime({
       .all<{ data: string; relevance: number }>(),
     db()
       .prepare(
-        `SELECT count(*) AS total FROM anime_cache a
-         JOIN anime_search_metadata m ON m.anime_id=a.id ${filter}`,
+         `SELECT count(*) AS total FROM anime_cache a
+         JOIN anime_search_metadata m ON m.anime_id=a.id
+         LEFT JOIN anime_themes_cache t ON t.anime_id=a.id ${filter}`,
       )
       .bind(...values)
       .first<{ total: number }>(),

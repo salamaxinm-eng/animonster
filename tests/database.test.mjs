@@ -551,8 +551,25 @@ test('search metadata supports normalized aliases and typo ranking', async () =>
      WHERE a.genres_index @> $1::jsonb AND m.themes @> $2::jsonb`,
     [JSON.stringify(['Экшен', 'Комедия']), JSON.stringify(['Военное'])],
   );
+  await databaseClient.query(
+    `UPDATE anime_search_metadata SET themes='[]'::jsonb WHERE anime_id=$1`,
+    [anime.id],
+  );
+  await databaseClient.query(
+    `INSERT INTO anime_themes_cache(anime_id,themes,status,checked_at)
+     VALUES ($1,$2,'ok',$3)`,
+    [anime.id, JSON.stringify(['Путешествие во времени']), timestamp],
+  );
+  const cachedTheme = await databaseClient.query(
+    `SELECT count(*) AS total FROM anime_cache a
+     JOIN anime_search_metadata m ON m.anime_id=a.id
+     LEFT JOIN anime_themes_cache t ON t.anime_id=a.id
+     WHERE (m.themes || COALESCE(t.themes::jsonb,'[]'::jsonb) || a.genres_index) @> $1::jsonb`,
+    [JSON.stringify(['Путешествие во времени'])],
+  );
   assert.equal(Number(filtered[0].total), 1);
   assert.equal(Number(missingCombination[0].total), 0);
+  assert.equal(Number(cachedTheme[0].total), 1);
   await databaseClient.close();
 });
 
