@@ -10,6 +10,7 @@ import {
   type Voiceover,
 } from '@/lib/anime';
 import { api, useCommunity } from '@/components/community/context';
+import { kodikEpisodeFromMessage } from '@/lib/kodik-events';
 
 type SkipTimes = {
   opening?: SkipSegment;
@@ -412,23 +413,8 @@ export function EpisodePlayer({
         return;
       }
       const next = Number(timeValue);
-      const episodeValue =
-        payload?.episode ??
-        payload?.episode_number ??
-        payload?.episodeNumber ??
-        payload?.current_episode ??
-        payload?.data?.episode;
-      const episodeNumber = Number(episodeValue);
-      const episodeSignal =
-        payload?.event === 'change_episode' ||
-        payload?.type === 'episode' ||
-        payload?.key === 'kodik_player_episode_changed' ||
-        episodeValue != null;
-      if (
-        episodeSignal &&
-        Number.isInteger(episodeNumber) &&
-        episodeNumber > 0
-      ) {
+      const episodeNumber = kodikEpisodeFromMessage(payload);
+      if (episodeNumber != null) {
         // Kodik has already changed its own episode. Keep this iframe alive so
         // mobile browsers do not lose its fullscreen browsing context.
         selectEpisode(episodeNumber, true);
