@@ -15,6 +15,7 @@ export type Anime = {
   popularity?: number;
   age_rating?: string;
   is_adult?: boolean;
+  age_rating_source?: 'shikimori' | 'kodik' | 'aniliberty';
   reason?: string;
   primary_provider?: 'kodik' | 'aniliberty';
   providers?: ('kodik' | 'aniliberty')[];

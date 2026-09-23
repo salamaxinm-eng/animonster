@@ -125,6 +125,7 @@ export function normalize(r: Release): Anime {
     popularity: r.added_in_users_favorites || 0,
     age_rating: r.age_rating?.label,
     is_adult: !!r.age_rating?.is_adult,
+    age_rating_source: r.age_rating ? 'aniliberty' : undefined,
     primary_provider: 'aniliberty',
     providers: ['aniliberty'],
     status:

@@ -1,4 +1,5 @@
 import type { Anime } from '@/lib/anime';
+import { shikimoriAgeRating } from '@/lib/age-rating';
 import { db, now } from './core';
 import {
   normalizeMatchTitle,
@@ -8,7 +9,7 @@ import {
 const ENDPOINT = 'https://shikimori.one/api/graphql';
 const QUERY = `query ($ids: String!) {
   animes(ids: $ids, limit: 50) {
-    id name russian synonyms airedOn { date } poster { originalUrl }
+    id name russian synonyms rating airedOn { date } poster { originalUrl }
     genres { russian kind }
   }
 }`;
@@ -79,6 +80,7 @@ export async function canonicalizeAnimeIdentities(items: Anime[]) {
       items.map(async (anime) => {
         const candidate = byId.get(anime.shikimori_id || anime.id);
         if (!candidate) return anime;
+        const canonicalAge = shikimoriAgeRating(candidate.rating);
         const repaired: Anime = {
           ...anime,
           russian: candidate.russian?.trim() || anime.russian,
@@ -88,8 +90,13 @@ export async function canonicalizeAnimeIdentities(items: Anime[]) {
             original:
               candidate.poster?.originalUrl?.trim() || anime.image.original,
           },
+          ...(canonicalAge && {
+            age_rating: canonicalAge.label,
+            is_adult: canonicalAge.isAdult,
+            age_rating_source: 'shikimori' as const,
+          }),
         };
-        if (identitySignature(repaired) !== identitySignature(anime))
+        if (JSON.stringify(repaired) !== JSON.stringify(anime))
           await db()
             .prepare(
               `UPDATE anime_cache SET data=?,search_text=?,year_index=? WHERE id=?`,
@@ -115,8 +122,9 @@ export async function refreshSearchMetadata(limit = 40) {
     .prepare(
       `SELECT m.anime_id,a.data FROM anime_search_metadata m
        JOIN anime_cache a ON a.id=m.anime_id
-       WHERE m.version<2 OR m.status='pending' OR (m.status='error' AND m.checked_at<?)
-       ORDER BY m.checked_at,m.anime_id LIMIT ?`,
+       WHERE m.version<3 OR m.status='pending' OR (m.status='error' AND m.checked_at<?)
+       ORDER BY CASE WHEN a.data::jsonb->>'is_adult'='true' THEN 0 ELSE 1 END,
+       m.checked_at,m.anime_id LIMIT ?`,
     )
     .bind(now() - 15 * 60 * 1000, safeLimit)
     .all<PendingRow>();
@@ -152,6 +160,7 @@ export async function refreshSearchMetadata(limit = 40) {
         .filter((genre) => genre.kind === 'theme' && genre.russian?.trim())
         .map((genre) => genre.russian!.trim());
       if (candidate) {
+        const canonicalAge = shikimoriAgeRating(candidate.rating);
         const repaired: Anime = {
           ...identity.anime,
           russian: candidate.russian?.trim() || identity.anime.russian,
@@ -162,6 +171,11 @@ export async function refreshSearchMetadata(limit = 40) {
               candidate.poster?.originalUrl?.trim() ||
               identity.anime.image.original,
           },
+          ...(canonicalAge && {
+            age_rating: canonicalAge.label,
+            is_adult: canonicalAge.isAdult,
+            age_rating_source: 'shikimori' as const,
+          }),
         };
         await db()
           .prepare(
@@ -178,7 +192,7 @@ export async function refreshSearchMetadata(limit = 40) {
       await db()
         .prepare(
           `UPDATE anime_search_metadata SET aliases=?::jsonb,normalized_aliases=?::text[],
-           normalized_titles=?,themes=?::jsonb,status=?,version=2,attempts=attempts+1,checked_at=?,last_error=NULL
+           normalized_titles=?,themes=?::jsonb,status=?,version=3,attempts=attempts+1,checked_at=?,last_error=NULL
            WHERE anime_id=?`,
         )
         .bind(

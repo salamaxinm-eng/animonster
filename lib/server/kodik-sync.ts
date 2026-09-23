@@ -1,4 +1,5 @@
 import type { Anime } from '@/lib/anime';
+import { shikimoriAgeRating } from '@/lib/age-rating';
 import { db, now, runtime } from './core';
 import { syncEpisodeAccess } from './episode-access';
 import { saveAnime } from './library';
@@ -24,6 +25,7 @@ type ShikimoriCandidate = {
   episodes?: number;
   episodes_aired?: number;
   status?: string;
+  rating?: string;
 };
 
 type SyncState = {
@@ -146,6 +148,9 @@ function normalizeKodikAnime(
     | 'kodik'
     | 'aniliberty'
   )[];
+  const canonicalAge = shikimoriAgeRating(canonical?.rating);
+  const preserveCanonicalAge = current?.age_rating_source === 'shikimori';
+  const kodikAge = ageRating(data);
   return {
     ...current,
     id: animeId,
@@ -171,11 +176,25 @@ function normalizeKodikAnime(
       current?.description ||
       '',
     genres: data?.anime_genres || data?.genres || current?.genres || [],
-    age_rating: ageRating(data) || current?.age_rating,
-    is_adult:
-      Number(data?.minimal_age || 0) >= 18 ||
-      ['R+', 'Rx'].includes(String(data?.rating_mpaa || '')) ||
-      !!current?.is_adult,
+    age_rating:
+      canonicalAge?.label ||
+      (preserveCanonicalAge
+        ? current?.age_rating
+        : kodikAge || current?.age_rating),
+    is_adult: canonicalAge
+      ? canonicalAge.isAdult
+      : preserveCanonicalAge
+        ? !!current?.is_adult
+        : Number(data?.minimal_age || 0) >= 18 ||
+          ['R+', 'Rx'].includes(String(data?.rating_mpaa || '')) ||
+          !!current?.is_adult,
+    age_rating_source: canonicalAge
+      ? 'shikimori'
+      : preserveCanonicalAge
+        ? 'shikimori'
+        : kodikAge
+          ? 'kodik'
+          : current?.age_rating_source,
     status: data?.anime_status || current?.status || '',
     primary_provider: 'kodik',
     providers,

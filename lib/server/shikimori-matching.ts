@@ -8,6 +8,7 @@ export type ShikimoriAnimeCandidate = {
   aired_on?: string | null;
   airedOn?: { date?: string | null } | null;
   poster?: { originalUrl?: string | null } | null;
+  rating?: string | null;
   genres?: Array<{
     kind?: string | null;
     russian?: string | null;
