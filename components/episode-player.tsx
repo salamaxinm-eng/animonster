@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import {
@@ -74,6 +74,7 @@ export function EpisodePlayer({
     [kodikDuration, setKodikDuration] = useState<number | null>(null),
     [iframeSeek, setIframeSeek] = useState<number | null>(null),
     [iframeRevision, setIframeRevision] = useState(0),
+    [iframeSourceEpisode, setIframeSourceEpisode] = useState(initialEpisode),
     [skipTimes, setSkipTimes] = useState<SkipTimes>({
       source: 'none',
       confidence: 'unverified',
@@ -99,19 +100,26 @@ export function EpisodePlayer({
   const voiceover =
     voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
   const isKodik = voiceover?.provider === 'kodik';
-  const availableIndices = voiceoverEpisodeIndices(episodes, voiceover);
+  const availableIndices = useMemo(
+    () => voiceoverEpisodeIndices(episodes, voiceover),
+    [episodes, voiceover],
+  );
   const firstVoiceoverIndex = availableIndices[0] ?? 0;
   const nextIndex = availableIndices.find((value) => value > index);
   const previousIndex = availableIndices.findLast((value) => value < index);
   useEffect(() => {
     if (voiceoverUserSelected.current || !voiceovers.length) return;
     const preferred = initialVoiceover(voiceovers, initialEpisode);
-    if (preferred && preferred.id !== voiceoverId) setVoiceoverId(preferred.id);
+    if (preferred && preferred.id !== voiceoverId) {
+      setIframeSourceEpisode(episode?.ordinal || initialEpisode);
+      setVoiceoverId(preferred.id);
+    }
   }, [voiceovers, initialEpisode, voiceoverId]);
   const selectEpisode = useCallback(
-    (ordinal: number) => {
+    (ordinal: number, preserveKodikFrame = false) => {
       const next = episodes.findIndex((item) => item.ordinal === ordinal);
       if (next < 0 || !availableIndices.includes(next)) return;
+      if (!preserveKodikFrame) setIframeSourceEpisode(ordinal);
       setIndex(next);
       onEpisodeChange(ordinal);
     },
@@ -132,7 +140,10 @@ export function EpisodePlayer({
     } catch {}
   }, [animeId, episode?.ordinal, voiceover?.id, currentTime]);
   useEffect(() => {
-    if (!availableIndices.includes(index)) setIndex(firstVoiceoverIndex);
+    if (!availableIndices.includes(index)) {
+      setIframeSourceEpisode(episodes[firstVoiceoverIndex]?.ordinal || 1);
+      setIndex(firstVoiceoverIndex);
+    }
   }, [voiceoverId, firstVoiceoverIndex, index]);
   useEffect(() => {
     if (!community.loaded) return;
@@ -213,8 +224,9 @@ export function EpisodePlayer({
     advancedEpisode.current = key;
     autoplayNext.current = true;
     setPlayback(false);
+    setIframeSourceEpisode(episodes[nextIndex].ordinal);
     setIndex(nextIndex);
-  }, [episode, nextIndex, setPlayback, voiceover?.id]);
+  }, [episode, episodes, nextIndex, setPlayback, voiceover?.id]);
   useEffect(() => {
     const restore = () => {
       if (document.visibilityState === 'visible') void requestWakeLock();
@@ -285,6 +297,7 @@ export function EpisodePlayer({
         .catch(() => {})
         .finally(() => {
           sending = false;
+          if (seconds > 0) flush();
         });
     };
     let ticks = 0;
@@ -345,6 +358,7 @@ export function EpisodePlayer({
         .catch(() => {})
         .finally(() => {
           sending = false;
+          if (seconds >= 1) flush();
         });
     };
     const receive = (event: MessageEvent) => {
@@ -415,7 +429,9 @@ export function EpisodePlayer({
         Number.isInteger(episodeNumber) &&
         episodeNumber > 0
       ) {
-        selectEpisode(episodeNumber);
+        // Kodik has already changed its own episode. Keep this iframe alive so
+        // mobile browsers do not lose its fullscreen browsing context.
+        selectEpisode(episodeNumber, true);
         return;
       }
       if (!Number.isFinite(next) || next < 0 || next > 24 * 60 * 60) return;
@@ -556,10 +572,10 @@ export function EpisodePlayer({
     try {
       const relative = voiceover.player_url.startsWith('/');
       const url = new URL(voiceover.player_url, 'https://animonster.invalid');
-      url.searchParams.set('episode', String(episode.ordinal));
+      url.searchParams.set('episode', String(iframeSourceEpisode));
       const requestedPosition =
         iframeSeek ??
-        (episode.ordinal === initialEpisode && initialPosition > 0
+        (iframeSourceEpisode === initialEpisode && initialPosition > 0
           ? initialPosition
           : 0);
       if (requestedPosition > 0)
@@ -598,6 +614,7 @@ export function EpisodePlayer({
     skippedSegment.current = `${episode?.id}:${voiceover?.id}:${kind}:${segment.stop}`;
     setCurrentTime(segment.stop);
     if (isKodik) {
+      setIframeSourceEpisode(episode?.ordinal || iframeSourceEpisode);
       setIframeSeek(segment.stop);
       setIframeRevision((value) => value + 1);
     } else if (video.current) video.current.currentTime = segment.stop;
@@ -653,7 +670,7 @@ export function EpisodePlayer({
           iframeUrl ? (
             <iframe
               ref={frame}
-              key={voiceover.id + ':' + episode.ordinal + ':' + iframeRevision}
+              key={voiceover.id + ':' + iframeRevision}
               src={iframeUrl}
               title={`${animeTitle} — ${voiceover.title}, серия ${episode.ordinal}`}
               allow="autoplay *; fullscreen *; picture-in-picture *; encrypted-media *"
@@ -755,6 +772,7 @@ export function EpisodePlayer({
             value={voiceover?.id || 'kodik'}
             onChange={(e) => {
               voiceoverUserSelected.current = true;
+              setIframeSourceEpisode(episode?.ordinal || 1);
               setVoiceoverId(e.target.value);
             }}
           >
@@ -770,7 +788,10 @@ export function EpisodePlayer({
           className="episode-select"
           aria-label="Выбор серии"
           value={index}
-          onChange={(e) => selectEpisode(Number(e.target.value))}
+          onChange={(e) => {
+            const selected = episodes[Number(e.target.value)];
+            if (selected) selectEpisode(selected.ordinal);
+          }}
         >
           {availableIndices.map((i) => {
             const e = episodes[i];

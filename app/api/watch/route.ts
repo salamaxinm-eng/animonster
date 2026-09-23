@@ -86,8 +86,8 @@ export async function POST(r: Request) {
 
       await db().batch([
         db()
-          .prepare('DELETE FROM watch_sessions WHERE expires<? OR actor=?')
-          .bind(n, a.key),
+          .prepare('DELETE FROM watch_sessions WHERE expires<?')
+          .bind(n),
 
         db()
           .prepare(
