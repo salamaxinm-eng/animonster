@@ -137,7 +137,7 @@ export async function grantReferralRewards(userId: string) {
   return { qualified };
 }
 
-export async function referralDashboard(userId: string) {
+export async function referralDashboard(userId: string, origin = base()) {
   await grantReferralRewards(userId);
   const code = await ensureReferralCode(userId);
   const [counts, friends] = await Promise.all([
@@ -164,7 +164,7 @@ export async function referralDashboard(userId: string) {
   ]);
   return {
     code,
-    url: `${base()}/ref/${code}`,
+    url: new URL(`/ref/${encodeURIComponent(code)}`, origin).toString(),
     registered: Number(counts?.registered || 0),
     qualified: Number(counts?.qualified || 0),
     friends: friends.results,

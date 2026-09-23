@@ -1,4 +1,3 @@
-import { base } from '@/lib/server/core';
 import { referralCodeOwner } from '@/lib/server/referrals';
 
 export async function GET(
@@ -7,7 +6,7 @@ export async function GET(
 ) {
   const code = (await params).code.trim().toUpperCase();
   const owner = await referralCodeOwner(code);
-  const target = new URL(owner ? '/profile' : '/', base());
+  const target = new URL(owner ? '/profile' : '/', request.url);
   if (!owner) target.searchParams.set('referral', 'invalid');
   const response = Response.redirect(target, 302);
   if (owner)

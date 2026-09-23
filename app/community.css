@@ -3073,7 +3073,7 @@ button:disabled {
   gap: 10px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  touch-action: pan-y;
+  touch-action: pan-x pan-y;
   padding: 2px 2px 9px;
   overscroll-behavior-inline: contain;
   scrollbar-color: #536274 #151b23;
@@ -3094,26 +3094,20 @@ button:disabled {
   height: 38px;
   display: grid;
   place-items: center;
-  border: 1px solid #a5e63e99;
+  border: 1px solid #536274;
   border-radius: 50%;
-  background: #111a22ef;
-  color: #c7f66a;
+  background: #18212cef;
+  color: #d8e2ed;
   box-shadow: 0 4px 16px #0008;
   cursor: pointer;
   z-index: 2;
 }
-.season-edge-button.previous {
-  left: 8px;
-}
 .season-edge-button.next {
   right: 8px;
 }
-.season-scroll-buttons button:last-child,
-.season-edge-button {
-  border-color: #a5e63e;
-  background: #a5e63e;
-  color: #10160d;
-  opacity: 1;
+.season-edge-button:hover:not(:disabled) {
+  border-color: #8d9daf;
+  background: #222e3b;
 }
 .season-edge-button svg {
   width: 20px;

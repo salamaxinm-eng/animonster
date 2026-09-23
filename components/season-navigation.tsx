@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, GitBranch } from 'lucide-react';
+import { ChevronRight, GitBranch } from 'lucide-react';
 import { posterUrl, type Anime } from '@/lib/anime';
 
 type RelationCard = {
@@ -87,23 +87,14 @@ function RelationRow({
   icon?: React.ReactNode;
 }) {
   const track = useRef<HTMLDivElement>(null);
-  const drag = useRef<{
-    pointerId: number;
-    startX: number;
-    startLeft: number;
-    moved: boolean;
-  } | null>(null);
-  const suppressClick = useRef(false);
-  const [scroll, setScroll] = useState({ left: false, right: false });
+  const [canScrollRight, setCanScrollRight] = useState(false);
   useEffect(() => {
     const element = track.current;
     if (!element) return;
     const update = () =>
-      setScroll({
-        left: element.scrollLeft > 2,
-        right:
-          element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
-      });
+      setCanScrollRight(
+        element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
+      );
     update();
     const observer = new ResizeObserver(update);
     observer.observe(element);
@@ -113,13 +104,11 @@ function RelationRow({
       element.removeEventListener('scroll', update);
     };
   }, [items.length]);
-  const move = (direction: -1 | 1) => {
+  const moveNext = () => {
     const element = track.current;
     if (!element) return;
     element.scrollTo({
-      left:
-        element.scrollLeft +
-        direction * Math.max(220, element.clientWidth * 0.72),
+      left: element.scrollLeft + Math.max(220, element.clientWidth * 0.72),
       behavior: 'smooth',
     });
   };
@@ -129,66 +118,11 @@ function RelationRow({
         <h2 id={id}>
           {icon} {title}
         </h2>
-        {items.length > 1 && (
-          <div className="season-scroll-buttons" aria-label="Прокрутка списка">
-            <button
-              type="button"
-              disabled={!scroll.left}
-              onClick={() => move(-1)}
-              aria-label="Показать предыдущие карточки"
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              type="button"
-              onClick={() => move(1)}
-              aria-label="Показать следующие карточки"
-            >
-              <ChevronRight />
-            </button>
-          </div>
-        )}
       </div>
       <div className="season-relation-scroller">
         <div
           ref={track}
           className="season-relation-track"
-          onPointerDown={(event) => {
-            if (event.pointerType === 'mouse') return;
-            drag.current = {
-              pointerId: event.pointerId,
-              startX: event.clientX,
-              startLeft: event.currentTarget.scrollLeft,
-              moved: false,
-            };
-            event.currentTarget.setPointerCapture(event.pointerId);
-          }}
-          onPointerMove={(event) => {
-            const current = drag.current;
-            if (!current || current.pointerId !== event.pointerId) return;
-            const distance = event.clientX - current.startX;
-            if (Math.abs(distance) > 5) current.moved = true;
-            event.currentTarget.scrollLeft = current.startLeft - distance;
-          }}
-          onPointerUp={(event) => {
-            const current = drag.current;
-            if (!current || current.pointerId !== event.pointerId) return;
-            suppressClick.current = current.moved;
-            drag.current = null;
-            if (event.currentTarget.hasPointerCapture(event.pointerId))
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            setTimeout(() => {
-              suppressClick.current = false;
-            }, 0);
-          }}
-          onPointerCancel={() => {
-            drag.current = null;
-          }}
-          onClickCapture={(event) => {
-            if (!suppressClick.current) return;
-            event.preventDefault();
-            event.stopPropagation();
-          }}
           onWheel={(event) => {
             const element = event.currentTarget;
             if (element.scrollWidth <= element.clientWidth) return;
@@ -226,20 +160,10 @@ function RelationRow({
         </div>
         {items.length > 1 && (
           <button
-            className="season-edge-button previous"
-            type="button"
-            disabled={!scroll.left}
-            onClick={() => move(-1)}
-            aria-label="Показать предыдущие карточки"
-          >
-            <ChevronLeft />
-          </button>
-        )}
-        {items.length > 1 && (
-          <button
             className="season-edge-button next"
             type="button"
-            onClick={() => move(1)}
+            disabled={!canScrollRight}
+            onClick={moveNext}
             aria-label="Показать следующие карточки"
           >
             <ChevronRight />

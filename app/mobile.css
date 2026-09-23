@@ -680,7 +680,15 @@
   }
 
   .season-relation-track {
-    grid-auto-columns: 175px;
+    grid-auto-columns: minmax(78%, 220px);
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    touch-action: pan-x pan-y;
+  }
+
+  .season-relation-track::-webkit-scrollbar,
+  .season-edge-button {
+    display: none;
   }
 
   .title-playback > h2,
