@@ -1,4 +1,5 @@
 import type { Anime, Episode } from '@/lib/anime';
+import { hasAdultConsent } from '@/lib/adult-consent';
 import { cacheAnime, getAnime } from '@/lib/server/library';
 import {
   liberty,
@@ -62,7 +63,11 @@ export async function GET(request: Request) {
         episodes: [],
         message: 'Этого аниме пока нет у подключённых источников.',
       });
-    if (anime.is_adult && !currentUser?.adult_confirmed_at)
+    if (
+      anime.is_adult &&
+      !currentUser?.adult_confirmed_at &&
+      !hasAdultConsent(request.headers.get('cookie'))
+    )
       throw new ApiError(
         'Подтвердите совершеннолетие в аккаунте.',
         403,

@@ -1,10 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  CommunityHeader,
-  useCommunity,
-  api,
-} from '@/components/community/context';
+import { CommunityHeader, useCommunity } from '@/components/community/context';
 import { Comments } from '@/components/community/comments';
 import { CollectionControl } from '@/components/community/collection-control';
 import { EpisodePlayer } from '@/components/episode-player';
@@ -19,6 +15,7 @@ import { EpisodeNotifications } from '@/components/episode-notifications';
 import { AnimeThemes } from '@/components/anime-themes';
 import { SeasonNavigation } from '@/components/season-navigation';
 import { UsersRound } from 'lucide-react';
+import { ADULT_CONSENT_COOKIE } from '@/lib/adult-consent';
 import {
   Dialog,
   DialogContent,
@@ -33,6 +30,8 @@ export function AnimePage({ anime }: { anime: Anime }) {
     [start, setStart] = useState({ episode: 1, position: 0, voiceover: '' }),
     [error, setError] = useState(''),
     [ageRejected, setAgeRejected] = useState(false),
+    [deviceAdultConfirmed, setDeviceAdultConfirmed] = useState(false),
+    [ageConsentReady, setAgeConsentReady] = useState(!anime.is_adult),
     [ageBusy, setAgeBusy] = useState(false),
     [ageError, setAgeError] = useState(''),
     [loading, setLoading] = useState(true),
@@ -45,7 +44,19 @@ export function AnimePage({ anime }: { anime: Anime }) {
     }>({ episode: 1, provider: 'kodik', voiceover: 'kodik' });
   const community = useCommunity();
   const { user } = community;
-  const ageLocked = !!anime.is_adult && !user?.adult_confirmed;
+  const ageLocked =
+    !!anime.is_adult &&
+    ageConsentReady &&
+    !user?.adult_confirmed &&
+    !deviceAdultConfirmed;
+  useEffect(() => {
+    setDeviceAdultConfirmed(
+      document.cookie
+        .split(';')
+        .some((part) => part.trim() === `${ADULT_CONSENT_COOKIE}=1`),
+    );
+    setAgeConsentReady(true);
+  }, [anime.id]);
   async function load(retry = false) {
     setLoading(true);
     setError('');
@@ -101,13 +112,20 @@ export function AnimePage({ anime }: { anime: Anime }) {
     }
   }
   useEffect(() => {
-    if (!community.loaded) return;
+    if (!community.loaded || !ageConsentReady) return;
     if (ageLocked) {
       setLoading(false);
       return;
     }
     void load();
-  }, [anime.id, user?.id, user?.adult_confirmed, ageLocked, community.loaded]);
+  }, [
+    anime.id,
+    user?.id,
+    user?.adult_confirmed,
+    ageLocked,
+    ageConsentReady,
+    community.loaded,
+  ]);
   const updatePartySelection = useCallback(
     (selection: typeof partySelection) => setPartySelection(selection),
     [],
@@ -195,7 +213,9 @@ export function AnimePage({ anime }: { anime: Anime }) {
               {partyError}
             </p>
           )}
-          {ageLocked ? (
+          {!ageConsentReady ? (
+            <p role="status">Проверяем возраст…</p>
+          ) : ageLocked ? (
             <div className="playback-error">
               {ageRejected
                 ? 'Воспроизведение контента 18+ заблокировано.'
@@ -241,8 +261,8 @@ export function AnimePage({ anime }: { anime: Anime }) {
           <DialogContent>
             <DialogTitle>Вам уже исполнилось 18 лет?</DialogTitle>
             <DialogDescription>
-              Подтверждение сохранится в аккаунте. До ответа видео не
-              загружается.
+              Подтверждение сохранится на этом устройстве. Регистрация не нужна.
+              До ответа видео не загружается.
             </DialogDescription>
             {ageError && (
               <p role="alert" className="error-msg">
@@ -253,16 +273,16 @@ export function AnimePage({ anime }: { anime: Anime }) {
               <Button
                 disabled={ageBusy}
                 onClick={async () => {
-                  if (!user) {
-                    setAgeRejected(true);
-                    community.login();
-                    return;
-                  }
                   setAgeBusy(true);
                   setAgeError('');
                   try {
-                    await api('adult_consent', { confirmed: true });
-                    await community.refresh();
+                    const response = await fetch('/api/adult-consent', {
+                      method: 'POST',
+                    });
+                    if (!response.ok)
+                      throw new Error('Не удалось сохранить подтверждение');
+                    setDeviceAdultConfirmed(true);
+                    if (user) await community.refresh();
                   } catch (reason) {
                     setAgeError((reason as Error).message);
                   } finally {
@@ -270,11 +290,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
                   }
                 }}
               >
-                {ageBusy
-                  ? 'Сохраняем…'
-                  : user
-                    ? 'Да, мне есть 18'
-                    : 'Войти и подтвердить возраст'}
+                {ageBusy ? 'Сохраняем…' : 'Да, мне есть 18'}
               </Button>
               <Button variant="outline" onClick={() => setAgeRejected(true)}>
                 Нет

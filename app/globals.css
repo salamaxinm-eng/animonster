@@ -273,12 +273,17 @@ footer .brand span {
   width: min(390px, 88vw);
   max-height: min(560px, 72vh);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   padding: 8px;
   border: 1px solid #303a47;
   border-radius: 14px;
   background: #111720;
   box-shadow: 0 18px 50px #000a;
   color: #eef2f6;
+}
+.global-search-results::-webkit-scrollbar {
+  display: none;
 }
 .global-search-caption {
   padding: 7px 9px 8px;

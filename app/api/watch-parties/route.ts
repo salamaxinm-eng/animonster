@@ -1,4 +1,5 @@
 import { body, fail, json, requireUser, sameOrigin } from '@/lib/server/core';
+import { hasAdultConsent } from '@/lib/adult-consent';
 import {
   activeParty,
   createParty,
@@ -20,6 +21,11 @@ export async function POST(request: Request) {
     requireWatchParties();
     sameOrigin(request);
     const user = await requireUser(request);
+    if (
+      !user.adult_confirmed_at &&
+      hasAdultConsent(request.headers.get('cookie'))
+    )
+      user.adult_confirmed_at = Date.now();
     return json(await createParty(user, await body(request)), 201);
   } catch (error) {
     return fail(error);
