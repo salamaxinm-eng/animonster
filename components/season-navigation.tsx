@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, GitBranch } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { GitBranch } from 'lucide-react';
 import Link from 'next/link';
 import { posterUrl, type Anime } from '@/lib/anime';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  useCarousel,
+} from '@/components/ui/carousel';
 
 type RelationCard = {
   item: Anime;
@@ -113,38 +121,11 @@ function RelationRow({
   allHref?: string;
   total?: number;
 }) {
-  const track = useRef<HTMLDivElement>(null);
-  const [scroll, setScroll] = useState({ left: false, right: false });
-  useEffect(() => {
-    const element = track.current;
-    if (!element) return;
-    const update = () =>
-      setScroll({
-        left: element.scrollLeft > 2,
-        right:
-          element.scrollLeft + element.clientWidth < element.scrollWidth - 2,
-      });
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(element);
-    element.addEventListener('scroll', update, { passive: true });
-    return () => {
-      observer.disconnect();
-      element.removeEventListener('scroll', update);
-    };
-  }, [items.length]);
-  const move = (direction: -1 | 1) => {
-    const element = track.current;
-    if (!element) return;
-    element.scrollTo({
-      left:
-        element.scrollLeft +
-        direction * Math.max(200, element.clientWidth * 0.72),
-      behavior: 'smooth',
-    });
-  };
   return (
-    <div className="season-relation-row">
+    <Carousel
+      className="season-relation-row"
+      opts={{ align: 'start', containScroll: 'trimSnaps', loop: false }}
+    >
       <div className="season-relation-heading">
         <h2 id={id}>
           {icon} {title}
@@ -155,76 +136,79 @@ function RelationRow({
               Показать все <span>{total}</span>
             </Link>
           )}
-          {items.length > 1 && (
-            <div
-              className="season-scroll-buttons"
-              aria-label="Прокрутка списка"
+          {items.length > 1 && <RelationCarouselControls />}
+        </div>
+      </div>
+      <RelationCarouselViewport label={`${title}: ${items.length} карточек`}>
+        {items.map((card) => {
+          const content = (
+            <>
+              <img src={posterUrl(card.item)} alt="" loading="lazy" />
+              <span>{card.label}</span>
+              <strong>{card.item.russian}</strong>
+              <small>{card.item.aired_on?.slice(0, 4) || '—'}</small>
+            </>
+          );
+          return (
+            <CarouselItem
+              className="season-relation-slide basis-auto pl-0"
+              key={card.item.id}
             >
-              <button
-                type="button"
-                disabled={!scroll.left}
-                onClick={() => move(-1)}
-                aria-label="Показать предыдущие карточки"
-              >
-                <ChevronLeft />
-              </button>
-              <button
-                type="button"
-                disabled={!scroll.right}
-                onClick={() => move(1)}
-                aria-label="Показать следующие карточки"
-              >
-                <ChevronRight />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-      <div
-        className={
-          'season-relation-scroller' + (scroll.right ? ' has-more' : '')
-        }
+              {card.active ? (
+                <div className="season-card active" aria-current="page">
+                  {content}
+                </div>
+              ) : (
+                <a
+                  className={'season-card' + (card.branch ? ' branch' : '')}
+                  href={`/anime/${card.item.id}`}
+                >
+                  {content}
+                </a>
+              )}
+            </CarouselItem>
+          );
+        })}
+      </RelationCarouselViewport>
+    </Carousel>
+  );
+}
+
+function RelationCarouselControls() {
+  return (
+    <div className="season-scroll-buttons" aria-label="Прокрутка списка">
+      <CarouselPrevious
+        className="static"
+        aria-label="Показать предыдущие карточки"
+      />
+      <CarouselNext
+        className="static"
+        aria-label="Показать следующие карточки"
+      />
+    </div>
+  );
+}
+
+function RelationCarouselViewport({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  const { canScrollNext } = useCarousel();
+  return (
+    <div
+      className={
+        'season-relation-scroller' + (canScrollNext ? ' has-more' : '')
+      }
+    >
+      <CarouselContent
+        className="season-relation-track ml-0"
+        aria-label={label}
       >
-        <div
-          ref={track}
-          className="season-relation-track"
-          aria-label={`${title}: ${items.length} карточек`}
-          onWheel={(event) => {
-            const element = event.currentTarget;
-            if (element.scrollWidth <= element.clientWidth) return;
-            event.preventDefault();
-            element.scrollLeft += event.deltaY || event.deltaX;
-          }}
-        >
-          {items.map((card) => {
-            const content = (
-              <>
-                <img src={posterUrl(card.item)} alt="" loading="lazy" />
-                <span>{card.label}</span>
-                <strong>{card.item.russian}</strong>
-                <small>{card.item.aired_on?.slice(0, 4) || '—'}</small>
-              </>
-            );
-            return card.active ? (
-              <div
-                className="season-card active"
-                aria-current="page"
-                key={card.item.id}
-              >
-                {content}
-              </div>
-            ) : (
-              <a
-                className={'season-card' + (card.branch ? ' branch' : '')}
-                href={`/anime/${card.item.id}`}
-                key={card.item.id}
-              >
-                {content}
-              </a>
-            );
-          })}
-        </div>
-      </div>
+        {children}
+      </CarouselContent>
     </div>
   );
 }

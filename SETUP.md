@@ -6,6 +6,14 @@
 
 `OWNER_PREVIEW=true` создаёт только в development локальный профиль администратора. В production этот режим выключен независимо от входящих заголовков.
 
+### Локальная разработка через Docker
+
+Для изолированного dev-окружения выполните `docker compose -f compose.dev.yaml up -d --build` и откройте `http://localhost:3000`. Этот стек запускает `next dev` с HMR напрямую, без Caddy и HTTPS. Исходники подключены в контейнер через bind mount, поэтому изменения применяются без пересборки образа.
+
+Dev-стек использует отдельные проект, сеть и PostgreSQL volume; production-контейнеры и `postgres_data` не затрагиваются. Локальный `.env` подключается опционально для токенов интеграций, но `DATABASE_URL`, `SITE_URL` и безопасные dev-флаги задаются самим Compose-файлом. `.env.production` не используется.
+
+Состояние проверяется командами `docker compose -f compose.dev.yaml ps` и `docker compose -f compose.dev.yaml logs -f app`. Остановка: `docker compose -f compose.dev.yaml down`. Команда `docker compose -f compose.dev.yaml down -v` дополнительно безвозвратно удаляет только dev-базу и кэши.
+
 ## Production на Timeweb Cloud
 
 Для первого запуска достаточно одного облачного сервера Ubuntu: PostgreSQL, Next.js и Caddy запускаются отдельными контейнерами Docker Compose. DNS-записи `A` для домена позднее можно направить на публичный IP сервера. Откройте входящие TCP-порты 22, 80 и 443.

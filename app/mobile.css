@@ -284,18 +284,15 @@
   .anime-slider {
     margin: 0 -18px;
     padding: 14px 18px 5px;
-    grid-auto-columns: min(42vw, 168px);
     gap: 13px;
-    scroll-snap-type: x proximity;
-    scrollbar-width: none;
   }
 
-  .anime-slider::-webkit-scrollbar {
+  .anime-slide {
+    flex-basis: min(42vw, 168px);
+  }
+
+  .anime-carousel-controls {
     display: none;
-  }
-
-  .anime-slider .card {
-    scroll-snap-align: start;
   }
 
   .section-head {
@@ -681,16 +678,12 @@
   }
 
   .season-relation-track {
-    grid-auto-columns: 170px;
     gap: 8px;
     padding-bottom: 4px;
-    scrollbar-width: none;
-    scroll-snap-type: x mandatory;
-    touch-action: pan-x pan-y;
   }
 
-  .season-relation-track::-webkit-scrollbar {
-    display: none;
+  .season-relation-slide {
+    flex-basis: 170px;
   }
 
   .season-relation-heading {

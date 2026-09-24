@@ -1109,10 +1109,14 @@
   border-radius: 16px;
   background: linear-gradient(135deg, #151c25, #0f141b);
 }
-.search-franchise-block > header {
+.search-franchise-carousel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 15px;
 }
-.search-franchise-block > header span {
+.search-franchise-carousel > header span {
   color: var(--am-accent);
   font-size: 10px;
   font-weight: 800;
@@ -1123,15 +1127,28 @@
   margin: 4px 0 0;
   font-size: 20px;
 }
-.search-franchise-block > div {
+.search-franchise-track {
   display: flex;
   gap: 11px;
-  overflow-x: auto;
   padding-bottom: 4px;
+  touch-action: pan-y pinch-zoom;
+}
+.search-franchise-slide {
+  flex: 0 0 150px;
+  min-width: 0;
+}
+.search-franchise-controls {
+  display: flex;
+  flex-shrink: 0;
+  gap: 7px;
+}
+.search-franchise-controls button {
+  width: 34px;
+  height: 34px;
 }
 .search-franchise-block a {
-  width: 150px;
-  flex: 0 0 150px;
+  width: 100%;
+  height: 100%;
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   column-gap: 10px;
@@ -3103,22 +3120,14 @@ button:disabled {
 }
 .season-relation-track {
   box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 190px;
-  justify-content: start;
+  display: flex;
   gap: 10px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
   padding: 2px 2px 9px;
-  overscroll-behavior-inline: contain;
-  scrollbar-color: #536274 #151b23;
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
+  touch-action: pan-y pinch-zoom;
+}
+.season-relation-slide {
+  flex: 0 0 190px;
+  min-width: 0;
 }
 .season-relation-scroller {
   position: relative;
@@ -3140,12 +3149,8 @@ button:disabled {
 .season-relation-scroller.has-more::after {
   opacity: 1;
 }
-.season-relation-track:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--am-accent-alt) 40%, transparent);
-  outline-offset: 4px;
-}
-.season-relation-track .season-card {
-  scroll-snap-align: start;
+.season-relation-slide .season-card {
+  height: 100%;
 }
 .season-card {
   width: 100%;
@@ -3363,22 +3368,32 @@ a.franchise-card:hover {
   margin-top: 24px;
 }
 .anime-slider {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 180px;
+  display: flex;
   gap: 22px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
   padding: 20px 0;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
+  touch-action: pan-y pinch-zoom;
 }
-.anime-slider::-webkit-scrollbar {
-  display: none;
+.anime-carousel {
+  min-width: 0;
 }
-.anime-slider .card {
-  scroll-snap-align: start;
+.anime-slide {
+  flex: 0 0 180px;
+  min-width: 0;
+}
+.anime-slide .card {
+  height: 100%;
+}
+.anime-carousel-controls button {
+  z-index: 3;
+  border-color: #465465;
+  background: #18212cef;
+  color: #eef3f8;
+}
+.anime-carousel-controls button:first-child {
+  left: 8px;
+}
+.anime-carousel-controls button:last-child {
+  right: 8px;
 }
 @media (min-width: 768px) {
   .recommend-section .anime-slider .card {
@@ -3608,8 +3623,10 @@ a.franchise-card:hover {
     grid-template-columns: 1fr;
   }
   .anime-slider {
-    grid-auto-columns: 150px;
     gap: 16px;
+  }
+  .anime-slide {
+    flex-basis: 150px;
   }
   .title-page {
     padding: 25px 5% 60px;

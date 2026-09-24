@@ -1,0 +1,67 @@
+name: animonster-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: animonster
+      POSTGRES_USER: animonster
+      POSTGRES_PASSWORD: animonster-dev
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U animonster -d animonster"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_URL: postgres://animonster:animonster-dev@postgres:5432/animonster
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: deps
+    command: npm run dev -- --hostname 0.0.0.0
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://animonster:animonster-dev@postgres:5432/animonster
+      SITE_URL: http://localhost:3000
+      OWNER_PREVIEW: "true"
+      INVITE_REQUIRED: "false"
+      EMAIL_VERIFICATION_ENABLED: "false"
+      PAYMENTS_ENABLED: "false"
+      DEV_ALLOWED_ORIGINS: localhost,127.0.0.1
+      NEXT_TELEMETRY_DISABLED: "1"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - next_cache:/app/.next
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_dev_data:
+  node_modules:
+  next_cache:

@@ -4,6 +4,13 @@ import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronDown, Filter, Search, X } from 'lucide-react';
 import { AnimeGrid } from '@/components/anime-grid';
 import { posterUrl, type Anime } from '@/lib/anime';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 const STORAGE_KEY = 'animonster-recent-searches';
 type Filters = {
@@ -536,24 +543,50 @@ function FilterChip({
 function FranchiseSearchBlock({ group }: { group: FranchiseGroup }) {
   return (
     <section className="search-franchise-block">
-      <header>
-        <span>Франшиза</span>
-        <h3>{group.title}</h3>
-      </header>
-      <div>
-        {group.items.map(({ item, label, branch }) => (
-          <a
-            className={branch ? 'branch' : ''}
-            href={'/anime/' + item.id}
-            key={item.id}
-          >
-            <img src={posterUrl(item)} alt="" />
-            <span>{label}</span>
-            <strong>{item.russian}</strong>
-            <small>{item.aired_on?.slice(0, 4) || '—'}</small>
-          </a>
-        ))}
-      </div>
+      <Carousel
+        className="search-franchise-carousel"
+        aria-label={`Франшиза ${group.title}`}
+        opts={{
+          align: 'start',
+          containScroll: 'trimSnaps',
+          dragFree: true,
+          loop: false,
+        }}
+      >
+        <header>
+          <div>
+            <span>Франшиза</span>
+            <h3>{group.title}</h3>
+          </div>
+          {group.items.length > 1 && (
+            <div className="search-franchise-controls">
+              <CarouselPrevious
+                className="static"
+                aria-label="Предыдущие части франшизы"
+              />
+              <CarouselNext
+                className="static"
+                aria-label="Следующие части франшизы"
+              />
+            </div>
+          )}
+        </header>
+        <CarouselContent className="search-franchise-track ml-0">
+          {group.items.map(({ item, label, branch }) => (
+            <CarouselItem
+              className="search-franchise-slide basis-auto pl-0"
+              key={item.id}
+            >
+              <a className={branch ? 'branch' : ''} href={'/anime/' + item.id}>
+                <img src={posterUrl(item)} alt="" />
+                <span>{label}</span>
+                <strong>{item.russian}</strong>
+                <small>{item.aired_on?.slice(0, 4) || '—'}</small>
+              </a>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
     </section>
   );
 }
