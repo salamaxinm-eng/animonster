@@ -112,6 +112,20 @@ test('HLS parser stores map and media segments and resume skips completed files'
   assert.deepEqual(hls.missingSegmentIds(parsed), ['segment-0']);
 });
 
+test('offline HLS loader exposes the state required by hls.js fragment loader', async () => {
+  const source = await readFile(
+    new URL('../lib/offline/player.ts', import.meta.url),
+    'utf8',
+  );
+  assert.match(source, /context: LoaderContext \| null = null/);
+  assert.match(source, /stats: LoaderStats =/);
+  assert.match(source, /callbacks\.onSuccess\([\s\S]*?this\.stats/);
+  assert.match(
+    source,
+    /data = data\.slice\(context\.rangeStart, context\.rangeEnd\)/,
+  );
+});
+
 test('deleting an offline episode removes OPFS data and IndexedDB metadata', async () => {
   const calls = [];
   await deletion.deleteOfflineData(

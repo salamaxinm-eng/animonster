@@ -22,21 +22,30 @@ export function OfflinePlayer({ id }: { id: string }) {
     let engine: import('hls.js').default | undefined;
     let cancelled = false;
     const element = video.current;
-    void import('hls.js').then(({ default: Hls }) => {
-      if (cancelled) return;
-      if (!Hls.isSupported()) {
-        setError(
-          'Офлайн-плеер недоступен в этой версии браузера. Обновите систему или откройте установленную PWA.',
-        );
-        return;
-      }
-      engine = new Hls({ loader: createOfflineHlsLoader(episode) as any });
-      engine.loadSource(offlinePlaybackUrl(episode));
-      engine.attachMedia(element);
-      engine.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) setError('Не удалось прочитать локальную копию серии.');
-      });
-    });
+    void import('hls.js')
+      .then(({ default: Hls }) => {
+        if (cancelled) return;
+        if (!Hls.isSupported()) {
+          setError(
+            'Офлайн-плеер недоступен в этой версии браузера. Обновите систему или откройте установленную PWA.',
+          );
+          return;
+        }
+        engine = new Hls({ loader: createOfflineHlsLoader(episode) as any });
+        engine.attachMedia(element);
+        engine.on(Hls.Events.MEDIA_ATTACHED, () => {
+          if (!cancelled) engine?.loadSource(offlinePlaybackUrl(episode));
+        });
+        engine.on(Hls.Events.ERROR, (_event, data) => {
+          if (data.fatal)
+            setError(
+              `Не удалось прочитать локальную копию серии (${data.details}).`,
+            );
+        });
+      })
+      .catch(() =>
+        setError('Не удалось запустить офлайн-плеер. Обновите страницу.'),
+      );
     return () => {
       cancelled = true;
       engine?.destroy();
