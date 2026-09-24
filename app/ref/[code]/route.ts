@@ -10,11 +10,11 @@ export async function GET(
   const publicUrl = new URL(base());
   const target = new URL(owner ? '/profile' : '/', publicUrl);
   if (!owner) target.searchParams.set('referral', 'invalid');
-  const response = Response.redirect(target, 302);
+  const headers = new Headers({ Location: target.href });
   if (owner)
-    response.headers.append(
+    headers.append(
       'Set-Cookie',
       `am_referral=${encodeURIComponent(code)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000${publicUrl.protocol === 'https:' ? '; Secure' : ''}`,
     );
-  return response;
+  return new Response(null, { status: 302, headers });
 }
