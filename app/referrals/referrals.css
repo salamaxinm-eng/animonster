@@ -90,8 +90,9 @@
 }
 .referral-orbit {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 125px;
   height: 125px;
   border: 2px solid #b49af2;
@@ -476,6 +477,11 @@
 .referral-orbit .referral-framed-avatar > .user-avatar.large {
   width: 110px;
   height: 110px;
+}
+.referral-orbit .referral-framed-avatar {
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 .referral-example-identity .referral-framed-avatar {
   padding: 14px;
