@@ -115,7 +115,12 @@ function RelationRow({
   return (
     <Carousel
       className="season-relation-row"
-      opts={{ align: 'start', containScroll: 'trimSnaps', loop: false }}
+      opts={{
+        align: 'start',
+        containScroll: 'trimSnaps',
+        dragFree: true,
+        loop: false,
+      }}
     >
       <div className="season-relation-heading">
         <h3>
