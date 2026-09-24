@@ -3043,7 +3043,22 @@ button:disabled {
   place-items: center;
   color: #84909e;
 }
-.season-relation-row h2 {
+.season-navigation-heading,
+.season-relation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.season-navigation-heading {
+  padding-bottom: 2px;
+  border-bottom: 1px solid #27313d;
+}
+.season-navigation-heading h2 {
+  margin: 0;
+  font-size: 21px;
+}
+.season-relation-row h3 {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -3051,10 +3066,6 @@ button:disabled {
   font-size: 19px;
 }
 .season-relation-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   margin-bottom: 12px;
 }
 .season-relation-actions {

@@ -669,7 +669,11 @@
     border-radius: 0;
   }
 
-  .season-relation-row h2 {
+  .season-navigation-heading h2 {
+    font-size: 19px;
+  }
+
+  .season-relation-row h3 {
     font-size: 17px;
   }
 

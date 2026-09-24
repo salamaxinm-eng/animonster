@@ -66,23 +66,24 @@ export function SeasonNavigation({ animeId }: { animeId: number }) {
       (card) => card.item.id,
     ),
   ).size;
-  const allHref = `/anime/${animeId}/franchise`;
-  const showAllIn =
-    relations.mainline.length > 1
-      ? 'mainline'
-      : relations.branches.length
-        ? 'branches'
-        : 'related';
 
   return (
-    <section className="season-navigation" aria-labelledby="seasons-title">
+    <section className="season-navigation" aria-labelledby="franchise-title">
+      <div className="season-navigation-heading">
+        <h2 id="franchise-title">Франшиза</h2>
+        {total >= 3 && (
+          <Link
+            className="season-show-all"
+            href={`/anime/${animeId}/franchise`}
+          >
+            Хронология франшизы <span>{total}</span>
+          </Link>
+        )}
+      </div>
       {relations.mainline.length > 1 && (
         <RelationRow
-          id="seasons-title"
           title="Сезоны и продолжения"
           items={relations.mainline}
-          allHref={showAllIn === 'mainline' ? allHref : undefined}
-          total={total}
         />
       )}
       {relations.branches.length > 0 && (
@@ -90,16 +91,12 @@ export function SeasonNavigation({ animeId }: { animeId: number }) {
           title="Ветки истории"
           items={relations.branches}
           icon={<GitBranch size={17} />}
-          allHref={showAllIn === 'branches' ? allHref : undefined}
-          total={total}
         />
       )}
       {relations.related.length > 0 && (
         <RelationRow
           title="Связанное"
           items={relations.related}
-          allHref={showAllIn === 'related' ? allHref : undefined}
-          total={total}
         />
       )}
     </section>
@@ -107,19 +104,13 @@ export function SeasonNavigation({ animeId }: { animeId: number }) {
 }
 
 function RelationRow({
-  id,
   title,
   items,
   icon,
-  allHref,
-  total,
 }: {
-  id?: string;
   title: string;
   items: RelationCard[];
   icon?: React.ReactNode;
-  allHref?: string;
-  total?: number;
 }) {
   return (
     <Carousel
@@ -127,15 +118,10 @@ function RelationRow({
       opts={{ align: 'start', containScroll: 'trimSnaps', loop: false }}
     >
       <div className="season-relation-heading">
-        <h2 id={id}>
+        <h3>
           {icon} {title}
-        </h2>
+        </h3>
         <div className="season-relation-actions">
-          {allHref && (
-            <Link className="season-show-all" href={allHref}>
-              Показать все <span>{total}</span>
-            </Link>
-          )}
           {items.length > 1 && <RelationCarouselControls />}
         </div>
       </div>
