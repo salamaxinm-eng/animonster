@@ -69,6 +69,32 @@ test('offline selection never accepts a caller supplied media URL', () => {
   assert.equal('url' in result, false);
 });
 
+test('offline range selection deduplicates, sorts, and limits episodes', () => {
+  assert.deepEqual(
+    rules.offlineRangeSelection({
+      animeId: 1,
+      episodes: [4, 2, 3, 2],
+      quality: 720,
+      voiceoverId: 'aniliberty',
+    }),
+    {
+      animeId: 1,
+      episodes: [2, 3, 4],
+      quality: 720,
+      voiceoverId: 'aniliberty',
+    },
+  );
+  assert.equal(
+    rules.offlineRangeSelection({
+      animeId: 1,
+      episodes: Array.from({ length: 51 }, (_, index) => index + 1),
+      quality: 720,
+      voiceoverId: 'aniliberty',
+    }).code,
+    'INVALID_EPISODE_RANGE',
+  );
+});
+
 test('HLS parser stores map and media segments and resume skips completed files', () => {
   const parsed = hls.parseMediaPlaylist(
     '#EXTM3U\n#EXT-X-MAP:URI="init.mp4"\n#EXTINF:5,\none.m4s\n#EXTINF:6,\ntwo.m4s\n#EXT-X-ENDLIST',

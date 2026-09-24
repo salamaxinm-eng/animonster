@@ -3032,6 +3032,38 @@ button:disabled {
   gap: 16px;
   margin-bottom: 12px;
 }
+.season-relation-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+}
+.season-show-all {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid #465465;
+  border-radius: 8px;
+  background: #18212c;
+  color: #dfe7ef;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.season-show-all:hover {
+  border-color: #a5e63e88;
+  color: #b4ed50;
+}
+.season-show-all span {
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: #a5e63e1b;
+  color: #b4ed50;
+  text-align: center;
+}
 .season-scroll-buttons {
   display: flex;
   gap: 7px;
@@ -3085,6 +3117,20 @@ button:disabled {
   width: 100%;
   min-width: 0;
   overflow: hidden;
+}
+.season-relation-scroller::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset: 0 0 0 auto;
+  width: 46px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #0e141b 92%);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+.season-relation-scroller.has-more::after {
+  opacity: 1;
 }
 .season-relation-track:focus-visible {
   outline: 2px solid #a5e63e66;
@@ -3145,6 +3191,109 @@ a.season-card:hover {
 .season-card small {
   color: #7f8b99;
   font-size: 11px;
+}
+.franchise-page main {
+  width: min(1100px, 92%);
+  margin: 0 auto;
+  padding: 40px 0 90px;
+}
+.franchise-heading {
+  max-width: 720px;
+  margin: 28px 0 26px;
+}
+.franchise-heading h1 {
+  margin: 7px 0 9px;
+  font-size: clamp(32px, 5vw, 52px);
+}
+.franchise-heading p {
+  color: #8f9aa7;
+}
+.franchise-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.franchise-card {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid #303b49;
+  border-radius: 14px;
+  background: #141b24;
+  transition:
+    border-color 150ms ease,
+    transform 150ms ease;
+}
+a.franchise-card:hover {
+  border-color: #a5e63e88;
+  transform: translateY(-2px);
+}
+.franchise-card.active {
+  border-color: #a5e63e;
+  background: #a5e63e0b;
+}
+.franchise-poster {
+  position: relative;
+}
+.franchise-poster img {
+  width: 92px;
+  aspect-ratio: 2 / 3;
+  border-radius: 9px;
+  object-fit: cover;
+}
+.franchise-poster span {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  min-width: 25px;
+  padding: 4px 6px;
+  border-radius: 7px;
+  background: #080c11e6;
+  color: #b4ed50;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+.franchise-relation-label {
+  color: #a9dc55;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.franchise-card h2 {
+  margin: 8px 0;
+  font-size: 16px;
+  line-height: 1.25;
+}
+.franchise-card p {
+  color: #82909f;
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 900px) {
+  .franchise-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .franchise-page main {
+    width: 100%;
+    padding: 24px 4vw 80px;
+  }
+  .franchise-grid {
+    grid-template-columns: 1fr;
+  }
+  .franchise-card {
+    grid-template-columns: 76px minmax(0, 1fr);
+  }
+  .franchise-poster img {
+    width: 76px;
+  }
 }
 .title-playback {
   margin: 35px 0;

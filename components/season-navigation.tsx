@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, GitBranch } from 'lucide-react';
+import Link from 'next/link';
 import { posterUrl, type Anime } from '@/lib/anime';
 
 type RelationCard = {
@@ -52,6 +53,19 @@ export function SeasonNavigation({ animeId }: { animeId: number }) {
   )
     return null;
 
+  const total = new Set(
+    [...relations.mainline, ...relations.branches, ...relations.related].map(
+      (card) => card.item.id,
+    ),
+  ).size;
+  const allHref = `/anime/${animeId}/franchise`;
+  const showAllIn =
+    relations.mainline.length > 1
+      ? 'mainline'
+      : relations.branches.length
+        ? 'branches'
+        : 'related';
+
   return (
     <section className="season-navigation" aria-labelledby="seasons-title">
       {relations.mainline.length > 1 && (
@@ -59,6 +73,8 @@ export function SeasonNavigation({ animeId }: { animeId: number }) {
           id="seasons-title"
           title="Сезоны и продолжения"
           items={relations.mainline}
+          allHref={showAllIn === 'mainline' ? allHref : undefined}
+          total={total}
         />
       )}
       {relations.branches.length > 0 && (
@@ -66,10 +82,17 @@ export function SeasonNavigation({ animeId }: { animeId: number }) {
           title="Ветки истории"
           items={relations.branches}
           icon={<GitBranch size={17} />}
+          allHref={showAllIn === 'branches' ? allHref : undefined}
+          total={total}
         />
       )}
       {relations.related.length > 0 && (
-        <RelationRow title="Связанное" items={relations.related} />
+        <RelationRow
+          title="Связанное"
+          items={relations.related}
+          allHref={showAllIn === 'related' ? allHref : undefined}
+          total={total}
+        />
       )}
     </section>
   );
@@ -80,11 +103,15 @@ function RelationRow({
   title,
   items,
   icon,
+  allHref,
+  total,
 }: {
   id?: string;
   title: string;
   items: RelationCard[];
   icon?: React.ReactNode;
+  allHref?: string;
+  total?: number;
 }) {
   const track = useRef<HTMLDivElement>(null);
   const [scroll, setScroll] = useState({ left: false, right: false });
@@ -122,31 +149,46 @@ function RelationRow({
         <h2 id={id}>
           {icon} {title}
         </h2>
-        {items.length > 1 && (
-          <div className="season-scroll-buttons" aria-label="Прокрутка списка">
-            <button
-              type="button"
-              disabled={!scroll.left}
-              onClick={() => move(-1)}
-              aria-label="Показать предыдущие карточки"
+        <div className="season-relation-actions">
+          {allHref && (
+            <Link className="season-show-all" href={allHref}>
+              Показать все <span>{total}</span>
+            </Link>
+          )}
+          {items.length > 1 && (
+            <div
+              className="season-scroll-buttons"
+              aria-label="Прокрутка списка"
             >
-              <ChevronLeft />
-            </button>
-            <button
-              type="button"
-              disabled={!scroll.right}
-              onClick={() => move(1)}
-              aria-label="Показать следующие карточки"
-            >
-              <ChevronRight />
-            </button>
-          </div>
-        )}
+              <button
+                type="button"
+                disabled={!scroll.left}
+                onClick={() => move(-1)}
+                aria-label="Показать предыдущие карточки"
+              >
+                <ChevronLeft />
+              </button>
+              <button
+                type="button"
+                disabled={!scroll.right}
+                onClick={() => move(1)}
+                aria-label="Показать следующие карточки"
+              >
+                <ChevronRight />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="season-relation-scroller">
+      <div
+        className={
+          'season-relation-scroller' + (scroll.right ? ' has-more' : '')
+        }
+      >
         <div
           ref={track}
           className="season-relation-track"
+          aria-label={`${title}: ${items.length} карточек`}
           onWheel={(event) => {
             const element = event.currentTarget;
             if (element.scrollWidth <= element.clientWidth) return;

@@ -11,6 +11,16 @@ const graph = await import(
   'data:text/javascript;base64,' +
     Buffer.from(stripTypeScriptTypes(source)).toString('base64')
 );
+const displaySource = (
+  await readFile(new URL('../lib/relation-display.ts', import.meta.url), 'utf8')
+).replace(
+  "import type { AnimeRelationsResult, RelationCard } from './server/anime-relations';",
+  '',
+);
+const display = await import(
+  'data:text/javascript;base64,' +
+    Buffer.from(stripTypeScriptTypes(displaySource)).toString('base64')
+);
 
 test('prequel and sequel relations form one chronological chain', () => {
   const edges = graph.normalizeRelationEdges([
@@ -76,4 +86,26 @@ test('branching and cyclic relation graphs stay deterministic', () => {
     new Map(),
   );
   assert.deepEqual(cycleResult.ordered, [1, 2]);
+});
+
+test('full franchise view removes duplicates and sorts unknown dates last', () => {
+  const card = (id, aired_on, label, active = false) => ({
+    item: { id, aired_on },
+    label,
+    active,
+  });
+  const result = display.chronologicalRelationCards({
+    mainline: [
+      card(2, '2020-01-01', 'Сезон 2'),
+      card(1, '2013-01-01', 'Сезон 1'),
+    ],
+    branches: [card(3, '2015-01-01', 'Ветка')],
+    related: [card(2, '2020-01-01', 'Дубликат', true), card(4, '', 'Прочее')],
+  });
+  assert.deepEqual(
+    result.map((entry) => entry.item.id),
+    [1, 3, 2, 4],
+  );
+  assert.equal(result.find((entry) => entry.item.id === 2).label, 'Сезон 2');
+  assert.equal(result.find((entry) => entry.item.id === 2).active, true);
 });

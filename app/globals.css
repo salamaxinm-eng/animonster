@@ -1123,6 +1123,24 @@ footer > span {
 .offline-card-actions button { display: inline-flex; align-items: center; gap: 7px; }
 .offline-quality-list { flex-wrap: wrap; }
 .offline-quality-dialog > a { width: fit-content; }
+.offline-mode-switch,
+.offline-range-picker {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.offline-mode-switch button.active {
+  border-color: #b4ed50;
+  color: #b4ed50;
+}
+.offline-range-picker label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #aab4c0;
+}
+.offline-range-picker select { min-width: 110px; }
+.offline-range-picker > button { align-self: end; }
 .offline-watch { margin-top: 24px; }
 .offline-license-message { margin: 40px 0; padding: 24px; border: 1px solid #ffffff18; border-radius: 16px; }
 @media (max-width: 600px) {

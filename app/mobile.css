@@ -697,6 +697,15 @@
     margin-bottom: 9px;
   }
 
+  .season-relation-actions {
+    gap: 0;
+  }
+
+  .season-show-all {
+    min-height: 32px;
+    padding: 0 9px;
+  }
+
   .season-card {
     min-height: 70px;
     grid-template-columns: 42px minmax(0, 1fr);

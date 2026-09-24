@@ -817,7 +817,11 @@ export function EpisodePlayer({
           </NativeSelect>
         )}
         {animeId && episode && (
-          <OfflineDownloadButton animeId={animeId} episode={episode.ordinal} />
+          <OfflineDownloadButton
+            animeId={animeId}
+            episode={episode.ordinal}
+            episodes={episodes.map((item) => item.ordinal)}
+          />
         )}
         <button
           disabled={previousIndex === undefined}

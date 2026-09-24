@@ -14,6 +14,44 @@ export type OfflineSelectionIssue = {
   status: number;
 };
 
+export type OfflineRangeSelection = Omit<OfflineSelection, 'episode'> & {
+  episodes: number[];
+};
+
+export function offlineRangeSelection(
+  value: unknown,
+): OfflineRangeSelection | OfflineSelectionIssue {
+  const input = (value || {}) as Record<string, unknown>;
+  const episodes = Array.isArray(input.episodes)
+    ? [...new Set(input.episodes.map(Number))]
+    : [];
+  if (!episodes.length || episodes.length > 50)
+    return {
+      message: 'Выберите от 1 до 50 серий.',
+      code: 'INVALID_EPISODE_RANGE',
+      status: 400,
+    };
+  if (
+    episodes.some(
+      (episode) =>
+        !Number.isInteger(episode) || episode < 1 || episode > 100000,
+    )
+  )
+    return {
+      message: 'Некорректный диапазон серий.',
+      code: 'INVALID_EPISODE_RANGE',
+      status: 400,
+    };
+  const single = offlineSelection({ ...input, episode: episodes[0] });
+  if ('code' in single) return single;
+  return {
+    animeId: single.animeId,
+    episodes: episodes.sort((a, b) => a - b),
+    quality: single.quality,
+    voiceoverId: 'aniliberty',
+  };
+}
+
 export function offlineSelection(
   value: unknown,
 ): OfflineSelection | OfflineSelectionIssue {
