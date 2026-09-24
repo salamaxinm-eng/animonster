@@ -14,6 +14,17 @@ const media = await import(
     Buffer.from(stripTypeScriptTypes(source)).toString('base64')
 );
 
+test('media URLs fail closed when the gateway is disabled', async () => {
+  process.env.MEDIA_PROXY_ENABLED = 'false';
+  await assert.rejects(
+    media.mediaProxyUrl('https://cache.libria.fun/show/index.m3u8'),
+    {
+      code: 'media_proxy_unavailable',
+      status: 503,
+    },
+  );
+});
+
 test('media proxy follows numbered CDN hosts with legacy deployment configuration', async () => {
   process.env.MEDIA_PROXY_HOSTS = 'cache.libria.fun,cache1.libria.fun';
   process.env.MEDIA_PROXY_ENABLED = 'true';

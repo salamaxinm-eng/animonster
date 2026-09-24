@@ -91,7 +91,15 @@ export async function mediaProxyUrl(
   expires = Date.now() + TOKEN_LIFETIME_MS,
   access?: MediaAccess,
 ) {
-  if (!mediaProxyEnabled()) return value;
+  // Browser downloads cannot read the provider CDN directly because it does
+  // not grant AniMonster cross-origin access. Fail closed instead of handing
+  // the client a URL that will inevitably surface as a vague "Failed to fetch".
+  if (!mediaProxyEnabled())
+    throw new ApiError(
+      'Медиашлюз временно недоступен.',
+      503,
+      'media_proxy_unavailable',
+    );
   const url = validateMediaUrl(value);
   const payload = base64url(
     encoder.encode(
