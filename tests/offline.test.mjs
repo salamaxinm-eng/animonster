@@ -126,6 +126,18 @@ test('offline HLS loader exposes the state required by hls.js fragment loader', 
   );
 });
 
+test('offline player starts its source before attaching Safari media', async () => {
+  const source = await readFile(
+    new URL('../components/offline-player.tsx', import.meta.url),
+    'utf8',
+  );
+  const load = source.indexOf('engine.loadSource(offlinePlaybackUrl(episode))');
+  const attach = source.indexOf('engine.attachMedia(element)');
+  assert.ok(load > 0 && attach > load);
+  assert.match(source, /enableWorker: false/);
+  assert.match(source, /Офлайн-плеер завис на этапе/);
+});
+
 test('deleting an offline episode removes OPFS data and IndexedDB metadata', async () => {
   const calls = [];
   await deletion.deleteOfflineData(

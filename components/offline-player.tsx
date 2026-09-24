@@ -21,7 +21,10 @@ export function OfflinePlayer({ id }: { id: string }) {
     if (episode.offlineAccessUntil < Date.now()) return;
     let engine: import('hls.js').default | undefined;
     let cancelled = false;
+    let startupStage = 'инициализация плеера';
+    let startupTimer: number | undefined;
     const element = video.current;
+    setError('');
     void import('hls.js')
       .then(({ default: Hls }) => {
         if (cancelled) return;
@@ -31,10 +34,21 @@ export function OfflinePlayer({ id }: { id: string }) {
           );
           return;
         }
-        engine = new Hls({ loader: createOfflineHlsLoader(episode) as any });
-        engine.attachMedia(element);
+        engine = new Hls({
+          loader: createOfflineHlsLoader(episode) as any,
+          enableWorker: false,
+          startFragPrefetch: true,
+        });
         engine.on(Hls.Events.MEDIA_ATTACHED, () => {
-          if (!cancelled) engine?.loadSource(offlinePlaybackUrl(episode));
+          startupStage = 'чтение локального плейлиста';
+        });
+        engine.on(Hls.Events.MANIFEST_PARSED, () => {
+          startupStage = 'подготовка первого сегмента';
+        });
+        engine.on(Hls.Events.FRAG_BUFFERED, () => {
+          if (startupTimer) window.clearTimeout(startupTimer);
+          startupTimer = undefined;
+          setError('');
         });
         engine.on(Hls.Events.ERROR, (_event, data) => {
           if (data.fatal)
@@ -42,12 +56,18 @@ export function OfflinePlayer({ id }: { id: string }) {
               `Не удалось прочитать локальную копию серии (${data.details}).`,
             );
         });
+        engine.loadSource(offlinePlaybackUrl(episode));
+        engine.attachMedia(element);
+        startupTimer = window.setTimeout(() => {
+          setError(`Офлайн-плеер завис на этапе: ${startupStage}.`);
+        }, 12_000);
       })
       .catch(() =>
         setError('Не удалось запустить офлайн-плеер. Обновите страницу.'),
       );
     return () => {
       cancelled = true;
+      if (startupTimer) window.clearTimeout(startupTimer);
       engine?.destroy();
     };
   }, [episode?.id, episode?.status, episode?.offlineAccessUntil]);
@@ -81,6 +101,13 @@ export function OfflinePlayer({ id }: { id: string }) {
           controls
           playsInline
           disableRemotePlayback
+          onCanPlay={() => setError('')}
+          onError={() => {
+            const code = video.current?.error?.code;
+            setError(
+              `Safari не смог декодировать локальное видео${code ? ` (код ${code})` : ''}.`,
+            );
+          }}
           onEnded={() => {
             episode.watchedAt = Date.now();
             episode.updatedAt = Date.now();
