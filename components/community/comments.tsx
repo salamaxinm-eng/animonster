@@ -33,6 +33,7 @@ type Comment = {
   theme: string;
   pin: string | null;
   tag: string | null;
+  profile_frame: string;
   like_count: number;
   vote: number;
   dislike_count: number;
@@ -224,14 +225,16 @@ export function Comments({
             className={'comment ' + (c.parent_id ? 'is-reply' : '')}
             key={c.id}
           >
-            <a href={'/members/' + c.author_id}>
+            <a
+              className={`comment-avatar profile-frame-${c.profile_frame || 'none'}`}
+              href={'/members/' + c.author_id}
+            >
               <Avatar avatar={c.avatar} theme={c.theme} />
             </a>
             <div className="comment-content">
               <div className="comment-meta">
                 <a href={'/members/' + c.author_id}>{c.nick}</a>
-                <UserTag id={c.tag} />
-                {c.plus && <span className="plus-comment-badge">PLUS</span>}
+                <UserTag id={c.tag || (c.plus ? 'plus' : null)} />
                 <Pin id={c.pin} />
                 <time>
                   {new Date(c.created_at).toLocaleString('ru-RU', {

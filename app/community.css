@@ -4479,7 +4479,6 @@ a.franchise-card:hover {
   border-color: var(--am-accent);
   background: color-mix(in srgb, var(--am-accent) 10.2%, transparent);
 }
-.plus-comment-badge,
 .plus-label {
   color: var(--am-accent);
   font-size: 11px;

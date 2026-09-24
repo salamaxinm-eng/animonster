@@ -164,6 +164,11 @@ export async function GET(r: Request) {
              CASE WHEN EXISTS(SELECT 1 FROM cosmetics x WHERE x.slug=u.tag AND x.kind='tag' AND x.active=1 AND
                (x.access_type='free' OR (x.access_type='plus' AND EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?)) OR
                (x.access_type NOT IN ('free','plus') AND EXISTS(SELECT 1 FROM user_cosmetics uc WHERE uc.user_id=u.id AND uc.cosmetic_id=x.id)))) THEN u.tag ELSE NULL END AS tag,
+             CASE WHEN u.profile_frame='none' THEN 'none'
+               WHEN EXISTS(SELECT 1 FROM cosmetics x WHERE x.slug=u.profile_frame AND x.kind='frame' AND x.active=1 AND
+                 (x.access_type='free' OR (x.access_type='plus' AND EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND g.expires>?)) OR
+                 (x.access_type NOT IN ('free','plus') AND EXISTS(SELECT 1 FROM user_cosmetics uc WHERE uc.user_id=u.id AND uc.cosmetic_id=x.id)))) THEN u.profile_frame
+               ELSE 'none' END AS profile_frame,
              (SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=1) AS like_count,
              (SELECT count(*) FROM likes l WHERE l.comment_id=c.id AND l.value=-1) AS dislike_count,
              COALESCE((SELECT sum(value) FROM likes l WHERE l.comment_id=c.id),0) AS score,
@@ -173,6 +178,7 @@ export async function GET(r: Request) {
              ORDER BY c.pinned DESC,${order} LIMIT 100`,
           )
           .bind(
+            now(),
             now(),
             now(),
             now(),
