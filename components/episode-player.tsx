@@ -11,6 +11,7 @@ import {
 } from '@/lib/anime';
 import { api, useCommunity } from '@/components/community/context';
 import { kodikEpisodeFromMessage } from '@/lib/kodik-events';
+import { OfflineDownloadButton } from '@/components/offline-download-button';
 
 type SkipTimes = {
   opening?: SkipSegment;
@@ -814,6 +815,9 @@ export function EpisodePlayer({
                 </option>
               ))}
           </NativeSelect>
+        )}
+        {animeId && episode && (
+          <OfflineDownloadButton animeId={animeId} episode={episode.ordinal} />
         )}
         <button
           disabled={previousIndex === undefined}

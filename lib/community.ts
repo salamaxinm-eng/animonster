@@ -217,6 +217,7 @@ export type Profile = {
     can_customize_profile: boolean;
     can_react: boolean;
     early_access: boolean;
+    can_download: boolean;
   };
 };
 export type Entry = {

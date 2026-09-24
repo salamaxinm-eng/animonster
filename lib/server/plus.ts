@@ -33,6 +33,7 @@ export async function plusEntitlements(userId: string) {
     canCustomizeProfile: active,
     canReact: active,
     earlyAccess: active,
+    canDownload: active,
   };
 }
 

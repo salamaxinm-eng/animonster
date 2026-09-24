@@ -403,6 +403,7 @@ export async function publicUser(u: User) {
       can_customize_profile: !!until,
       can_react: !!until,
       early_access: !!until,
+      can_download: !!until,
     },
     profile_background: until ? u.profile_background || null : null,
     profile_frame: cosmetics.frame,

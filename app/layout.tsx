@@ -5,8 +5,9 @@ import { MobileNavigation } from '@/components/mobile-navigation';
 import './community.css';
 import './mobile.css';
 import './rewards.css';
-import { Suspense } from "react";
-import YandexMetrika from "@/components/yandex-metrika";
+import { Suspense } from 'react';
+import YandexMetrika from '@/components/yandex-metrika';
+import { PwaRegistration } from '@/components/pwa-registration';
 
 const SITE_URL = 'https://animonster.su';
 
@@ -76,6 +77,7 @@ export default function RootLayout({
   return (
     <html lang="ru" className="dark">
       <body>
+        <PwaRegistration />
         <CommunityProvider>
           {children}
 

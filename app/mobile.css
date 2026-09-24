@@ -96,7 +96,7 @@
     min-height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
     padding: 6px 8px env(safe-area-inset-bottom);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     background: #151922f7;
     border-top: 1px solid #313844;
     backdrop-filter: blur(20px);

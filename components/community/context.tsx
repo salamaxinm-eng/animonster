@@ -319,6 +319,7 @@ export function AccountNav() {
       <a href="/pins" className="plus-link">
         <Gem size={17} /> Пины
       </a>
+      <a href="/downloads">Загрузки</a>
       <BuySubscription className="subscription-nav" />
       {c.moderator && <a href="/admin">Админка</a>}
       {c.user ? (
@@ -374,6 +375,9 @@ export function CommunityHeader() {
         </a>
         <a className="back-catalog" href="/recommendations">
           Рекомендации
+        </a>
+        <a className="back-catalog" href="/downloads">
+          Загрузки
         </a>
       </nav>
       <GlobalSearch />

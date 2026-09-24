@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   Bookmark,
+  Download,
   Ghost,
   Gift,
   Home,
@@ -36,6 +37,12 @@ const items: MobileNavItem[] = [
     active: (path) => path === '/bookmarks',
   },
   {
+    href: '/downloads',
+    label: 'Загрузки',
+    icon: Download,
+    active: (path) => path.startsWith('/downloads'),
+  },
+  {
     href: '/catalog',
     label: 'Каталог',
     icon: LayoutGrid,
@@ -65,9 +72,11 @@ export function MobileNavigation() {
   const sectionTitle =
     pathname === '/bookmarks'
       ? 'Закладки'
-      : pathname === '/catalog' || pathname === '/genres'
-        ? 'Каталог'
-        : '';
+      : pathname.startsWith('/downloads')
+        ? 'Загрузки'
+        : pathname === '/catalog' || pathname === '/genres'
+          ? 'Каталог'
+          : '';
 
   useEffect(() => {
     const update = () => setHash(location.hash);
