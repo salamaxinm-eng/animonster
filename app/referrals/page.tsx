@@ -21,6 +21,7 @@ import {
   useCommunity,
 } from '@/components/community/context';
 import { referralMilestones as milestones } from '@/lib/referral-rewards';
+import { referralUrl } from '@/lib/referral-url';
 
 type Dashboard = {
   code: string;
@@ -82,7 +83,12 @@ export default function ReferralsPage() {
         if (!response.ok) throw new Error();
         return response.json();
       })
-      .then(setData)
+      .then((result: Dashboard) =>
+        setData({
+          ...result,
+          url: referralUrl(result.code, window.location.origin),
+        }),
+      )
       .catch(() => setNotice('Не удалось загрузить реферальную программу'));
   }, [community.user?.id]);
   const next = useMemo(

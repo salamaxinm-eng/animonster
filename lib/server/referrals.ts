@@ -2,6 +2,7 @@ import { base, cookie, db, now, uid } from './core';
 import { grantCosmetic } from './cosmetics';
 import { grantPlusDays } from './plus';
 import { referralMilestones as MILESTONES } from '../referral-rewards';
+import { referralUrl } from '../referral-url';
 
 const REFERRAL_COOKIE = 'am_referral';
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -164,7 +165,7 @@ export async function referralDashboard(userId: string, origin = base()) {
   ]);
   return {
     code,
-    url: new URL(`/ref/${encodeURIComponent(code)}`, origin).toString(),
+    url: referralUrl(code, origin),
     registered: Number(counts?.registered || 0),
     qualified: Number(counts?.qualified || 0),
     friends: friends.results,

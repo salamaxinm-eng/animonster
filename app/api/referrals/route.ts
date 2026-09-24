@@ -4,9 +4,7 @@ import { referralDashboard } from '@/lib/server/referrals';
 export async function GET(request: Request) {
   try {
     const user = await requireUser(request);
-    return json(
-      await referralDashboard(user.id, new URL(request.url).origin),
-    );
+    return json(await referralDashboard(user.id));
   } catch (error) {
     return fail(error);
   }
