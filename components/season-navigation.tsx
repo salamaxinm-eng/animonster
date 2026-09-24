@@ -187,7 +187,29 @@ function RelationCarouselViewport({
   label: string;
   children: React.ReactNode;
 }) {
-  const { canScrollNext } = useCarousel();
+  const { api, canScrollNext } = useCarousel();
+
+  useEffect(() => {
+    if (!api) return;
+
+    const reduceEdgeMomentum = () => {
+      const { limit, location, scrollBody, target } = api.internalEngine();
+      const constrainedTarget = limit.constrain(target.get());
+      const releasedOutsideBounds = constrainedTarget !== target.get();
+      const positionOutsideBounds = limit.reachedAny(location.get());
+
+      if (!releasedOutsideBounds && !positionOutsideBounds) return;
+
+      target.set(constrainedTarget);
+      scrollBody.useDuration(14).useFriction(0.35);
+    };
+
+    api.on('pointerUp', reduceEdgeMomentum);
+    return () => {
+      api.off('pointerUp', reduceEdgeMomentum);
+    };
+  }, [api]);
+
   return (
     <div
       className={
@@ -195,7 +217,7 @@ function RelationCarouselViewport({
       }
     >
       <CarouselContent
-        className="season-relation-track ml-0"
+        className="season-relation-track"
         aria-label={label}
       >
         {children}
