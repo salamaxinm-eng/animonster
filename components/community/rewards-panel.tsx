@@ -15,7 +15,7 @@ type Achievement = {
 };
 type Cosmetic = {
   id: string;
-  kind: 'tag' | 'pin' | 'frame';
+  kind: 'tag' | 'pin' | 'frame' | 'theme';
   slug: string;
   name: string;
   description: string;
@@ -93,6 +93,14 @@ export function RewardsPanel({
     }
   }
 
+  function isEquipped(item: Cosmetic) {
+    if (item.kind === 'frame')
+      return community.user?.profile_frame === item.slug;
+    if (item.kind === 'theme')
+      return community.user?.theme === 'bleach' && item.slug === 'bleach-theme';
+    return community.user?.[item.kind] === item.slug;
+  }
+
   if (loading)
     return (
       <section className="social-panel rewards-panel">Загрузка наград…</section>
@@ -135,7 +143,8 @@ export function RewardsPanel({
                   >
                     <Avatar avatar={community.user?.avatar} />
                   </span>
-                ) : reward.kind === 'pin' && reward.image ? (
+                ) : (reward.kind === 'pin' || reward.kind === 'theme') &&
+                  reward.image ? (
                   <img key={reward.slug} src={reward.image} alt={reward.name} />
                 ) : (
                   <UserTag key={reward.slug} id={reward.slug} />
@@ -172,6 +181,7 @@ export function RewardsPanel({
             ['frame', 'Рамки'],
             ['tag', 'Теги'],
             ['pin', 'Пины'],
+            ['theme', 'Темы'],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -189,8 +199,8 @@ export function RewardsPanel({
           ['all', 'Все'],
           ['achievement', 'За аниме'],
           ['referral', 'За друзей'],
-            ['plus', 'Plus'],
-            ['purchase', 'Годовой Plus'],
+          ['plus', 'Plus'],
+          ['purchase', 'Годовой Plus'],
         ].map(([value, label]) => (
           <button
             key={value}
@@ -245,19 +255,12 @@ export function RewardsPanel({
               {item.unlocked && (
                 <button
                   type="button"
-                  disabled={
-                    !!pending ||
-                    (item.kind === 'frame'
-                      ? community.user?.profile_frame
-                      : community.user?.[item.kind]) === item.slug
-                  }
+                  disabled={!!pending || isEquipped(item)}
                   onClick={() => void equip(item)}
                 >
                   {pending === item.id
                     ? 'Устанавливаем…'
-                    : (item.kind === 'frame'
-                          ? community.user?.profile_frame
-                          : community.user?.[item.kind]) === item.slug
+                    : isEquipped(item)
                       ? 'Установлено ✓'
                       : 'Установить'}
                 </button>

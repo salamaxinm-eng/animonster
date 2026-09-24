@@ -93,6 +93,14 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     void fetch('/api/activity', { method: 'POST' });
   }, [refresh]);
   useEffect(() => {
+    const theme = me.user?.theme === 'bleach' ? 'bleach' : '';
+    if (theme) document.documentElement.dataset.siteTheme = theme;
+    else delete document.documentElement.dataset.siteTheme;
+    return () => {
+      delete document.documentElement.dataset.siteTheme;
+    };
+  }, [me.user?.theme]);
+  useEffect(() => {
     if (!me.user) return;
     let legacy: any[] = [];
     try {

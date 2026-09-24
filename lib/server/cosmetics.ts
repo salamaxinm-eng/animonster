@@ -1,6 +1,6 @@
 import { ApiError, db, now, premium } from './core';
 
-export type CosmeticKind = 'tag' | 'pin' | 'frame';
+export type CosmeticKind = 'tag' | 'pin' | 'frame' | 'theme';
 export type CosmeticAccess =
   | 'free'
   | 'plus'

@@ -153,7 +153,7 @@
   padding: 15px;
   border: 1px solid #b9f36e42;
   border-radius: 15px;
-  background: linear-gradient(135deg, #b4ed500b, #845cff0c);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--am-accent) 4.3%, transparent), #845cff0c);
 }
 .support-amount-picker > label {
   color: #eaf5df;
@@ -216,7 +216,7 @@
 .plus-dialog .plus-price-card {
   padding: 15px 17px;
   border-radius: 15px;
-  background: linear-gradient(120deg, #b4ed500e, #ffffff03);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--am-accent) 5.5%, transparent), #ffffff03);
 }
 .plus-dialog .plus-price-card strong {
   font-size: 31px;

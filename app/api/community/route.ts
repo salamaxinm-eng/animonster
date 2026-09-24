@@ -313,8 +313,9 @@ export async function POST(r: Request) {
           'Смена аватара откроется на 5 уровне или с AniMonster Plus.',
           403,
         );
+      const selectedTheme = themes.find((x) => x.id === b.theme);
       if (
-        !themes.some((x) => x.id === b.theme) ||
+        !selectedTheme ||
         (!avatars.some((x) => x.id === avatar) && !customAvatar)
       )
         throw new ApiError('Неизвестное оформление');
@@ -328,6 +329,13 @@ export async function POST(r: Request) {
         ),
         validateEquippedCosmetic(u.id, 'tag', b.tag, access.premiumUntil),
       ]);
+      if (selectedTheme.cosmetic)
+        await validateEquippedCosmetic(
+          u.id,
+          'theme',
+          selectedTheme.cosmetic,
+          access.premiumUntil,
+        );
       const autoSkipSegments =
         b.auto_skip_segments == null
           ? (u.auto_skip_segments ?? null)
@@ -341,7 +349,7 @@ export async function POST(r: Request) {
         .bind(
           nick,
           bio,
-          b.theme,
+          selectedTheme.id,
           avatar,
           pin,
           frame,

@@ -1,8 +1,19 @@
-export const themes = [
+export const themes: Array<{
+  id: string;
+  name: string;
+  color: string;
+  cosmetic?: string;
+}> = [
   { id: 'neon', name: 'Неон', color: '#b4ed50' },
   { id: 'sakura', name: 'Сакура', color: '#ff94c2' },
   { id: 'mage', name: 'Тёмный маг', color: '#b29aff' },
   { id: 'cyber', name: 'Киберпанк', color: '#65d9ff' },
+  {
+    id: 'bleach',
+    name: 'Блич',
+    color: '#ff2638',
+    cosmetic: 'bleach-theme',
+  },
 ];
 export const avatars = [
   { id: 'moon', name: 'Странница', position: '77% 40%' },

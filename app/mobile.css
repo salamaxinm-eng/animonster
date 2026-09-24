@@ -61,11 +61,11 @@
 
   .mobile-brand svg {
     width: 29px;
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .mobile-brand strong {
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .mobile-page-heading {
@@ -122,7 +122,7 @@
   }
 
   .mobile-bottom-nav .active {
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .site > .header,
@@ -227,13 +227,13 @@
     height: 52px;
     display: grid;
     place-items: center;
-    border: 2px solid #b4ed50;
-    color: #b4ed50;
+    border: 2px solid var(--am-accent);
+    color: var(--am-accent);
     background: #080d12b8;
   }
 
   .popular-hero .mobile-hero-bookmark.saved {
-    background: #b4ed50;
+    background: var(--am-accent);
     color: #142006;
   }
 
@@ -340,7 +340,7 @@
 
   .mobile-catalog-tabs .active {
     color: #eef2f6;
-    border-color: #b4ed50;
+    border-color: var(--am-accent);
   }
 
   .mobile-section-title {
@@ -392,7 +392,7 @@
   .mobile-catalog-page-tabs .active,
   .bookmarks-tabs .active {
     color: #eef2f5;
-    border-color: #b4ed50;
+    border-color: var(--am-accent);
   }
 
   .mobile-catalog-toolbar,
@@ -416,7 +416,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #b4ed50;
+    color: var(--am-accent);
     font-size: 12px;
   }
 
@@ -493,7 +493,7 @@
   }
 
   .mobile-filter-sheet nav button.active {
-    background: #b4ed50;
+    background: var(--am-accent);
     color: #142006;
   }
 
@@ -834,7 +834,7 @@
   .bookmark-placeholder {
     display: grid;
     place-items: center;
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .bookmark-row > div:nth-child(2) {
@@ -866,7 +866,7 @@
   }
 
   .bookmark-row > button.saved {
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .bookmark-list-pills {
@@ -888,7 +888,7 @@
   }
 
   .bookmark-list-pills button.active {
-    background: #b4ed50;
+    background: var(--am-accent);
     color: #142006;
   }
 
@@ -1012,7 +1012,7 @@
 
   .search-theme-toggle > svg:first-child,
   .search-theme-toggle.active {
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .search-theme-toggle span {
@@ -1054,7 +1054,7 @@
 
   .search-theme-panel-heading button {
     min-height: 36px;
-    color: #b4ed50;
+    color: var(--am-accent);
     font-size: 12px;
   }
 
@@ -1101,8 +1101,8 @@
   }
 
   .search-theme-options button.selected {
-    border-color: #a5e63e;
-    background: #a5e63e18;
+    border-color: var(--am-accent-alt);
+    background: color-mix(in srgb, var(--am-accent-alt) 9.4%, transparent);
     color: #d5f39c;
   }
 
@@ -1124,7 +1124,7 @@
 
   .recent-searches > div button {
     min-height: 44px;
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .recent-searches nav {
@@ -1341,10 +1341,10 @@
     gap: 5px;
     min-height: 44px;
     padding: 0 10px;
-    border: 1px solid #b4ed5040;
+    border: 1px solid color-mix(in srgb, var(--am-accent) 25.1%, transparent);
     border-radius: 12px;
-    background: #b4ed5010;
-    color: #c3f16e;
+    background: color-mix(in srgb, var(--am-accent) 6.3%, transparent);
+    color: var(--am-accent);
     font-size: 13px;
     font-weight: 750;
   }

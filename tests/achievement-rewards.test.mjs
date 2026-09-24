@@ -59,6 +59,8 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
       await engine.exec(await readFile('migrations/postgres/' + name, 'utf8'));
     await engine.exec(`INSERT INTO users(id,identity,nick,created_at) VALUES ('veteran','test:veteran','veteran',1),('friend1','test:f1','f1',1),('friend2','test:f2','f2',1),('friend3','test:f3','f3',1);
       INSERT INTO user_achievements VALUES ('veteran','achievement:one-piece-100',1);
+      INSERT INTO history(user_id,anime_id,episode,duration,watched_seconds,completed,updated_at)
+        SELECT 'veteran',269,n,1440,720,1,1 FROM generate_series(1,100) n;
       INSERT INTO referrals(id,referrer_id,referred_user_id,code,status,registered_at,qualified_at,created_at)
         SELECT 'ref' || n,'veteran','friend' || n,'TESTCODE','qualified',1,2,1 FROM generate_series(1,3) n;`);
     for (const name of migrations.filter((name) => name >= '0021'))
@@ -70,6 +72,14 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
         'achievement-one-piece',
       ),
       'achievement-one-piece',
+    );
+    assert.equal(
+      await cosmetics.validateEquippedCosmetic(
+        'veteran',
+        'theme',
+        'bleach-theme',
+      ),
+      'bleach-theme',
     );
     assert.equal(
       await cosmetics.validateEquippedCosmetic(
@@ -124,6 +134,20 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
         'achievement-bleach',
       ),
       'achievement-bleach',
+    );
+    await assert.rejects(() =>
+      cosmetics.validateEquippedCosmetic('watcher', 'theme', 'bleach-theme'),
+    );
+    await history(269, 100);
+    const bleachUnlock = await evaluateUserAchievements('watcher', 269);
+    assert.ok(bleachUnlock.unlocked.includes('bleach-theme-100'));
+    assert.equal(
+      await cosmetics.validateEquippedCosmetic(
+        'watcher',
+        'theme',
+        'bleach-theme',
+      ),
+      'bleach-theme',
     );
     await history(20, 50);
     const unlock = await evaluateUserAchievements('watcher', 20);
@@ -181,6 +205,10 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
       2,
     );
     const catalog = await cosmetics.cosmeticsCatalog('watcher');
+    assert.equal(
+      catalog.filter((c) => c.kind === 'theme' && c.unlocked).length,
+      1,
+    );
     assert.equal(
       catalog.filter((c) => c.kind === 'pin' && c.access_type === 'achievement')
         .length,

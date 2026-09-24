@@ -39,7 +39,7 @@ import {
 import { proxyImageUrl } from '@/lib/anime';
 type CosmeticOption = {
   id: string;
-  kind: 'tag' | 'pin' | 'frame';
+  kind: 'tag' | 'pin' | 'frame' | 'theme';
   slug: string;
   name: string;
   condition: string;
@@ -937,10 +937,37 @@ export function ProfilePage({
                           className={draft.theme === t.id ? 'selected' : ''}
                           style={{ '--swatch': t.color } as React.CSSProperties}
                           key={t.id}
+                          disabled={
+                            !!t.cosmetic &&
+                            !cosmetics.some(
+                              (item) =>
+                                item.kind === 'theme' &&
+                                item.slug === t.cosmetic &&
+                                item.unlocked,
+                            )
+                          }
+                          title={
+                            t.cosmetic &&
+                            !cosmetics.some(
+                              (item) =>
+                                item.kind === 'theme' &&
+                                item.slug === t.cosmetic &&
+                                item.unlocked,
+                            )
+                              ? 'Откроется за 100 просмотренных серий «Блич»'
+                              : undefined
+                          }
                           onClick={() => setDraft({ ...draft, theme: t.id })}
                         >
                           <span />
                           {t.name}
+                          {t.cosmetic &&
+                            !cosmetics.some(
+                              (item) =>
+                                item.kind === 'theme' &&
+                                item.slug === t.cosmetic &&
+                                item.unlocked,
+                            ) && <small>100 серий</small>}
                           {draft.theme === t.id && <Check size={14} />}
                         </button>
                       ))}

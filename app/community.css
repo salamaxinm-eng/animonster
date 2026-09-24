@@ -73,15 +73,15 @@
   color: #ceb6ed;
 }
 .mobile-referral-button[aria-current='page'] {
-  border-color: #b4ed50;
-  color: #b4ed50;
+  border-color: var(--am-accent);
+  color: var(--am-accent);
 }
 .user-avatar {
   width: 42px;
   height: 42px;
   display: inline-block;
   flex-shrink: 0;
-  border: 2px solid #b4ed50;
+  border: 2px solid var(--am-accent);
   border-radius: 50%;
   overflow: hidden;
   padding: 3px;
@@ -142,16 +142,16 @@
 .user-tag-supporter,
 .user-tag-hundred-episodes,
 .user-tag-mugiwara {
-  border-color: #a5e63e55;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
   background: #141b11;
   color: #cfef99;
-  box-shadow: 0 0 12px #a5e63e1f;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--am-accent-alt) 12.2%, transparent);
 }
 .social-site {
   max-width: 1440px;
   margin: auto;
   padding: 0 5% 70px;
-  --profile-accent: #b4ed50;
+  --profile-accent: var(--am-accent);
 }
 
 /* The search route is shared by desktop and mobile. Mobile overrides live in
@@ -183,8 +183,8 @@
   }
 
   .mobile-search-form > button:hover {
-    border-color: #a5e63e80;
-    color: #b4ed50;
+    border-color: color-mix(in srgb, var(--am-accent-alt) 50.2%, transparent);
+    color: var(--am-accent);
   }
 
   .mobile-search-form label {
@@ -204,8 +204,8 @@
   }
 
   .mobile-search-form label:focus-within {
-    border-color: #a5e63e;
-    box-shadow: 0 0 0 3px #a5e63e17;
+    border-color: var(--am-accent-alt);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--am-accent-alt) 9%, transparent);
   }
 
   .mobile-search-form input {
@@ -251,12 +251,12 @@
 
   .search-theme-toggle:hover,
   .search-theme-toggle.active {
-    border-color: #a5e63e80;
+    border-color: color-mix(in srgb, var(--am-accent-alt) 50.2%, transparent);
     color: #d7f1a7;
   }
 
   .search-theme-toggle > svg:first-child {
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .search-theme-toggle > svg:last-child {
@@ -293,12 +293,12 @@
     min-height: 36px;
     padding: 0 12px;
     border-radius: 8px;
-    color: #b4ed50;
+    color: var(--am-accent);
     font-size: 13px;
   }
 
   .search-theme-panel-heading button:hover {
-    background: #a5e63e10;
+    background: color-mix(in srgb, var(--am-accent-alt) 6.3%, transparent);
   }
 
   .search-theme-input {
@@ -315,7 +315,7 @@
   }
 
   .search-theme-input:focus-within {
-    border-color: #a5e63e80;
+    border-color: color-mix(in srgb, var(--am-accent-alt) 50.2%, transparent);
   }
 
   .search-theme-input input {
@@ -350,8 +350,8 @@
 
   .search-theme-options button:hover,
   .search-theme-options button.selected {
-    border-color: #a5e63e;
-    background: #a5e63e16;
+    border-color: var(--am-accent-alt);
+    background: color-mix(in srgb, var(--am-accent-alt) 8.6%, transparent);
     color: #d9f4a7;
   }
 
@@ -374,7 +374,7 @@
 
   .recent-searches > div button {
     min-height: 36px;
-    color: #b4ed50;
+    color: var(--am-accent);
   }
 
   .recent-searches nav {
@@ -457,7 +457,7 @@
   text-align: center;
 }
 .party-gate > svg {
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .party-gate h1 {
   margin: 16px 0 8px;
@@ -552,7 +552,7 @@
     radial-gradient(circle at 50% 20%, #68449b44, transparent 45%), #090d12;
 }
 .party-connect > svg {
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .party-connect h2,
 .party-connect p {
@@ -577,7 +577,7 @@
   font-size: 13px;
 }
 .party-limit-card a {
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .party-soft-sync {
   position: absolute;
@@ -836,7 +836,7 @@
   display: grid;
   place-items: center;
   border-radius: 11px;
-  background: #b4ed50;
+  background: var(--am-accent);
   color: #10150b;
 }
 .party-chat-form button:disabled {
@@ -883,7 +883,7 @@
     gap: 7px;
     padding: 12px 17px;
     border-radius: 999px;
-    background: #b4ed50;
+    background: var(--am-accent);
     color: #11170b;
     box-shadow: 0 10px 30px #0008;
     font-weight: 800;
@@ -970,7 +970,7 @@
   color: #c4ced9;
 }
 .search-filter-toggle.active {
-  border-color: #a5e63e80;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 50.2%, transparent);
   color: #d9f4a7;
 }
 .search-filter-toggle span {
@@ -979,7 +979,7 @@
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: #b4ed50;
+  background: var(--am-accent);
   color: #11170b;
   font-size: 11px;
   font-weight: 800;
@@ -1078,8 +1078,8 @@
   font-size: 12px;
 }
 .search-filter-options button.selected {
-  border-color: #a5e63e;
-  background: #a5e63e16;
+  border-color: var(--am-accent-alt);
+  background: color-mix(in srgb, var(--am-accent-alt) 8.6%, transparent);
   color: #d9f4a7;
 }
 .search-filter-chips {
@@ -1087,7 +1087,7 @@
   margin: 0 0 25px;
 }
 .search-filter-chips button {
-  border-color: #a5e63e50;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 31.4%, transparent);
   color: #d3eba8;
 }
 .search-results-heading {
@@ -1113,7 +1113,7 @@
   margin-bottom: 15px;
 }
 .search-franchise-block > header span {
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1.5px;
@@ -1188,8 +1188,8 @@
   font-size: 12px;
   padding: 10px 16px;
   color: #a4b69c;
-  background: #b4ed5009;
-  border: 1px solid #b4ed501d;
+  background: color-mix(in srgb, var(--am-accent) 3.5%, transparent);
+  border: 1px solid color-mix(in srgb, var(--am-accent) 11.4%, transparent);
   border-radius: 8px;
   margin-bottom: 18px;
 }
@@ -1383,7 +1383,7 @@
   width: 100%;
   margin-top: 10px;
   padding: 9px;
-  border: 1px dashed #b4ed5045;
+  border: 1px dashed color-mix(in srgb, var(--am-accent) 27.1%, transparent);
   border-radius: 7px;
   color: var(--profile-accent);
   font-size: 12px;
@@ -1689,6 +1689,14 @@
 .theme-options button.selected {
   border-color: var(--swatch);
 }
+.theme-options button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+.theme-options button small {
+  color: #9ca6b3;
+  font-size: 10px;
+}
 .theme-options button > span {
   width: 10px;
   height: 10px;
@@ -1734,8 +1742,8 @@
   line-height: 1.6;
 }
 .notification.unread {
-  background: #b4ed5008;
-  border-left: 2px solid #b4ed50;
+  background: color-mix(in srgb, var(--am-accent) 3.1%, transparent);
+  border-left: 2px solid var(--am-accent);
 }
 .notification svg {
   flex-shrink: 0;
@@ -1914,7 +1922,7 @@
   padding: 10px 0;
 }
 .success-msg {
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 13px;
   line-height: 1.6;
 }
@@ -1936,7 +1944,7 @@
 .collection-custom-lists summary {
   width: fit-content;
   cursor: pointer;
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .collection-custom-lists > div {
   display: flex;
@@ -2329,7 +2337,7 @@ button:disabled {
   gap: 18px;
 }
 .site-footer a:hover {
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .legal-page {
   max-width: 900px;
@@ -2468,7 +2476,7 @@ button:disabled {
   margin-bottom: 18px;
 }
 .anime-meta strong {
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .anime-hero p.hero-description {
   font-size: 14px;
@@ -2509,7 +2517,7 @@ button:disabled {
 }
 .hero-dots button.active {
   width: 48px;
-  background: #b4ed50;
+  background: var(--am-accent);
 }
 .hero-controls > button {
   display: grid;
@@ -2541,7 +2549,7 @@ button:disabled {
   bottom: 58px;
   min-height: 44px;
   padding: 0 18px;
-  border: 1px solid #b4ed50;
+  border: 1px solid var(--am-accent);
   border-radius: 7px;
   background: #0b1016e8;
   color: #dfffa3;
@@ -2578,7 +2586,7 @@ button:disabled {
   color: #eef5ff;
 }
 .auto-skip-question button:first-child {
-  background: #b4ed50;
+  background: var(--am-accent);
   color: #152006;
   font-weight: 700;
 }
@@ -2830,9 +2838,9 @@ button:disabled {
 .subscription-nav {
   font-size: 12px;
   padding: 9px 12px;
-  border: 1px solid #b4ed5044;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 26.7%, transparent);
   border-radius: 8px;
-  color: #b4ed50;
+  color: var(--am-accent);
   white-space: nowrap;
 }
 .title-page {
@@ -2878,7 +2886,7 @@ button:disabled {
 }
 .genre-tile:hover {
   transform: translateY(-3px);
-  border-color: #b4ed5070;
+  border-color: color-mix(in srgb, var(--am-accent) 43.9%, transparent);
 }
 .genre-tile-shade {
   position: absolute;
@@ -2952,14 +2960,14 @@ button:disabled {
 }
 .genre-links a {
   padding: 6px 12px;
-  border: 1px solid #b4ed5033;
-  background: #b4ed500b;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 20%, transparent);
+  background: color-mix(in srgb, var(--am-accent) 4.3%, transparent);
   border-radius: 20px;
   font-size: 12px;
   color: #d5e8b2;
 }
 .genre-links a:hover {
-  border-color: #b4ed50;
+  border-color: var(--am-accent);
 }
 .anime-themes {
   margin-top: 18px;
@@ -2998,7 +3006,7 @@ button:disabled {
 }
 .anime-themes li:hover,
 .anime-themes li:focus-within {
-  border-color: #a5e63e99;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 60%, transparent);
   color: #d5e8b2;
 }
 .season-navigation {
@@ -3053,15 +3061,15 @@ button:disabled {
   white-space: nowrap;
 }
 .season-show-all:hover {
-  border-color: #a5e63e88;
-  color: #b4ed50;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 53.3%, transparent);
+  color: var(--am-accent);
 }
 .season-show-all span {
   min-width: 20px;
   padding: 2px 5px;
   border-radius: 999px;
-  background: #a5e63e1b;
-  color: #b4ed50;
+  background: color-mix(in srgb, var(--am-accent-alt) 10.6%, transparent);
+  color: var(--am-accent);
   text-align: center;
 }
 .season-scroll-buttons {
@@ -3083,8 +3091,8 @@ button:disabled {
   visibility: visible !important;
 }
 .season-scroll-buttons button:hover:not(:disabled) {
-  border-color: #a5e63e88;
-  color: #b4ed50;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 53.3%, transparent);
+  color: var(--am-accent);
 }
 .season-scroll-buttons button:disabled {
   cursor: default;
@@ -3133,7 +3141,7 @@ button:disabled {
   opacity: 1;
 }
 .season-relation-track:focus-visible {
-  outline: 2px solid #a5e63e66;
+  outline: 2px solid color-mix(in srgb, var(--am-accent-alt) 40%, transparent);
   outline-offset: 4px;
 }
 .season-relation-track .season-card {
@@ -3155,12 +3163,12 @@ button:disabled {
     transform 150ms ease;
 }
 a.season-card:hover {
-  border-color: #a5e63e80;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 50.2%, transparent);
   transform: translateY(-2px);
 }
 .season-card.active {
-  border-color: #a5e63e;
-  background: #a5e63e0e;
+  border-color: var(--am-accent-alt);
+  background: color-mix(in srgb, var(--am-accent-alt) 5.5%, transparent);
 }
 .season-card.branch {
   border-style: dashed;
@@ -3230,12 +3238,12 @@ a.season-card:hover {
     transform 150ms ease;
 }
 a.franchise-card:hover {
-  border-color: #a5e63e88;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 53.3%, transparent);
   transform: translateY(-2px);
 }
 .franchise-card.active {
-  border-color: #a5e63e;
-  background: #a5e63e0b;
+  border-color: var(--am-accent-alt);
+  background: color-mix(in srgb, var(--am-accent-alt) 4.3%, transparent);
 }
 .franchise-poster {
   position: relative;
@@ -3254,7 +3262,7 @@ a.franchise-card:hover {
   padding: 4px 6px;
   border-radius: 7px;
   background: #080c11e6;
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 11px;
   font-weight: 800;
   text-align: center;
@@ -3333,7 +3341,7 @@ a.franchise-card:hover {
   margin-bottom: 12px;
 }
 .recommend-heading a {
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 13px;
   white-space: nowrap;
 }
@@ -3348,7 +3356,7 @@ a.franchise-card:hover {
   margin: 0 0 8px;
 }
 .browse-heading > a {
-  color: #b4ed50;
+  color: var(--am-accent);
   white-space: nowrap;
 }
 .browse-page > .cards {
@@ -3417,7 +3425,7 @@ a.franchise-card:hover {
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
   background: linear-gradient(110deg, #172218, #131a24);
-  border: 1px solid #b4ed5025;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 14.5%, transparent);
   border-radius: 14px;
   padding: 25px;
   margin-bottom: 16px;
@@ -3478,9 +3486,9 @@ a.franchise-card:hover {
   font-size: 11px;
 }
 .achievement.unlocked {
-  border-color: #b4ed5044;
+  border-color: color-mix(in srgb, var(--am-accent) 26.7%, transparent);
   color: #c7e4a0;
-  background: #b4ed5007;
+  background: color-mix(in srgb, var(--am-accent) 2.7%, transparent);
 }
 .achievement [data-slot='progress'] {
   height: 4px;
@@ -3501,7 +3509,7 @@ a.franchise-card:hover {
   color: #8e9cae;
 }
 .history-list span {
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 13px;
 }
 .dashboard-cards {
@@ -3513,7 +3521,7 @@ a.franchise-card:hover {
 .dashboard-cards strong {
   display: block;
   font-size: 48px;
-  color: #b4ed50;
+  color: var(--am-accent);
   margin-top: 16px;
 }
 .dashboard-cards span {
@@ -3795,7 +3803,7 @@ a.franchise-card:hover {
   position: absolute;
   left: 13px;
   top: 8px;
-  color: #b4ed50;
+  color: var(--am-accent);
   font-weight: 800;
 }
 .plus-buy-button {
@@ -3842,7 +3850,7 @@ a.franchise-card:hover {
   width: 17px;
   height: 17px;
   margin: 0;
-  accent-color: #a5e63e;
+  accent-color: var(--am-accent-alt);
 }
 .plus-dialog > .muted {
   margin: 0;
@@ -3851,8 +3859,8 @@ a.franchise-card:hover {
 }
 .profile-frame-lime .user-avatar {
   box-shadow:
-    0 0 0 3px #b4ed50,
-    0 0 24px #b4ed5066;
+    0 0 0 3px var(--am-accent),
+    0 0 24px color-mix(in srgb, var(--am-accent) 40%, transparent);
 }
 .profile-frame-violet .user-avatar {
   box-shadow:
@@ -3933,7 +3941,7 @@ a.franchise-card:hover {
   --cosmetic-accent: #70d9ff;
 }
 .user-tag-recruiter {
-  --cosmetic-accent: #b4ed50;
+  --cosmetic-accent: var(--am-accent);
 }
 [class*='profile-frame-']:not(.profile-frame-none) > .user-avatar {
   position: relative;
@@ -3947,7 +3955,7 @@ a.franchise-card:hover {
   --frame-accent: #72e1ff;
 }
 .profile-frame-lime > .user-avatar {
-  --frame-accent: #b4ed50;
+  --frame-accent: var(--am-accent);
 }
 .profile-frame-one-piece-master > .user-avatar {
   --frame-accent: #ffd36e;
@@ -4045,7 +4053,7 @@ a.franchise-card:hover {
   opacity: 0.65;
 }
 .cosmetic-card button:focus-visible {
-  outline: 2px solid #b4ed50;
+  outline: 2px solid var(--am-accent);
   outline-offset: 3px;
 }
 .cosmetic-card.unlocked {
@@ -4084,7 +4092,7 @@ a.franchise-card:hover {
   cursor: pointer;
 }
 .admin-tool-tabs button[aria-pressed='true'] {
-  background: #b4ed50;
+  background: var(--am-accent);
   color: #10170b;
 }
 .admin-tools > [hidden] {
@@ -4155,7 +4163,7 @@ a.franchise-card:hover {
   color: #8793a1;
 }
 .reward-card.unlocked {
-  border-color: #a5e63e55;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
   background: #141a16;
   color: #d8e6c1;
 }
@@ -4190,7 +4198,7 @@ a.franchise-card:hover {
   margin-bottom: 32px;
 }
 .referral-hero > span {
-  color: #a5e63e;
+  color: var(--am-accent-alt);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -4291,8 +4299,8 @@ a.franchise-card:hover {
   color: #dce8cc;
 }
 .referral-progress .done span {
-  border-color: #a5e63e;
-  background: #a5e63e22;
+  border-color: var(--am-accent-alt);
+  background: color-mix(in srgb, var(--am-accent-alt) 13.3%, transparent);
 }
 .referral-progress .next {
   background: #6f50aa1c;
@@ -4309,7 +4317,7 @@ a.franchise-card:hover {
   color: #778391;
 }
 .referral-rewards article.unlocked {
-  border-color: #a5e63e55;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
   color: #d8e6c1;
 }
 .referral-rewards article.next {
@@ -4390,7 +4398,7 @@ a.franchise-card:hover {
 }
 .list-plus-editor summary {
   cursor: pointer;
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .list-plus-editor textarea {
   width: 100%;
@@ -4468,12 +4476,12 @@ a.franchise-card:hover {
   background: var(--panel);
 }
 .comment-reactions button.active {
-  border-color: #b4ed50;
-  background: #b4ed501a;
+  border-color: var(--am-accent);
+  background: color-mix(in srgb, var(--am-accent) 10.2%, transparent);
 }
 .plus-comment-badge,
 .plus-label {
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -4508,7 +4516,7 @@ a.franchise-card:hover {
   border-radius: 10px;
 }
 .dashboard-cards.compact strong {
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 24px;
 }
 
@@ -4541,7 +4549,7 @@ a.franchise-card:hover {
 }
 .success-msg,
 .invite-result {
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .vk-login-form {
   display: grid;
@@ -4737,7 +4745,7 @@ a.franchise-card:hover {
   gap: 18px !important;
   border-radius: 24px;
   background:
-    radial-gradient(ellipse at top right, #b4ed5014, transparent 45%), #11171e;
+    radial-gradient(ellipse at top right, color-mix(in srgb, var(--am-accent) 7.8%, transparent), transparent 45%), #11171e;
 }
 .plus-dialog [data-slot='dialog-close'] {
   min-width: 44px;
@@ -4750,7 +4758,7 @@ a.franchise-card:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #b4ed50;
+  color: var(--am-accent);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.6px;
@@ -4761,7 +4769,7 @@ a.franchise-card:hover {
   letter-spacing: -1px;
 }
 .plus-intro [data-slot='dialog-title'] span {
-  color: #b4ed50;
+  color: var(--am-accent);
 }
 .plus-intro [data-slot='dialog-description'] {
   margin: 8px 0 0;
@@ -4771,9 +4779,9 @@ a.franchise-card:hover {
 }
 .plus-price-card {
   padding: 18px 20px;
-  border: 1px solid #b4ed5033;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 20%, transparent);
   border-radius: 16px;
-  background: #b4ed500a;
+  background: color-mix(in srgb, var(--am-accent) 3.9%, transparent);
 }
 .plus-price-card strong {
   font-size: 38px;
@@ -4803,7 +4811,7 @@ a.franchise-card:hover {
   content: none;
 }
 .plus-benefits li > svg {
-  color: #b4ed50;
+  color: var(--am-accent);
   flex-shrink: 0;
   margin-top: 3px;
 }
@@ -4859,8 +4867,8 @@ a.franchise-card:hover {
   transition: transform 120ms ease;
 }
 .plus-dialog .plus-legal-links input:checked {
-  border-color: #a5e63e;
-  background: #a5e63e;
+  border-color: var(--am-accent-alt);
+  background: var(--am-accent-alt);
 }
 .plus-dialog .plus-legal-links input:checked::before {
   transform: rotate(-45deg) scale(1);
@@ -4870,9 +4878,9 @@ a.franchise-card:hover {
   outline-offset: 3px;
 }
 .plus-dialog .plus-legal-links .plus-agreement-link {
-  color: #b4ed50;
+  color: var(--am-accent);
   text-decoration: underline;
-  text-decoration-color: #b4ed5077;
+  text-decoration-color: color-mix(in srgb, var(--am-accent) 46.7%, transparent);
   text-underline-offset: 3px;
 }
 .plus-legal-list {
@@ -4907,8 +4915,8 @@ a.franchise-card:hover {
   color: #94d936;
 }
 .plus-dialog .plus-legal-links .plus-legal-link:hover {
-  border-color: #a5e63e66;
-  background: #a5e63e0c;
+  border-color: color-mix(in srgb, var(--am-accent-alt) 40%, transparent);
+  background: color-mix(in srgb, var(--am-accent-alt) 4.7%, transparent);
   color: #f1f4f7;
 }
 @media (max-width: 480px) {
