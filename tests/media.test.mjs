@@ -35,6 +35,7 @@ test('media proxy follows numbered CDN hosts with legacy deployment configuratio
     'cache6.libria.fun',
     'cache7.libria.fun',
     'cache9.libria.fun',
+    'cache-cloud12.libria.fun',
   ]) {
     const url = `https://${host}/videos/segment.ts`;
     assert.equal(media.validateMediaUrl(url).hostname, host);
@@ -50,6 +51,9 @@ test('media proxy follows numbered CDN hosts with legacy deployment configuratio
   }
   for (const url of [
     'https://cache2.libria.fun.evil.test/a',
+    'https://cache-cloud12.libria.fun.evil.test/a',
+    'https://cache-cloud.libria.fun/a',
+    'https://cache-cloud0.libria.fun/a',
     'https://evil.libria.fun/a',
     'https://127.0.0.1/a',
     'http://cache2.libria.fun/a',

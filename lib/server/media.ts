@@ -28,7 +28,8 @@ function allowedMediaHost(hostname: string) {
   return (
     hosts.has(hostname) ||
     (hosts.has('cache.libria.fun') &&
-      /^cache[1-9][0-9]*\.libria\.fun$/.test(hostname))
+      (/^cache[1-9][0-9]*\.libria\.fun$/.test(hostname) ||
+        /^cache-cloud[1-9][0-9]*\.libria\.fun$/.test(hostname)))
   );
 }
 
