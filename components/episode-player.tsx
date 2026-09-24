@@ -12,6 +12,7 @@ import {
 import { api, useCommunity } from '@/components/community/context';
 import { kodikEpisodeFromMessage } from '@/lib/kodik-events';
 import { OfflineDownloadButton } from '@/components/offline-download-button';
+import type { PlaybackDiagnosticCode } from '@/lib/playback-diagnostics';
 
 type SkipTimes = {
   opening?: SkipSegment;
@@ -76,6 +77,7 @@ export function EpisodePlayer({
     [kodikDuration, setKodikDuration] = useState<number | null>(null),
     [iframeSeek, setIframeSeek] = useState<number | null>(null),
     [iframeRevision, setIframeRevision] = useState(0),
+    [kodikLoadVersion, setKodikLoadVersion] = useState(0),
     [iframeSourceEpisode, setIframeSourceEpisode] = useState(initialEpisode),
     [skipTimes, setSkipTimes] = useState<SkipTimes>({
       source: 'none',
@@ -92,6 +94,9 @@ export function EpisodePlayer({
   const playbackActiveRef = useRef(false);
   const autoplayNext = useRef(false);
   const advancedEpisode = useRef('');
+  const kodikSignal = useRef(false);
+  const kodikLoadedAt = useRef(0);
+  const reportedKodikDiagnostics = useRef(new Set<string>());
   const community = useCommunity(),
     { user } = community;
   const skippedSegment = useRef('');
@@ -102,6 +107,43 @@ export function EpisodePlayer({
   const voiceover =
     voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
   const isKodik = voiceover?.provider === 'kodik';
+  const reportKodikDiagnostic = useCallback(
+    (
+      code: PlaybackDiagnosticCode,
+      phase: 'load' | 'playback' | 'message' | 'network',
+      details: { player_code?: string; iframe_loaded?: boolean } = {},
+    ) => {
+      if (!animeId || !episode || !voiceover || voiceover.provider !== 'kodik')
+        return;
+      const key = `${animeId}:${episode.ordinal}:${voiceover.id}:${code}`;
+      if (reportedKodikDiagnostics.current.has(key)) return;
+      reportedKodikDiagnostics.current.add(key);
+      void fetch('/api/playback-diagnostics', {
+        method: 'POST',
+        keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          anime_id: animeId,
+          episode: episode.ordinal,
+          voiceover: voiceover.id,
+          code,
+          phase,
+          details: {
+            online: navigator.onLine,
+            visibility: document.visibilityState,
+            iframe_loaded: details.iframe_loaded ?? kodikLoadedAt.current > 0,
+            elapsed_ms: kodikLoadedAt.current
+              ? Date.now() - kodikLoadedAt.current
+              : 0,
+            ...(details.player_code
+              ? { player_code: details.player_code }
+              : {}),
+          },
+        }),
+      }).catch(() => {});
+    },
+    [animeId, episode?.ordinal, voiceover?.id, voiceover?.provider],
+  );
   const availableIndices = useMemo(
     () => voiceoverEpisodeIndices(episodes, voiceover),
     [episodes, voiceover],
@@ -389,6 +431,14 @@ export function EpisodePlayer({
           return;
         }
       }
+      kodikSignal.current = true;
+      const messageKind = String(payload?.key || payload?.event || '')
+        .toLowerCase()
+        .slice(0, 100);
+      if (messageKind.includes('error') || messageKind.includes('fail'))
+        reportKodikDiagnostic('player_reported_error', 'message', {
+          player_code: messageKind,
+        });
       const timeValue =
           payload?.key === 'kodik_player_time_update'
             ? payload.value
@@ -456,6 +506,7 @@ export function EpisodePlayer({
     setPlayback,
     advanceToNext,
     selectEpisode,
+    reportKodikDiagnostic,
   ]);
   const stream = episode
     ? (quality === '1080'
@@ -576,6 +627,33 @@ export function EpisodePlayer({
       return '';
     }
   })();
+  useEffect(() => {
+    kodikSignal.current = false;
+    kodikLoadedAt.current = 0;
+  }, [iframeUrl]);
+  useEffect(() => {
+    if (!isKodik || !iframeUrl || !kodikLoadVersion) return;
+    const timer = setTimeout(() => {
+      if (
+        !kodikSignal.current &&
+        navigator.onLine &&
+        document.visibilityState === 'visible'
+      )
+        reportKodikDiagnostic('no_player_signal', 'load', {
+          iframe_loaded: true,
+        });
+    }, 25_000);
+    return () => clearTimeout(timer);
+  }, [iframeUrl, isKodik, kodikLoadVersion, reportKodikDiagnostic]);
+  useEffect(() => {
+    if (!isKodik) return;
+    const offline = () =>
+      reportKodikDiagnostic('browser_offline', 'network', {
+        iframe_loaded: kodikLoadedAt.current > 0,
+      });
+    window.addEventListener('offline', offline);
+    return () => window.removeEventListener('offline', offline);
+  }, [isKodik, reportKodikDiagnostic]);
   const activeKind =
       skipTimes.opening &&
       currentTime >= skipTimes.opening.start &&
@@ -662,10 +740,15 @@ export function EpisodePlayer({
               title={`${animeTitle} — ${voiceover.title}, серия ${episode.ordinal}`}
               allow="autoplay *; fullscreen *; picture-in-picture *; encrypted-media *"
               allowFullScreen
+              onLoad={() => {
+                kodikLoadedAt.current = Date.now();
+                setKodikLoadVersion((value) => value + 1);
+              }}
               onError={() => {
                 setError(
                   'Kodik временно недоступен. Повторите загрузку плеера.',
                 );
+                reportKodikDiagnostic('iframe_error', 'load');
               }}
             />
           ) : (
