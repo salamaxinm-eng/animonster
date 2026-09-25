@@ -167,7 +167,11 @@ export function ProfilePage({
   useEffect(() => {
     if (tab !== 'settings' || !data) return;
     const frame = requestAnimationFrame(() => {
-      document.getElementById('profile-settings')?.scrollIntoView({
+      const targetId =
+        window.location.hash === '#appearance-settings'
+          ? 'appearance-settings'
+          : 'profile-settings';
+      document.getElementById(targetId)?.scrollIntoView({
         behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
           ? 'instant'
           : 'smooth',
@@ -885,7 +889,7 @@ export function ProfilePage({
                       }
                     />
                   </label>
-                  <fieldset>
+                  <fieldset id="appearance-settings">
                     <legend>Аватар</legend>
                     <div className="avatar-upload">
                       <Avatar large avatar={draft.avatar} theme={draft.theme} />

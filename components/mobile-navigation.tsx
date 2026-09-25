@@ -13,7 +13,10 @@ import {
   UserRound,
 } from 'lucide-react';
 import { BuySubscription } from '@/components/community/buy-subscription';
-import { useCommunity } from '@/components/community/context';
+import {
+  AccountMenu,
+  useCommunity,
+} from '@/components/community/context';
 
 type MobileNavItem = {
   href: string;
@@ -154,6 +157,11 @@ export function MobileNavigation() {
                 <Icon aria-hidden="true" />
                 <span>{item.label}</span>
               </button>
+            );
+          }
+          if (item.account && community.user) {
+            return (
+              <AccountMenu key={item.label} compact active={active} />
             );
           }
           return (

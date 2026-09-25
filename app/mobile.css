@@ -125,6 +125,30 @@
     color: var(--am-accent);
   }
 
+  .mobile-bottom-nav .mobile-account-menu-trigger {
+    width: 100%;
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .mobile-bottom-nav .mobile-account-menu-trigger:hover,
+  .mobile-bottom-nav .mobile-account-menu-trigger[data-popup-open] {
+    border: 0;
+    background: color-mix(in srgb, var(--am-accent) 8%, transparent);
+    box-shadow: none;
+  }
+
+  .mobile-bottom-nav .mobile-account-menu-trigger .user-avatar {
+    width: 25px;
+    height: 25px;
+    padding: 1px;
+    border-width: 1px;
+  }
+
   .site > .header,
   .social-site > .community-header,
   body:has(.mobile-topbar) > footer,

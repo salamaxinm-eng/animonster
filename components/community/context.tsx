@@ -18,12 +18,25 @@ import { GlobalSearch } from '@/components/global-search';
 import { EmailForm } from './email-form';
 import { Input } from '@/components/ui/input';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Ghost,
   Bell,
   Gem,
   ArrowLeft,
   MessageCircle,
   UsersRound,
+  ChevronDown,
+  Download,
+  LogOut,
+  Palette,
+  Settings,
+  UserRound,
 } from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
 import { earnedPins } from '@/lib/earned-pins';
@@ -293,6 +306,100 @@ export function Avatar({
     </span>
   );
 }
+export function AccountMenu({
+  compact = false,
+  active = false,
+}: {
+  compact?: boolean;
+  active?: boolean;
+}) {
+  const c = useCommunity();
+  if (!c.user) return null;
+
+  const openPage = (href: string) => window.location.assign(href);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className={`account-menu-trigger${compact ? ' mobile-account-menu-trigger' : ''}${active ? ' active' : ''}`}
+        aria-label="Открыть меню аккаунта"
+      >
+        <Avatar avatar={c.user.avatar} theme={c.user.theme} />
+        {compact ? (
+          <span>Аккаунт</span>
+        ) : (
+          <>
+            <span className="account-menu-nick">{c.user.nick}</span>
+            <ChevronDown className="account-menu-chevron" size={15} />
+          </>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="account-dropdown"
+        align="end"
+        side={compact ? 'top' : 'bottom'}
+        sideOffset={10}
+      >
+        <DropdownMenuItem
+          className="account-dropdown-item"
+          onClick={() => openPage('/profile')}
+        >
+          <UserRound />
+          Профиль
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item"
+          onClick={() => openPage('/profile?tab=settings#profile-settings')}
+        >
+          <Settings />
+          Настройки
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item"
+          onClick={() => openPage('/downloads')}
+        >
+          <Download />
+          Загрузки
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item"
+          onClick={() =>
+            openPage('/profile?tab=settings#appearance-settings')
+          }
+        >
+          <Palette />
+          Оформление
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item"
+          onClick={() => openPage('/profile?tab=notifications')}
+        >
+          <Bell />
+          Уведомления
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="account-dropdown-separator" />
+        <DropdownMenuItem
+          className="account-dropdown-item"
+          onClick={() => openPage(c.supportUrl || '/legal/support')}
+        >
+          <MessageCircle />
+          Поддержка
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item account-dropdown-item-danger"
+          disabled={c.preview}
+          onClick={async () => {
+            await api('logout', {});
+            await c.refresh();
+          }}
+        >
+          <LogOut />
+          {c.preview ? 'Режим предпросмотра' : 'Выйти из аккаунта'}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 export function AccountNav() {
   const c = useCommunity();
   const [activeParty, setActiveParty] = useState<{
@@ -324,36 +431,13 @@ export function AccountNav() {
       <a href="/referrals" className="referral-nav-button">
         <Gem size={16} /> Пригласить друзей
       </a>
-      <a href="/pins" className="plus-link">
-        <Gem size={17} /> Пины
-      </a>
-      <a href="/downloads">Загрузки</a>
       <BuySubscription className="subscription-nav" />
       {c.moderator && <a href="/admin">Админка</a>}
       {c.user ? (
         <>
-          <a className="account-link" href="/profile">
-            <Avatar avatar={c.user.avatar} theme={c.user.theme} />
-            <span>{c.user.nick}</span>
-          </a>
+          <AccountMenu />
           {c.emailVerificationRequired && !c.user.email_verified && (
             <span className="verify-email-label">Подтвердите email</span>
-          )}
-          <a href="/profile?tab=notifications" aria-label="Уведомления">
-            <Bell size={18} />
-          </a>
-          {c.preview ? (
-            <span className="preview-label">Предпросмотр</span>
-          ) : (
-            <button
-              className="text-link"
-              onClick={async () => {
-                await api('logout', {});
-                await c.refresh();
-              }}
-            >
-              Выйти
-            </button>
           )}
         </>
       ) : (
@@ -390,7 +474,7 @@ export function CommunityHeader() {
       </nav>
       <GlobalSearch />
       <AccountNav />
-      {community.supportUrl && (
+      {!community.user && community.supportUrl && (
         <a
           className="support-link"
           href={community.supportUrl}
