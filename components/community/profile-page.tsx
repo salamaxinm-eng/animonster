@@ -37,6 +37,7 @@ import {
   type CollectionList,
 } from '@/lib/community';
 import { proxyImageUrl } from '@/lib/anime';
+import { subscriptionPlans } from '@/lib/subscription-plans';
 type CosmeticOption = {
   id: string;
   kind: 'tag' | 'pin' | 'frame' | 'theme';
@@ -580,7 +581,11 @@ export function ProfilePage({
                 <h3>Твой ник. Твой тайтл.</h3>
                 <p>Коллекционные пины рядом с ником</p>
                 <strong>
-                  89 ₽ <span>/ 30 дней</span>
+                  {subscriptionPlans.monthly.originalPriceLabel && (
+                    <s>{subscriptionPlans.monthly.originalPriceLabel}</s>
+                  )}
+                  {subscriptionPlans.monthly.priceLabel}{' '}
+                  <span>/ 30 дней</span>
                 </strong>
                 <span className="plus-promo-link">
                   Открыть AniMonster Plus →

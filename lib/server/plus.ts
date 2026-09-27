@@ -1,6 +1,6 @@
 import { db, now, premium } from './core';
 
-export const PLUS_PRICE = '89.00';
+export const PLUS_PRICE = '109.00';
 export const PLUS_DURATION_MS = 30 * 86400000;
 export const FREE_EPISODE_DELAY_MS = 4 * 3600000;
 

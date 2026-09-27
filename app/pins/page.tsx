@@ -9,6 +9,7 @@ import {
 } from '@/components/community/context';
 import { BuySubscription } from '@/components/community/buy-subscription';
 import { pins } from '@/lib/community';
+import { subscriptionPlans } from '@/lib/subscription-plans';
 export default function PinsPage() {
   const c = useCommunity(),
     [selected, setSelected] = useState(pins[0].id),
@@ -95,10 +96,14 @@ export default function PinsPage() {
               — в профиле, на стенке и под видео.
             </p>
             <div className="subscription-price">
-              89 ₽ <span>/ 30 дней</span>
+              {subscriptionPlans.monthly.originalPriceLabel && (
+                <s>{subscriptionPlans.monthly.originalPriceLabel}</s>
+              )}
+              {subscriptionPlans.monthly.priceLabel} <span>/ 30 дней</span>
             </div>
             <p className="annual-pins-price">
-              Или 961,20 ₽ / год · −10% и тег «Вечный накама» навсегда
+              Или {subscriptionPlans.annual.priceLabel} / год · −
+              {subscriptionPlans.annual.discount}% и тег «Вечный накама» навсегда
             </p>
             <p className="platega-review-label" role="note">
               Platega test

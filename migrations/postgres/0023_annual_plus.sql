@@ -1,5 +1,5 @@
 ALTER TABLE orders ADD COLUMN plan text NOT NULL DEFAULT 'monthly' CHECK (plan IN ('monthly','annual'));
-ALTER TABLE orders ADD COLUMN amount numeric(10,2) NOT NULL DEFAULT 89.00 CHECK (amount > 0);
+ALTER TABLE orders ADD COLUMN amount numeric(10,2) NOT NULL DEFAULT 109.00 CHECK (amount > 0);
 ALTER TABLE orders ADD COLUMN duration_days integer NOT NULL DEFAULT 30 CHECK (duration_days > 0);
 ALTER TABLE cosmetics DROP CONSTRAINT cosmetics_access_type_check;
 ALTER TABLE cosmetics ADD CONSTRAINT cosmetics_access_type_check CHECK (access_type IN ('free','plus','achievement','referral','admin','purchase'));

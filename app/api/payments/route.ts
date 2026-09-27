@@ -12,6 +12,7 @@ import {
 } from '@/lib/server/core';
 import { paymentFetch, verifyPayment } from '@/lib/server/billing';
 import {
+  SUPPORT_MIN_AMOUNT,
   SUPPORT_PLAN,
   subscriptionPlan,
   supportAmount,
@@ -55,7 +56,7 @@ export async function POST(r: Request) {
     if (!fixedPlan && chosenAmount === null)
       throw new ApiError(
         requestedPlan === SUPPORT_PLAN
-          ? 'Выберите целую сумму от 90 до 100 000 ₽'
+          ? `Выберите целую сумму от ${SUPPORT_MIN_AMOUNT} до 100 000 ₽`
           : 'Неизвестный тариф',
         400,
       );

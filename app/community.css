@@ -2107,6 +2107,13 @@
   font-weight: 750;
   margin: 23px 0 6px;
 }
+.subscription-price s {
+  display: inline-block;
+  margin-right: 10px;
+  color: #778497;
+  font-size: 24px;
+  font-weight: 650;
+}
 .subscription-price > span {
   font-size: 16px;
   font-weight: 400;
@@ -4902,6 +4909,12 @@ a.franchise-card:hover {
   font-size: 38px;
   letter-spacing: -1.5px;
   color: #edf9db;
+}
+.plus-promo strong s {
+  margin-right: 7px;
+  color: #8690a0;
+  font-size: 15px;
+  letter-spacing: 0;
 }
 .plus-price-card span,
 .plus-price-card p {

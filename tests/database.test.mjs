@@ -661,7 +661,7 @@ test('cosmetic access separates Plus from permanent achievement rewards', async 
   await databaseClient.close();
 });
 
-test('referral qualification changes once at 3600 server seconds', async () => {
+test('referral qualification changes once at three completed episodes', async () => {
   const databaseClient = await database();
   const referrer = crypto.randomUUID();
   const friend = crypto.randomUUID();
@@ -685,18 +685,20 @@ test('referral qualification changes once at 3600 server seconds', async () => {
   );
   await databaseClient.query(
     `INSERT INTO history(user_id,anime_id,episode,duration,watched_seconds,completed,updated_at)
-     VALUES ($1,21,1,7200,3599,1,$2)`,
+     VALUES ($1,21,1,7200,100000,0,$2),
+            ($1,21,2,7200,1,1,$2),
+            ($1,21,3,7200,1,1,$2)`,
     [friend, timestamp],
   );
   const qualify = () =>
     databaseClient.query(
       `UPDATE referrals SET status='qualified',qualified_at=$2 WHERE referred_user_id=$1 AND status='pending'
-       AND (SELECT COALESCE(sum(watched_seconds),0) FROM history WHERE user_id=$1)>=3600 RETURNING id`,
+       AND (SELECT COALESCE(sum(completed),0) FROM history WHERE user_id=$1)>=3 RETURNING id`,
       [friend, timestamp],
     );
   assert.equal((await qualify()).length, 0);
   await databaseClient.query(
-    'UPDATE history SET watched_seconds=3600 WHERE user_id=$1 AND anime_id=21 AND episode=1',
+    'UPDATE history SET completed=1 WHERE user_id=$1 AND anime_id=21 AND episode=1',
     [friend],
   );
   assert.equal((await qualify()).length, 1);

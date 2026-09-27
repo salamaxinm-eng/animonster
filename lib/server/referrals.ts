@@ -75,14 +75,14 @@ export async function evaluateReferralQualification(referredUserId: string) {
     .bind(referredUserId)
     .first<{ id: string; referrer_id: string }>();
   if (!referral) return { qualified: false };
-  const watch = await db()
+  const progress = await db()
     .prepare(
-      'SELECT COALESCE(sum(watched_seconds),0) AS seconds FROM history WHERE user_id=?',
+      'SELECT COALESCE(SUM(completed), 0) AS episodes FROM history WHERE user_id=?',
     )
     .bind(referredUserId)
-    .first<{ seconds: number }>();
-  const seconds = Number(watch?.seconds || 0);
-  if (seconds < 3600) return { qualified: false, seconds };
+    .first<{ episodes: number }>();
+  const episodes = Number(progress?.episodes || 0);
+  if (episodes < 3) return { qualified: false, episodes };
   const won = await db()
     .prepare(
       `UPDATE referrals SET status='qualified',qualified_at=?
@@ -95,11 +95,11 @@ export async function evaluateReferralQualification(referredUserId: string) {
       referredUserId,
       3,
       `referral-friend:${won.id}`,
-      'Награда приглашённому после 60 минут просмотра',
+      'Награда приглашённому после 3 просмотренных серий',
     );
     await grantReferralRewards(won.referrer_id);
   }
-  return { qualified: !!won, seconds, referrerId: won?.referrer_id };
+  return { qualified: !!won, episodes, referrerId: won?.referrer_id };
 }
 
 export async function grantReferralRewards(userId: string) {

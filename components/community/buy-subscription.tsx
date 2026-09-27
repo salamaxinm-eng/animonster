@@ -56,6 +56,7 @@ export function BuySubscription({
   const priceLabel = plan
     ? plan.priceLabel
     : `${chosenSupportAmount ?? SUPPORT_MIN_AMOUNT} ₽`;
+  const originalPriceLabel = plan?.originalPriceLabel;
 
   useEffect(() => {
     if (!open) return;
@@ -133,9 +134,14 @@ export function BuySubscription({
                   >
                     <span>
                       {option.id === 'annual' ? 'На год' : 'На месяц'}{' '}
-                      {option.discount > 0 && <b>−10%</b>}
+                      {option.discount > 0 && <b>−{option.discount}%</b>}
                     </span>
-                    <strong>{option.priceLabel}</strong>
+                    <strong>
+                      {option.originalPriceLabel && (
+                        <s>{option.originalPriceLabel}</s>
+                      )}
+                      {option.priceLabel}
+                    </strong>
                     <small>{option.label}</small>
                   </button>
                 ))}
@@ -185,14 +191,18 @@ export function BuySubscription({
                     ))}
                   </div>
                   <small>
-                    Целая сумма от 90 ₽. Ник и общая сумма появятся в рейтинге.
+                    Целая сумма от {SUPPORT_MIN_AMOUNT} ₽. Ник и общая сумма
+                    появятся в рейтинге.
                   </small>
                 </div>
               )}
 
               <div className="plus-price-card">
                 <div>
-                  <strong>{priceLabel}</strong>
+                  <strong>
+                    {originalPriceLabel && <s>{originalPriceLabel}</s>}
+                    {priceLabel}
+                  </strong>
                   <span> / {plan?.label || '30 дней'}</span>
                 </div>
                 <p>
@@ -211,7 +221,7 @@ export function BuySubscription({
                     навсегда после подтверждённой годовой покупки.
                   </p>
                   <small>
-                    <s>1 068 ₽</s> · Экономия 106,80 ₽ относительно 12 месяцев.
+                    <s>1 308 ₽</s> · Экономия 309 ₽ относительно 12 месяцев.
                   </small>
                 </div>
               )}

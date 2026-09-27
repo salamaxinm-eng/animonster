@@ -3,23 +3,25 @@ export const subscriptionPlans = {
     id: 'monthly',
     label: '30 дней',
     days: 30,
-    price: '89.00',
-    priceLabel: '89 ₽',
+    price: '109.00',
+    priceLabel: '109 ₽',
+    originalPriceLabel: '149 ₽',
     discount: 0,
   },
   annual: {
     id: 'annual',
     label: '365 дней',
     days: 365,
-    price: '961.20',
-    priceLabel: '961,20 ₽',
-    discount: 10,
+    price: '999.00',
+    priceLabel: '999 ₽',
+    originalPriceLabel: null,
+    discount: 24,
   },
 } as const;
 export type SubscriptionPlan = keyof typeof subscriptionPlans;
 export const ANNUAL_TAG = 'eternal-nakama';
 export const SUPPORT_PLAN = 'support';
-export const SUPPORT_MIN_AMOUNT = 90;
+export const SUPPORT_MIN_AMOUNT = 110;
 export const SUPPORT_MAX_AMOUNT = 100_000;
 
 export function supportAmount(value: unknown) {
