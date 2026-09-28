@@ -106,206 +106,243 @@ export function BuySubscription({
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sign-dialog plus-dialog">
-          <div className="plus-intro">
-            <span className="plus-eyebrow">
-              <Sparkles size={16} /> БОЛЬШЕ ВОЗМОЖНОСТЕЙ
-            </span>
-            <DialogTitle>
-              AniMonster <span>Plus</span>
-            </DialogTitle>
-            <DialogDescription>
-              Больше возможностей для тебя — больше возможностей для AniMonster.
-            </DialogDescription>
-          </div>
-          <div className="plus-dialog-layout">
-            <section className="plus-offer-column" aria-label="Выбор тарифа">
-              <div
-                className="plus-plan-options"
-                role="group"
-                aria-label="Тариф Plus"
-              >
-                {Object.values(subscriptionPlans).map((option) => (
-                  <button
-                    type="button"
-                    key={option.id}
-                    aria-pressed={planId === option.id}
-                    disabled={busy}
-                    onClick={() => setPlanId(option.id)}
-                  >
-                    <span>
-                      {option.id === 'annual' ? 'На год' : 'На месяц'}{' '}
-                      {option.discount > 0 && <b>−{option.discount}%</b>}
-                    </span>
-                    <strong>
-                      {option.originalPriceLabel && (
-                        <s>{option.originalPriceLabel}</s>
-                      )}
-                      {option.priceLabel}
-                    </strong>
-                    <small>{option.label}</small>
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  className="plus-support-plan"
-                  aria-pressed={planId === SUPPORT_PLAN}
-                  disabled={busy}
-                  onClick={() => setPlanId(SUPPORT_PLAN)}
+          <div className="plus-dialog-scroll">
+            <div className="plus-intro">
+              <span className="plus-eyebrow">
+                <Sparkles size={16} /> БОЛЬШЕ ВОЗМОЖНОСТЕЙ
+              </span>
+              <DialogTitle>
+                AniMonster <span>Plus</span>
+              </DialogTitle>
+              <DialogDescription>
+                Больше возможностей для тебя — больше возможностей для
+                AniMonster.
+              </DialogDescription>
+            </div>
+            <div className="plus-dialog-layout">
+              <section className="plus-offer-column" aria-label="Выбор тарифа">
+                <div
+                  className="plus-plan-options"
+                  role="group"
+                  aria-label="Тариф Plus"
                 >
-                  <span>
-                    <Rocket size={15} /> Свой тариф
-                  </span>
-                  <strong>от {SUPPORT_MIN_AMOUNT} ₽</strong>
-                  <small>30 дней + место в рейтинге</small>
-                </button>
-              </div>
-
-              {planId === SUPPORT_PLAN && (
-                <div className="support-amount-picker">
-                  <label htmlFor="plus-support-amount">
-                    Сколько хочешь вложить в AniMonster
-                  </label>
-                  <div className="support-amount-input">
-                    <input
-                      id="plus-support-amount"
-                      type="number"
-                      inputMode="numeric"
-                      min={SUPPORT_MIN_AMOUNT}
-                      max={100000}
-                      step={10}
-                      value={customAmount}
-                      onChange={(event) => setCustomAmount(event.target.value)}
-                      aria-invalid={chosenSupportAmount === null}
-                    />
-                    <span>₽</span>
-                  </div>
-                  <div className="support-amount-presets">
-                    {[150, 300, 500, 1000].map((amount) => (
-                      <button
-                        type="button"
-                        key={amount}
-                        onClick={() => setCustomAmount(String(amount))}
-                      >
-                        {amount.toLocaleString('ru-RU')} ₽
-                      </button>
-                    ))}
-                  </div>
-                  <small>
-                    Целая сумма от {SUPPORT_MIN_AMOUNT} ₽. Ник и общая сумма
-                    появятся в рейтинге.
-                  </small>
-                </div>
-              )}
-
-              <div className="plus-price-card">
-                <div>
-                  <strong>
-                    {originalPriceLabel && <s>{originalPriceLabel}</s>}
-                    {priceLabel}
-                  </strong>
-                  <span> / {plan?.label || '30 дней'}</span>
-                </div>
-                <p>
-                  {planId === SUPPORT_PLAN
-                    ? '30 дней Plus, а вся сумма поднимает тебя в рейтинге.'
-                    : 'Без автосписаний. Продлеваешь, когда захочешь.'}
-                </p>
-              </div>
-              {planId === 'annual' && (
-                <div className="annual-tag-offer">
-                  <span className="user-tag user-tag-eternal-nakama">
-                    Вечный накама
-                  </span>
-                  <p>
-                    Твой знак верности AniMonster. Уникальный тег останется
-                    навсегда после подтверждённой годовой покупки.
-                  </p>
-                  <small>
-                    <s>1 308 ₽</s> · Экономия 309 ₽ относительно 12 месяцев.
-                  </small>
-                </div>
-              )}
-            </section>
-
-            <aside className="supporter-board" aria-label="Лидеры поддержки">
-              <div className="supporter-board-heading">
-                <span>
-                  <Trophy size={17} /> ЗАЛ СЛАВЫ
-                </span>
-                <strong>Топ поддержки</strong>
-                <p>Три человека, которые сильнее всех двигают проект вперёд.</p>
-              </div>
-              <ol className="supporter-leaders">
-                {[0, 1, 2].map((index) => {
-                  const leader = leaders[index];
-                  return (
-                    <li key={leader?.id || index} data-rank={index + 1}>
-                      <span className="supporter-rank">
-                        {index === 0 ? <Crown size={18} /> : index + 1}
-                      </span>
-                      <span className="supporter-name">
-                        {leader?.nick ||
-                          (leadersLoading ? 'Загружаем…' : 'Место свободно')}
+                  {Object.values(subscriptionPlans).map((option) => (
+                    <button
+                      type="button"
+                      key={option.id}
+                      aria-pressed={planId === option.id}
+                      disabled={busy}
+                      onClick={() => setPlanId(option.id)}
+                    >
+                      <span>
+                        {option.id === 'annual' ? 'На год' : 'На месяц'}{' '}
+                        {option.discount > 0 && <b>−{option.discount}%</b>}
                       </span>
                       <strong>
-                        {leader
-                          ? `${leader.amount.toLocaleString('ru-RU')} ₽`
-                          : '—'}
+                        {option.originalPriceLabel && (
+                          <s>{option.originalPriceLabel}</s>
+                        )}
+                        {option.priceLabel}
                       </strong>
-                    </li>
-                  );
-                })}
-              </ol>
-              <div className="champion-tag-card">
-                <div className="champion-reward-set">
+                      <small>{option.label}</small>
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="plus-support-plan"
+                    aria-pressed={planId === SUPPORT_PLAN}
+                    disabled={busy}
+                    onClick={() => setPlanId(SUPPORT_PLAN)}
+                  >
+                    <span>
+                      <Rocket size={15} /> Свой тариф
+                    </span>
+                    <strong>от {SUPPORT_MIN_AMOUNT} ₽</strong>
+                    <small>30 дней + место в рейтинге</small>
+                  </button>
+                </div>
+
+                {planId === SUPPORT_PLAN && (
+                  <div className="support-amount-picker">
+                    <label htmlFor="plus-support-amount">
+                      Сколько хочешь вложить в AniMonster
+                    </label>
+                    <div className="support-amount-input">
+                      <input
+                        id="plus-support-amount"
+                        type="number"
+                        inputMode="numeric"
+                        min={SUPPORT_MIN_AMOUNT}
+                        max={100000}
+                        step={10}
+                        value={customAmount}
+                        onChange={(event) =>
+                          setCustomAmount(event.target.value)
+                        }
+                        aria-invalid={chosenSupportAmount === null}
+                      />
+                      <span>₽</span>
+                    </div>
+                    <div className="support-amount-presets">
+                      {[150, 300, 500, 1000].map((amount) => (
+                        <button
+                          type="button"
+                          key={amount}
+                          onClick={() => setCustomAmount(String(amount))}
+                        >
+                          {amount.toLocaleString('ru-RU')} ₽
+                        </button>
+                      ))}
+                    </div>
+                    <small>
+                      Целая сумма от {SUPPORT_MIN_AMOUNT} ₽. Ник и общая сумма
+                      появятся в рейтинге.
+                    </small>
+                  </div>
+                )}
+
+                <div className="plus-price-card">
+                  <div>
+                    <strong>
+                      {originalPriceLabel && <s>{originalPriceLabel}</s>}
+                      {priceLabel}
+                    </strong>
+                    <span> / {plan?.label || '30 дней'}</span>
+                  </div>
+                  <p>
+                    {planId === SUPPORT_PLAN
+                      ? '30 дней Plus, а вся сумма поднимает тебя в рейтинге.'
+                      : 'Без автосписаний. Продлеваешь, когда захочешь.'}
+                  </p>
+                </div>
+                {planId === 'annual' && (
+                  <div className="annual-tag-offer">
+                    <span className="user-tag user-tag-eternal-nakama">
+                      Вечный накама
+                    </span>
+                    <p>
+                      Твой знак верности AniMonster. Уникальный тег останется
+                      навсегда после подтверждённой годовой покупки.
+                    </p>
+                    <small>
+                      <s>1 308 ₽</s> · Экономия 309 ₽ относительно 12 месяцев.
+                    </small>
+                  </div>
+                )}
+              </section>
+
+              <aside className="supporter-board" aria-label="Лидеры поддержки">
+                <div className="supporter-board-heading">
                   <span>
-                    <img src="/frames/champion-gold.svg" alt="" /> Рамка
+                    <Trophy size={17} /> ЗАЛ СЛАВЫ
                   </span>
+                  <strong>Топ поддержки</strong>
+                  <p>
+                    Три человека, которые сильнее всех двигают проект вперёд.
+                  </p>
+                </div>
+                <ol className="supporter-leaders">
+                  {[0, 1, 2].map((index) => {
+                    const leader = leaders[index];
+                    return (
+                      <li key={leader?.id || index} data-rank={index + 1}>
+                        <span className="supporter-rank">
+                          {index === 0 ? <Crown size={18} /> : index + 1}
+                        </span>
+                        <span className="supporter-name">
+                          {leader?.nick ||
+                            (leadersLoading ? 'Загружаем…' : 'Место свободно')}
+                        </span>
+                        <strong>
+                          {leader
+                            ? `${leader.amount.toLocaleString('ru-RU')} ₽`
+                            : '—'}
+                        </strong>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <div className="champion-tag-card">
+                  <div className="champion-reward-set">
+                    <span>
+                      <img src="/frames/champion-gold.svg" alt="" /> Рамка
+                    </span>
+                    <span>
+                      <img src="/pins/champion-crown.svg" alt="" /> Пин
+                    </span>
+                  </div>
+                  <span className="user-tag user-tag-number-one">Номер 1</span>
+                  <p>
+                    Весь золотой комплект получает лидер. Обгони его — рамка,
+                    пин и тег станут твоими.
+                  </p>
+                </div>
+              </aside>
+            </div>
+
+            <div className="plus-feature-strip">
+              {[
+                { icon: Play, title: 'Серии раньше', text: 'без ожидания' },
+                { icon: Bell, title: 'Telegram', text: 'без лимита' },
+                {
+                  icon: Library,
+                  title: '20 коллекций',
+                  text: 'со своим стилем',
+                },
+                { icon: Palette, title: 'Редкий профиль', text: 'рамки и фон' },
+                { icon: Heart, title: 'Особые бонусы', text: 'для своих' },
+              ].map(({ icon: Icon, title, text }) => (
+                <div key={title}>
+                  <Icon size={18} />
                   <span>
-                    <img src="/pins/champion-crown.svg" alt="" /> Пин
+                    <strong>{title}</strong>
+                    <small>{text}</small>
                   </span>
                 </div>
-                <span className="user-tag user-tag-number-one">Номер 1</span>
-                <p>
-                  Весь золотой комплект получает лидер. Обгони его — рамка, пин
-                  и тег станут твоими.
-                </p>
-              </div>
-            </aside>
+              ))}
+            </div>
+            <a className="text-link" href="/plus">
+              Посмотреть бонусные подборки →
+            </a>
+            <div className="plus-legal-links">
+              <nav
+                className="plus-legal-list"
+                aria-label="Документы и поддержка"
+              >
+                {[
+                  ['/legal/requisites', 'Реквизиты продавца'],
+                  ['/legal/privacy', 'Политика конфиденциальности'],
+                  ['/legal/terms', 'Пользовательское соглашение'],
+                  ['/legal/prices', 'Цены и тарифы'],
+                  ['/legal/support', 'Поддержка'],
+                ].map(([href, label]) => (
+                  <a
+                    className="plus-legal-link"
+                    href={href}
+                    key={href}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <span>{label}</span>
+                    <ExternalLink size={14} aria-hidden="true" />
+                  </a>
+                ))}
+              </nav>
+            </div>
           </div>
-
-          <div className="plus-feature-strip">
-            {[
-              { icon: Play, title: 'Серии раньше', text: 'без ожидания' },
-              { icon: Bell, title: 'Telegram', text: 'без лимита' },
-              { icon: Library, title: '20 коллекций', text: 'со своим стилем' },
-              { icon: Palette, title: 'Редкий профиль', text: 'рамки и фон' },
-              { icon: Heart, title: 'Особые бонусы', text: 'для своих' },
-            ].map(({ icon: Icon, title, text }) => (
-              <div key={title}>
-                <Icon size={18} />
-                <span>
-                  <strong>{title}</strong>
-                  <small>{text}</small>
-                </span>
-              </div>
-            ))}
-          </div>
-          <span className="platega-review-label" role="note">
-            Platega test
-          </span>
-          <a className="text-link" href="/plus">
-            Посмотреть бонусные подборки →
-          </a>
-          {error && <p className="error-msg">{error}</p>}
-          {paymentUnavailable && (
-            <p className="plus-payment-notice" role="status">
-              Оплата пока не подключена, деньги не списываются. Пока магазин
-              настраивается, Plus можно получить у администратора.
-            </p>
-          )}
-          <div className="plus-legal-links">
-            <label>
+          <div className="plus-checkout-footer">
+            {error && (
+              <p className="error-msg" role="alert">
+                {error}
+              </p>
+            )}
+            {paymentUnavailable && (
+              <p className="plus-payment-notice" role="status">
+                Оплата пока не подключена, деньги не списываются. Пока магазин
+                настраивается, Plus можно получить у администратора.
+              </p>
+            )}
+            <label className="plus-agreement-label">
               <input
                 type="checkbox"
                 checked={accepted}
@@ -323,50 +360,30 @@ export function BuySubscription({
                 </a>
               </span>
             </label>
-            <nav className="plus-legal-list" aria-label="Документы и поддержка">
-              {[
-                ['/legal/requisites', 'Реквизиты продавца'],
-                ['/legal/privacy', 'Политика конфиденциальности'],
-                ['/legal/terms', 'Пользовательское соглашение'],
-                ['/legal/prices', 'Цены и тарифы'],
-                ['/legal/support', 'Поддержка'],
-              ].map(([href, label]) => (
-                <a
-                  className="plus-legal-link"
-                  href={href}
-                  key={href}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span>{label}</span>
-                  <ExternalLink size={14} aria-hidden="true" />
-                </a>
-              ))}
-            </nav>
+            <button
+              className="primary plus-buy-button"
+              type="button"
+              disabled={
+                busy ||
+                !accepted ||
+                paymentUnavailable ||
+                (planId === SUPPORT_PLAN && chosenSupportAmount === null)
+              }
+              onClick={buy}
+            >
+              {busy
+                ? 'Переходим к оплате…'
+                : paymentUnavailable
+                  ? 'Оплата скоро появится'
+                  : planId === SUPPORT_PLAN
+                    ? `Поддержать · ${priceLabel}`
+                    : `Оплатить · ${priceLabel}`}
+            </button>
+            <p className="plus-renewal-note">
+              Уже есть Plus? Добавим {plan?.label || '30 дней'} к оставшемуся
+              сроку.
+            </p>
           </div>
-          <button
-            className="primary plus-buy-button"
-            type="button"
-            disabled={
-              busy ||
-              !accepted ||
-              paymentUnavailable ||
-              (planId === SUPPORT_PLAN && chosenSupportAmount === null)
-            }
-            onClick={buy}
-          >
-            {busy
-              ? 'Переходим к оплате…'
-              : paymentUnavailable
-                ? 'Оплата скоро появится'
-                : planId === SUPPORT_PLAN
-                  ? `Поддержать · ${priceLabel}`
-                  : `Купить · ${priceLabel}`}
-          </button>
-          <p className="plus-renewal-note">
-            Уже есть Plus? Добавим {plan?.label || '30 дней'} к оставшемуся
-            сроку.
-          </p>
         </DialogContent>
       </Dialog>
     </>

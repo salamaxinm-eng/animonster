@@ -103,10 +103,8 @@ export default function PinsPage() {
             </div>
             <p className="annual-pins-price">
               Или {subscriptionPlans.annual.priceLabel} / год · −
-              {subscriptionPlans.annual.discount}% и тег «Вечный накама» навсегда
-            </p>
-            <p className="platega-review-label" role="note">
-              Platega test
+              {subscriptionPlans.annual.discount}% и тег «Вечный накама»
+              навсегда
             </p>
             <nav
               className="payment-doc-links"
