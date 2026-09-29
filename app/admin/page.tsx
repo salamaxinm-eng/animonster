@@ -121,6 +121,8 @@ export default async function Page() {
                     <th>Место</th>
                     <th>Пользователь</th>
                     <th>Просмотрено серий</th>
+                    <th>Начато серий</th>
+                    <th>Часов просмотра</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -130,6 +132,8 @@ export default async function Page() {
                         id: string;
                         nick: string;
                         watchedEpisodes: number;
+                        trackedEpisodes: number;
+                        watchedHours: number;
                       },
                       index: number,
                     ) => (
@@ -139,6 +143,8 @@ export default async function Page() {
                           <a href={`/members/${item.id}`}>{item.nick}</a>
                         </td>
                         <td>{item.watchedEpisodes}</td>
+                        <td>{item.trackedEpisodes}</td>
+                        <td>{item.watchedHours.toLocaleString('ru-RU')}</td>
                       </tr>
                     ),
                   )}

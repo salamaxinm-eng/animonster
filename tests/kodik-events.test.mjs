@@ -26,6 +26,16 @@ test('Kodik current episode event exposes internally selected episode', () => {
   );
 });
 
+test('Kodik current episode also accepts a direct numeric value', () => {
+  assert.equal(
+    events.kodikEpisodeFromMessage({
+      key: 'kodik_player_current_episode',
+      value: 590,
+    }),
+    590,
+  );
+});
+
 test('Kodik time events are not mistaken for episode changes', () => {
   assert.equal(
     events.kodikEpisodeFromMessage({

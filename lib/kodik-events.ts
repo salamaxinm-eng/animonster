@@ -1,9 +1,7 @@
 type MessageRecord = Record<string, unknown>;
 
 const record = (value: unknown): MessageRecord | null =>
-  value != null && typeof value === 'object'
-    ? (value as MessageRecord)
-    : null;
+  value != null && typeof value === 'object' ? (value as MessageRecord) : null;
 
 export function kodikEpisodeFromMessage(payload: unknown) {
   const message = record(payload);
@@ -13,7 +11,9 @@ export function kodikEpisodeFromMessage(payload: unknown) {
   const value = record(message.value);
   const data = record(message.data);
   const episodeValue =
-    (key === 'kodik_player_current_episode' ? value?.episode : undefined) ??
+    (key === 'kodik_player_current_episode'
+      ? (value?.episode ?? message.value)
+      : undefined) ??
     message.episode ??
     message.episode_number ??
     message.episodeNumber ??

@@ -89,7 +89,7 @@ export async function dashboard() {
       .first<{ n: number }>(),
     db()
       .prepare(
-        'SELECT COALESCE(sum(watched_seconds),0) AS seconds, count(*) AS tracked, COALESCE(sum(completed),0) AS completed FROM history',
+        'SELECT COALESCE(sum(watched_seconds),0) AS seconds, count(*) AS tracked, count(*) FILTER (WHERE completed=1) AS completed FROM history',
       )
       .first<{ seconds: number; tracked: number; completed: number }>(),
     db()
@@ -126,8 +126,9 @@ export async function dashboard() {
       .all(),
     db()
       .prepare(`SELECT u.id,u.nick,
-        COALESCE(SUM(CASE WHEN h.completed=1 THEN 1 ELSE 0 END),0) AS watched_episodes,
-        COUNT(h.episode) AS tracked_episodes
+        COUNT(*) FILTER (WHERE h.completed=1) AS watched_episodes,
+        COUNT(h.episode) AS tracked_episodes,
+        COALESCE(SUM(h.watched_seconds),0) AS watched_seconds
         FROM users u LEFT JOIN history h ON h.user_id=u.id
         WHERE u.deleted_at IS NULL AND u.identity NOT LIKE 'preview:%'
         GROUP BY u.id,u.nick
@@ -203,6 +204,7 @@ export async function dashboard() {
       nick: String(item.nick || 'Без имени'),
       watchedEpisodes: Number(item.watched_episodes || 0),
       trackedEpisodes: Number(item.tracked_episodes || 0),
+      watchedHours: Math.round(Number(item.watched_seconds || 0) / 360) / 10,
     })),
     providers: providers.results,
     paidOrders30d: Number(paymentStats?.paid || 0),

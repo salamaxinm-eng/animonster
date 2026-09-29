@@ -14,6 +14,11 @@ import { getAnime } from '@/lib/server/library';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
 import { evaluateUserAchievements } from '@/lib/server/achievements';
 import { evaluateReferralQualification } from '@/lib/server/referrals';
+import {
+  cachedEpisodeDuration,
+  kodikSourceHasEpisode,
+  kodikTranslationId,
+} from '@/lib/watch-progress';
 
 const WATCHED_EPISODE_SECONDS = 12 * 60;
 
@@ -61,18 +66,39 @@ export async function POST(r: Request) {
 
       const meta = await getAnime(id);
 
-      const episode =
-        meta &&
-        (
-          JSON.parse(meta.episodes) as {
-            ordinal: number;
-            duration: number;
-          }[]
-        ).find((e) => e.ordinal === ep);
-
-      if (!episode || !episode.duration) {
+      if (!meta) {
         throw new ApiError('Серия недоступна', 404);
       }
+      const cachedDuration = cachedEpisodeDuration(meta.episodes, ep);
+      let duration = cachedDuration;
+      if (provider === 'kodik') {
+        const translationId = kodikTranslationId(voiceover);
+        if (!translationId) throw new ApiError('Некорректная озвучка');
+        const exact = await db()
+          .prepare(
+            'SELECT 1 AS available FROM kodik_episode_links WHERE anime_id=? AND translation_id=? AND episode=?',
+          )
+          .bind(id, translationId, ep)
+          .first<{ available: number }>();
+        const source = exact
+          ? null
+          : await db()
+              .prepare(
+                `SELECT episodes_count,payload FROM anime_sources
+                 WHERE provider='kodik' AND anime_id=? AND translation_id=? AND active=1
+                 ORDER BY episodes_count DESC,last_seen_at DESC LIMIT 1`,
+              )
+              .bind(id, translationId)
+              .first<{ episodes_count: number; payload: string }>();
+        if (
+          !exact &&
+          (!source ||
+            !kodikSourceHasEpisode(source.payload, source.episodes_count, ep))
+        )
+          throw new ApiError('Серия недоступна', 404);
+        duration ||= 24 * 60;
+      }
+      if (!duration) throw new ApiError('Серия недоступна', 404);
 
       const token = uid();
       const previous = a.user
@@ -85,9 +111,7 @@ export async function POST(r: Request) {
         : null;
 
       await db().batch([
-        db()
-          .prepare('DELETE FROM watch_sessions WHERE expires<?')
-          .bind(n),
+        db().prepare('DELETE FROM watch_sessions WHERE expires<?').bind(n),
 
         db()
           .prepare(
@@ -99,9 +123,9 @@ export async function POST(r: Request) {
             a.user?.id || null,
             id,
             ep,
-            episode.duration,
+            duration,
             n,
-            Math.min(episode.duration, Number(previous?.watched_seconds || 0)),
+            Math.min(duration, Number(previous?.watched_seconds || 0)),
             n + 14400000,
             provider,
             voiceover,
