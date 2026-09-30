@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      DATABASE_URL: postgres://animonster:${POSTGRES_PASSWORD}@${CLUSTER_DATABASE_HOST:-10.77.0.1}:5432/animonster
+    ports:
+      - "${CLUSTER_APP_BIND_ADDRESS:-10.77.0.2}:3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
