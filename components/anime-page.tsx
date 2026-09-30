@@ -61,20 +61,27 @@ export function AnimePage({ anime }: { anime: Anime }) {
     setLoading(true);
     setError('');
     try {
-      const [r, h] = await Promise.all([
-        fetch(
-          '/api/videos?id=' +
-            anime.id +
-            (anime.release_id ? '&release_id=' + anime.release_id : ''),
-        ),
-        fetch('/api/watch?anime=' + anime.id),
-      ]);
-      const x = (await r.json()) as any,
-        history = (await h.json()) as {
+      const historyPromise = fetch('/api/watch?anime=' + anime.id, {
+        signal: AbortSignal.timeout(3_000),
+      })
+        .then((response) => (response.ok ? response.json() : []))
+        .catch(() => [] as {
           episode: number;
           position: number;
           voiceover?: string;
-        }[];
+        }[]);
+      const r = await fetch(
+        '/api/videos?id=' +
+          anime.id +
+          (anime.release_id ? '&release_id=' + anime.release_id : ''),
+        { signal: AbortSignal.timeout(20_000) },
+      );
+      const x = (await r.json()) as any;
+      const history = (await historyPromise) as {
+        episode: number;
+        position: number;
+        voiceover?: string;
+      }[];
       if (!r.ok || !x.episodes?.length)
         throw Error(x.error || x.message || 'Серии временно недоступны.');
       let saved: { episode?: number; position?: number; voiceover?: string } =
@@ -106,7 +113,11 @@ export function AnimePage({ anime }: { anime: Anime }) {
       setVoiceovers(x.voiceovers || []);
       setVoiceoversMessage(x.voiceovers_message || '');
     } catch (e) {
-      setError((e as Error).message);
+      setError(
+        (e as Error).name === 'TimeoutError'
+          ? 'Серии загружаются слишком долго. Попробуйте ещё раз.'
+          : (e as Error).message,
+      );
     } finally {
       setLoading(false);
     }

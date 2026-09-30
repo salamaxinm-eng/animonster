@@ -29,25 +29,12 @@ export async function GET(request: Request) {
       throw new ApiError('Некорректный релиз');
     if (!releaseId && !anime) releaseId = (await findRelease(id))?.id;
 
-    if (releaseId) {
+    if (releaseId && !anime) {
       try {
         const release: Release = await liberty('/anime/releases/' + releaseId);
         const normalized = normalize(release);
         if (normalized.id === id && available(release)) {
-          anime = anime
-            ? {
-                ...normalized,
-                ...anime,
-                release_id: release.id,
-                mal_id: normalized.mal_id || anime.mal_id,
-                providers: [
-                  ...new Set<'aniliberty' | 'kodik'>([
-                    ...(anime.providers || []),
-                    'aniliberty',
-                  ]),
-                ],
-              }
-            : normalized;
+          anime = normalized;
           await cacheAnime(anime!, release.episodes);
         }
       } catch (error) {

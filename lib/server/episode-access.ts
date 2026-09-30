@@ -56,22 +56,28 @@ export async function syncEpisodeAccess(
     !baseline && runtime().PLUS_EARLY_ACCESS_ENABLED === 'true' && initialized
       ? FREE_EPISODE_DELAY_MS
       : 0;
-  await db().batch([
-    ...ordinals.map((episode) =>
+  const requested = JSON.stringify([...new Set(ordinals)]);
+  if (ordinals.length)
+    await db().batch([
       db()
         .prepare(
-          'INSERT INTO episode_availability(anime_id,provider,episode,first_seen_at,free_at) VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING',
+          `INSERT INTO episode_availability(anime_id,provider,episode,first_seen_at,free_at)
+           SELECT ?,?,value::integer,?,?
+           FROM jsonb_array_elements_text(?::jsonb)
+           WHERE true
+           ON CONFLICT DO NOTHING`,
         )
-        .bind(animeId, provider, episode, timestamp, timestamp + delay),
-    ),
-    ...ordinals.map((episode) =>
+        .bind(animeId, provider, timestamp, timestamp + delay, requested),
       db()
         .prepare(
-          'INSERT INTO anime_episode_availability(anime_id,episode,first_seen_at,free_at) VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
+          `INSERT INTO anime_episode_availability(anime_id,episode,first_seen_at,free_at)
+           SELECT ?,value::integer,?,?
+           FROM jsonb_array_elements_text(?::jsonb)
+           WHERE true
+           ON CONFLICT DO NOTHING`,
         )
-        .bind(animeId, episode, timestamp, timestamp + delay),
-    ),
-  ]);
+        .bind(animeId, timestamp, timestamp + delay, requested),
+    ]);
   const rows = await db()
     .prepare(
       'SELECT episode,first_seen_at,free_at FROM anime_episode_availability WHERE anime_id=?',
