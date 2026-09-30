@@ -20,7 +20,7 @@ export async function ensureSearchMetadata(anime: Anime) {
   await db()
     .prepare(
       `INSERT INTO anime_search_metadata(anime_id,aliases,normalized_aliases,normalized_titles,status)
-       VALUES (?,?::jsonb,?::text[],?,'pending')
+       VALUES (?,?::text::jsonb,?::text[],?,'pending')
        ON CONFLICT(anime_id) DO UPDATE SET
        aliases=CASE WHEN anime_search_metadata.status='ok' THEN anime_search_metadata.aliases ELSE excluded.aliases END,
        normalized_aliases=CASE WHEN anime_search_metadata.status='ok' THEN anime_search_metadata.normalized_aliases ELSE excluded.normalized_aliases END,
@@ -191,8 +191,8 @@ export async function refreshSearchMetadata(limit = 40) {
       }
       await db()
         .prepare(
-          `UPDATE anime_search_metadata SET aliases=?::jsonb,normalized_aliases=?::text[],
-           normalized_titles=?,themes=?::jsonb,status=?,version=3,attempts=attempts+1,checked_at=?,last_error=NULL
+          `UPDATE anime_search_metadata SET aliases=?::text::jsonb,normalized_aliases=?::text[],
+           normalized_titles=?,themes=?::text::jsonb,status=?,version=3,attempts=attempts+1,checked_at=?,last_error=NULL
            WHERE anime_id=?`,
         )
         .bind(

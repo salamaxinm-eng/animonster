@@ -33,15 +33,8 @@ type FranchiseGroup = {
 };
 const EMPTY_FILTERS: Filters = { genres: [], themes: [], kind: '', status: '' };
 const DEFAULT_FACETS: Facets = {
-  genres: [
-    'Экшен', 'Приключения', 'Комедия', 'Драма', 'Фэнтези', 'Романтика',
-    'Фантастика', 'Триллер', 'Ужасы', 'Детектив', 'Повседневность', 'Спорт',
-  ],
-  themes: [
-    'Школа', 'Магия', 'Военное', 'Исторический', 'Психологическое',
-    'Путешествие во времени', 'Исекай', 'Музыка', 'Мифология', 'Самураи',
-    'Суперспособности', 'Выживание',
-  ],
+  genres: [],
+  themes: [],
   kinds: [
     { value: 'tv', label: 'Сериал' },
     { value: 'movie', label: 'Фильм' },
@@ -74,6 +67,7 @@ export default function SearchPage() {
   const input = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [draftFilters, setDraftFilters] = useState<Filters>(EMPTY_FILTERS);
   const [facets, setFacets] = useState<Facets>(DEFAULT_FACETS);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [items, setItems] = useState<Anime[]>([]);
@@ -91,15 +85,9 @@ export default function SearchPage() {
       const nextFilters = filtersFromUrl(params);
       setQuery(params.get('q') || '');
       setFilters(nextFilters);
+      setDraftFilters(nextFilters);
       setPage(Math.max(1, Number(params.get('page')) || 1));
-      setFiltersOpen(
-        !!(
-          nextFilters.genres.length ||
-          nextFilters.themes.length ||
-          nextFilters.kind ||
-          nextFilters.status
-        ),
-      );
+      setFiltersOpen(false);
     };
     syncFromUrl();
     addEventListener('popstate', syncFromUrl);
@@ -112,15 +100,15 @@ export default function SearchPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/search/facets', { signal: controller.signal })
+    fetch('/api/search/facets?v=2', { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error();
         return (await response.json()) as Facets;
       })
       .then((result) =>
         setFacets({
-          genres: result.genres?.length ? result.genres : DEFAULT_FACETS.genres,
-          themes: result.themes?.length ? result.themes : DEFAULT_FACETS.themes,
+          genres: result.genres || [],
+          themes: result.themes || [],
           kinds: result.kinds?.length ? result.kinds : DEFAULT_FACETS.kinds,
           statuses: result.statuses?.length
             ? result.statuses
@@ -210,6 +198,25 @@ export default function SearchPage() {
     });
   }
 
+  function toggleDraftList(key: 'genres' | 'themes', value: string) {
+    setDraftFilters((current) => ({
+      ...current,
+      [key]: current[key].includes(value)
+        ? current[key].filter((item) => item !== value)
+        : [...current[key], value],
+    }));
+  }
+
+  function openFilters() {
+    setDraftFilters(filters);
+    setFiltersOpen(true);
+  }
+
+  function applyFilters() {
+    changeFilters(draftFilters);
+    setFiltersOpen(false);
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
     remember(query);
@@ -255,7 +262,9 @@ export default function SearchPage() {
             className={'search-filter-toggle' + (activeCount ? ' active' : '')}
             type="button"
             aria-expanded={filtersOpen}
-            onClick={() => setFiltersOpen((open) => !open)}
+            onClick={() =>
+              filtersOpen ? setFiltersOpen(false) : openFilters()
+            }
           >
             <Filter size={17} /> Фильтры
             {activeCount > 0 && <span>{activeCount}</span>}
@@ -290,34 +299,53 @@ export default function SearchPage() {
             <FilterOptions
               title="Жанры"
               values={facets.genres}
-              selected={filters.genres}
-              onToggle={(value) => toggleList('genres', value)}
+              selected={draftFilters.genres}
+              onToggle={(value) => toggleDraftList('genres', value)}
             />
             <FilterOptions
               title="Темы"
               values={facets.themes}
-              selected={filters.themes}
-              onToggle={(value) => toggleList('themes', value)}
+              selected={draftFilters.themes}
+              onToggle={(value) => toggleDraftList('themes', value)}
             />
             <SingleOptions
               title="Тип"
               values={facets.kinds}
-              selected={filters.kind}
+              selected={draftFilters.kind}
               onChange={(kind) =>
-                changeFilters({ ...filters, kind: kind as Filters['kind'] })
+                setDraftFilters((current) => ({
+                  ...current,
+                  kind: kind as Filters['kind'],
+                }))
               }
             />
             <SingleOptions
               title="Статус"
               values={facets.statuses}
-              selected={filters.status}
+              selected={draftFilters.status}
               onChange={(status) =>
-                changeFilters({
-                  ...filters,
+                setDraftFilters((current) => ({
+                  ...current,
                   status: status as Filters['status'],
-                })
+                }))
               }
             />
+            <footer className="search-filter-actions">
+              <button
+                type="button"
+                className="search-filter-clear"
+                onClick={() => setDraftFilters(EMPTY_FILTERS)}
+              >
+                Сбросить
+              </button>
+              <button
+                type="button"
+                className="search-filter-apply"
+                onClick={applyFilters}
+              >
+                <Search size={18} /> Показать результаты
+              </button>
+            </footer>
           </section>
         )}
 

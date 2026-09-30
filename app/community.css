@@ -1109,6 +1109,31 @@
 .search-filter-panel > header button {
   color: #8995a3;
 }
+.search-filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid #27313e;
+}
+.search-filter-actions button {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+.search-filter-clear {
+  color: #aab5c1;
+}
+.search-filter-apply {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--am-accent);
+  color: #10170a;
+}
 .search-filter-group {
   min-width: 0;
   display: grid;

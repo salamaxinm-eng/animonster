@@ -63,7 +63,7 @@ export async function cachedCatalogPage({
   const where: string[] = [];
   const values: unknown[] = [];
   if (genre) {
-    where.push('genres_index @> ?::jsonb');
+    where.push('genres_index @> ?::text::jsonb');
     values.push(JSON.stringify([genre]));
   }
   if (kind) {
@@ -118,7 +118,7 @@ export async function saveAnime(
   await db()
     .prepare(
       `INSERT INTO anime_cache(id,data,episodes,updated_at,primary_provider,search_text,kind_index,status_index,year_index,score_index,genres_index)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?::jsonb)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?::text::jsonb)
        ON CONFLICT(id) DO UPDATE SET data=excluded.data,
        episodes=CASE WHEN excluded.episodes='[]' THEN anime_cache.episodes ELSE excluded.episodes END,
        updated_at=excluded.updated_at,primary_provider=excluded.primary_provider,

@@ -573,6 +573,64 @@ test('search metadata supports normalized aliases and typo ranking', async () =>
   await databaseClient.close();
 });
 
+test('filter migration restores JSON arrays and indexed genre/theme matches', async () => {
+  const databaseClient = await database();
+  const animeId = 991234;
+  const genres = ['Приключения', 'Экшен'];
+  const aliases = ['Тестовое аниме', 'Test Anime'];
+  await databaseClient.query(
+    `INSERT INTO anime_cache(id,data,updated_at,genres_index,kind_index,status_index)
+     VALUES ($1,$2,$3,$4::jsonb,'tv','released')`,
+    [
+      animeId,
+      JSON.stringify({ id: animeId, genres }),
+      Date.now(),
+      JSON.stringify(JSON.stringify(genres)),
+    ],
+  );
+  await databaseClient.query(
+    `INSERT INTO anime_search_metadata(anime_id,aliases,normalized_aliases,normalized_titles)
+     VALUES ($1,$2::jsonb,ARRAY['тестовое аниме'],'тестовое аниме')`,
+    [animeId, JSON.stringify(JSON.stringify(aliases))],
+  );
+  await databaseClient.query(
+    `INSERT INTO anime_themes_cache(anime_id,themes,status,checked_at)
+     VALUES ($1,$2,'ok',$3)`,
+    [animeId, JSON.stringify(['Исэкай']), Date.now()],
+  );
+
+  const migration = await fs.readFile(
+    'migrations/postgres/0032_repair_search_filter_json.sql',
+    'utf8',
+  );
+  for (const statement of migration
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)) {
+    await databaseClient.query(statement);
+  }
+  const repaired = await databaseClient.query(
+    `SELECT jsonb_typeof(a.genres_index) AS genre_type,
+            jsonb_typeof(m.aliases) AS alias_type
+     FROM anime_cache a JOIN anime_search_metadata m ON m.anime_id=a.id
+     WHERE a.id=$1`,
+    [animeId],
+  );
+  const matches = await databaseClient.query(
+    `SELECT count(*) AS total FROM anime_cache a
+     JOIN anime_search_metadata m ON m.anime_id=a.id
+     LEFT JOIN anime_themes_cache t ON t.anime_id=a.id
+     WHERE a.genres_index @> $1::text::jsonb
+       AND (m.themes || COALESCE(t.themes::jsonb,'[]'::jsonb) || a.genres_index) @> $2::text::jsonb
+       AND a.kind_index='tv' AND a.status_index='released'`,
+    [JSON.stringify(['Приключения']), JSON.stringify(['Исэкай'])],
+  );
+  assert.equal(repaired[0].genre_type, 'array');
+  assert.equal(repaired[0].alias_type, 'array');
+  assert.equal(Number(matches[0].total), 1);
+  await databaseClient.close();
+});
+
 test('achievements unlock once at 100 episodes including One Piece', async () => {
   const databaseClient = await database();
   const userId = crypto.randomUUID();

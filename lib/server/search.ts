@@ -51,7 +51,11 @@ export async function searchAnime({
           WHERE similarity(alias,?) >= 0.28 OR replace(alias,' ','') LIKE ?
         ))`,
       );
-      values.push(`%${normalized}%`, normalized, `%${normalized.replaceAll(' ', '')}%`);
+      values.push(
+        `%${normalized}%`,
+        normalized,
+        `%${normalized.replaceAll(' ', '')}%`,
+      );
     } else {
       where.push(
         `EXISTS(SELECT 1 FROM unnest(m.normalized_aliases) alias WHERE alias=? OR alias LIKE ?)`,
@@ -60,12 +64,12 @@ export async function searchAnime({
     }
   }
   if (genres.length) {
-    where.push('a.genres_index @> ?::jsonb');
+    where.push('a.genres_index @> ?::text::jsonb');
     values.push(JSON.stringify(genres));
   }
   if (themes.length) {
     where.push(
-      `(m.themes || COALESCE(t.themes::jsonb,'[]'::jsonb) || a.genres_index) @> ?::jsonb`,
+      `(m.themes || COALESCE(t.themes::jsonb,'[]'::jsonb) || a.genres_index) @> ?::text::jsonb`,
     );
     values.push(JSON.stringify(themes));
   }
@@ -113,7 +117,7 @@ export async function searchAnime({
       .all<{ data: string; relevance: number }>(),
     db()
       .prepare(
-         `SELECT count(*) AS total FROM anime_cache a
+        `SELECT count(*) AS total FROM anime_cache a
          JOIN anime_search_metadata m ON m.anime_id=a.id
          LEFT JOIN anime_themes_cache t ON t.anime_id=a.id ${filter}`,
       )

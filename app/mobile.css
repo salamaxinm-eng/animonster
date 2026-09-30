@@ -1219,7 +1219,7 @@
     overflow-y: auto;
     margin: 0;
     padding: calc(18px + env(safe-area-inset-top)) 18px
-      calc(30px + env(safe-area-inset-bottom));
+      calc(88px + env(safe-area-inset-bottom));
     border: 0;
     border-radius: 0;
     background: #0b1016;
@@ -1250,6 +1250,19 @@
   }
   .search-filter-options button {
     min-height: 40px;
+  }
+  .search-filter-actions {
+    position: fixed;
+    z-index: 2;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+    background: #0b1016f5;
+  }
+  .search-filter-apply {
+    flex: 1;
   }
   .search-results-heading {
     align-items: flex-start;
