@@ -380,7 +380,7 @@ export async function rememberKodikSources(
       .prepare(
         `INSERT INTO kodik_episode_links(anime_id,translation_id,episode,player_url,updated_at)
          SELECT ?,links.translation_id,links.episode,links.player_url,?
-         FROM jsonb_to_recordset(?::jsonb) AS links(
+         FROM jsonb_to_recordset(?::text::jsonb) AS links(
            translation_id integer,episode integer,player_url text
          )
          WHERE true

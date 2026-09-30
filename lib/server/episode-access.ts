@@ -63,7 +63,7 @@ export async function syncEpisodeAccess(
         .prepare(
           `INSERT INTO episode_availability(anime_id,provider,episode,first_seen_at,free_at)
            SELECT ?,?,value::integer,?,?
-           FROM jsonb_array_elements_text(?::jsonb)
+           FROM jsonb_array_elements_text(?::text::jsonb)
            WHERE true
            ON CONFLICT DO NOTHING`,
         )
@@ -72,7 +72,7 @@ export async function syncEpisodeAccess(
         .prepare(
           `INSERT INTO anime_episode_availability(anime_id,episode,first_seen_at,free_at)
            SELECT ?,value::integer,?,?
-           FROM jsonb_array_elements_text(?::jsonb)
+           FROM jsonb_array_elements_text(?::text::jsonb)
            WHERE true
            ON CONFLICT DO NOTHING`,
         )
