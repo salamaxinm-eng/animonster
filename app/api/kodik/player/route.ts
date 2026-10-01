@@ -2,6 +2,7 @@ import { ApiError, db, fail, now, premium, viewer } from '@/lib/server/core';
 import {
   kodikEpisodeOrdinals,
   kodikHasEpisodeMap,
+  kodikSeasonPlayer,
   safeKodikPlayerUrl,
   type KodikResult,
 } from '@/lib/server/kodik';
@@ -24,14 +25,21 @@ export async function GET(request: Request) {
     )
       throw new ApiError('Некорректный источник', 400);
     const user = await viewer(request);
+    const timestamp = now();
+    let premiumUntil: number | undefined;
+    const hasPlus = async () => {
+      if (!user) return false;
+      premiumUntil ??= await premium(user.id);
+      return premiumUntil > timestamp;
+    };
     const access = await db()
       .prepare(
         'SELECT free_at FROM anime_episode_availability WHERE anime_id=? AND episode=?',
       )
       .bind(animeId, episode)
       .first<{ free_at: number }>();
-    if (access && Number(access.free_at) > now()) {
-      if (!user || (await premium(user.id)) <= now())
+    if (access && Number(access.free_at) > timestamp) {
+      if (!(await hasPlus()))
         throw new ApiError('Серия доступна по AniMonster Plus', 403);
     }
     const exact = await db()
@@ -69,11 +77,32 @@ export async function GET(request: Request) {
         episode <= Number(source.episodes_count || 0) &&
         !kodikHasEpisodeMap(payload),
     )?.source;
-    const source = exact && mapped
+    let source = exact && mapped
       ? { player_url: exact.player_url }
       : generic;
     if (!source)
       throw new ApiError('Серия временно недоступна', 404);
+    if (exact && mapped) {
+      const season = sourceData
+        .map(({ payload }) => kodikSeasonPlayer(payload, episode, exact.player_url))
+        .find((value) => value !== null);
+      if (season) {
+        const availability = (
+          await db()
+            .prepare('SELECT episode,free_at FROM anime_episode_availability WHERE anime_id=?')
+            .bind(animeId)
+            .all<{ episode: number; free_at: number }>()
+        ).results;
+        const freeAt = new Map(
+          availability.map((row) => [Number(row.episode), Number(row.free_at)]),
+        );
+        const allFree = season.episodeOrdinals.every(
+          (ordinal) => (freeAt.get(ordinal) ?? Infinity) <= timestamp,
+        );
+        if (allFree || (await hasPlus()))
+          source = { player_url: season.playerUrl };
+      }
+    }
     const safe = safeKodikPlayerUrl(source.player_url);
     if (!safe) throw new ApiError('Источник временно недоступен', 502);
     const target = new URL(safe);

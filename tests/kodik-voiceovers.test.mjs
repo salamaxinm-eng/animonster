@@ -123,3 +123,32 @@ test('invalid episode links are not advertised as playable episodes', () => {
   assert.equal(kodik.kodikHasEpisodeMap(stored), true);
   assert.equal(kodik.kodikHasEpisodeMap({ ...stored, seasons: {} }), false);
 });
+
+test('Kodik season player is used only for the matching episode link', () => {
+  const exact = 'https://kodik.info/seria/first';
+  const season = {
+    ...stored,
+    seasons: {
+      1: {
+        link: '//kodik.info/season/one',
+        episodes: { 1: exact, 2: 'https://kodik.info/seria/second' },
+      },
+    },
+  };
+  assert.deepEqual(kodik.kodikSeasonPlayer(season, 1, exact), {
+    playerUrl: 'https://kodik.info/season/one',
+    episodeOrdinals: [1, 2],
+  });
+  assert.equal(
+    kodik.kodikSeasonPlayer(season, 1, 'https://kodik.info/seria/stale'),
+    null,
+  );
+  assert.equal(
+    kodik.kodikSeasonPlayer(
+      { ...season, seasons: { 1: { ...season.seasons[1], link: 'https://example.com/season/one' } } },
+      1,
+      exact,
+    ),
+    null,
+  );
+});

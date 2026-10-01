@@ -72,6 +72,33 @@ export function kodikHasEpisodeMap(item: KodikResult) {
     (season) => Object.keys(season.episodes || {}).length > 0,
   );
 }
+export function kodikSeasonPlayer(
+  item: KodikResult,
+  episode: number,
+  exactPlayerUrl: string,
+) {
+  const exact = safeKodikPlayerUrl(exactPlayerUrl);
+  if (!exact) return null;
+  for (const season of Object.values(item.seasons || {})) {
+    const entry = season.episodes?.[String(episode)];
+    const episodeUrl = typeof entry === 'string' ? entry : entry?.link || '';
+    if (safeKodikPlayerUrl(episodeUrl) !== exact) continue;
+    const playerUrl = safeKodikPlayerUrl(season.link || '');
+    if (!playerUrl || new URL(playerUrl).pathname.split('/')[1] !== 'season')
+      continue;
+    const episodeOrdinals = Object.entries(season.episodes || {}).flatMap(
+      ([ordinal, value]) => {
+        const link = typeof value === 'string' ? value : value.link || '';
+        const number = Number(ordinal);
+        return Number.isInteger(number) && number > 0 && safeKodikPlayerUrl(link)
+          ? [number]
+          : [];
+      },
+    );
+    return { playerUrl, episodeOrdinals };
+  }
+  return null;
+}
 export function kodikLastEpisode(item: KodikResult) {
   return Math.max(
     1,
