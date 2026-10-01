@@ -2679,29 +2679,6 @@ button:disabled {
 .episode-view .player {
   position: relative;
 }
-.kodik-next-episode {
-  position: absolute;
-  z-index: 6;
-  top: 12px;
-  left: 164px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  min-height: 42px;
-  padding: 0 12px;
-  border: 1px solid #ffffff26;
-  border-radius: 5px;
-  background: #17191ddf;
-  color: #f5f6f8;
-  font-size: 14px;
-  font-weight: 650;
-  box-shadow: 0 2px 12px #0006;
-}
-.kodik-next-episode:hover,
-.kodik-next-episode:focus-visible {
-  background: #292d34f2;
-}
 .skip-segment-button {
   position: absolute;
   z-index: 4;
