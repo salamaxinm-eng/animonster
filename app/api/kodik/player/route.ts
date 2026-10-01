@@ -1,5 +1,6 @@
 import { ApiError, db, fail, now, premium, viewer } from '@/lib/server/core';
 import {
+  kodikEpisodeOrdinals,
   kodikHasEpisodeMap,
   safeKodikPlayerUrl,
   type KodikResult,
@@ -39,34 +40,38 @@ export async function GET(request: Request) {
       )
       .bind(animeId, translationId, episode)
       .first<{ player_url: string }>();
-    const sources = exact
-      ? []
-      : (
-          await db()
-            .prepare(
-              `SELECT player_url,episodes_count,payload FROM anime_sources
-               WHERE provider='kodik' AND anime_id=? AND translation_id=? AND active=1
-               ORDER BY episodes_count DESC,last_seen_at DESC`,
-            )
-            .bind(animeId, translationId)
-            .all<{
-              player_url: string;
-              episodes_count: number;
-              payload: string;
-            }>()
-        ).results;
-    const source = exact
-      ? { player_url: exact.player_url, episodes_count: episode }
-      : sources.find((candidate) => {
-          if (episode > Number(candidate.episodes_count || 0)) return false;
-          try {
-            return !kodikHasEpisodeMap(
-              JSON.parse(candidate.payload) as KodikResult,
-            );
-          } catch {
-            return false;
-          }
-        });
+    const sources = (
+      await db()
+        .prepare(
+          `SELECT player_url,episodes_count,payload FROM anime_sources
+           WHERE provider='kodik' AND anime_id=? AND translation_id=? AND active=1
+           ORDER BY episodes_count DESC,last_seen_at DESC`,
+        )
+        .bind(animeId, translationId)
+        .all<{
+          player_url: string;
+          episodes_count: number;
+          payload: string;
+        }>()
+    ).results;
+    const sourceData = sources.flatMap((source) => {
+      try {
+        return [{ source, payload: JSON.parse(source.payload) as KodikResult }];
+      } catch {
+        return [];
+      }
+    });
+    const mapped = sourceData.some(({ payload }) =>
+      kodikEpisodeOrdinals(payload).includes(episode),
+    );
+    const generic = sourceData.find(
+      ({ source, payload }) =>
+        episode <= Number(source.episodes_count || 0) &&
+        !kodikHasEpisodeMap(payload),
+    )?.source;
+    const source = exact && mapped
+      ? { player_url: exact.player_url }
+      : generic;
     if (!source)
       throw new ApiError('Серия временно недоступна', 404);
     const safe = safeKodikPlayerUrl(source.player_url);
