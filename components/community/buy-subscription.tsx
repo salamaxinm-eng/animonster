@@ -238,7 +238,7 @@ export function BuySubscription({
                   </span>
                   <strong>Топ поддержки</strong>
                   <p>
-                    Три человека, которые сильнее всех двигают проект вперёд.
+                    Все подтверждённые покупки Plus и донаты складываются в общий рейтинг.
                   </p>
                 </div>
                 <ol className="supporter-leaders">

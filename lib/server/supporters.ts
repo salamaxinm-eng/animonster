@@ -7,12 +7,18 @@ export type SupporterLeader = {
   payments: number;
 };
 
+// Every confirmed purchase supports the project, regardless of tariff.
+const paidOrders = "o.status='succeeded' AND u.deleted_at IS NULL";
+const leaderId = `(SELECT o.user_id FROM orders o JOIN users u ON u.id=o.user_id
+  WHERE ${paidOrders} GROUP BY o.user_id
+  ORDER BY SUM(o.amount) DESC,MIN(o.created_at),o.user_id LIMIT 1)`;
+
 export async function supporterLeaderboard() {
   const rows = await db()
     .prepare(
       `SELECT u.id,u.nick,COALESCE(SUM(o.amount),0) AS amount,COUNT(o.id)::integer AS payments
        FROM orders o JOIN users u ON u.id=o.user_id
-       WHERE o.plan='support' AND o.status='succeeded' AND u.deleted_at IS NULL
+       WHERE ${paidOrders}
        GROUP BY u.id,u.nick
        ORDER BY SUM(o.amount) DESC,MIN(o.created_at),u.id
        LIMIT 3`,
@@ -32,8 +38,31 @@ export async function refreshSupporterChampion() {
     ),
     db().prepare(
       `DELETE FROM user_cosmetics
-       WHERE cosmetic_id IN ('tag:number-one','frame:champion-gold','pin:champion-crown')
-         AND source='purchase'`,
+       WHERE (cosmetic_id='pin:champion-crown'
+         OR (cosmetic_id IN ('tag:number-one','frame:champion-gold') AND source='purchase'))
+         AND user_id IS DISTINCT FROM ${leaderId}`,
+    ),
+    db().prepare(
+      `UPDATE users SET
+         pin=CASE WHEN pin='champion-crown' THEN NULL ELSE pin END,
+         tag=CASE WHEN tag='number-one' AND NOT EXISTS (
+           SELECT 1 FROM user_cosmetics WHERE user_id=users.id AND cosmetic_id='tag:number-one'
+         ) THEN NULL ELSE tag END,
+         profile_frame=CASE WHEN profile_frame='champion-gold' AND NOT EXISTS (
+           SELECT 1 FROM user_cosmetics WHERE user_id=users.id AND cosmetic_id='frame:champion-gold'
+         ) THEN 'none' ELSE profile_frame END
+       WHERE id IS DISTINCT FROM ${leaderId}
+         AND (pin='champion-crown'
+           OR (tag='number-one' AND NOT EXISTS (
+             SELECT 1 FROM user_cosmetics WHERE user_id=users.id AND cosmetic_id='tag:number-one'))
+           OR (profile_frame='champion-gold' AND NOT EXISTS (
+             SELECT 1 FROM user_cosmetics WHERE user_id=users.id AND cosmetic_id='frame:champion-gold')))`,
+    ),
+    db().prepare(
+      `UPDATE users SET pin='champion-crown'
+       WHERE id=${leaderId}
+         AND NOT EXISTS (SELECT 1 FROM user_cosmetics
+           WHERE user_id=users.id AND cosmetic_id='pin:champion-crown')`,
     ),
     db()
       .prepare(
@@ -44,7 +73,7 @@ export async function refreshSupporterChampion() {
          FROM (
            SELECT o.user_id,SUM(o.amount) AS amount
            FROM orders o JOIN users u ON u.id=o.user_id
-           WHERE o.plan='support' AND o.status='succeeded' AND u.deleted_at IS NULL
+           WHERE ${paidOrders}
            GROUP BY o.user_id
            ORDER BY SUM(o.amount) DESC,MIN(o.created_at),o.user_id
            LIMIT 1

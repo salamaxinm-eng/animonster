@@ -130,7 +130,7 @@ export async function verifyPayment(providerId: string) {
           ]
         : []),
     ]);
-    if (order.plan === 'support') await refreshSupporterChampion();
+    await refreshSupporterChampion();
   } else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED') {
     const status = p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled';
     await db().batch([
@@ -156,7 +156,7 @@ export async function verifyPayment(providerId: string) {
           ]
         : []),
     ]);
-    if (order.plan === 'support' && p.status === 'CHARGEBACKED')
+    if (p.status === 'CHARGEBACKED')
       await refreshSupporterChampion();
   }
   const saved = await db()
