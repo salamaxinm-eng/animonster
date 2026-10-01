@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PopularHero } from '@/components/popular-hero';
 import { HomeDiscovery } from '@/components/home-discovery';
 import { posterUrl, type Anime } from '@/lib/anime';
+import { fetchJsonWithRetry } from '@/lib/client/fetch-json';
 import { AccountNav, api, useCommunity } from '@/components/community/context';
 import { GlobalSearch } from '@/components/global-search';
 export default function Home() {
@@ -27,6 +28,7 @@ export default function Home() {
     [favoriteIds, setFavoriteIds] = useState<number[]>([]),
     [apiStatus, setApiStatus] = useState(''),
     [catalogSort, setCatalogSort] = useState('rating'),
+    [catalogRetry, setCatalogRetry] = useState(0),
     [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [page, setPage] = useState(1),
     [pages, setPages] = useState(1),
@@ -70,19 +72,18 @@ export default function Home() {
     const timer = setTimeout(async () => {
       setApiStatus('Обновляем каталог…');
       try {
-        const r = await fetch(
+        const { data, response } = await fetchJsonWithRetry<Anime[]>(
           '/api/catalog?kind=' +
             (tab === 'movies' ? 'movie' : tab === 'airing' ? 'ongoing' : '') +
             '&page=' +
             page +
             '&sort=' +
             catalogSort,
-          { signal: controller.signal },
+          controller.signal,
         );
-        if (!r.ok) throw Error();
-        setItems(await r.json());
-        setTotal(Number(r.headers.get('X-Total-Count')) || 0);
-        setPages(Number(r.headers.get('X-Total-Pages')) || 1);
+        setItems(data);
+        setTotal(Number(response.headers.get('X-Total-Count')) || 0);
+        setPages(Number(response.headers.get('X-Total-Pages')) || 1);
         setApiStatus('');
       } catch {
         if (!controller.signal.aborted)
@@ -97,7 +98,7 @@ export default function Home() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [tab, page, catalogSort]);
+  }, [tab, page, catalogSort, catalogRetry]);
   function has(id: number) {
     return favoriteIds.includes(id);
   }
@@ -386,21 +387,31 @@ export default function Home() {
               <h3>
                 {tab === 'saved'
                   ? 'Здесь начинается твоя коллекция'
-                  : 'Ничего не нашлось'}
+                  : apiStatus
+                    ? 'Не удалось загрузить каталог'
+                    : 'Ничего не нашлось'}
               </h3>
               <p>
                 {tab === 'saved'
                   ? 'Нажми на закладку рядом с названием аниме.'
-                  : 'Попробуй другое название или открой все аниме.'}
+                  : apiStatus
+                    ? 'Проверь соединение и попробуй ещё раз.'
+                    : 'Попробуй другое название или открой все аниме.'}
               </p>
               <button
                 className="primary"
                 onClick={() => {
-                  setPage(1);
-                  setTab('all');
+                  if (apiStatus && tab !== 'saved') {
+                    setCatalogRetry((n) => n + 1);
+                  } else {
+                    setPage(1);
+                    setTab('all');
+                  }
                 }}
               >
-                Открыть каталог
+                {apiStatus && tab !== 'saved'
+                  ? 'Повторить загрузку'
+                  : 'Открыть каталог'}
               </button>
             </div>
           )}

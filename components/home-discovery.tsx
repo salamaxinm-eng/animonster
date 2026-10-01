@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Clock3, Flame, Grid2X2, LayoutGrid, Sparkles } from 'lucide-react';
 import type { Anime } from '@/lib/anime';
+import { fetchJsonWithRetry } from '@/lib/client/fetch-json';
 import { AnimeGrid } from './anime-grid';
 import { useCommunity } from './community/context';
 
@@ -21,6 +22,7 @@ export function HomeDiscovery() {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -30,10 +32,8 @@ export function HomeDiscovery() {
       active === 'recommended'
         ? '/api/recommendations'
         : '/api/catalog?sort=' + (active === 'new' ? 'fresh' : 'rating');
-    fetch(url, { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw Error('Не удалось загрузить подборку');
-        const result: any = await response.json();
+    fetchJsonWithRetry<any>(url, controller.signal)
+      .then(({ data: result }) => {
         if (active === 'recommended') return result.sections || [];
         return [
           {
@@ -50,11 +50,10 @@ export function HomeDiscovery() {
       .catch(async () => {
         if (controller.signal.aborted) return;
         try {
-          const response = await fetch('/api/catalog?sort=rating', {
-            signal: controller.signal,
-          });
-          if (!response.ok) throw Error();
-          const items = (await response.json()) as Anime[];
+          const { data: items } = await fetchJsonWithRetry<Anime[]>(
+            '/api/catalog?sort=rating',
+            controller.signal,
+          );
           setSections([
             {
               title: 'Популярное сейчас',
@@ -71,7 +70,7 @@ export function HomeDiscovery() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [active, community.user?.id]);
+  }, [active, community.user?.id, retry]);
 
   return (
     <section className="home-discovery" aria-label="Подборки AniMonster">
@@ -103,9 +102,12 @@ export function HomeDiscovery() {
           Собираем подборку…
         </div>
       ) : error ? (
-        <p className="home-discovery-error" role="alert">
-          {error}
-        </p>
+        <div className="home-discovery-error" role="alert">
+          <p>{error}</p>
+          <button className="primary" onClick={() => setRetry((n) => n + 1)}>
+            Повторить загрузку
+          </button>
+        </div>
       ) : (
         sections.map((section, index) => (
           <div className="home-rail" key={section.title}>
