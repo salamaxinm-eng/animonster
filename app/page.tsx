@@ -144,6 +144,7 @@ export default function Home() {
           <a href="#catalog">Каталог</a>
           <a href="/genres">Жанры</a>
           <a href="/recommendations">Рекомендации</a>
+          <a href="/statistics">Статистика</a>
           <button
             onClick={() => {
               setTab('movies');

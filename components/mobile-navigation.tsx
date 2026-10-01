@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   Bookmark,
-  Download,
   Ghost,
   Gift,
   Home,
   LayoutGrid,
   Search,
+  Trophy,
   UserRound,
 } from 'lucide-react';
 import { BuySubscription } from '@/components/community/buy-subscription';
@@ -40,10 +40,10 @@ const items: MobileNavItem[] = [
     active: (path) => path === '/bookmarks',
   },
   {
-    href: '/downloads',
-    label: 'Загрузки',
-    icon: Download,
-    active: (path) => path.startsWith('/downloads'),
+    href: '/statistics',
+    label: 'Статистика',
+    icon: Trophy,
+    active: (path) => path === '/statistics',
   },
   {
     href: '/catalog',
@@ -75,8 +75,10 @@ export function MobileNavigation() {
   const sectionTitle =
     pathname === '/bookmarks'
       ? 'Закладки'
-      : pathname.startsWith('/downloads')
-        ? 'Загрузки'
+      : pathname === '/statistics'
+        ? 'Статистика'
+        : pathname.startsWith('/downloads')
+          ? 'Загрузки'
         : pathname === '/catalog' || pathname === '/genres'
           ? 'Каталог'
           : '';

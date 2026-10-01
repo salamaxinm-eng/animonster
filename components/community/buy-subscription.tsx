@@ -38,16 +38,20 @@ type SupporterLeader = {
 export function BuySubscription({
   className = 'outline-button',
   compact = false,
+  label,
+  initialPlan = 'monthly',
 }: {
   className?: string;
   compact?: boolean;
+  label?: string;
+  initialPlan?: PlanChoice;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [accepted, setAccepted] = useState(false);
   const [paymentUnavailable, setPaymentUnavailable] = useState(false);
-  const [planId, setPlanId] = useState<PlanChoice>('monthly');
+  const [planId, setPlanId] = useState<PlanChoice>(initialPlan);
   const [customAmount, setCustomAmount] = useState('300');
   const [leaders, setLeaders] = useState<SupporterLeader[]>([]);
   const [leadersLoading, setLeadersLoading] = useState(false);
@@ -102,7 +106,7 @@ export function BuySubscription({
     <>
       <button className={className} onClick={() => setOpen(true)}>
         <Sparkles size={16} aria-hidden="true" />{' '}
-        {compact ? 'Plus' : 'AniMonster Plus'}
+        {label || (compact ? 'Plus' : 'AniMonster Plus')}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sign-dialog plus-dialog">

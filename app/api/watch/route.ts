@@ -225,6 +225,15 @@ export async function POST(r: Request) {
             WATCHED_EPISODE_SECONDS,
           ),
       );
+      if (delta > 0 && s.watched + delta >= WATCHED_EPISODE_SECONDS) {
+        stmts.push(
+          db()
+            .prepare(
+              'INSERT OR IGNORE INTO qualified_episode_views(user_id,anime_id,episode,qualified_at) VALUES (?,?,?,?)',
+            )
+            .bind(a.user.id, s.anime_id, s.episode, n),
+        );
+      }
     }
 
     await db().batch(stmts);

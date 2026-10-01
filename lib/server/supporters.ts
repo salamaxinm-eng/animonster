@@ -8,12 +8,12 @@ export type SupporterLeader = {
 };
 
 // Every confirmed purchase supports the project, regardless of tariff.
-const paidOrders = "o.status='succeeded' AND u.deleted_at IS NULL";
+const paidOrders = "o.status='succeeded' AND NOT o.is_test AND u.deleted_at IS NULL";
 const leaderId = `(SELECT o.user_id FROM orders o JOIN users u ON u.id=o.user_id
   WHERE ${paidOrders} GROUP BY o.user_id
   ORDER BY SUM(o.amount) DESC,MIN(o.created_at),o.user_id LIMIT 1)`;
 
-export async function supporterLeaderboard() {
+export async function supporterLeaderboard(limit = 3) {
   const rows = await db()
     .prepare(
       `SELECT u.id,u.nick,COALESCE(SUM(o.amount),0) AS amount,COUNT(o.id)::integer AS payments
@@ -21,8 +21,9 @@ export async function supporterLeaderboard() {
        WHERE ${paidOrders}
        GROUP BY u.id,u.nick
        ORDER BY SUM(o.amount) DESC,MIN(o.created_at),u.id
-       LIMIT 3`,
+       LIMIT ?`,
     )
+    .bind(Math.max(1, Math.min(10, Math.floor(limit))))
     .all<SupporterLeader>();
   return rows.results.map((item) => ({
     ...item,

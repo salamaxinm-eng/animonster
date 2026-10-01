@@ -474,6 +474,9 @@ export function CommunityHeader() {
         <a className="back-catalog" href="/recommendations">
           Рекомендации
         </a>
+        <a className="back-catalog" href="/statistics">
+          Статистика
+        </a>
         <a className="back-catalog" href="/downloads">
           Загрузки
         </a>
