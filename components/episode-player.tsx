@@ -805,6 +805,17 @@ export function EpisodePlayer({
             aria-label={'Серия ' + episode?.ordinal}
           />
         )}
+        {isKodik && iframeUrl && !episode?.plus_locked && nextIndex !== undefined && (
+          <button
+            type="button"
+            className="kodik-next-episode"
+            onClick={advanceToNext}
+            aria-label="Следующая серия"
+            title="Следующая серия"
+          >
+            Далее <ChevronRight size={18} aria-hidden="true" />
+          </button>
+        )}
         {!isKodik && activeKind && activeSegment && !showAutoSkipQuestion && (
           <button
             type="button"
