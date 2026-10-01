@@ -940,23 +940,6 @@
     min-height: 44px;
   }
 
-  .title-playback .episode-toolbar .voiceover-select,
-  .title-playback .episode-toolbar .episode-select,
-  .title-playback .episode-toolbar .quality-select {
-    order: 1;
-  }
-
-  .title-playback .episode-toolbar > button:last-of-type {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-  }
-
-  .episode-next-label {
-    display: inline;
-  }
-
   .mobile-legal {
     display: flex;
     flex-wrap: wrap;

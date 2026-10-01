@@ -2747,9 +2747,6 @@ button:disabled {
   background: #212d3d;
   border-radius: 6px;
 }
-.episode-next-label {
-  display: none;
-}
 .playback-error {
   font-size: 13px;
   color: #f0b6b6;

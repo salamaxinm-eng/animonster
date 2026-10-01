@@ -943,7 +943,6 @@ export function EpisodePlayer({
           }
           aria-label="Следующая серия"
         >
-          <span className="episode-next-label">Далее</span>
           <ChevronRight size={20} />
         </button>
       </div>
