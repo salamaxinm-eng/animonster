@@ -1,7 +1,7 @@
 {$SITE_ADDRESS:http://31.77.10.81} {
   encode zstd gzip
   reverse_proxy app:3000 {$CLUSTER_APP_UPSTREAM:app:3000} {
-    lb_policy random_choose 2
+    lb_policy cookie animonster_node
     health_uri /api/health
     health_interval 10s
     health_timeout 3s

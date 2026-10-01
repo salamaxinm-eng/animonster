@@ -1,6 +1,5 @@
-const VERSION = 'animonster-shell-v1';
+const VERSION = 'animonster-shell-v2';
 const SHELL = [
-  '/',
   '/downloads',
   '/downloads/watch',
   '/manifest.webmanifest',
@@ -11,7 +10,7 @@ const SHELL = [
 async function precacheShell() {
   const cache = await caches.open(VERSION);
   const assets = new Set(SHELL);
-  for (const path of ['/', '/downloads', '/downloads/watch']) {
+  for (const path of ['/downloads', '/downloads/watch']) {
     try {
       const response = await fetch(path, { cache: 'no-store' });
       if (!response.ok) continue;
@@ -69,10 +68,12 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          void caches
-            .open(VERSION)
-            .then((cache) => cache.put(url.pathname, copy));
+          if (response.ok) {
+            const copy = response.clone();
+            void caches
+              .open(VERSION)
+              .then((cache) => cache.put(url.pathname, copy));
+          }
           return response;
         })
         .catch(async () => {
@@ -85,7 +86,7 @@ self.addEventListener('fetch', (event) => {
                     ? '/downloads/watch'
                     : '/downloads',
                 )
-              : await cache.match('/'))
+              : Response.error())
           );
         }),
     );
@@ -100,8 +101,10 @@ self.addEventListener('fetch', (event) => {
         (cached) =>
           cached ||
           fetch(request).then((response) => {
-            const copy = response.clone();
-            void caches.open(VERSION).then((cache) => cache.put(request, copy));
+            if (response.ok) {
+              const copy = response.clone();
+              void caches.open(VERSION).then((cache) => cache.put(request, copy));
+            }
             return response;
           }),
       ),
