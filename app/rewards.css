@@ -582,6 +582,17 @@
   --frame-art: url('/frames/champion-gold.svg');
   --frame-accent: #ffd34d;
 }
+.profile-frame-founder > .user-avatar {
+  --frame-art: url('/frames/founder.svg');
+  --frame-accent: #d8a96b;
+}
+.user-tag-founding-10 {
+  --tag-color: #c69558;
+  --tag-end: #9b7045;
+  --tag-light: #f1dbb8;
+  --tag-icon: url('/rewards/founder/founder-001.svg');
+}
+.founder-member-badge{display:inline-block;padding:5px 10px;border:1px solid #bd955f;border-radius:999px;color:#edc994;background:#2b251f;font-size:.69rem;font-weight:800;letter-spacing:.09em}
 .profile-frame-achievement-shinobi > .user-avatar {
   --frame-art: url('/frames/achievement-shinobi.svg');
   --frame-accent: #ff85bc;

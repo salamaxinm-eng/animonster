@@ -106,6 +106,7 @@ export default function PinsPage() {
               {subscriptionPlans.annual.discount}% и тег «Вечный накама»
               навсегда
             </p>
+            <p className="billing-note"><a href="/founders">FOUNDING 10</a> · Первые 10 пользователей, поддержавших AniMonster донатом от 1000 ₽, получают эксклюзивный статус Founder. Один успешный донат должен составлять не менее 1000 ₽; суммы нескольких донатов не складываются.</p>
             <nav
               className="payment-doc-links"
               aria-label="Документы и условия оплаты"
@@ -123,8 +124,7 @@ export default function PinsPage() {
             {c.user?.premium_until ? (
               <>
                 <p className="success-msg">
-                  Подписка до{' '}
-                  {new Date(c.user.premium_until).toLocaleDateString('ru-RU')}
+                  {c.user.plus_lifetime ? 'Пожизненный Plus' : `Подписка до ${new Date(c.user.premium_until).toLocaleDateString('ru-RU')}`}
                 </p>
                 <button className="primary" disabled={busy} onClick={equip}>
                   Установить выбранный пин <Check size={17} />

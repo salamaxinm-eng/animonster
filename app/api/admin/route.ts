@@ -18,6 +18,7 @@ import { dashboard } from '@/lib/server/admin';
 import { validSegment } from '@/lib/server/skip-times';
 import { linkQueuedKodik, runKodikSync } from '@/lib/server/kodik-sync';
 import { watchPartyMetrics } from '@/lib/server/watch-parties';
+import { syncFounderRewards } from '@/lib/server/founders';
 
 async function moderator(r: Request) {
   const user = await viewer(r);
@@ -69,7 +70,7 @@ export async function GET(r: Request) {
         .all(),
       db()
         .prepare(`SELECT u.id,u.nick,u.email,u.role,u.email_verified,u.suspended_until,u.created_at,
-        (SELECT MAX(g.expires) FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL) AS premium_until
+        (SELECT CASE WHEN BOOL_OR(g.lifetime) THEN 253402300799000 ELSE MAX(g.expires) END FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL) AS premium_until
         FROM users u WHERE u.deleted_at IS NULL ORDER BY u.created_at DESC LIMIT 100`)
         .all(),
       db()
@@ -167,6 +168,13 @@ export async function GET(r: Request) {
         )
         .all(),
     ]);
+    const founders = await db().prepare(
+      `SELECT f.founder_number,f.user_id,u.nick,f.first_qualifying_payment_at,
+              f.qualifying_amount,f.payment_id,
+              (SELECT count(*) FROM user_cosmetics c WHERE c.user_id=f.user_id AND c.source='founder') AS cosmetic_count,
+              EXISTS(SELECT 1 FROM grants g WHERE g.order_id='founder:' || f.founder_number::text AND g.user_id=f.user_id AND g.revoked_at IS NULL) AS plus_granted
+       FROM founding_members f JOIN users u ON u.id=f.user_id ORDER BY f.founder_number`,
+    ).all();
     return json({
       can_manage_roles: actor.role === 'admin',
       invite_required: inviteRequired(),
@@ -182,6 +190,7 @@ export async function GET(r: Request) {
       telegram_queue: telegramQueue.results,
       episode_access: episodeAccess,
       payments: payments.results,
+      founders: founders.results,
       plus_state: plusState,
       plus_early_access_enabled: runtime().PLUS_EARLY_ACCESS_ENABLED === 'true',
       kodik_sync_enabled: runtime().KODIK_SYNC_ENABLED === 'true',
@@ -503,6 +512,13 @@ export async function POST(r: Request) {
       .bind(target)
       .first<{ id: string; role: string }>();
     if (!exists) throw new ApiError('Пользователь не найден', 404);
+    if (action === 'founder_resync') {
+      if (actor.role !== 'admin') throw new ApiError('Только администратор', 403);
+      const synced = await syncFounderRewards(target);
+      if (!synced) throw new ApiError('Founder-место не найдено', 404);
+      await audit(actor.id, 'founder.resync', target);
+      return json({ ok: true });
+    }
     if (action === 'grant_plus') {
       const days = Math.min(366, Math.max(1, Number(b.days) || 30));
       const id = `manual:${uid()}`;

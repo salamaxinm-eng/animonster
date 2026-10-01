@@ -323,6 +323,8 @@ export function ProfilePage({
               src={
                 data.user.profile_background?.startsWith('asset:')
                   ? `/api/plus-assets/${data.user.profile_background.split(':')[1]}`
+                  : data.user.profile_background?.startsWith('/rewards/founder/')
+                    ? data.user.profile_background
                   : '/hero.png'
               }
               alt="Обложка профиля"
@@ -345,6 +347,7 @@ export function ProfilePage({
                 <Pin
                   id={tab === 'settings' ? draft?.pin || null : data.user.pin}
                 />
+                {data.user.founder_number && <span className="founder-member-badge" title="Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽.">FOUNDING MEMBER #{String(data.user.founder_number).padStart(3, '0')}</span>}
               </div>
               <p>
                 {data.user.created_at &&
@@ -406,10 +409,11 @@ export function ProfilePage({
           <div className="profile-layout">
             <aside className="profile-sidebar">
               <section className="social-panel">
+                {data.user.founder_number && <p className="founder-profile-detail">Founder #{String(data.user.founder_number).padStart(3, '0')} · Дата вступления: {new Date(Number(data.user.founder_since)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>}
                 <p className="muted">
                   Подписка:{' '}
                   {data.user.premium_until
-                    ? `Plus до ${new Date(
+                    ? data.user.plus_lifetime ? 'Plus пожизненно' : `Plus до ${new Date(
                         data.user.premium_until,
                       ).toLocaleString('ru-RU', {
                         day: 'numeric',

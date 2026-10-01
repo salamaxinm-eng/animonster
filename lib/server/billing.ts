@@ -1,5 +1,6 @@
 import { db, runtime, ApiError, now } from './core';
 import { refreshSupporterChampion } from './supporters';
+import { assignFounder, syncFounderRewards } from './founders';
 
 type PlategaTransaction = {
   id?: string;
@@ -12,6 +13,8 @@ type PlategaTransaction = {
   commission?: number;
   payload?: string;
   externalId?: string;
+  isTest?: boolean;
+  test?: boolean;
 };
 
 function cents(value: number) {
@@ -101,9 +104,9 @@ export async function verifyPayment(providerId: string) {
         .bind(order.user_id),
       db()
         .prepare(
-          "UPDATE orders SET status=?,provider_id=? WHERE id=? AND status<>'chargebacked'",
+          "UPDATE orders SET status=?,provider_id=?,confirmed_at=COALESCE(confirmed_at,?),is_test=? WHERE id=? AND status<>'chargebacked'",
         )
-        .bind('succeeded', paymentId, order.id),
+        .bind('succeeded', paymentId, now(), p.isTest === true || p.test === true, order.id),
       db()
         .prepare(
           "INSERT INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=? AND revoked_at IS NULL),0))+? WHERE EXISTS(SELECT 1 FROM orders WHERE id=? AND status='succeeded') ON CONFLICT(order_id) DO NOTHING",
@@ -130,7 +133,19 @@ export async function verifyPayment(providerId: string) {
           ]
         : []),
     ]);
-    await refreshSupporterChampion();
+    try {
+      if (Number(order.amount) >= 1000 && p.isTest !== true && p.test !== true) {
+        await assignFounder(order.id);
+        await syncFounderRewards(order.user_id);
+      }
+    } catch (error) {
+      console.error('Founder reward synchronization failed', error);
+    }
+    try {
+      await refreshSupporterChampion();
+    } catch (error) {
+      console.error('Supporter reward synchronization failed', error);
+    }
   } else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED') {
     const status = p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled';
     await db().batch([

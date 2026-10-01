@@ -203,6 +203,9 @@ export const pins = [
   },
 ];
 export type Profile = {
+  founder_number?: number | null;
+  founder_since?: number | null;
+  plus_lifetime?: boolean;
   id: string;
   nick: string;
   bio: string;

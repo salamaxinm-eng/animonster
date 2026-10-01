@@ -9,7 +9,7 @@ import {
   ApiError,
   viewer,
 } from '@/lib/server/core';
-import { actor } from '../activity/route';
+import { actor } from '@/lib/server/activity-actor';
 import { getAnime } from '@/lib/server/library';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
 import { evaluateUserAchievements } from '@/lib/server/achievements';

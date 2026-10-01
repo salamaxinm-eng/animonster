@@ -27,11 +27,12 @@ export async function POST(request: Request) {
     const user = await requireUser(request);
     const input = await body(request);
     const kind = String(input.kind || '') as CosmeticKind;
-    if (!['tag', 'pin', 'frame', 'theme'].includes(kind))
+    if (!['tag', 'pin', 'frame', 'theme', 'background'].includes(kind))
       throw new ApiError('Неизвестный тип косметики');
     const slug = await validateEquippedCosmetic(user.id, kind, input.slug);
-    const column = kind === 'frame' ? 'profile_frame' : kind;
-    const value = kind === 'theme' && slug === 'bleach-theme' ? 'bleach' : slug;
+    const column = kind === 'frame' ? 'profile_frame' : kind === 'background' ? 'profile_background' : kind;
+    const value = kind === 'theme' && slug === 'bleach-theme' ? 'bleach' :
+      kind === 'background' && slug === 'founder-background' ? '/rewards/founder/background.svg' : slug;
     await dbUpdate(column, value, user.id);
     return json({ ok: true, kind, slug });
   } catch (error) {
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
 
 async function dbUpdate(column: string, value: string | null, userId: string) {
   const { db } = await import('@/lib/server/core');
-  if (!['tag', 'pin', 'profile_frame', 'theme'].includes(column))
+  if (!['tag', 'pin', 'profile_frame', 'profile_background', 'theme'].includes(column))
     throw new ApiError('Некорректное поле');
   await db()
     .prepare(`UPDATE users SET ${column}=? WHERE id=?`)

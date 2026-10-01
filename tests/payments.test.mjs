@@ -15,6 +15,10 @@ const source = (
     'const refreshSupporterChampion = async () => {};',
   )
   .replace(
+    "import { assignFounder, syncFounderRewards } from './founders';",
+    'const assignFounder = async () => {}; const syncFounderRewards = async () => {};',
+  )
+  .replace(
     "import { PLUS_DURATION_MS, PLUS_PRICE } from './plus';",
     "const PLUS_DURATION_MS = 0; const PLUS_PRICE = '109.00';",
   );

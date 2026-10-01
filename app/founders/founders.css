@@ -1,0 +1,14 @@
+.founders-page{max-width:1120px;margin:0 auto;padding:64px 24px 96px;color:#f2eee7}
+.founders-page h1{font-size:clamp(3rem,8vw,6rem);letter-spacing:.12em;margin:14px 0 20px;color:#e8b979}
+.founders-page p{color:#bcb8b2;max-width:720px;line-height:1.65}
+.founders-page .founders-lead{font-size:1.15rem;color:#eee6db}
+.founders-remaining{font-weight:700;color:#e8b979!important;margin:26px 0}
+.founders-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:36px}
+.founder-seat{min-height:140px;display:flex;align-items:center;gap:13px;flex-wrap:wrap;padding:18px;border:1px solid #554936;border-radius:16px;background:#191a1e}
+.founder-seat.occupied{background:linear-gradient(145deg,#25221e,#18191d)}
+.founder-seat-number{width:100%;font-size:.8rem;letter-spacing:.14em;color:#dbad6b;text-transform:uppercase;font-weight:800}
+.founder-seat strong{display:block;font-size:1.08rem}
+.founder-seat small{display:block;color:#a7a3a0;margin-top:6px}
+.founder-free{color:#9c978d}
+.founders-invite{margin-top:32px}
+.founders-invite a{color:#e8b979;text-decoration:underline}

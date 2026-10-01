@@ -211,6 +211,10 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   );
 }
 export function Pin({ id }: { id: string | null }) {
+  const founder = /^founder-(00[1-9]|010)$/.exec(id || '');
+  if (founder) return <span className="anime-pin founder-pin" title="Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽." aria-label={`Founder #${founder[1]}`}>
+    <img src={`/rewards/founder/${founder[0]}.svg`} alt="" />
+  </span>;
   const referralPins = [
     {
       id: 'referral-scout',
@@ -258,6 +262,7 @@ export function Pin({ id }: { id: string | null }) {
 }
 const tagLabels: Record<string, string> = {
   'eternal-nakama': 'Вечный накама',
+  'founding-10': 'FOUNDING 10',
   'number-one': 'Номер 1',
   plus: 'PLUS',
   supporter: 'Поддержал AniMonster',
@@ -270,7 +275,7 @@ const tagLabels: Record<string, string> = {
 export function UserTag({ id }: { id?: string | null }) {
   if (!id) return null;
   return (
-    <span className={`user-tag user-tag-${id}`} title="Тег пользователя">
+    <span className={`user-tag user-tag-${id}`} title={id === 'founding-10' ? 'Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽.' : 'Тег пользователя'}>
       {tagLabels[id] || id.replaceAll('-', ' ')}
     </span>
   );
@@ -431,6 +436,7 @@ export function AccountNav() {
       <a href="/referrals" className="referral-nav-button">
         <Gem size={16} /> Пригласить друзей
       </a>
+      <a href="/founders" className="referral-nav-button">FOUNDING 10</a>
       <BuySubscription className="subscription-nav" />
       {c.moderator && <a href="/admin">Админка</a>}
       {c.user ? (

@@ -1,23 +1,10 @@
 import {
   db,
-  viewer,
-  cookie,
-  hash,
-  uid,
   now,
   sameOrigin,
   fail,
 } from '@/lib/server/core';
-export async function actor(r: Request) {
-  const user = await viewer(r),
-    supplied = cookie(r, 'am_visitor');
-  const visitor = /^[a-f0-9-]{36}$/.test(supplied) ? supplied : uid();
-  return {
-    user,
-    visitor,
-    key: user ? 'u:' + user.id : 'v:' + (await hash(visitor)),
-  };
-}
+import { actor } from '@/lib/server/activity-actor';
 export async function POST(r: Request) {
   try {
     sameOrigin(r);

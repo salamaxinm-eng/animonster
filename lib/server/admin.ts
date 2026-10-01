@@ -83,7 +83,7 @@ export async function dashboard() {
       .first<{ n: number }>(),
     db()
       .prepare(
-        'SELECT count(DISTINCT user_id) AS n FROM grants WHERE revoked_at IS NULL AND starts_at<=? AND expires>?',
+        'SELECT count(DISTINCT user_id) AS n FROM grants WHERE revoked_at IS NULL AND starts_at<=? AND (expires>? OR lifetime)',
       )
       .bind(timestamp, timestamp)
       .first<{ n: number }>(),

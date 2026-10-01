@@ -1,13 +1,14 @@
 import { ApiError, db, now, premium } from './core';
 
-export type CosmeticKind = 'tag' | 'pin' | 'frame' | 'theme';
+export type CosmeticKind = 'tag' | 'pin' | 'frame' | 'theme' | 'background';
 export type CosmeticAccess =
   | 'free'
   | 'plus'
   | 'achievement'
   | 'referral'
   | 'purchase'
-  | 'admin';
+  | 'admin'
+  | 'founder';
 
 export type Cosmetic = {
   id: string;
@@ -86,6 +87,8 @@ export async function cosmeticsCatalog(userId?: string) {
                   : 'Покупка годового AniMonster Plus'
                 : item.access_type === 'admin'
                   ? 'Выдаётся администрацией'
+                  : item.access_type === 'founder'
+                    ? 'Только для участников FOUNDING 10'
                   : 'Доступно всем',
     };
   });
@@ -109,6 +112,12 @@ export async function validateEquippedCosmetic(
   if (!item)
     throw new ApiError('Неизвестная косметика', 400, 'unknown_cosmetic');
   if (item.access_type === 'free') return slug;
+  if (item.access_type === 'founder') {
+    const founder = await db().prepare('SELECT founder_number FROM founding_members WHERE user_id=?')
+      .bind(userId).first<{ founder_number: number }>();
+    if (!founder || (kind === 'pin' && slug !== `founder-${String(founder.founder_number).padStart(3, '0')}`))
+      throw new ApiError('Эта награда доступна только Founder', 403, 'cosmetic_locked');
+  }
   const until = premiumUntil ?? (await premium(userId));
   if (item.access_type === 'plus') {
     if (until > now()) return slug;
@@ -134,6 +143,7 @@ export async function grantCosmetic(
   sourceKey: string,
   metadata: Record<string, unknown> = {},
 ) {
+  if (source === 'founder') throw new Error('Use Founder membership synchronization');
   const item = await db()
     .prepare('SELECT id FROM cosmetics WHERE slug=? AND active=1')
     .bind(cosmeticSlug)

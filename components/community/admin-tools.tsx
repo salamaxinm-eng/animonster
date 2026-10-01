@@ -813,6 +813,21 @@ export function AdminTools() {
         )}
       </section>
       <section className="social-panel" hidden={section !== 'users'}>
+        <h2>FOUNDING 10</h2>
+        <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Место</th><th>Пользователь</th><th>Дата</th><th>Сумма</th><th>Заказ</th><th>Награды</th><th>Действие</th></tr></thead><tbody>
+          {(data.founders || []).map((founder: any) => <tr key={founder.founder_number}>
+            <td>#{String(founder.founder_number).padStart(3, '0')}</td>
+            <td>{founder.nick}<br /><small>{founder.user_id}</small></td>
+            <td>{new Date(Number(founder.first_qualifying_payment_at)).toLocaleString('ru-RU')}</td>
+            <td>{founder.qualifying_amount} ₽</td>
+            <td>{founder.payment_id}</td>
+            <td>{Number(founder.cosmetic_count)}/4 · Plus {founder.plus_granted ? '✓' : '—'}</td>
+            <td aria-label="Действие">{data.can_manage_roles && <Button variant="outline" onClick={() => void mutate({ action: 'founder_resync', user_id: founder.user_id })}>Re-sync rewards</Button>}</td>
+          </tr>)}
+        </tbody></table></div>
+        {!data.founders?.length && <p className="muted">Места пока свободны.</p>}
+      </section>
+      <section className="social-panel" hidden={section !== 'users'}>
         <h2>Пользователи</h2>
         {message && (
           <p role="status" className="success-msg">

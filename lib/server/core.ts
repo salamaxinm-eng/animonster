@@ -91,6 +91,9 @@ class Database {
       return results;
     });
   }
+  async transaction<T>(callback: (transaction: Database) => Promise<T>): Promise<T> {
+    return this.connection.begin((transaction: any) => callback(new Database(transaction)));
+  }
 }
 
 let database: Database | undefined;
@@ -361,7 +364,7 @@ export async function requireUser(r: Request) {
 export async function premium(id: string) {
   const row = await db()
     .prepare(
-      'SELECT MAX(expires) AS expires FROM grants WHERE user_id=? AND revoked_at IS NULL',
+      'SELECT CASE WHEN BOOL_OR(lifetime) THEN 253402300799000 ELSE MAX(expires) END AS expires FROM grants WHERE user_id=? AND revoked_at IS NULL',
     )
     .bind(id)
     .first<{ expires: number | null }>();
@@ -369,6 +372,8 @@ export async function premium(id: string) {
 }
 export async function publicUser(u: User) {
   const until = await premium(u.id);
+  const founder = await db().prepare('SELECT founder_number,first_qualifying_payment_at FROM founding_members WHERE user_id=?')
+    .bind(u.id).first<{ founder_number: number; first_qualifying_payment_at: number }>();
   const { safeEquippedCosmetics } = await import('./cosmetics');
   const cosmetics = await safeEquippedCosmetics(
     u.id,
@@ -394,6 +399,9 @@ export async function publicUser(u: User) {
     collection_public: u.collection_public,
     created_at: u.created_at,
     premium_until: until,
+    plus_lifetime: founder?.founder_number === 1,
+    founder_number: founder?.founder_number ?? null,
+    founder_since: founder?.first_qualifying_payment_at ?? null,
     level,
     entitlements: {
       can_change_avatar: !!until || level >= 5,
@@ -405,7 +413,7 @@ export async function publicUser(u: User) {
       early_access: !!until,
       can_download: !!until,
     },
-    profile_background: until ? u.profile_background || null : null,
+    profile_background: until || founder ? u.profile_background || null : null,
     profile_frame: cosmetics.frame,
     adult_confirmed: !!u.adult_confirmed_at,
     auto_skip_segments:

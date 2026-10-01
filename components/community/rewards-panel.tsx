@@ -15,7 +15,7 @@ type Achievement = {
 };
 type Cosmetic = {
   id: string;
-  kind: 'tag' | 'pin' | 'frame' | 'theme';
+  kind: 'tag' | 'pin' | 'frame' | 'theme' | 'background';
   slug: string;
   name: string;
   description: string;
@@ -98,6 +98,8 @@ export function RewardsPanel({
       return community.user?.profile_frame === item.slug;
     if (item.kind === 'theme')
       return community.user?.theme === 'bleach' && item.slug === 'bleach-theme';
+    if (item.kind === 'background')
+      return community.user?.profile_background === '/rewards/founder/background.svg';
     return community.user?.[item.kind] === item.slug;
   }
 
@@ -182,6 +184,7 @@ export function RewardsPanel({
             ['tag', 'Теги'],
             ['pin', 'Пины'],
             ['theme', 'Темы'],
+            ['background', 'Фоны'],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -201,6 +204,7 @@ export function RewardsPanel({
           ['referral', 'За друзей'],
           ['plus', 'Plus'],
           ['purchase', 'Годовой Plus'],
+          ['founder', 'Founder'],
         ].map(([value, label]) => (
           <button
             key={value}

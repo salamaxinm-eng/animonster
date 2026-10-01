@@ -10,7 +10,7 @@ export async function queueEpisodeNotifications(
     .prepare(
       `SELECT s.user_id,s.created_at FROM telegram_subscriptions s
        WHERE s.anime_id=? AND (
-         EXISTS(SELECT 1 FROM grants g WHERE g.user_id=s.user_id AND g.revoked_at IS NULL AND g.expires>?)
+         EXISTS(SELECT 1 FROM grants g WHERE g.user_id=s.user_id AND g.revoked_at IS NULL AND (g.expires>? OR g.lifetime))
          OR (SELECT count(*) FROM telegram_subscriptions earlier
              WHERE earlier.user_id=s.user_id AND
              (earlier.created_at<s.created_at OR (earlier.created_at=s.created_at AND earlier.anime_id<=s.anime_id)))<=3
