@@ -1,4 +1,4 @@
-import type { Anime, Voiceover } from '@/lib/anime';
+import { kodikPlayerPath, type Anime, type Voiceover } from '@/lib/anime';
 import { db, now, runtime } from '@/lib/server/core';
 
 export type KodikMaterialData = {
@@ -57,12 +57,20 @@ export function kodikEpisodeOrdinals(item: KodikResult) {
   return [
     ...new Set(
       Object.values(item.seasons || {}).flatMap((season) =>
-        Object.keys(season.episodes || {}).map(Number),
+        Object.entries(season.episodes || {}).flatMap(([ordinal, value]) => {
+          const link = typeof value === 'string' ? value : value.link || '';
+          return safeKodikPlayerUrl(link) ? [Number(ordinal)] : [];
+        }),
       ),
     ),
   ]
     .filter((n) => Number.isInteger(n) && n > 0 && n <= 100000)
     .sort((a, b) => a - b);
+}
+export function kodikHasEpisodeMap(item: KodikResult) {
+  return Object.values(item.seasons || {}).some(
+    (season) => Object.keys(season.episodes || {}).length > 0,
+  );
 }
 export function kodikLastEpisode(item: KodikResult) {
   return Math.max(
@@ -274,6 +282,7 @@ export function normalizeKodikVoiceovers(
     const translation = item.translation;
     const title = translation?.title?.trim();
     const player = item.link ? safeKodikPlayerUrl(item.link) : undefined;
+    const translationId = Number(translation?.id);
     const remoteId = Number(item.shikimori_id);
     const exactId = anime.id < 100000000;
     const exactFallbackTitle = [item.title, item.title_orig]
@@ -287,6 +296,8 @@ export function normalizeKodikVoiceovers(
       !allowedKodikResult(item) ||
       !title ||
       !player ||
+      !Number.isInteger(translationId) ||
+      translationId < 1 ||
       (exactId && remoteId !== anime.id) ||
       (!exactId &&
         (!exactFallbackTitle ||
@@ -294,20 +305,24 @@ export function normalizeKodikVoiceovers(
     )
       continue;
     const type = translation?.type === 'subtitles' ? 'subtitles' : 'voice';
-    const id = `${type}:${translation?.id || comparable(title)}`;
+    const id = `${type}:${translationId}`;
+    const episodeOrdinals = kodikEpisodeOrdinals(item);
+    if (kodikHasEpisodeMap(item) && !episodeOrdinals.length) continue;
     const next: Voiceover = {
       id: 'kodik:' + id,
       title: type === 'subtitles' ? `Субтитры · ${title}` : title,
       provider: 'kodik',
       translation_type: type,
       episodes: kodikLastEpisode(item),
-      episode_ordinals: kodikEpisodeOrdinals(item).length
-        ? kodikEpisodeOrdinals(item)
-        : undefined,
-      player_url: player,
+      episode_ordinals: episodeOrdinals.length ? episodeOrdinals : undefined,
+      player_url: kodikPlayerPath(anime.id, String(translationId)),
     };
     const current = byTranslation.get(id);
-    if (!current || next.episodes > current.episodes)
+    if (
+      !current ||
+      (next.episode_ordinals?.length ?? next.episodes) >
+        (current.episode_ordinals?.length ?? current.episodes)
+    )
       byTranslation.set(id, next);
   }
   return [...byTranslation.values()]

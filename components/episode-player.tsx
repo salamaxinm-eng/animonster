@@ -148,6 +148,13 @@ export function EpisodePlayer({
     () => voiceoverEpisodeIndices(episodes, voiceover),
     [episodes, voiceover],
   );
+  const selectableVoiceovers = useMemo(
+    () =>
+      voiceovers.filter((item) =>
+        voiceoverEpisodeIndices(episodes, item).includes(index),
+      ),
+    [voiceovers, episodes, index],
+  );
   const firstVoiceoverIndex = availableIndices[0] ?? 0;
   const nextIndex = availableIndices.find((value) => value > index);
   const previousIndex = availableIndices.findLast((value) => value < index);
@@ -160,10 +167,10 @@ export function EpisodePlayer({
     }
   }, [voiceovers, initialEpisode, voiceoverId]);
   const selectEpisode = useCallback(
-    (ordinal: number, preserveKodikFrame = false) => {
+    (ordinal: number) => {
       const next = episodes.findIndex((item) => item.ordinal === ordinal);
       if (next < 0 || !availableIndices.includes(next)) return;
-      if (!preserveKodikFrame) setIframeSourceEpisode(ordinal);
+      setIframeSourceEpisode(ordinal);
       setIndex(next);
       onEpisodeChange(ordinal);
     },
@@ -466,9 +473,9 @@ export function EpisodePlayer({
       const next = Number(timeValue);
       const episodeNumber = kodikEpisodeFromMessage(payload);
       if (episodeNumber != null) {
-        // Kodik has already changed its own episode. Keep this iframe alive so
-        // mobile browsers do not lose its fullscreen browsing context.
-        selectEpisode(episodeNumber, true);
+        // Reload the exact episode link for the selected translation. Kodik's
+        // own next-episode navigation can otherwise change the voiceover.
+        if (episodeNumber !== episode.ordinal) selectEpisode(episodeNumber);
         return;
       }
       if (!Number.isFinite(next) || next < 0 || next > 24 * 60 * 60) return;
@@ -630,6 +637,7 @@ export function EpisodePlayer({
   useEffect(() => {
     kodikSignal.current = false;
     kodikLoadedAt.current = 0;
+    setError('');
   }, [iframeUrl]);
   useEffect(() => {
     if (!isKodik || !iframeUrl || !kodikLoadVersion) return;
@@ -638,10 +646,14 @@ export function EpisodePlayer({
         !kodikSignal.current &&
         navigator.onLine &&
         document.visibilityState === 'visible'
-      )
+      ) {
         reportKodikDiagnostic('no_player_signal', 'load', {
           iframe_loaded: true,
         });
+        setError(
+          'Если видео не началось, обновите плеер или выберите другую озвучку.',
+        );
+      }
     }, 25_000);
     return () => clearTimeout(timer);
   }, [iframeUrl, isKodik, kodikLoadVersion, reportKodikDiagnostic]);
@@ -829,13 +841,20 @@ export function EpisodePlayer({
       {error && (
         <div className="playback-error" role="alert">
           {error}
-          <button onClick={onRetry}>
+          <button
+            onClick={() => {
+              if (isKodik) {
+                setError('');
+                setIframeRevision((value) => value + 1);
+              } else onRetry();
+            }}
+          >
             <RefreshCw size={15} /> Обновить источник
           </button>
         </div>
       )}
       <div className="episode-toolbar">
-        {voiceovers.length > 1 && (
+        {selectableVoiceovers.length > 1 && (
           <NativeSelect
             className="voiceover-select"
             aria-label="Выбор озвучки"
@@ -846,7 +865,7 @@ export function EpisodePlayer({
               setVoiceoverId(e.target.value);
             }}
           >
-            {voiceovers.map((item) => (
+            {selectableVoiceovers.map((item) => (
               <option value={item.id} key={item.id}>
                 {item.title} · {item.episode_ordinals?.length ?? item.episodes}{' '}
                 серий

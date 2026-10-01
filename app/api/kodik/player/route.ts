@@ -1,5 +1,9 @@
 import { ApiError, db, fail, now, premium, viewer } from '@/lib/server/core';
-import { safeKodikPlayerUrl } from '@/lib/server/kodik';
+import {
+  kodikHasEpisodeMap,
+  safeKodikPlayerUrl,
+  type KodikResult,
+} from '@/lib/server/kodik';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,17 +39,35 @@ export async function GET(request: Request) {
       )
       .bind(animeId, translationId, episode)
       .first<{ player_url: string }>();
+    const sources = exact
+      ? []
+      : (
+          await db()
+            .prepare(
+              `SELECT player_url,episodes_count,payload FROM anime_sources
+               WHERE provider='kodik' AND anime_id=? AND translation_id=? AND active=1
+               ORDER BY episodes_count DESC,last_seen_at DESC`,
+            )
+            .bind(animeId, translationId)
+            .all<{
+              player_url: string;
+              episodes_count: number;
+              payload: string;
+            }>()
+        ).results;
     const source = exact
       ? { player_url: exact.player_url, episodes_count: episode }
-      : await db()
-          .prepare(
-            `SELECT player_url,episodes_count FROM anime_sources
-             WHERE provider='kodik' AND anime_id=? AND translation_id=? AND active=1
-             ORDER BY episodes_count DESC,last_seen_at DESC LIMIT 1`,
-          )
-          .bind(animeId, translationId)
-          .first<{ player_url: string; episodes_count: number }>();
-    if (!source || episode > Number(source.episodes_count || 0))
+      : sources.find((candidate) => {
+          if (episode > Number(candidate.episodes_count || 0)) return false;
+          try {
+            return !kodikHasEpisodeMap(
+              JSON.parse(candidate.payload) as KodikResult,
+            );
+          } catch {
+            return false;
+          }
+        });
+    if (!source)
       throw new ApiError('Серия временно недоступна', 404);
     const safe = safeKodikPlayerUrl(source.player_url);
     if (!safe) throw new ApiError('Источник временно недоступен', 502);

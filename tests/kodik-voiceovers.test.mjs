@@ -59,7 +59,7 @@ test('cached Kodik source remains available when only the sync worker has a toke
   assert.deepEqual(result.voiceovers[0].episode_ordinals, [1, 1176]);
   assert.equal(
     result.voiceovers[0].player_url,
-    'https://kodik.info/serial/one-piece',
+    '/api/kodik/player?anime_id=21&translation=91',
   );
 });
 
@@ -87,4 +87,39 @@ test('AniLibria remains available as a voiceover inside the Kodik player', () =>
   assert.equal(voiceovers.length, 1);
   assert.equal(voiceovers[0].title, 'AniLibria.TV');
   assert.equal(voiceovers[0].provider, 'kodik');
+  assert.equal(
+    voiceovers[0].player_url,
+    '/api/kodik/player?anime_id=21&translation=92',
+  );
+});
+
+test('invalid episode links are not advertised as playable episodes', () => {
+  const result = kodik.normalizeKodikVoiceovers(
+    [
+      {
+        ...stored,
+        seasons: {
+          1: {
+            episodes: {
+              1: 'https://kodik.info/one',
+              2: 'https://example.com/not-a-kodik-player',
+            },
+          },
+        },
+      },
+    ],
+    {
+      id: 21,
+      name: 'One Piece',
+      russian: 'Ван-Пис',
+      image: { original: '' },
+      score: '0',
+      kind: 'tv',
+      episodes: 1176,
+      aired_on: '1999-10-20',
+    },
+  );
+  assert.deepEqual(result[0].episode_ordinals, [1]);
+  assert.equal(kodik.kodikHasEpisodeMap(stored), true);
+  assert.equal(kodik.kodikHasEpisodeMap({ ...stored, seasons: {} }), false);
 });
