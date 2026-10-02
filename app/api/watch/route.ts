@@ -14,6 +14,7 @@ import { getAnime } from '@/lib/server/library';
 import { markRecommendationsDirty } from '@/lib/server/recommendations/repository';
 import { evaluateUserAchievements } from '@/lib/server/achievements';
 import { evaluateReferralQualification } from '@/lib/server/referrals';
+import { recordStreakProgress, streakDay } from '@/lib/server/streak';
 import {
   cachedEpisodeDuration,
   kodikSourceHasEpisode,
@@ -179,36 +180,29 @@ export async function POST(r: Request) {
       Math.min(s.duration, Math.floor(Number(b.position) || 0)),
     );
 
-    const won = await db()
-      .prepare(
-        'UPDATE watch_sessions SET last_at=?,watched=watched+? WHERE token=? AND last_at=? RETURNING token',
-      )
-      .bind(n, delta, b.token, s.last_at)
-      .first();
+    const won = await db().transaction(async (transaction) => {
+      const claimed = await transaction
+        .prepare(
+          'UPDATE watch_sessions SET last_at=?,watched=watched+? WHERE token=? AND last_at=? RETURNING token',
+        )
+        .bind(n, delta, b.token, s.last_at)
+        .first();
+      if (!claimed) return false;
 
-    if (!won) {
-      return json({ ok: true });
-    }
-
-    const stmts = [
-      db()
+      await transaction
         .prepare('INSERT OR IGNORE INTO daily_activity(day,actor) VALUES (?,?)')
-        .bind(day, a.key),
-    ];
-
-    if (s.watched + delta >= 30) {
-      stmts.push(
-        db()
+        .bind(day, a.key)
+        .run();
+      if (s.watched + delta >= 30)
+        await transaction
           .prepare(
             'INSERT OR IGNORE INTO daily_views(day,actor,anime_id,episode) VALUES (?,?,?,?)',
           )
-          .bind(day, a.key, s.anime_id, s.episode),
-      );
-    }
+          .bind(day, a.key, s.anime_id, s.episode)
+          .run();
 
-    if (a.user) {
-      stmts.push(
-        db()
+      if (a.user) {
+        await transaction
           .prepare(
             'INSERT INTO history(user_id,anime_id,episode,voiceover,position,duration,watched_seconds,completed,updated_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id,anime_id,episode) DO UPDATE SET voiceover=excluded.voiceover,position=excluded.position,watched_seconds=LEAST(history.duration,history.watched_seconds+excluded.watched_seconds),completed=GREATEST(history.completed,CASE WHEN history.watched_seconds+excluded.watched_seconds>=? THEN 1 ELSE 0 END),updated_at=excluded.updated_at',
           )
@@ -223,20 +217,30 @@ export async function POST(r: Request) {
             delta >= WATCHED_EPISODE_SECONDS ? 1 : 0,
             n,
             WATCHED_EPISODE_SECONDS,
-          ),
-      );
-      if (delta > 0 && s.watched + delta >= WATCHED_EPISODE_SECONDS) {
-        stmts.push(
-          db()
+          )
+          .run();
+        if (delta > 0 && s.watched + delta >= WATCHED_EPISODE_SECONDS)
+          await transaction
             .prepare(
               'INSERT OR IGNORE INTO qualified_episode_views(user_id,anime_id,episode,qualified_at) VALUES (?,?,?,?)',
             )
-            .bind(a.user.id, s.anime_id, s.episode, n),
-        );
+            .bind(a.user.id, s.anime_id, s.episode, n)
+            .run();
+        if (delta > 0)
+          await recordStreakProgress(
+            transaction,
+            a.user.id,
+            s.anime_id,
+            s.episode,
+            s.duration,
+            delta,
+            streakDay(n),
+          );
       }
-    }
+      return true;
+    });
 
-    await db().batch(stmts);
+    if (!won) return json({ ok: true });
 
     if (
       a.user &&

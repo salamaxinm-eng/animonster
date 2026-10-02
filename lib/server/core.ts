@@ -28,6 +28,7 @@ export type Runtime = {
   MEDIA_PROXY_SECRET?: string;
   MEDIA_PROXY_HOSTS?: string;
   WATCH_PARTIES_ENABLED?: string;
+  STREAK_TIMEZONE?: string;
 };
 
 export const runtime = () => process.env as Runtime;
@@ -300,6 +301,9 @@ export type User = {
   profile_frame?: string;
   suspended_until?: number | null;
   created_at: number;
+  current_streak?: number;
+  longest_streak?: number;
+  last_streak_date?: string | null;
 };
 export async function ensureUser(identity: string, nick = 'Monster') {
   const found = await db()
@@ -371,6 +375,7 @@ export async function premium(id: string) {
   return row?.expires && row.expires > now() ? row.expires : 0;
 }
 export async function publicUser(u: User) {
+  const { publicStreak } = await import('./streak');
   const until = await premium(u.id);
   const founder = await db().prepare('SELECT founder_number,first_qualifying_payment_at FROM founding_members WHERE user_id=?')
     .bind(u.id).first<{ founder_number: number; first_qualifying_payment_at: number }>();
@@ -403,6 +408,7 @@ export async function publicUser(u: User) {
     founder_number: founder?.founder_number ?? null,
     founder_since: founder?.first_qualifying_payment_at ?? null,
     level,
+    streak: publicStreak(u),
     entitlements: {
       can_change_avatar: !!until || level >= 5,
       custom_list_limit: until ? 20 : 3,

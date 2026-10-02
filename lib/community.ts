@@ -202,6 +202,8 @@ export const pins = [
     image: '/pins/vinland-saga.png',
   },
 ];
+import type { Streak } from './streak';
+
 export type Profile = {
   founder_number?: number | null;
   founder_since?: number | null;
@@ -221,6 +223,7 @@ export type Profile = {
   email_verified: boolean;
   auto_skip_segments: boolean | null;
   level: number;
+  streak: Streak;
   profile_background: string | null;
   profile_frame: string;
   entitlements: {

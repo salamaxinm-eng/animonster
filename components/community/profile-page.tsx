@@ -4,6 +4,7 @@ import { BuySubscription } from './buy-subscription';
 import { AccountData } from './account-data';
 import { TelegramSettings } from './telegram-settings';
 import { RewardsPanel } from './rewards-panel';
+import { StreakDisplay } from './streak-display';
 
 import { useEffect, useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -397,6 +398,7 @@ export function ProfilePage({
               )
             )}
           </section>
+          <StreakDisplay streak={data.user.streak} />
           <div className="account-journey">
             <ProfileJourney
               id={data.user.id}
