@@ -342,14 +342,7 @@ export function ProfilePage({
               theme={theme.id}
             />
             <div className="profile-name">
-              <div className="profile-title-row">
-                <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
-                <UserTag id={tab === 'settings' ? draft?.tag : data.user.tag} />
-                <Pin
-                  id={tab === 'settings' ? draft?.pin || null : data.user.pin}
-                />
-                {data.user.founder_number && <span className="founder-member-badge" title="Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽.">FOUNDING MEMBER #{String(data.user.founder_number).padStart(3, '0')}</span>}
-              </div>
+              <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
               <p>
                 {data.user.created_at &&
                 Number.isFinite(new Date(data.user.created_at).getTime())
@@ -359,6 +352,20 @@ export function ProfilePage({
                   <span className="plus-label"> PLUS</span>
                 )}
               </p>
+            </div>
+            <div className="profile-badges">
+              <UserTag id={tab === 'settings' ? draft?.tag : data.user.tag} />
+              <Pin
+                id={tab === 'settings' ? draft?.pin || null : data.user.pin}
+              />
+              {data.user.founder_number && (
+                <span
+                  className="founder-member-badge"
+                  title="Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽."
+                >
+                  FOUNDING MEMBER #{String(data.user.founder_number).padStart(3, '0')}
+                </span>
+              )}
             </div>
             {data.own ? (
               <button
