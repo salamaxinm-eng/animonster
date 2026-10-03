@@ -9,6 +9,12 @@
       events 1200
       ipv6_prefix 64
     }
+    zone site_burst {
+      key {remote_host}
+      window 1s
+      events 60
+      ipv6_prefix 64
+    }
     zone api {
       match {
         path /api/*
@@ -16,6 +22,15 @@
       key {remote_host}
       window 1m
       events 360
+      ipv6_prefix 64
+    }
+    zone api_burst {
+      match {
+        path /api/*
+      }
+      key {remote_host}
+      window 1s
+      events 24
       ipv6_prefix 64
     }
     zone auth {
