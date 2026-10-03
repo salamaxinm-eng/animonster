@@ -1,5 +1,42 @@
 {$SITE_ADDRESS:http://31.77.10.81} {
   encode zstd gzip
+  # Limit abusive clients before requests reach either Next.js node.
+  # A generous site limit allows normal asset loading and video playback.
+  rate_limit {
+    zone site {
+      key {remote_host}
+      window 1m
+      events 1200
+      ipv6_prefix 64
+    }
+    zone api {
+      match {
+        path /api/*
+      }
+      key {remote_host}
+      window 1m
+      events 360
+      ipv6_prefix 64
+    }
+    zone auth {
+      match {
+        path /api/auth/*
+      }
+      key {remote_host}
+      window 1m
+      events 30
+      ipv6_prefix 64
+    }
+    zone search {
+      match {
+        path /api/search /api/search/*
+      }
+      key {remote_host}
+      window 1m
+      events 90
+      ipv6_prefix 64
+    }
+  }
   reverse_proxy app:3000 {$CLUSTER_APP_UPSTREAM:app:3000} {
     lb_policy cookie animonster_node
     health_uri /api/health
