@@ -15,7 +15,7 @@ export type Runtime = {
   KODIK_CATALOG_ENABLED?: string;
   ANILIBERTY_API_URL?: string;
   RECOMMENDATION_CRON_SECRET?: string;
-  UNISENDER_API_KEY?: string;
+  RESEND_API_KEY?: string;
   EMAIL_FROM?: string;
   TELEGRAM_URL?: string;
   TELEGRAM_BOT_TOKEN?: string;
