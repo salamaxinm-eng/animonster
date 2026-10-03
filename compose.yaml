@@ -48,6 +48,7 @@ services:
     build:
       context: .
       dockerfile: Caddy.Dockerfile
+      network: host
     restart: unless-stopped
     ports: ["80:80", "443:443"]
     env_file: .env.production
