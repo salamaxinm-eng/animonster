@@ -68,3 +68,14 @@
     format json
   }
 }
+
+# Mail.ru checks the verification URL over plain HTTP and requires 200.
+http://animonster.su {
+  handle /mailru-domainuoEN7dmyLT3J0c0x.html {
+    root * /srv/verification
+    file_server
+  }
+  handle {
+    redir https://animonster.su{uri} 308
+  }
+}

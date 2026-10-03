@@ -54,6 +54,7 @@ services:
     env_file: .env.production
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./public/mailru-domainuoEN7dmyLT3J0c0x.html:/srv/verification/mailru-domainuoEN7dmyLT3J0c0x.html:ro
       - caddy_data:/data
     depends_on:
       app:
