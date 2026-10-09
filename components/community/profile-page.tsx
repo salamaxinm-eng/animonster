@@ -324,7 +324,7 @@ export function ProfilePage({
               src={
                 data.user.profile_background?.startsWith('asset:')
                   ? `/api/plus-assets/${data.user.profile_background.split(':')[1]}`
-                  : data.user.profile_background?.startsWith('/rewards/founder/')
+                  : data.user.profile_background?.startsWith('/rewards/')
                     ? data.user.profile_background
                   : '/hero.png'
               }
@@ -342,7 +342,10 @@ export function ProfilePage({
               theme={theme.id}
             />
             <div className="profile-name">
-              <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
+              <div className="profile-name-line">
+                <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
+                <Pin id={tab === 'settings' ? draft?.pin || null : data.user.pin} />
+              </div>
               <p>
                 {data.user.created_at &&
                 Number.isFinite(new Date(data.user.created_at).getTime())
@@ -355,9 +358,6 @@ export function ProfilePage({
             </div>
             <div className="profile-badges">
               <UserTag id={tab === 'settings' ? draft?.tag : data.user.tag} />
-              <Pin
-                id={tab === 'settings' ? draft?.pin || null : data.user.pin}
-              />
               {data.user.founder_number && (
                 <span
                   className="founder-member-badge"
@@ -367,6 +367,7 @@ export function ProfilePage({
                 </span>
               )}
             </div>
+            <StreakDisplay streak={data.user.streak} />
             {data.own ? (
               <button
                 className="outline-button"
@@ -405,7 +406,6 @@ export function ProfilePage({
               )
             )}
           </section>
-          <StreakDisplay streak={data.user.streak} />
           <div className="account-journey">
             <ProfileJourney
               id={data.user.id}

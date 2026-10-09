@@ -21,6 +21,10 @@ const source = (
   .replace(
     "import { PLUS_DURATION_MS, PLUS_PRICE } from './plus';",
     "const PLUS_DURATION_MS = 0; const PLUS_PRICE = '109.00';",
+  )
+  .replace(
+    "import { confirmBundlePayment, confirmVpnPayment, revokeBundlePayment, revokeVpnPayment } from './vpn';",
+    'const confirmBundlePayment = async () => {}; const confirmVpnPayment = async () => {}; const revokeBundlePayment = async () => {}; const revokeVpnPayment = async () => {};',
   );
 
 const billing = await import(

@@ -9,11 +9,12 @@ import {
   sameOrigin,
   uid,
 } from '@/lib/server/core';
+import { revokeVpnDevice } from '@/lib/server/vpn';
 
 export async function GET(r: Request) {
   try {
     const user = await requireUser(r);
-    const [profile, collection, lists, listItems, history, comments] =
+    const [profile, collection, lists, listItems, history, comments, vpnSubscription, vpnDevices] =
       await Promise.all([
         db()
           .prepare(
@@ -51,6 +52,10 @@ export async function GET(r: Request) {
           )
           .bind(user.id)
           .all(),
+        db().prepare('SELECT expires_at,granted_at FROM vpn_subscriptions WHERE user_id=?')
+          .bind(user.id).first(),
+        db().prepare('SELECT id,name,status,created_at,revoked_at FROM vpn_devices WHERE user_id=? ORDER BY created_at DESC')
+          .bind(user.id).all(),
       ]);
     return new Response(
       JSON.stringify(
@@ -62,6 +67,8 @@ export async function GET(r: Request) {
           list_items: listItems.results,
           history: history.results,
           comments: comments.results,
+          vpn_subscription: vpnSubscription,
+          vpn_devices: vpnDevices.results,
         },
         null,
         2,
@@ -86,6 +93,12 @@ export async function DELETE(r: Request) {
     const b = await body(r);
     if (b.confirmation !== 'УДАЛИТЬ')
       throw new ApiError('Введите УДАЛИТЬ для подтверждения.');
+    const vpnDevices = await db().prepare(`SELECT id FROM vpn_devices
+      WHERE user_id=? AND status<>'revoked'`).bind(user.id).all<{ id: string }>();
+    for (const device of vpnDevices.results)
+      await revokeVpnDevice(user.id, device.id);
+    await db().prepare('UPDATE vpn_subscriptions SET expires_at=?,updated_at=? WHERE user_id=?')
+      .bind(now(), now(), user.id).run();
     const anonymous = `deleted:${uid()}`;
     await db().batch([
       db().prepare('DELETE FROM sessions WHERE user_id=?').bind(user.id),

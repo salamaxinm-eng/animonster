@@ -604,6 +604,7 @@
     grid-template-areas:
       'avatar name'
       'badges badges'
+      'streak streak'
       'action action';
     gap: 12px 14px;
   }
@@ -1418,6 +1419,9 @@
   .account-page .profile-name h1 {
     font-size: 24px;
     line-height: 1.2;
+  }
+  .account-page .profile-streak {
+    margin-left: 90px;
   }
   .account-page .profile-badges {
     padding-top: 2px;

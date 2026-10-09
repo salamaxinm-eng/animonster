@@ -63,7 +63,7 @@ export function RewardsPanel({
       .finally(() => setLoading(false));
   }, []);
 
-  async function equip(item: Cosmetic) {
+  async function equip(item: Cosmetic, remove = false) {
     if (pending) return;
     setPending(item.id);
     setNotice('');
@@ -72,7 +72,7 @@ export function RewardsPanel({
       const response = await fetch('/api/cosmetics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: item.kind, slug: item.slug }),
+        body: JSON.stringify({ kind: item.kind, slug: remove ? null : item.slug }),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -80,7 +80,7 @@ export function RewardsPanel({
       }
       await community.refresh();
       await onEquipped?.();
-      setNotice(`Установлено: ${item.name}`);
+      setNotice(`${remove ? 'Снято' : 'Установлено'}: ${item.name}`);
     } catch (error) {
       setFailed(true);
       setNotice(
@@ -99,7 +99,7 @@ export function RewardsPanel({
     if (item.kind === 'theme')
       return community.user?.theme === 'bleach' && item.slug === 'bleach-theme';
     if (item.kind === 'background')
-      return community.user?.profile_background === '/rewards/founder/background.svg';
+      return community.user?.profile_background === item.image || community.user?.profile_background === item.slug;
     return community.user?.[item.kind] === item.slug;
   }
 
@@ -205,6 +205,7 @@ export function RewardsPanel({
           ['plus', 'Plus'],
           ['purchase', 'Годовой Plus'],
           ['founder', 'Founder'],
+          ['fundraising', 'За поддержку'],
         ].map(([value, label]) => (
           <button
             key={value}
@@ -237,7 +238,7 @@ export function RewardsPanel({
                 }[item.rarity] || item.rarity}
               </small>
               <div
-                className={`cosmetic-preview profile-frame-${item.kind === 'frame' ? item.slug : 'none'}`}
+                className={`cosmetic-preview cosmetic-preview-${item.kind} profile-frame-${item.kind === 'frame' ? item.slug : 'none'}`}
               >
                 {item.kind === 'frame' ? (
                   <Avatar avatar={community.user?.avatar} large />
@@ -259,13 +260,13 @@ export function RewardsPanel({
               {item.unlocked && (
                 <button
                   type="button"
-                  disabled={!!pending || isEquipped(item)}
-                  onClick={() => void equip(item)}
+                    disabled={!!pending}
+                    onClick={() => void equip(item, isEquipped(item))}
                 >
                   {pending === item.id
                     ? 'Устанавливаем…'
                     : isEquipped(item)
-                      ? 'Установлено ✓'
+                      ? 'Снять ✓'
                       : 'Установить'}
                 </button>
               )}

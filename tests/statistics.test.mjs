@@ -67,20 +67,26 @@ test('statistics include old completed episodes only in all-time views and exclu
     const supporterSource = stripTypeScriptTypes(await readFile('lib/server/supporters.ts', 'utf8'))
       .replace("import { db, now } from './core';", 'const db = () => globalThis.statisticsTestDb; const now = () => Date.now();');
     globalThis.statisticsSupporters = await import('data:text/javascript;base64,' + Buffer.from(supporterSource).toString('base64'));
+    const fundraisingSource = stripTypeScriptTypes(await readFile('lib/server/fundraising.ts', 'utf8'))
+      .replace("import { ApiError, db } from './core';", 'const db = () => globalThis.statisticsTestDb; class ApiError extends Error {}');
+    globalThis.statisticsFundraising = await import('data:text/javascript;base64,' + Buffer.from(fundraisingSource).toString('base64'));
     const statisticsSource = stripTypeScriptTypes(await readFile('lib/server/statistics.ts', 'utf8'))
       .replace("import { db, now } from './core';", 'const db = () => globalThis.statisticsTestDb; const now = () => Date.now();')
-      .replace("import { supporterLeaderboard } from './supporters';", 'const { supporterLeaderboard } = globalThis.statisticsSupporters;');
+      .replace("import { supporterLeaderboard } from './supporters';", 'const { supporterLeaderboard } = globalThis.statisticsSupporters;')
+      .replace("import { fundraisingGoals } from './fundraising';", 'const { fundraisingGoals } = globalThis.statisticsFundraising;');
     const { publicStatistics } = await import('data:text/javascript;base64,' + Buffer.from(statisticsSource).toString('base64'));
     const stats = await publicStatistics();
 
     assert.equal(stats.goal, 60000);
     assert.equal(stats.raised, 500);
+    assert.equal(stats.goals.find((goal) => goal.slug === 'development').raised, 0);
     assert.deepEqual(stats.supporters.map((row) => row.id), [first]);
     assert.deepEqual(stats.allTimeViews.map((row) => [row.id, row.views]), [[first, 2], [second, 1]]);
     assert.deepEqual(stats.monthlyViews.map((row) => [row.id, row.views]), [[first, 1]]);
   } finally {
     delete globalThis.statisticsTestDb;
     delete globalThis.statisticsSupporters;
+    delete globalThis.statisticsFundraising;
     await engine.close();
   }
 });

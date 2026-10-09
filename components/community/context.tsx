@@ -36,6 +36,7 @@ import {
   LogOut,
   Palette,
   Settings,
+  Trophy,
   UserRound,
 } from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
@@ -217,6 +218,14 @@ export function Pin({ id }: { id: string | null }) {
   </span>;
   const referralPins = [
     {
+      id: 'player-supporter', name: 'Oni · Свой плеер',
+      label: 'За поддержку своего плеера', image: '/rewards/support/player-pin-v2.png',
+    },
+    {
+      id: 'development-supporter', name: 'Oni · Развитие AniMonster',
+      label: 'За поддержку развития', image: '/rewards/support/development-pin-v2.png',
+    },
+    {
       id: 'referral-scout',
       name: 'Искатель',
       label: 'Реферальная награда',
@@ -274,6 +283,11 @@ const tagLabels: Record<string, string> = {
 };
 export function UserTag({ id }: { id?: string | null }) {
   if (!id) return null;
+  if (id === 'support-oni-vip' || id === 'support-oni-player') return (
+    <span className="user-tag user-tag-support-oni-vip" title="Oni VIP · За поддержку AniMonster">
+      <img src={id === 'support-oni-player' ? '/rewards/support/player-tag-v2.png' : '/rewards/support/development-tag-v2.png'} alt="Oni VIP" />
+    </span>
+  );
   return (
     <span className={`user-tag user-tag-${id}`} title={id === 'founding-10' ? 'Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽.' : 'Тег пользователя'}>
       {tagLabels[id] || id.replaceAll('-', ' ')}
@@ -368,6 +382,20 @@ export function AccountMenu({
         </DropdownMenuItem>
         <DropdownMenuItem
           className="account-dropdown-item"
+          onClick={() => openPage('/statistics')}
+        >
+          <Trophy />
+          Статистика
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item"
+          onClick={() => openPage('/referrals')}
+        >
+          <Gem />
+          Пригласить друзей
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item"
           onClick={() =>
             openPage('/profile?tab=settings#appearance-settings')
           }
@@ -433,9 +461,6 @@ export function AccountNav() {
           <UsersRound size={16} /> Вернуться в комнату
         </a>
       )}
-      <a href="/referrals" className="referral-nav-button">
-        <Gem size={16} /> Пригласить друзей
-      </a>
       <a href="/founders" className="referral-nav-button">FOUNDING 10</a>
       <BuySubscription className="subscription-nav" />
       {c.moderator && <a href="/admin">Админка</a>}
@@ -474,8 +499,8 @@ export function CommunityHeader() {
         <a className="back-catalog" href="/recommendations">
           Рекомендации
         </a>
-        <a className="back-catalog" href="/statistics">
-          Статистика
+        <a className="back-catalog" href="/vpn">
+          VPN
         </a>
         <a className="back-catalog" href="/downloads">
           Загрузки

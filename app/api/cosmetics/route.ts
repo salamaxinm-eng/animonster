@@ -8,6 +8,7 @@ import {
 } from '@/lib/server/core';
 import {
   cosmeticsCatalog,
+  cosmeticEquipValue,
   type CosmeticKind,
   validateEquippedCosmetic,
 } from '@/lib/server/cosmetics';
@@ -31,8 +32,7 @@ export async function POST(request: Request) {
       throw new ApiError('Неизвестный тип косметики');
     const slug = await validateEquippedCosmetic(user.id, kind, input.slug);
     const column = kind === 'frame' ? 'profile_frame' : kind === 'background' ? 'profile_background' : kind;
-    const value = kind === 'theme' && slug === 'bleach-theme' ? 'bleach' :
-      kind === 'background' && slug === 'founder-background' ? '/rewards/founder/background.svg' : slug;
+    const value = await cosmeticEquipValue(kind, slug);
     await dbUpdate(column, value, user.id);
     return json({ ok: true, kind, slug });
   } catch (error) {

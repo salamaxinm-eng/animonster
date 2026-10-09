@@ -3,14 +3,15 @@
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, CalendarDays, Heart, Play, Trophy } from 'lucide-react';
 import { CommunityHeader } from '@/components/community/context';
-import { BuySubscription } from '@/components/community/buy-subscription';
+import { SupportDonation } from '@/components/community/support-donation';
+import { GoalRewardPreview } from '@/components/community/fundraising-choice';
+import type { FundraisingGoal } from '@/lib/fundraising';
 import './statistics.css';
 
 type Leader = { id: string; nick: string; views: number };
 type Supporter = { id: string; nick: string; amount: number; payments: number };
 type Statistics = {
-  goal: number;
-  raised: number;
+  goals: FundraisingGoal[];
   supporters: Supporter[];
   allTimeViews: Leader[];
   monthlyViews: Leader[];
@@ -98,6 +99,7 @@ function Leaderboard({
 export default function StatisticsPage() {
   const [stats, setStats] = useState<Statistics | null>(null);
   const [error, setError] = useState('');
+  const [goalSlug, setGoalSlug] = useState('player');
 
   useEffect(() => {
     let active = true;
@@ -122,10 +124,11 @@ export default function StatisticsPage() {
     };
   }, []);
 
-  const goal = stats?.goal || 60_000;
-  const raised = stats?.raised || 0;
-  const percent = Math.min(100, Math.max(0, (raised / goal) * 100));
-  const remaining = Math.max(0, goal - raised);
+  const selectedGoal = stats?.goals.find((goal) => goal.slug === goalSlug) || stats?.goals[0];
+  const goal = selectedGoal?.targetAmount ?? 0;
+  const raised = selectedGoal?.raised ?? 0;
+  const percent = selectedGoal?.percent ?? 0;
+  const remaining = selectedGoal?.remaining ?? 0;
 
   return (
     <div className="social-site stats-site">
@@ -149,26 +152,28 @@ export default function StatisticsPage() {
             <span className="stats-fund-kicker">
               <span className="stats-live-dot" /> НАША ЦЕЛЬ
             </span>
-            <h2 id="stats-fund-title">Собираем на свой плеер</h2>
-            <p>
-              Цель — 60 000 ₽. Каждая подтверждённая покупка Plus и прямая
-              поддержка, включая прошлые платежи, приближает нас к ней.
-            </p>
-            <BuySubscription
-              className="stats-support-button"
-              label="Поддержать проект"
-              initialPlan="support"
-            />
+            <div className="fundraising-goal-switch" role="group" aria-label="Сборы AniMonster">
+              {stats?.goals.map((item) => <button type="button" key={item.id}
+                aria-pressed={selectedGoal?.id === item.id} onClick={() => setGoalSlug(item.slug)}>{item.shortTitle}</button>)}
+            </div>
+            <h2 id="stats-fund-title">{selectedGoal?.title || 'Загружаем цель…'}</h2>
+            <p>{selectedGoal?.description}</p>
+            {selectedGoal?.rewards.length ? <div className="stats-fund-reward">
+              <p>За поддержку — эксклюзивный набор для профиля. Донат от 150 ₽.</p>
+              <GoalRewardPreview goal={selectedGoal} compact />
+            </div> : null}
+            {selectedGoal && <SupportDonation initialGoalSlug={selectedGoal.slug} disabled={!selectedGoal.isActive} />}
+            {selectedGoal && !selectedGoal.isActive && <p className="stats-remaining">Сбор завершён. Полученные награды остаются у вас.</p>}
           </div>
           <div className="stats-fund-progress">
             <div className="stats-progress-top">
               <span>Собрано</span>
-              <strong>{stats ? money(raised) : 'Загружаем…'}</strong>
+              <strong>{selectedGoal ? money(raised) : 'Загружаем…'}</strong>
             </div>
             <div
               className="stats-meter"
               role="progressbar"
-              aria-label="Сбор на свой плеер"
+              aria-label={selectedGoal?.title || 'Сбор AniMonster'}
               aria-valuemin={0}
               aria-valuemax={goal}
               aria-valuenow={Math.min(raised, goal)}
@@ -176,11 +181,11 @@ export default function StatisticsPage() {
               <div className="stats-meter-fill" style={{ width: `${percent}%` }} />
             </div>
             <div className="stats-progress-bottom">
-              <span>{stats ? `${Math.round(percent)}% цели` : 'Обновляем данные'}</span>
-              <span>{money(goal)} цель</span>
+              <span>{selectedGoal ? `${Math.round(percent)}% цели` : 'Обновляем данные'}</span>
+              <span>{selectedGoal ? `${money(goal)} цель` : '—'}</span>
             </div>
             <p className="stats-remaining">
-              {stats
+              {selectedGoal
                 ? remaining > 0
                   ? `Осталось собрать ${money(remaining)}`
                   : 'Цель достигнута! Спасибо за поддержку.'

@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import { Flame } from 'lucide-react';
 import { streakAsset, type Streak } from '@/lib/streak';
 
+function dayWord(days: number) {
+  const plural = new Intl.PluralRules('ru').select(days);
+  return plural === 'one' ? 'день' : plural === 'few' ? 'дня' : 'дней';
+}
+
 export function StreakDisplay({ streak }: { streak: Streak }) {
   const source = streakAsset(streak.tier);
   const [missingAsset, setMissingAsset] = useState(false);
@@ -20,11 +25,13 @@ export function StreakDisplay({ streak }: { streak: Streak }) {
       </span>
       <div className="profile-streak-copy">
         {streak.current ? (
-          <strong><span>{streak.current}</span> дней подряд</strong>
+          <strong><span>{streak.current}</span> {dayWord(streak.current)} подряд</strong>
         ) : (
           <strong>Начни серию просмотра</strong>
         )}
-        <small>Лучший результат: {streak.longest} дн.</small>
+        {(streak.current > 0 || streak.longest > 0) && (
+          <small>Лучший: {streak.longest} {dayWord(streak.longest)}</small>
+        )}
       </div>
     </section>
   );

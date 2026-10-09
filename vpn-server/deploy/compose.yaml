@@ -1,0 +1,27 @@
+services:
+  awg:
+    image: animonster/amneziawg-go:3.1.20260828
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ../secrets/awg0.conf:/etc/amnezia/awg0.conf:ro
+      - ./awg-entrypoint.sh:/opt/awg-entrypoint.sh:ro
+    command: ["/bin/bash", "/opt/awg-entrypoint.sh"]
+    restart: unless-stopped
+    stop_grace_period: 20s
+
+  xray:
+    image: ghcr.io/xtls/xray-core:26.7.28@sha256:b697cda1588faca696ab7f7755dd1161f60862af3ff6026300e44cff6aedd558
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ../secrets/xray.json:/etc/xray/config.json:ro
+    command: ["run", "-config", "/etc/xray/config.json"]
+    restart: unless-stopped

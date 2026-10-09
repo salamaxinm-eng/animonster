@@ -1,6 +1,7 @@
 import { db, runtime, ApiError, now } from './core';
 import { refreshSupporterChampion } from './supporters';
 import { assignFounder, syncFounderRewards } from './founders';
+import { confirmBundlePayment, confirmVpnPayment, revokeBundlePayment, revokeVpnPayment } from './vpn';
 
 type PlategaTransaction = {
   id?: string;
@@ -82,7 +83,7 @@ export async function verifyPayment(providerId: string) {
       user_id: string;
       provider: string;
       provider_id: string | null;
-      plan: 'monthly' | 'annual' | 'support';
+      plan: 'monthly' | 'annual' | 'support' | 'donation' | 'vpn' | 'vpn_plus';
       amount: string | number;
       duration_days: number;
     }>();
@@ -96,6 +97,17 @@ export async function verifyPayment(providerId: string) {
     throw new ApiError('Платёж не подтверждён', 400);
   if (order.provider_id && order.provider_id !== paymentId)
     throw new ApiError('Платёж не совпадает', 400);
+  if (order.plan === 'vpn' || order.plan === 'vpn_plus') {
+    if (p.status === 'CONFIRMED')
+      await (order.plan === 'vpn_plus' ? confirmBundlePayment : confirmVpnPayment)(
+        order.id, order.user_id, paymentId, p.isTest === true || p.test === true);
+    else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED')
+      await (order.plan === 'vpn_plus' ? revokeBundlePayment : revokeVpnPayment)(order.id, order.user_id,
+        p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled');
+    const saved = await db().prepare('SELECT status FROM orders WHERE id=?')
+      .bind(order.id).first<{ status: string }>();
+    return saved?.status || 'pending';
+  }
   if (p.status === 'CONFIRMED') {
     await db().batch([
       // Serialize extensions for this account, including distinct concurrent orders.
@@ -109,7 +121,7 @@ export async function verifyPayment(providerId: string) {
         .bind('succeeded', paymentId, now(), p.isTest === true || p.test === true, order.id),
       db()
         .prepare(
-          "INSERT INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=? AND revoked_at IS NULL),0))+? WHERE EXISTS(SELECT 1 FROM orders WHERE id=? AND status='succeeded') ON CONFLICT(order_id) DO NOTHING",
+          "INSERT INTO grants(order_id,user_id,starts_at,expires) SELECT ?,?,?,GREATEST(?,COALESCE((SELECT MAX(expires) FROM grants WHERE user_id=? AND revoked_at IS NULL),0))+? WHERE EXISTS(SELECT 1 FROM orders WHERE id=? AND status='succeeded' AND duration_days>0) ON CONFLICT(order_id) DO NOTHING",
         )
         .bind(
           order.id,
@@ -132,6 +144,7 @@ export async function verifyPayment(providerId: string) {
               .bind(order.user_id, now(), order.id, order.id),
           ]
         : []),
+      db().prepare('SELECT grant_fundraising_reward(?)').bind(order.id),
     ]);
     try {
       if (Number(order.amount) >= 1000 && p.isTest !== true && p.test !== true) {

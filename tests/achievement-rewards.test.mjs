@@ -229,7 +229,8 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
     }
     for (const item of catalog) {
       if (item.image) await access('public' + item.image);
-      if (item.kind === 'frame') await access(`public/frames/${item.slug}.svg`);
+      if (item.kind === 'frame' && !item.image)
+        await access(`public/frames/${item.slug}.svg`);
     }
   } finally {
     delete globalThis.rewardTestDatabase;

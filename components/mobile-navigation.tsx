@@ -5,11 +5,10 @@ import { usePathname } from 'next/navigation';
 import {
   Bookmark,
   Ghost,
-  Gift,
   Home,
   LayoutGrid,
   Search,
-  Trophy,
+  Shield,
   UserRound,
 } from 'lucide-react';
 import { BuySubscription } from '@/components/community/buy-subscription';
@@ -40,10 +39,10 @@ const items: MobileNavItem[] = [
     active: (path) => path === '/bookmarks',
   },
   {
-    href: '/statistics',
-    label: 'Статистика',
-    icon: Trophy,
-    active: (path) => path === '/statistics',
+    href: '/vpn',
+    label: 'VPN',
+    icon: Shield,
+    active: (path) => path === '/vpn',
   },
   {
     href: '/catalog',
@@ -75,8 +74,10 @@ export function MobileNavigation() {
   const sectionTitle =
     pathname === '/bookmarks'
       ? 'Закладки'
-      : pathname === '/statistics'
-        ? 'Статистика'
+      : pathname === '/vpn'
+        ? 'VPN'
+        : pathname === '/statistics'
+          ? 'Статистика'
         : pathname.startsWith('/downloads')
           ? 'Загрузки'
         : pathname === '/catalog' || pathname === '/genres'
@@ -116,14 +117,6 @@ export function MobileNavigation() {
           </a>
         )}
         <div className="mobile-topbar-actions">
-          <a
-            href="/referrals"
-            className="mobile-referral-button"
-            aria-label="Пригласить друзей"
-            aria-current={pathname === '/referrals' ? 'page' : undefined}
-          >
-            <Gift size={19} />
-          </a>
           <BuySubscription compact className="mobile-plus-button" />
           <a
             className="mobile-search-button"

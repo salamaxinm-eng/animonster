@@ -1,0 +1,5 @@
+secrets/
+managed/
+backups/
+__pycache__/
+*.pyc

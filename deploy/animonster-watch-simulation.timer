@@ -1,0 +1,11 @@
+[Unit]
+Description=Advance administrative simulated progress once per hour
+
+[Timer]
+OnActiveSec=1h
+OnUnitInactiveSec=1h
+AccuracySec=1s
+Unit=animonster-watch-simulation.service
+
+[Install]
+WantedBy=timers.target

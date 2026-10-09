@@ -1,7 +1,6 @@
 import { db, now } from './core';
 import { supporterLeaderboard } from './supporters';
-
-export const PLAYER_FUND_GOAL = 60_000;
+import { fundraisingGoals } from './fundraising';
 
 export type ViewLeader = {
   id: string;
@@ -27,20 +26,18 @@ async function viewLeaderboard(since?: number): Promise<ViewLeader[]> {
 
 export async function publicStatistics() {
   const last30Days = now() - 30 * 24 * 60 * 60 * 1000;
-  const [supporters, allTimeViews, monthlyViews, funding] = await Promise.all([
+  const [supporters, allTimeViews, monthlyViews, goals] = await Promise.all([
     supporterLeaderboard(10),
     viewLeaderboard(),
     viewLeaderboard(last30Days),
-    db()
-      .prepare(
-        "SELECT COALESCE(SUM(amount),0) AS amount FROM orders WHERE status='succeeded' AND NOT is_test",
-      )
-      .first<{ amount: string | number }>(),
+    fundraisingGoals(),
   ]);
 
   return {
-    goal: PLAYER_FUND_GOAL,
-    raised: Number(funding?.amount || 0),
+    // Preserve the original API fields for clients deployed before goals.
+    goal: goals.find((goal) => goal.slug === 'player')?.targetAmount ?? 0,
+    raised: goals.find((goal) => goal.slug === 'player')?.raised ?? 0,
+    goals,
     supporters,
     allTimeViews,
     monthlyViews,

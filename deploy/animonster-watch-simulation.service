@@ -1,0 +1,10 @@
+[Unit]
+Description=AniMonster administrative simulated episode progress
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/animonster
+ExecStart=/bin/sh -c 'docker exec -i animonster-postgres-1 psql -U animonster -d animonster -v ON_ERROR_STOP=1 < scripts/admin-watch-simulation.sql'
+TimeoutStartSec=60

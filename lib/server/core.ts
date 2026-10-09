@@ -29,6 +29,11 @@ export type Runtime = {
   MEDIA_PROXY_HOSTS?: string;
   WATCH_PARTIES_ENABLED?: string;
   STREAK_TIMEZONE?: string;
+  VPN_CONFIG_KEY?: string;
+  VPN_AGENT_TOKEN?: string;
+  VPN_PILOT_GRANTS_ENABLED?: string;
+  VPN_PAYMENTS_ENABLED?: string;
+  VPN_BUNDLE_PAYMENTS_ENABLED?: string;
 };
 
 export const runtime = () => process.env as Runtime;
@@ -379,7 +384,7 @@ export async function publicUser(u: User) {
   const until = await premium(u.id);
   const founder = await db().prepare('SELECT founder_number,first_qualifying_payment_at FROM founding_members WHERE user_id=?')
     .bind(u.id).first<{ founder_number: number; first_qualifying_payment_at: number }>();
-  const { safeEquippedCosmetics } = await import('./cosmetics');
+  const { safeEquippedCosmetics, safeProfileBackground } = await import('./cosmetics');
   const cosmetics = await safeEquippedCosmetics(
     u.id,
     { tag: u.tag, pin: u.pin, frame: u.profile_frame },
@@ -419,7 +424,7 @@ export async function publicUser(u: User) {
       early_access: !!until,
       can_download: !!until,
     },
-    profile_background: until || founder ? u.profile_background || null : null,
+    profile_background: await safeProfileBackground(u.id, u.profile_background, until),
     profile_frame: cosmetics.frame,
     adult_confirmed: !!u.adult_confirmed_at,
     auto_skip_segments:

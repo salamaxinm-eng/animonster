@@ -8,6 +8,7 @@ import {
   supportAmount,
   type SubscriptionPlan,
 } from '@/lib/subscription-plans';
+import { VPN_PLUS_PLAN } from '@/lib/vpn-plan';
 import {
   Sparkles,
   Bell,
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/dialog';
 
 type PlanChoice = SubscriptionPlan | typeof SUPPORT_PLAN;
+import { FundraisingChoice, useFundraisingGoals } from './fundraising-choice';
 type SupporterLeader = {
   id: string;
   nick: string;
@@ -55,6 +57,9 @@ export function BuySubscription({
   const [customAmount, setCustomAmount] = useState('300');
   const [leaders, setLeaders] = useState<SupporterLeader[]>([]);
   const [leadersLoading, setLeadersLoading] = useState(false);
+  const [goalSlug, setGoalSlug] = useState('player');
+  const { goals, loading: goalsLoading, error: goalsError } = useFundraisingGoals(open);
+  const selectedGoal = goals.find((goal) => goal.slug === goalSlug && goal.isActive);
   const plan = planId === SUPPORT_PLAN ? null : subscriptionPlans[planId];
   const chosenSupportAmount = supportAmount(customAmount);
   const priceLabel = plan
@@ -82,6 +87,7 @@ export function BuySubscription({
         body: JSON.stringify({
           action: 'create',
           plan: planId,
+          goalSlug,
           ...(planId === SUPPORT_PLAN ? { amount: chosenSupportAmount } : {}),
         }),
       });
@@ -123,6 +129,9 @@ export function BuySubscription({
                 AniMonster.
               </DialogDescription>
             </div>
+            {goalsLoading && <p role="status">Загружаем цели поддержки…</p>}
+            {goalsError && <p className="error-msg" role="alert">{goalsError}</p>}
+            <FundraisingChoice goals={goals} goalSlug={goalSlug} onChange={setGoalSlug} disabled={busy || goalsLoading} />
             <div className="plus-dialog-layout">
               <section className="plus-offer-column" aria-label="Выбор тарифа">
                 <div
@@ -165,6 +174,11 @@ export function BuySubscription({
                     <small>30 дней + место в рейтинге</small>
                   </button>
                 </div>
+
+                <a className="plus-bundle-link" href="/vpn">
+                  <span>Нужен ещё VPN? Комплект VPN + Plus на 30 дней</span>
+                  <strong>{Number(VPN_PLUS_PLAN.price)} ₽ →</strong>
+                </a>
 
                 {planId === SUPPORT_PLAN && (
                   <div className="support-amount-picker">
@@ -369,6 +383,9 @@ export function BuySubscription({
               type="button"
               disabled={
                 busy ||
+                goalsLoading ||
+                !!goalsError ||
+                !selectedGoal ||
                 !accepted ||
                 paymentUnavailable ||
                 (planId === SUPPORT_PLAN && chosenSupportAmount === null)
