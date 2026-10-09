@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Play,
   Bookmark,
@@ -22,6 +22,7 @@ import { AccountNav, api, useCommunity } from '@/components/community/context';
 import { GlobalSearch } from '@/components/global-search';
 export default function Home() {
   const community = useCommunity();
+  const firstCatalogLoad = useRef(true);
   const [items, setItems] = useState<Anime[]>([]),
     [tab, setTab] = useState('all'),
     [saved, setSaved] = useState<Anime[]>([]),
@@ -69,6 +70,8 @@ export default function Home() {
     }
     const controller = new AbortController();
     setCatalogLoading(true);
+    const delay = firstCatalogLoad.current ? 0 : 180;
+    firstCatalogLoad.current = false;
     const timer = setTimeout(async () => {
       setApiStatus('Обновляем каталог…');
       try {
@@ -93,7 +96,7 @@ export default function Home() {
       } finally {
         if (!controller.signal.aborted) setCatalogLoading(false);
       }
-    }, 400);
+    }, delay);
     return () => {
       clearTimeout(timer);
       controller.abort();

@@ -44,6 +44,6 @@ export async function GET() {
       items: candidates.slice(0, 5),
       source: viewedCount ? 'Топ AniMonster' : 'Топ сайта',
     },
-    { headers: { 'Cache-Control': 'no-store' } },
+    { headers: { 'Cache-Control': 'public, max-age=30, stale-while-revalidate=120' } },
   );
 }
