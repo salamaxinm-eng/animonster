@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { db, now, viewer, type User } from './core';
 import { publicStreak } from './streak';
-import { streakTimezone } from '@/lib/streak';
+import { streakDate, streakTimezone } from '@/lib/streak';
 import { cosmeticsCatalog } from './cosmetics';
 import type { Anime } from '@/lib/anime';
 import { normalizePassportGenre, passportArchetype } from '@/lib/passport-metrics';
@@ -72,6 +72,8 @@ export async function passportAwardOptions(id: string): Promise<Award[]> {
 }
 async function calculate(user: User, config: Settings): Promise<Omit<Passport, 'own' | 'public' | 'available_awards'>> {
   const id = user.id;
+  const favoriteIds = config.favorite_ids.filter((value) => Number.isInteger(value) && value > 0).slice(0, 3);
+  const favoritePlaceholders = favoriteIds.map(() => '?').join(',');
   const [views, watched, metadata, awards] = await Promise.all([
     db().prepare(`SELECT q.anime_id,q.episode,q.qualified_at FROM qualified_episode_views q
       WHERE q.user_id=? AND NOT EXISTS (
@@ -83,7 +85,8 @@ async function calculate(user: User, config: Settings): Promise<Omit<Passport, '
         SELECT 1 FROM passport_simulated_episodes s
         WHERE s.user_id=h.user_id AND s.anime_id=h.anime_id AND s.episode=h.episode
       )`).bind(id).first<TimeRow>(),
-    db().prepare('SELECT id,data FROM anime_cache WHERE id IN (SELECT DISTINCT anime_id FROM qualified_episode_views WHERE user_id=?) OR id IN (SELECT value::integer FROM jsonb_array_elements_text(?::jsonb) AS value)').bind(id, JSON.stringify(config.favorite_ids)).all<{ id: number; data: string }>(),
+    db().prepare(`SELECT id,data FROM anime_cache WHERE id IN (SELECT DISTINCT anime_id FROM qualified_episode_views WHERE user_id=?)${favoriteIds.length ? ` OR id IN (${favoritePlaceholders})` : ''}`)
+      .bind(id, ...favoriteIds).all<{ id: number; data: string }>(),
     passportAwardOptions(id),
   ]);
   const anime = new Map<number, Anime>();
@@ -94,14 +97,13 @@ async function calculate(user: User, config: Settings): Promise<Omit<Passport, '
   const daily = new Map<string, number>();
   let undated = false, night = 0;
   const timezone = streakTimezone(process.env.STREAK_TIMEZONE);
-  const dayFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' });
   for (const row of views.results) {
     const aid = Number(row.anime_id);
     if (!perAnime.has(aid)) perAnime.set(aid, new Set());
     perAnime.get(aid)!.add(Number(row.episode));
     if (row.qualified_at == null) { undated = true; continue; }
     const date = new Date(Number(row.qualified_at));
-    const day = dayFormatter.format(date);
+    const day = streakDate(date.getTime(), timezone);
     daily.set(day, (daily.get(day) || 0) + 1);
     const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: timezone, hour: '2-digit', hourCycle: 'h23' }).format(date));
     if (hour < 5) night++;
@@ -123,7 +125,7 @@ async function calculate(user: User, config: Settings): Promise<Omit<Passport, '
   }
   const topGenres = [...genres].sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([name, count]) => ({ name, percent: Math.round(count / Math.max(1, perAnime.size) * 100) }));
-  const today = dayFormatter.format(new Date(now()));
+  const today = streakDate(now(), timezone);
   const thirty = now() - 30 * 86_400_000;
   const dated = views.results.filter((v) => v.qualified_at != null && Number(v.qualified_at) >= thirty).length;
   const monthly = new Map<string, number>();
@@ -131,7 +133,6 @@ async function calculate(user: User, config: Settings): Promise<Omit<Passport, '
   const thisMonth = today.slice(0, 7);
   const previousMonth = new Date(Date.UTC(Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 2, 1)).toISOString().slice(0, 7);
   const prev = monthly.get(previousMonth) || 0;
-  const favoriteIds = config.favorite_ids.filter((value) => Number.isInteger(value) && value > 0).slice(0, 3);
   return {
     user: {
       id, nick: user.nick, avatar: user.avatar, tag: user.tag || null, pin: user.pin || null,
