@@ -7,6 +7,7 @@ import { RewardsPanel } from './rewards-panel';
 import { StreakDisplay } from './streak-display';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -63,6 +64,7 @@ export function ProfilePage({
       character_showcase: Array<{ id: string; name: string; image: string }>;
       characters: Array<{ id: string; name: string; image: string }>;
       own: boolean;
+      passport_public: boolean;
       blocked: boolean;
     } | null>(null),
     [draft, setDraft] = useState<Profile | null>(null),
@@ -440,6 +442,9 @@ export function ProfilePage({
                 <a className="profile-link" href={'/members/' + data.user.id}>
                   Постоянная ссылка на профиль ↗
                 </a>
+                {data.passport_public && <Link className="outline-button" href={data.own ? '/passport' : '/members/' + data.user.id + '/passport'}>
+                  Аниме-паспорт
+                </Link>}
               </section>
               <section className="social-panel">
                 <h3>Моя коллекция</h3>

@@ -15,6 +15,7 @@ import { markRecommendationsDirty } from '@/lib/server/recommendations/repositor
 import { evaluateUserAchievements } from '@/lib/server/achievements';
 import { evaluateReferralQualification } from '@/lib/server/referrals';
 import { recordStreakProgress, streakDay } from '@/lib/server/streak';
+import { clearPassport } from '@/lib/server/passport';
 import {
   cachedEpisodeDuration,
   kodikSourceHasEpisode,
@@ -241,6 +242,7 @@ export async function POST(r: Request) {
     });
 
     if (!won) return json({ ok: true });
+    if (a.user && delta > 0) clearPassport(a.user.id);
 
     if (
       a.user &&

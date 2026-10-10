@@ -142,6 +142,7 @@ export async function GET(r: Request) {
           ? characterShowcase.results
           : [],
         characters: characters.results,
+        passport_public: own || !!(await db().prepare('SELECT 1 AS visible FROM passport_settings WHERE user_id=? AND is_public=1').bind(id).first()),
         own,
         blocked: u ? await blocked(u.id, id) : false,
       });

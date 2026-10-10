@@ -29,7 +29,7 @@ test('statistics include old completed episodes only in all-time views and exclu
 
   try {
     const migrations = (await readdir('migrations/postgres'))
-      .filter((name) => name.endsWith('.sql') && name !== '0035_qualified_episode_views.sql')
+      .filter((name) => name.endsWith('.sql') && !['0035_qualified_episode_views.sql', '0044_anime_passport.sql', '0045_passport_simulation_provenance.sql'].includes(name))
       .sort();
     for (const name of migrations)
       await engine.exec(await readFile(`migrations/postgres/${name}`, 'utf8'));
@@ -46,6 +46,8 @@ test('statistics include old completed episodes only in all-time views and exclu
     }
 
     await engine.exec(await readFile('migrations/postgres/0035_qualified_episode_views.sql', 'utf8'));
+    await engine.exec(await readFile('migrations/postgres/0044_anime_passport.sql', 'utf8'));
+    await engine.exec(await readFile('migrations/postgres/0045_passport_simulation_provenance.sql', 'utf8'));
     const old = (await engine.query('SELECT qualified_at FROM qualified_episode_views')).rows;
     assert.equal(old.length, 2);
     assert.ok(old.every((row) => row.qualified_at === null));
