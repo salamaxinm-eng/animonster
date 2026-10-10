@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   SUPPORT_MIN_AMOUNT,
+  SUPPORT_MAX_AMOUNT,
   SUPPORT_PLAN,
   subscriptionPlans,
   supportAmount,
@@ -15,27 +16,100 @@ import {
   Library,
   Palette,
   Play,
+  Check,
+  ChartNoAxesColumn,
+  SlidersHorizontal,
+  ChevronDown,
+  Download,
   Heart,
-  ExternalLink,
-  Crown,
-  Trophy,
-  Rocket,
+  X,
 } from 'lucide-react';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import { useFundraisingGoals } from './fundraising-choice';
+import { useCommunity } from './context';
+import type { FundraisingReward } from '@/lib/fundraising';
+import './buy-subscription.css';
 
 type PlanChoice = SubscriptionPlan | typeof SUPPORT_PLAN;
-import { FundraisingChoice, useFundraisingGoals } from './fundraising-choice';
-type SupporterLeader = {
-  id: string;
-  nick: string;
-  amount: number;
-  payments: number;
+const rewardLabels = {
+  pin: 'Пин',
+  tag: 'Тег',
+  frame: 'Рамка',
+  background: 'Фон',
 };
+
+function SupportHall() {
+  const [open, setOpen] = useState(false);
+  const [leaders, setLeaders] = useState<
+    { id: string; nick: string; amount: number }[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    if (!open) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError('');
+    void fetch('/api/plus-supporters', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw Error('Не удалось загрузить рейтинг');
+        return response.json();
+      })
+      .then((result) => setLeaders(result.leaders || []))
+      .catch((cause) => {
+        if (!controller.signal.aborted) setError(cause.message);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [open]);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger className="plus-purchase-text-link">
+        Зал славы →
+      </DialogTrigger>
+      <DialogContent className="plus-hall-dialog">
+        <DialogTitle>Зал славы</DialogTitle>
+        <DialogDescription>
+          Подтверждённые покупки Plus и донаты складываются в общий рейтинг
+          поддержки.
+        </DialogDescription>
+        {loading ? (
+          <p role="status">Загружаем рейтинг…</p>
+        ) : error ? (
+          <p role="alert">{error}</p>
+        ) : (
+          <ol className="plus-hall-list">
+            {leaders.map((leader, index) => (
+              <li key={leader.id}>
+                <span>
+                  {index + 1}.{' '}
+                  <a href={`/members/${leader.id}`}>{leader.nick}</a>
+                </span>
+                <strong>{leader.amount.toLocaleString('ru-RU')} ₽</strong>
+              </li>
+            ))}
+            {!leaders.length && <li>Пока нет участников</li>}
+          </ol>
+        )}
+        <div className="plus-hall-prize">
+          <img src="/frames/champion-gold.svg" alt="Золотая рамка лидера" />
+          <img src="/pins/champion-crown.svg" alt="Пин лидера" />
+          <span className="user-tag user-tag-number-one">Номер 1</span>
+        </div>
+        <p>Рамка, пин и тег принадлежат текущему лидеру рейтинга.</p>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function BuySubscription({
   className = 'outline-button',
@@ -48,36 +122,54 @@ export function BuySubscription({
   label?: string;
   initialPlan?: PlanChoice;
 }) {
+  const { user, loaded, login } = useCommunity();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const submitting = useRef(false);
   const [error, setError] = useState('');
   const [accepted, setAccepted] = useState(false);
-  const [paymentUnavailable, setPaymentUnavailable] = useState(false);
   const [planId, setPlanId] = useState<PlanChoice>(initialPlan);
   const [customAmount, setCustomAmount] = useState('300');
-  const [leaders, setLeaders] = useState<SupporterLeader[]>([]);
-  const [leadersLoading, setLeadersLoading] = useState(false);
   const [goalSlug, setGoalSlug] = useState('player');
-  const { goals, loading: goalsLoading, error: goalsError } = useFundraisingGoals(open);
-  const selectedGoal = goals.find((goal) => goal.slug === goalSlug && goal.isActive);
+  const [previewReward, setPreviewReward] = useState<FundraisingReward | null>(
+    null,
+  );
+  const inputId = useId();
+  const {
+    goals,
+    loading: goalsLoading,
+    error: goalsError,
+  } = useFundraisingGoals(open);
+  const selectedGoal = goals.find(
+    (goal) => goal.slug === goalSlug && goal.isActive,
+  );
   const plan = planId === SUPPORT_PLAN ? null : subscriptionPlans[planId];
   const chosenSupportAmount = supportAmount(customAmount);
   const priceLabel = plan
     ? plan.priceLabel
-    : `${chosenSupportAmount ?? SUPPORT_MIN_AMOUNT} ₽`;
-  const originalPriceLabel = plan?.originalPriceLabel;
-
-  useEffect(() => {
-    if (!open) return;
-    setLeadersLoading(true);
-    void fetch('/api/plus-supporters')
-      .then((response) => (response.ok ? response.json() : { leaders: [] }))
-      .then((result) => setLeaders(result.leaders || []))
-      .catch(() => setLeaders([]))
-      .finally(() => setLeadersLoading(false));
-  }, [open]);
+    : chosenSupportAmount === null
+      ? '—'
+      : `${chosenSupportAmount.toLocaleString('ru-RU')} ₽`;
+  const invalidAmount = planId === SUPPORT_PLAN && chosenSupportAmount === null;
+  const disabled =
+    busy ||
+    goalsLoading ||
+    !!goalsError ||
+    !selectedGoal ||
+    !accepted ||
+    invalidAmount ||
+    !loaded;
+  const activePlus =
+    !!user && (user.plus_lifetime || Number(user.premium_until) > Date.now());
 
   async function buy() {
+    if (disabled || submitting.current) return;
+    if (!user) {
+      setOpen(false);
+      login();
+      return;
+    }
+    submitting.current = true;
     setBusy(true);
     setError('');
     try {
@@ -92,320 +184,349 @@ export function BuySubscription({
         }),
       });
       const result = await response.json();
-      if (!response.ok && response.status === 503) {
-        setPaymentUnavailable(true);
-        setBusy(false);
-        return;
-      }
       if (!response.ok)
-        throw new Error(result.error || 'Не удалось создать платёж');
+        throw new Error(
+          result.error || 'Не удалось создать платёж. Попробуйте ещё раз.',
+        );
+      if (!result.url)
+        throw new Error('Платёжная ссылка не получена. Попробуйте ещё раз.');
       window.location.assign(result.url);
     } catch (cause) {
       setError(
         cause instanceof Error ? cause.message : 'Не удалось создать платёж',
       );
+      submitting.current = false;
       setBusy(false);
     }
   }
 
   return (
     <>
-      <button className={className} onClick={() => setOpen(true)}>
-        <Sparkles size={16} aria-hidden="true" />{' '}
-        {label || (compact ? 'Plus' : 'AniMonster Plus')}
-      </button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sign-dialog plus-dialog">
-          <div className="plus-dialog-scroll">
-            <div className="plus-intro">
-              <span className="plus-eyebrow">
-                <Sparkles size={16} /> БОЛЬШЕ ВОЗМОЖНОСТЕЙ
-              </span>
-              <DialogTitle>
-                AniMonster <span>Plus</span>
-              </DialogTitle>
-              <DialogDescription>
-                Больше возможностей для тебя — больше возможностей для
-                AniMonster.
-              </DialogDescription>
-            </div>
-            {goalsLoading && <p role="status">Загружаем цели поддержки…</p>}
-            {goalsError && <p className="error-msg" role="alert">{goalsError}</p>}
-            <FundraisingChoice goals={goals} goalSlug={goalSlug} onChange={setGoalSlug} disabled={busy || goalsLoading} />
-            <div className="plus-dialog-layout">
-              <section className="plus-offer-column" aria-label="Выбор тарифа">
-                <div
-                  className="plus-plan-options"
-                  role="group"
-                  aria-label="Тариф Plus"
-                >
-                  {Object.values(subscriptionPlans).map((option) => (
-                    <button
-                      type="button"
-                      key={option.id}
-                      aria-pressed={planId === option.id}
-                      disabled={busy}
-                      onClick={() => setPlanId(option.id)}
-                    >
-                      <span>
-                        {option.id === 'annual' ? 'На год' : 'На месяц'}{' '}
-                        {option.discount > 0 && <b>−{option.discount}%</b>}
-                      </span>
-                      <strong>
-                        {option.originalPriceLabel && (
-                          <s>{option.originalPriceLabel}</s>
-                        )}
-                        {option.priceLabel}
-                      </strong>
-                      <small>{option.label}</small>
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="plus-support-plan"
-                    aria-pressed={planId === SUPPORT_PLAN}
-                    disabled={busy}
-                    onClick={() => setPlanId(SUPPORT_PLAN)}
-                  >
-                    <span>
-                      <Rocket size={15} /> Свой тариф
-                    </span>
-                    <strong>от {SUPPORT_MIN_AMOUNT} ₽</strong>
-                    <small>30 дней + место в рейтинге</small>
-                  </button>
-                </div>
-
-                <a className="plus-bundle-link" href="/vpn">
-                  <span>Нужен ещё VPN? Комплект VPN + Plus на 30 дней</span>
-                  <strong>{Number(VPN_PLUS_PLAN.price)} ₽ →</strong>
-                </a>
-
-                {planId === SUPPORT_PLAN && (
-                  <div className="support-amount-picker">
-                    <label htmlFor="plus-support-amount">
-                      Сколько хочешь вложить в AniMonster
-                    </label>
-                    <div className="support-amount-input">
-                      <input
-                        id="plus-support-amount"
-                        type="number"
-                        inputMode="numeric"
-                        min={SUPPORT_MIN_AMOUNT}
-                        max={100000}
-                        step={10}
-                        value={customAmount}
-                        onChange={(event) =>
-                          setCustomAmount(event.target.value)
-                        }
-                        aria-invalid={chosenSupportAmount === null}
-                      />
-                      <span>₽</span>
-                    </div>
-                    <div className="support-amount-presets">
-                      {[150, 300, 500, 1000].map((amount) => (
-                        <button
-                          type="button"
-                          key={amount}
-                          onClick={() => setCustomAmount(String(amount))}
-                        >
-                          {amount.toLocaleString('ru-RU')} ₽
-                        </button>
-                      ))}
-                    </div>
-                    <small>
-                      Целая сумма от {SUPPORT_MIN_AMOUNT} ₽. Ник и общая сумма
-                      появятся в рейтинге.
-                    </small>
-                  </div>
-                )}
-
-                <div className="plus-price-card">
-                  <div>
-                    <strong>
-                      {originalPriceLabel && <s>{originalPriceLabel}</s>}
-                      {priceLabel}
-                    </strong>
-                    <span> / {plan?.label || '30 дней'}</span>
-                  </div>
-                  <p>
-                    {planId === SUPPORT_PLAN
-                      ? '30 дней Plus, а вся сумма поднимает тебя в рейтинге.'
-                      : 'Без автосписаний. Продлеваешь, когда захочешь.'}
-                  </p>
-                </div>
-                {planId === 'annual' && (
-                  <div className="annual-tag-offer">
-                    <span className="user-tag user-tag-eternal-nakama">
-                      Вечный накама
-                    </span>
-                    <p>
-                      Твой знак верности AniMonster. Уникальный тег останется
-                      навсегда после подтверждённой годовой покупки.
-                    </p>
-                    <small>
-                      <s>1 308 ₽</s> · Экономия 309 ₽ относительно 12 месяцев.
-                    </small>
-                  </div>
-                )}
-              </section>
-
-              <aside className="supporter-board" aria-label="Лидеры поддержки">
-                <div className="supporter-board-heading">
-                  <span>
-                    <Trophy size={17} /> ЗАЛ СЛАВЫ
-                  </span>
-                  <strong>Топ поддержки</strong>
-                  <p>
-                    Все подтверждённые покупки Plus и донаты складываются в общий рейтинг.
-                  </p>
-                </div>
-                <ol className="supporter-leaders">
-                  {[0, 1, 2].map((index) => {
-                    const leader = leaders[index];
+        <DialogTrigger className={className} onClick={() => setError('')}>
+          <Sparkles size={16} aria-hidden="true" />{' '}
+          {label || (compact ? 'Plus' : 'AniMonster Plus')}
+        </DialogTrigger>
+        <DialogContent className="plus-purchase-dialog" showCloseButton={false}>
+          <header className="plus-purchase-header">
+            <DialogTitle>
+              AniMonster <span>Plus</span>
+            </DialogTitle>
+            <DialogDescription>
+              Больше возможностей для тебя — больше возможностей для AniMonster.
+            </DialogDescription>
+            <DialogClose
+              className="plus-purchase-close"
+              aria-label="Закрыть окно покупки Plus"
+            >
+              <X size={20} />
+            </DialogClose>
+          </header>
+          <div className="plus-purchase-body">
+            <section aria-label="Направление поддержки">
+              <h3>Куда направить поддержку?</h3>
+              {goalsLoading && <p role="status">Загружаем цели поддержки…</p>}
+              {goalsError && (
+                <p className="plus-purchase-error" role="alert">
+                  {goalsError}
+                </p>
+              )}
+              <div
+                className="plus-purchase-grid"
+                role="group"
+                aria-label="Сбор"
+              >
+                {goals
+                  .filter((goal) => goal.isActive)
+                  .map((goal) => {
+                    const Icon =
+                      goal.slug === 'player' ? Play : ChartNoAxesColumn;
                     return (
-                      <li key={leader?.id || index} data-rank={index + 1}>
-                        <span className="supporter-rank">
-                          {index === 0 ? <Crown size={18} /> : index + 1}
+                      <button
+                        key={goal.id}
+                        className="plus-purchase-choice plus-purchase-goal"
+                        type="button"
+                        aria-pressed={goalSlug === goal.slug}
+                        disabled={busy || goalsLoading}
+                        onClick={() => setGoalSlug(goal.slug)}
+                      >
+                        <Icon size={24} aria-hidden="true" />
+                        <span>
+                          <strong>
+                            {goal.slug === 'player'
+                              ? 'Свой плеер'
+                              : goal.shortTitle}
+                          </strong>
+                          <small>
+                            {goal.slug === 'player'
+                              ? 'Собираем на собственный видеохостинг'
+                              : goal.slug === 'development'
+                                ? 'Новые функции и улучшения'
+                                : goal.description}
+                          </small>
                         </span>
-                        <span className="supporter-name">
-                          {leader?.nick ||
-                            (leadersLoading ? 'Загружаем…' : 'Место свободно')}
+                        <span className="plus-choice-check" aria-hidden="true">
+                          {goalSlug === goal.slug && <Check size={12} />}
                         </span>
-                        <strong>
-                          {leader
-                            ? `${leader.amount.toLocaleString('ru-RU')} ₽`
-                            : '—'}
-                        </strong>
-                      </li>
+                      </button>
                     );
                   })}
-                </ol>
-                <div className="champion-tag-card">
-                  <div className="champion-reward-set">
+              </div>
+            </section>
+            <section aria-label="Выбор тарифа">
+              <h3>Выбери тариф</h3>
+              <div
+                className="plus-purchase-grid"
+                role="group"
+                aria-label="Тариф Plus"
+              >
+                {Object.values(subscriptionPlans).map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className="plus-purchase-choice plus-purchase-plan"
+                    aria-pressed={planId === option.id}
+                    disabled={busy}
+                    onClick={() => setPlanId(option.id)}
+                  >
                     <span>
-                      <img src="/frames/champion-gold.svg" alt="" /> Рамка
+                      {option.label}
+                      {option.discount > 0 && (
+                        <b className="plus-purchase-discount">
+                          −{option.discount}%
+                        </b>
+                      )}
                     </span>
-                    <span>
-                      <img src="/pins/champion-crown.svg" alt="" /> Пин
+                    <strong>{option.priceLabel}</strong>
+                    <small>
+                      {option.originalPriceLabel ? (
+                        <s>{option.originalPriceLabel}</s>
+                      ) : (
+                        'Выгоднее на целый год'
+                      )}
+                    </small>
+                    <span className="plus-choice-check" aria-hidden="true">
+                      {planId === option.id && <Check size={12} />}
                     </span>
-                  </div>
-                  <span className="user-tag user-tag-number-one">Номер 1</span>
-                  <p>
-                    Весь золотой комплект получает лидер. Обгони его — рамка,
-                    пин и тег станут твоими.
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="plus-purchase-custom-toggle"
+                aria-expanded={planId === SUPPORT_PLAN}
+                aria-controls={`${inputId}-custom`}
+                disabled={busy}
+                onClick={() =>
+                  setPlanId(planId === SUPPORT_PLAN ? 'monthly' : SUPPORT_PLAN)
+                }
+              >
+                <SlidersHorizontal size={19} aria-hidden="true" />
+                <span>
+                  Своя сумма поддержки
+                  <small>Выбери сумму — мы ценим любую поддержку</small>
+                </span>
+                <ChevronDown size={17} />
+              </button>
+              {planId === SUPPORT_PLAN && (
+                <div id={`${inputId}-custom`} className="plus-purchase-custom">
+                  <label htmlFor={inputId}>Сумма поддержки, ₽</label>
+                  <input
+                    id={inputId}
+                    type="number"
+                    inputMode="numeric"
+                    min={SUPPORT_MIN_AMOUNT}
+                    max={SUPPORT_MAX_AMOUNT}
+                    step={1}
+                    value={customAmount}
+                    disabled={busy}
+                    onChange={(event) => setCustomAmount(event.target.value)}
+                    aria-invalid={invalidAmount}
+                    aria-describedby={`${inputId}-hint`}
+                  />
+                  <p
+                    id={`${inputId}-hint`}
+                    className={invalidAmount ? 'plus-purchase-error' : ''}
+                  >
+                    Целое число от {SUPPORT_MIN_AMOUNT} до{' '}
+                    {SUPPORT_MAX_AMOUNT.toLocaleString('ru-RU')} ₽. Даёт{' '}
+                    {subscriptionPlans.monthly.label} Plus; ник и сумма
+                    поддержки появятся в рейтинге.
                   </p>
                 </div>
-              </aside>
-            </div>
-
-            <div className="plus-feature-strip">
-              {[
-                { icon: Play, title: 'Серии раньше', text: 'без ожидания' },
-                { icon: Bell, title: 'Telegram', text: 'без лимита' },
-                {
-                  icon: Library,
-                  title: '20 коллекций',
-                  text: 'со своим стилем',
-                },
-                { icon: Palette, title: 'Редкий профиль', text: 'рамки и фон' },
-                { icon: Heart, title: 'Особые бонусы', text: 'для своих' },
-              ].map(({ icon: Icon, title, text }) => (
-                <div key={title}>
-                  <Icon size={18} />
-                  <span>
-                    <strong>{title}</strong>
-                    <small>{text}</small>
-                  </span>
-                </div>
-              ))}
-            </div>
-            <a className="text-link" href="/plus">
-              Посмотреть бонусные подборки →
-            </a>
-            <div className="plus-legal-links">
-              <nav
-                className="plus-legal-list"
-                aria-label="Документы и поддержка"
-              >
+              )}
+              {planId === 'annual' && (
+                <p className="plus-purchase-note">
+                  Годовой бонус: постоянный тег «Вечный накама» после
+                  подтверждения оплаты.
+                </p>
+              )}
+              {activePlus && (
+                <p className="plus-purchase-note">
+                  После оплаты срок Plus продлится на выбранное количество дней.
+                </p>
+              )}
+            </section>
+            <section aria-label="Преимущества Plus">
+              <h3>Что входит в Plus?</h3>
+              <div className="plus-purchase-benefits">
                 {[
-                  ['/legal/requisites', 'Реквизиты продавца'],
-                  ['/legal/privacy', 'Политика конфиденциальности'],
-                  ['/legal/terms', 'Пользовательское соглашение'],
-                  ['/legal/prices', 'Цены и тарифы'],
-                  ['/legal/support', 'Поддержка'],
-                ].map(([href, label]) => (
-                  <a
-                    className="plus-legal-link"
-                    href={href}
-                    key={href}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <span>{label}</span>
-                    <ExternalLink size={14} aria-hidden="true" />
-                  </a>
+                  {
+                    icon: Play,
+                    title: 'Ранний доступ к сериям',
+                    text: 'Смотри новинки раньше',
+                  },
+                  {
+                    icon: Bell,
+                    title: 'Telegram-уведомления',
+                    text: 'Без лимита тайтлов',
+                  },
+                  {
+                    icon: Library,
+                    title: '20 коллекций',
+                    text: 'По своим темам и стилям',
+                  },
+                  {
+                    icon: Palette,
+                    title: 'Оформление профиля',
+                    text: 'Рамки, фоны, пины и тег',
+                  },
+                ].map(({ icon: Icon, title, text }) => (
+                  <div key={title}>
+                    <Icon size={21} aria-hidden="true" />
+                    <span>
+                      <strong>{title}</strong>
+                      <small>{text}</small>
+                    </span>
+                  </div>
                 ))}
-              </nav>
+              </div>
+              <details className="plus-purchase-details">
+                <summary>Все преимущества</summary>
+                <p>
+                  <Download size={15} aria-hidden="true" /> Загрузка серий для
+                  просмотра офлайн
+                </p>
+                <p>
+                  <Heart size={15} aria-hidden="true" /> Реакции и бонусные
+                  подборки
+                </p>
+                <a href="/plus">Открыть подборки →</a>
+              </details>
+            </section>
+            <section aria-label="Награды за поддержку">
+              <div className="plus-purchase-section-heading">
+                <h3>Награды за поддержку</h3>
+                {selectedGoal?.bundleOwned && <span>Набор уже получен ✓</span>}
+              </div>
+              <div className="plus-purchase-rewards">
+                {selectedGoal?.rewards.map((reward) => (
+                  <button
+                    type="button"
+                    key={reward.id}
+                    onClick={() => setPreviewReward(reward)}
+                    aria-label={`Увеличить: ${reward.name}`}
+                  >
+                    <span>
+                      <img src={reward.image} alt={reward.name} />
+                    </span>
+                    <small>{rewardLabels[reward.kind]}</small>
+                  </button>
+                ))}
+              </div>
+              {selectedGoal && !selectedGoal.bundleOwned && (
+                <p className="plus-purchase-note">
+                  Набор выбранного сбора добавится в профиль после подтверждения
+                  оплаты.
+                </p>
+              )}
+            </section>
+            <div className="plus-purchase-extras">
+              <SupportHall />
+              <details className="plus-purchase-details">
+                <summary>VPN + Plus</summary>
+                <a href="/vpn">
+                  Комплект на {VPN_PLUS_PLAN.days} дней —{' '}
+                  {Number(VPN_PLUS_PLAN.price)} ₽ →
+                </a>
+              </details>
+              <details className="plus-purchase-details">
+                <summary>Документы и поддержка</summary>
+                <nav aria-label="Документы и поддержка">
+                  {[
+                    ['/legal/requisites', 'Реквизиты'],
+                    ['/legal/privacy', 'Конфиденциальность'],
+                    ['/legal/terms', 'Соглашение'],
+                    ['/legal/prices', 'Тарифы'],
+                    ['/legal/support', 'Поддержка'],
+                  ].map(([href, text]) => (
+                    <a key={href} href={href} target="_blank" rel="noreferrer">
+                      {text}
+                    </a>
+                  ))}
+                </nav>
+              </details>
             </div>
           </div>
-          <div className="plus-checkout-footer">
+          <footer className="plus-purchase-footer">
             {error && (
-              <p className="error-msg" role="alert">
+              <p className="plus-purchase-error" role="alert">
                 {error}
               </p>
             )}
-            {paymentUnavailable && (
-              <p className="plus-payment-notice" role="status">
-                Оплата пока не подключена, деньги не списываются. Пока магазин
-                настраивается, Plus можно получить у администратора.
-              </p>
-            )}
-            <label className="plus-agreement-label">
+            <div className="plus-purchase-total" aria-live="polite">
+              <span>
+                Итого · {plan?.label || subscriptionPlans.monthly.label}
+              </span>
+              <strong>{priceLabel}</strong>
+            </div>
+            <label className="plus-purchase-agreement">
               <input
                 type="checkbox"
                 checked={accepted}
+                disabled={busy}
                 onChange={(event) => setAccepted(event.target.checked)}
-              />{' '}
+              />
               <span>
                 Принимаю{' '}
-                <a
-                  className="plus-agreement-link"
-                  href="/legal/offer"
-                  target="_blank"
-                  rel="noreferrer"
-                >
+                <a href="/legal/offer" target="_blank" rel="noreferrer">
                   условия оферты
                 </a>
               </span>
             </label>
-            <button
-              className="primary plus-buy-button"
-              type="button"
-              disabled={
-                busy ||
-                goalsLoading ||
-                !!goalsError ||
-                !selectedGoal ||
-                !accepted ||
-                paymentUnavailable ||
-                (planId === SUPPORT_PLAN && chosenSupportAmount === null)
-              }
-              onClick={buy}
-            >
-              {busy
-                ? 'Переходим к оплате…'
-                : paymentUnavailable
-                  ? 'Оплата скоро появится'
-                  : planId === SUPPORT_PLAN
-                    ? `Поддержать · ${priceLabel}`
-                    : `Оплатить · ${priceLabel}`}
-            </button>
-            <p className="plus-renewal-note">
-              Уже есть Plus? Добавим {plan?.label || '30 дней'} к оставшемуся
-              сроку.
-            </p>
-          </div>
+            <div className="plus-purchase-action">
+              <button type="button" disabled={disabled} onClick={buy}>
+                {busy
+                  ? 'Переходим к оплате…'
+                  : !loaded
+                    ? 'Загружаем…'
+                    : invalidAmount
+                      ? 'Укажите сумму поддержки'
+                      : !user
+                        ? 'Войти для оплаты →'
+                        : `Оплатить ${priceLabel} →`}
+              </button>
+              <small>Разовый платёж · Без автопродления</small>
+            </div>
+          </footer>
         </DialogContent>
+        <Dialog
+          open={!!previewReward}
+          onOpenChange={(value) => {
+            if (!value) setPreviewReward(null);
+          }}
+        >
+          <DialogContent className="plus-reward-dialog">
+            <DialogTitle>{previewReward?.name}</DialogTitle>
+            <DialogDescription>
+              {previewReward ? rewardLabels[previewReward.kind] : 'Награда'}{' '}
+              выбранного направления поддержки
+            </DialogDescription>
+            {previewReward && (
+              <img src={previewReward.image} alt={previewReward.name} />
+            )}
+          </DialogContent>
+        </Dialog>
       </Dialog>
     </>
   );
