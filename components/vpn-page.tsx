@@ -47,6 +47,18 @@ export function VpnPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState<{ code: string; amount: number; percent: number; expiresAt: number } | null>(null);
+  const [promoError, setPromoError] = useState('');
+  const [promoBusy, setPromoBusy] = useState(false);
+  async function applyPromo() {
+    setPromoBusy(true); setPromoError(''); setPromo(null);
+    try {
+      setPromo(await api('/api/payments/promo', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: 'vpn', promoCode: promoInput }) }));
+    } catch(cause) { setPromoError(cause instanceof Error ? cause.message : 'Не удалось проверить промокод'); }
+    finally { setPromoBusy(false); }
+  }
 
   const refresh = useCallback(async () => {
     if (!community.user) return;
@@ -119,7 +131,7 @@ export function VpnPage() {
     try {
       const result = await api('/api/payments', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, ...(plan === 'vpn' && promo ? { promoCode: promo.code } : {}) }),
       });
       window.location.assign(result.url);
     } catch (cause) {
@@ -154,8 +166,16 @@ export function VpnPage() {
                     'Покупка VPN появится после запуска оплаты.'}</p>
                 {overview?.purchase.available && (
                   <>
-                    <div className="vpn-price"><strong>{overview.purchase.price} ₽</strong><span>/ {overview.purchase.days} дней</span></div>
-                    <button className="vpn-buy" disabled={busy} onClick={() => void buyVpn('vpn')}>
+                    <div className="vpn-price">{promo && <del>{overview.purchase.price} ₽</del>}<strong>{promo ? promo.amount.toLocaleString('ru-RU',{minimumFractionDigits:2}) : overview.purchase.price} ₽</strong><span>/ {overview.purchase.days} дней</span></div>
+                    <div className="vpn-promo">
+                      <label htmlFor="vpn-promo">Промокод</label>
+                      <div><input id="vpn-promo" value={promoInput} maxLength={64} disabled={promoBusy || busy}
+                        onChange={(event) => { setPromoInput(event.target.value); setPromo(null); setPromoError(''); }} />
+                        <button disabled={busy || promoBusy || !promoInput.trim()} onClick={() => void applyPromo()}>{promoBusy ? 'Проверяем…' : 'Применить'}</button></div>
+                      {promo && <p role="status">Скидка {promo.percent}%. Код действует до {new Date(promo.expiresAt).toLocaleString('ru-RU')} и доступен один раз на аккаунт.</p>}
+                      {promoError && <p role="alert">{promoError}</p>}
+                    </div>
+                    <button className="vpn-buy" disabled={busy || promoBusy} onClick={() => void buyVpn('vpn')}>
                       {overview.active ? 'Продлить подписку' : 'Оформить подписку'} <ArrowRight size={18} aria-hidden="true" />
                     </button>
                   </>

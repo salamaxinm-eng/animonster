@@ -15,6 +15,7 @@ import { requireActiveFundraisingGoal } from '@/lib/server/fundraising';
 import { DONATION_PLAN, DONATION_MIN_AMOUNT, donationAmount } from '@/lib/fundraising';
 import { VPN_PLAN, VPN_PLUS_PLAN } from '@/lib/vpn-plan';
 import { vpnBundlePurchaseAvailable, vpnPurchaseAvailable } from '@/lib/server/vpn';
+import { reservePromotion } from '@/lib/server/payment-promotions';
 import {
   SUPPORT_MIN_AMOUNT,
   SUPPORT_PLAN,
@@ -86,7 +87,11 @@ export async function POST(r: Request) {
       days: requestedPlan === DONATION_PLAN ? 0 : 30,
       price: chosenAmount!.toFixed(2),
     };
-    const id = uid();
+    const promotion = b.promoCode ? await reservePromotion(u.id,b.promoCode,plan.id) : null;
+    if (promotion && 'url' in promotion) return json({ url: promotion.url });
+    const id = promotion?.id || uid();
+    const price = promotion && 'quote' in promotion ? promotion.quote.amount.toFixed(2) : plan.price;
+    if (!promotion)
     await db()
       .prepare(
         'INSERT INTO orders(id,user_id,created_at,provider,plan,amount,duration_days,fundraising_goal_id) VALUES (?,?,?,?,?,?,?,?)',
@@ -97,7 +102,7 @@ export async function POST(r: Request) {
       method: 'POST',
       body: JSON.stringify({
         paymentDetails: {
-          amount: Number(plan.price),
+          amount: Number(price),
           currency: 'RUB',
         },
         description: plan.id === VPN_PLAN.id ? `AniMonster VPN — ${VPN_PLAN.label}` :
@@ -119,6 +124,7 @@ export async function POST(r: Request) {
       (p as typeof p & { redirect?: string }).redirect;
     if (!providerId || !paymentUrl)
       throw new ApiError('Не получена ссылка на оплату', 502);
+    if (promotion) await db().prepare('UPDATE orders SET payment_url=? WHERE id=?').bind(paymentUrl,id).run();
     return json({ url: paymentUrl });
   } catch (e) {
     return fail(e);

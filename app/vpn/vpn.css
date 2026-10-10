@@ -84,3 +84,4 @@
   .vpn-steps { grid-template-columns: 1fr; gap: 22px; }
   .vpn-guide-notes p:first-child, .vpn-guide-notes p:last-child { max-width: none; }
 }
+.vpn-promo{margin:16px 0;max-width:430px}.vpn-promo label{display:block;margin-bottom:8px;font-size:14px}.vpn-promo>div{display:flex;gap:8px}.vpn-promo input{min-width:0;flex:1;background:#11161d;border:1px solid #35404b;border-radius:7px;padding:10px;color:inherit}.vpn-promo button{padding:10px 14px}.vpn-promo p{font-size:13px}.vpn-price del{color:#8994a3;font-size:16px}

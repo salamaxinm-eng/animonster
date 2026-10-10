@@ -112,6 +112,7 @@ test('fundraising migration, checkout, provider verification and permanent inven
     '@/lib/fundraising': sharedUrl,
     '@/lib/vpn-plan': url("export const VPN_PLAN={id:'vpn',days:30,price:'149.00'}; export const VPN_PLUS_PLAN={id:'vpn_plus',days:30,price:'199.00'};"),
     '@/lib/server/vpn': url('export const vpnPurchaseAvailable=()=>false; export const vpnBundlePurchaseAvailable=()=>false;'),
+    '@/lib/server/payment-promotions': url('export async function reservePromotion(){throw new Error("Promo is unavailable for fundraising")}'),
   });
   const cosmeticUrl = url(
     stripTypeScriptTypes(
