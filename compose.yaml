@@ -35,6 +35,8 @@ services:
     environment:
       DATABASE_URL: postgres://animonster:${POSTGRES_PASSWORD}@postgres:5432/animonster
     expose: ["3000"]
+    ports:
+      - "${CLUSTER_APP_BIND_ADDRESS:-127.0.0.1}:3000:3000"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
