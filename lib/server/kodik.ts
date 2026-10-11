@@ -90,7 +90,9 @@ export function kodikSeasonPlayer(
       ([ordinal, value]) => {
         const link = typeof value === 'string' ? value : value.link || '';
         const number = Number(ordinal);
-        return Number.isInteger(number) && number > 0 && safeKodikPlayerUrl(link)
+        return Number.isInteger(number) &&
+          number > 0 &&
+          safeKodikPlayerUrl(link)
           ? [number]
           : [];
       },
@@ -284,10 +286,16 @@ export function blockedKodikContent(item: KodikResult) {
 }
 
 export function allowedKodikResult(item: KodikResult) {
+  return !blockedKodikContent(item) && playableKodikResult(item);
+}
+
+// Catalog discovery filters must not remove players from an already published
+// title. Playback still checks the exact title identity, provider restrictions,
+// safe URLs and episode maps; age consent is enforced by the videos API.
+function playableKodikResult(item: KodikResult) {
   const translationType = item.translation?.type;
 
   return (
-    !blockedKodikContent(item) &&
     (item.type === 'anime' || item.type === 'anime-serial') &&
     (translationType === 'voice' || translationType === 'subtitles') &&
     !item.camrip &&
@@ -320,7 +328,7 @@ export function normalizeKodikVoiceovers(
           comparable(String(value)) === comparable(anime.name),
       );
     if (
-      !allowedKodikResult(item) ||
+      !playableKodikResult(item) ||
       !title ||
       !player ||
       !Number.isInteger(translationId) ||
@@ -366,9 +374,15 @@ export function normalizeKodikVoiceovers(
 export async function rememberKodikSources(
   animeId: number,
   results: KodikResult[],
+  publishedAnime?: Anime,
 ) {
   const timestamp = now();
-  const valid = results.filter(allowedKodikResult);
+  const valid = results.filter((item) =>
+    publishedAnime
+      ? publishedAnime.id === animeId &&
+        normalizeKodikVoiceovers([item], publishedAnime).length > 0
+      : allowedKodikResult(item),
+  );
   if (!valid.length) return;
   await db().batch(
     valid.map((item) =>
@@ -459,7 +473,10 @@ async function storedKodikResults(animeId: number) {
   });
   return {
     results,
-    refreshedAt: Math.max(0, ...rows.results.map((row) => Number(row.last_seen_at) || 0)),
+    refreshedAt: Math.max(
+      0,
+      ...rows.results.map((row) => Number(row.last_seen_at) || 0),
+    ),
   };
 }
 
@@ -506,7 +523,7 @@ export async function kodikVoiceovers(anime: Anime): Promise<{
       const sources = new Map(results.map((item) => [String(item.id), item]));
       for (const item of data.results) sources.set(String(item.id), item);
       results = [...sources.values()];
-      await rememberKodikSources(anime.id, results);
+      await rememberKodikSources(anime.id, results, anime);
     }
   } catch (error) {
     if (!results.length) {

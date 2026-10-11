@@ -43,6 +43,89 @@ const kodikSource = stripTypeScriptTypes(
   .replace("from '@/lib/server/core'", `from '${coreUrl}'`);
 const kodik = await import(moduleUrl(kodikSource));
 
+const published = {
+  id: 56733,
+  shikimori_id: 56733,
+  name: 'Magical Explorer',
+  russian: 'Магический исследователь',
+  image: { original: '' },
+  score: '0',
+  kind: 'tv',
+  episodes: 13,
+  aired_on: '2026',
+  is_adult: false,
+};
+const publishedSource = {
+  ...stored,
+  id: 'magical-explorer-voice',
+  shikimori_id: 56733,
+  title: published.russian,
+  episodes_count: 3,
+  material_data: { anime_genres: ['Гарем', 'Этти', 'Комедия'] },
+  seasons: {
+    1: {
+      episodes: {
+        1: 'https://kodikplayer.com/seria/one',
+        3: 'https://kodikplayer.com/seria/three',
+      },
+    },
+  },
+};
+
+test('published anime keeps its matching players despite catalog discovery genre filters', () => {
+  assert.equal(kodik.allowedKodikResult(publishedSource), false);
+  const voices = kodik.normalizeKodikVoiceovers([publishedSource], published);
+  assert.equal(voices.length, 1);
+  assert.equal(voices[0].episodes, 3);
+  assert.deepEqual(voices[0].episode_ordinals, [1, 3]);
+  for (const changed of [
+    { shikimori_id: 21 },
+    { blocked_countries: ['RU'] },
+    { link: 'https://example.com/player' },
+    { camrip: true },
+    { translation: { id: 91, title: 'Invalid', type: 'unknown' } },
+  ])
+    assert.equal(
+      kodik.normalizeKodikVoiceovers(
+        [{ ...publishedSource, ...changed }],
+        published,
+      ).length,
+      0,
+    );
+});
+
+test('published sources are persisted for player routing and subsequent cached requests', async () => {
+  const state = { rows: [], saved: [] };
+  globalThis.kodikPlaybackTestState = state;
+  const persistenceCore = moduleUrl(`
+    export const runtime=()=>({}); export const now=()=>1000;
+    export const db=()=>({
+      prepare(sql) { return { bind(...args) { return { sql,args,all:async()=>({results:globalThis.kodikPlaybackTestState.rows}),run:async()=>({}) }; } }; },
+      async batch(statements) { for(const s of statements) { globalThis.kodikPlaybackTestState.saved.push(s); if(s.sql.includes('INSERT INTO anime_sources')) globalThis.kodikPlaybackTestState.rows.push({payload:s.args[8],last_seen_at:1000}); } }
+    });
+  `);
+  const persisted = await import(
+    moduleUrl(
+      kodikSource.replace(`from '${coreUrl}'`, `from '${persistenceCore}'`),
+    )
+  );
+  await persisted.rememberKodikSources(published.id, [publishedSource]);
+  assert.equal(state.rows.length, 0, 'discovery policy is unchanged');
+  await persisted.rememberKodikSources(
+    published.id,
+    [publishedSource, { ...publishedSource, shikimori_id: 21 }],
+    published,
+  );
+  assert.equal(state.rows.length, 1, 'only the matching source is saved');
+  const result = await persisted.kodikVoiceovers(published);
+  assert.equal(result.status, 'ready');
+  assert.equal(
+    result.voiceovers[0].player_url,
+    '/api/kodik/player?anime_id=56733&translation=91',
+  );
+  delete globalThis.kodikPlaybackTestState;
+});
+
 test('cached Kodik source remains available when only the sync worker has a token', async () => {
   const result = await kodik.kodikVoiceovers({
     id: 21,
@@ -145,7 +228,12 @@ test('Kodik season player is used only for the matching episode link', () => {
   );
   assert.equal(
     kodik.kodikSeasonPlayer(
-      { ...season, seasons: { 1: { ...season.seasons[1], link: 'https://example.com/season/one' } } },
+      {
+        ...season,
+        seasons: {
+          1: { ...season.seasons[1], link: 'https://example.com/season/one' },
+        },
+      },
       1,
       exact,
     ),
