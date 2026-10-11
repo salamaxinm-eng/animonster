@@ -1,5 +1,4 @@
 'use client';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Activity,
@@ -10,17 +9,9 @@ import {
   Crown,
   Home,
   LayoutGrid,
-  Menu,
   Palette,
   Settings,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { sectionHref } from './shared';
 
 export const sections = [
@@ -35,7 +26,7 @@ export const sections = [
   ['settings', 'Настройки', Settings],
 ] as const;
 export type Section = (typeof sections)[number][0];
-const shortcuts = [
+export const shortcuts = [
   ['/vpn', 'VPN'],
   ['/downloads', 'Загрузки'],
   ['/bookmarks', 'Закладки'],
@@ -75,8 +66,6 @@ export function HubNavigation({
   moderator: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  useEffect(() => setOpen(false), [section]);
   return (
     <div className="hub-layout">
       <aside className="hub-sidebar">
@@ -103,33 +92,6 @@ export function HubNavigation({
               Профиль
             </Link>
           )}
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger className="hub-button">
-              <Menu size={20} aria-hidden="true" />
-              Разделы
-            </DialogTrigger>
-            <DialogContent className="hub-drawer">
-              <DialogTitle>Разделы профиля</DialogTitle>
-              <DialogDescription className="hub-sr-only">
-                Выберите раздел личного кабинета.
-              </DialogDescription>
-              <nav aria-label="Разделы кабинета на телефоне">
-                <SectionLinks
-                  section={section}
-                  onNavigate={() => setOpen(false)}
-                />
-                <details className="hub-shortcuts">
-                  <summary>Другие возможности</summary>
-                  {shortcuts.map(([url, label]) => (
-                    <Link href={url} key={url} onClick={() => setOpen(false)}>
-                      {label}
-                    </Link>
-                  ))}
-                  {moderator && <Link href="/admin">Администрирование</Link>}
-                </details>
-              </nav>
-            </DialogContent>
-          </Dialog>
         </div>
         {section !== 'overview' && (
           <header className="hub-page-header">

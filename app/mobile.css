@@ -1115,6 +1115,8 @@
     overflow-y: auto;
     margin-top: 11px;
     overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #48545e #151b21;
   }
 
   .search-theme-options button {
@@ -1526,3 +1528,26 @@
     padding: 18px !important;
   }
 }
+
+/* Profile sections open above the bottom navigation, on every mobile page. */
+.mobile-profile-dropdown {
+  width: min(320px, calc(100vw - 24px));
+  max-height: min(var(--available-height), 72dvh);
+  padding: 8px;
+  background: #151b21;
+  color: #e9eef2;
+  border: 1px solid #283139;
+  border-radius: 16px;
+  box-shadow: 0 16px 48px #0006;
+  overscroll-behavior: contain;
+}
+.isolate:has(> .mobile-profile-dropdown) { z-index: 1100; }
+.mobile-profile-dropdown [data-slot='dropdown-menu-label'] { padding: 12px 10px; font-size: 13px; color: #aeb9c3; }
+.mobile-profile-dropdown [data-slot='dropdown-menu-item'] { min-height: 44px; padding: 10px 12px; gap: 12px; font-size: 14px; border-radius: 10px; color: #d0d8df; cursor: pointer; }
+.mobile-profile-dropdown [data-slot='dropdown-menu-item'].selected { background: #b5ed4914; color: #b5ed49; font-weight: 600; box-shadow: inset 3px 0 #b5ed49; }
+.mobile-profile-dropdown [data-slot='dropdown-menu-item'][data-highlighted],
+.mobile-profile-dropdown [data-slot='dropdown-menu-item']:focus-visible { background: #283139; outline: 2px solid #b5ed49; outline-offset: -2px; }
+.mobile-profile-dropdown .account-divider { margin-top: 8px; border-top: 1px solid #283139; }
+.mobile-profile-dropdown [data-slot='dropdown-menu-separator'] { background: #283139; margin: 8px 0; }
+@media (prefers-reduced-motion: reduce) { .mobile-profile-dropdown { animation: none; transition: none; } }
+

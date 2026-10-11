@@ -10,6 +10,7 @@ import {
   Search,
   UserRound,
 } from 'lucide-react';
+import { MobileProfileMenu } from '@/components/community/mobile-profile-menu';
 import { BuySubscription } from '@/components/community/buy-subscription';
 import { useCommunity } from '@/components/community/context';
 
@@ -161,6 +162,8 @@ function MobileNavigationContent() {
               </button>
             );
           }
+          if (item.account)
+            return <MobileProfileMenu key={item.label} active={active} />;
           return (
             <a
               key={item.label}
