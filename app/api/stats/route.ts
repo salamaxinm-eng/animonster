@@ -52,7 +52,7 @@ export async function GET(r: Request) {
       })),
     ].map((a) => ({ ...a, unlocked: a.current >= a.target }));
     const visible = !!owner.collection_public || u?.id === id;
-    const history = visible
+    const history = visible && new URL(r.url).searchParams.get('summary') !== '1'
       ? (
           await db()
             .prepare(

@@ -1,21 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Bookmark,
   Ghost,
   Home,
   LayoutGrid,
   Search,
-  Shield,
   UserRound,
 } from 'lucide-react';
 import { BuySubscription } from '@/components/community/buy-subscription';
-import {
-  AccountMenu,
-  useCommunity,
-} from '@/components/community/context';
+import { useCommunity } from '@/components/community/context';
 
 type MobileNavItem = {
   href: string;
@@ -33,18 +29,6 @@ const items: MobileNavItem[] = [
     active: (path, hash) => path === '/' && hash !== '#catalog',
   },
   {
-    href: '/bookmarks',
-    label: 'Закладки',
-    icon: Bookmark,
-    active: (path) => path === '/bookmarks',
-  },
-  {
-    href: '/vpn',
-    label: 'VPN',
-    icon: Shield,
-    active: (path) => path === '/vpn',
-  },
-  {
     href: '/catalog',
     label: 'Каталог',
     icon: LayoutGrid,
@@ -58,8 +42,14 @@ const items: MobileNavItem[] = [
       (path === '/' && hash === '#catalog'),
   },
   {
+    href: '/profile?section=list',
+    label: 'Мой список',
+    icon: Bookmark,
+    active: (path) => path === '/profile?section=list',
+  },
+  {
     href: '/profile',
-    label: 'Аккаунт',
+    label: 'Профиль',
     icon: UserRound,
     active: (path) =>
       path === '/profile' || path.startsWith('/members/') || path === '/pins',
@@ -68,7 +58,22 @@ const items: MobileNavItem[] = [
 ];
 
 export function MobileNavigation() {
+  return (
+    <Suspense fallback={null}>
+      <MobileNavigationContent />
+    </Suspense>
+  );
+}
+
+function MobileNavigationContent() {
   const pathname = usePathname();
+  const params = useSearchParams();
+  const activePath =
+    pathname === '/profile' &&
+    (params.get('section') === 'list' ||
+      (!params.get('section') && params.get('tab') === 'collection'))
+      ? '/profile?section=list'
+      : pathname;
   const community = useCommunity();
   const [hash, setHash] = useState('');
   const sectionTitle =
@@ -78,11 +83,11 @@ export function MobileNavigation() {
         ? 'VPN'
         : pathname === '/statistics'
           ? 'Статистика'
-        : pathname.startsWith('/downloads')
-          ? 'Загрузки'
-        : pathname === '/catalog' || pathname === '/genres'
-          ? 'Каталог'
-          : '';
+          : pathname.startsWith('/downloads')
+            ? 'Загрузки'
+            : pathname === '/catalog' || pathname === '/genres'
+              ? 'Каталог'
+              : '';
 
   useEffect(() => {
     const update = () => setHash(location.hash);
@@ -141,7 +146,9 @@ export function MobileNavigation() {
       <nav className="mobile-bottom-nav" aria-label="Навигация">
         {items.map((item) => {
           const Icon = item.icon;
-          const active = item.active(pathname, hash);
+          const active =
+            item.active(activePath, hash) &&
+            !(item.account && activePath === '/profile?section=list');
           if (item.account && !community.user) {
             return (
               <button
@@ -152,11 +159,6 @@ export function MobileNavigation() {
                 <Icon aria-hidden="true" />
                 <span>{item.label}</span>
               </button>
-            );
-          }
-          if (item.account && community.user) {
-            return (
-              <AccountMenu key={item.label} compact active={active} />
             );
           }
           return (

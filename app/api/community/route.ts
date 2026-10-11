@@ -61,8 +61,9 @@ export async function GET(r: Request) {
         .first<User>();
       if (!profile) throw new ApiError('Профиль не найден', 404);
       const own = u?.id === id;
+      const compact = p.get('view') === 'hub';
       const entries =
-        own || profile.collection_public
+        !compact && (own || profile.collection_public)
           ? (
               await db()
                 .prepare(
@@ -84,7 +85,7 @@ export async function GET(r: Request) {
             ).results
           : [];
       const memberships =
-        own || profile.collection_public
+        !compact && (own || profile.collection_public)
           ? (
               await db()
                 .prepare(
@@ -146,6 +147,18 @@ export async function GET(r: Request) {
         own,
         blocked: u ? await blocked(u.id, id) : false,
       });
+    }
+    if (action === 'profile_list') {
+      const id = p.get('id');
+      const owner = await db().prepare('SELECT collection_public FROM users WHERE id=?').bind(id).first<{collection_public:number}>();
+      if (!owner) throw new ApiError('Профиль не найден',404);
+      if (u?.id !== id && !owner.collection_public) throw new ApiError('Список скрыт владельцем профиля',403);
+      const status=p.get('status')||'all';
+      const page=Math.floor(Math.max(0,Math.min(10000,Number(p.get('page'))||0)));
+      const clause=status.startsWith('list:')?'AND EXISTS(SELECT 1 FROM collection_list_items i JOIN collection_lists l ON l.id=i.list_id WHERE l.user_id=c.user_id AND l.id=? AND i.anime_id=c.anime_id)':status==='favorites'?'AND c.favorite=1':status==='all'?'':'AND c.status=?';
+      const params=[id,...(status!=='all'&&status!=='favorites'?[status.startsWith('list:')?status.slice(5):status]:[]),`%${String(p.get('q')||'').trim().slice(0,80).toLocaleLowerCase('ru')}%`,page*40];
+      const rows=await db().prepare(`SELECT c.anime_id,c.title,c.image,c.status,c.rating,c.favorite FROM collection c WHERE c.user_id=? ${clause} AND lower(c.title) LIKE ? ORDER BY c.favorite DESC,c.title,c.anime_id LIMIT 41 OFFSET ?`).bind(...params).all();
+      return json({items:rows.results.slice(0,40),hasMore:rows.results.length>40});
     }
     if (action === 'comments') {
       const scope = p.get('scope') || '';

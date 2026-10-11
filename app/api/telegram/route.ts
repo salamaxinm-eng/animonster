@@ -31,6 +31,7 @@ export async function GET(request: Request) {
     ]);
     const access = await plusEntitlements(user.id);
     return json({
+      ready: !!runtime().TELEGRAM_BOT_USERNAME && !!runtime().TELEGRAM_BOT_TOKEN,
       account,
       subscriptions: subscriptions.results,
       limit: access.telegramTitleLimit,

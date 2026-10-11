@@ -368,7 +368,7 @@ export function AccountMenu({
         </DropdownMenuItem>
         <DropdownMenuItem
           className="account-dropdown-item"
-          onClick={() => openPage('/profile?tab=settings#profile-settings')}
+          onClick={() => openPage('/profile?section=settings')}
         >
           <Settings />
           Настройки
@@ -397,7 +397,7 @@ export function AccountMenu({
         <DropdownMenuItem
           className="account-dropdown-item"
           onClick={() =>
-            openPage('/profile?tab=settings#appearance-settings')
+            openPage('/profile?section=appearance')
           }
         >
           <Palette />
@@ -405,7 +405,7 @@ export function AccountMenu({
         </DropdownMenuItem>
         <DropdownMenuItem
           className="account-dropdown-item"
-          onClick={() => openPage('/profile?tab=notifications')}
+          onClick={() => openPage('/profile?section=settings&settings=notifications')}
         >
           <Bell />
           Уведомления
@@ -433,7 +433,7 @@ export function AccountMenu({
     </DropdownMenu>
   );
 }
-export function AccountNav() {
+export function AccountNav({ minimal = false }: { minimal?: boolean }) {
   const c = useCommunity();
   const [activeParty, setActiveParty] = useState<{
     code: string;
@@ -461,9 +461,9 @@ export function AccountNav() {
           <UsersRound size={16} /> Вернуться в комнату
         </a>
       )}
-      <a href="/founders" className="referral-nav-button">FOUNDING 10</a>
-      <BuySubscription className="subscription-nav" />
-      {c.moderator && <a href="/admin">Админка</a>}
+      {!minimal && <a href="/founders" className="referral-nav-button">FOUNDING 10</a>}
+      {!minimal && <BuySubscription className="subscription-nav" />}
+      {!minimal && c.moderator && <a href="/admin">Админка</a>}
       {c.user ? (
         <>
           <AccountMenu />
@@ -479,7 +479,7 @@ export function AccountNav() {
     </div>
   );
 }
-export function CommunityHeader() {
+export function CommunityHeader({ account = false }: { account?: boolean }) {
   const community = useCommunity();
   return (
     <header className="community-header">
@@ -490,6 +490,7 @@ export function CommunityHeader() {
         </span>
       </a>
       <nav className="community-links" aria-label="Основные разделы">
+        {account ? <><a className="back-catalog" href="/">Главная</a><a className="back-catalog" href="/catalog">Каталог</a><a className="back-catalog" href="/profile?section=list">Мой список</a></> : <>
         <a className="back-catalog" href="/#catalog">
           <ArrowLeft size={16} /> Каталог
         </a>
@@ -505,9 +506,10 @@ export function CommunityHeader() {
         <a className="back-catalog" href="/downloads">
           Загрузки
         </a>
+        </>}
       </nav>
       <GlobalSearch />
-      <AccountNav />
+      <AccountNav minimal={account} />
       {!community.user && community.supportUrl && (
         <a
           className="support-link"
