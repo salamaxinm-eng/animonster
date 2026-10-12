@@ -1489,10 +1489,6 @@
   color: var(--profile-accent);
   margin-top: 20px;
 }
-.profile-sidebar a.outline-button {
-  margin-top: 14px;
-  text-decoration: none;
-}
 .profile-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -5378,4 +5374,9 @@ a.franchise-card:hover {
     grid-template-columns: 1fr 1fr;
     gap: 18px;
   }
+}
+
+.profile-sidebar a.outline-button {
+  margin-top: 14px;
+  text-decoration: none;
 }

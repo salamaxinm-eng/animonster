@@ -87,7 +87,7 @@ export async function vpnOverview(userId: string) {
 
 export async function addVpnDevice(userId: string, rawName: unknown) {
   const name = String(rawName || '').trim().replace(/\s+/g, ' ');
-  if (!name || name.length > 40 || /\p{Cc}/u.test(name))
+  if (!name || name.length > 40 || /[\x00-\x1f\x7f]/.test(name))
     throw new ApiError('Укажите название устройства до 40 символов');
   key();
   if (!runtime().VPN_AGENT_TOKEN)
