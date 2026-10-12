@@ -24,7 +24,11 @@ void test('real database: watch ledger, concurrent players, claims, late payment
  for(const file of (await readdir('migrations/postgres')).filter(f=>f.endsWith('.sql')).sort())await engine.exec(await readFile('migrations/postgres/'+file,'utf8'));
  const finale=(await engine.query("SELECT cosmetic_id,level,track FROM pass_rewards WHERE cosmetic_id IN ('pin:pass-oni','tag:pass-oni','frame:pass-oni','background:pass-oni')")).rows;
  assert.equal(finale.length,4);assert.ok(finale.every(r=>r.level===40&&r.track==='premium'));
- for(const name of ['pin','tag','frame']){const stats=await sharp('public/rewards/pass/oni-final-'+name+'.png').stats();assert.equal(stats.channels.at(-1).min,0)}
+ const tags=(await engine.query("SELECT c.name,c.image,r.name AS reward_name,r.preview FROM cosmetics c JOIN pass_rewards r ON r.cosmetic_id=c.id WHERE r.season_id='oni-awakening' AND c.kind='tag' ORDER BY c.id")).rows;
+ const russianOrder=(a,b)=>a.localeCompare(b,'ru');
+ assert.deepEqual(tags.map(t=>t.name).sort(russianOrder),['БАНКАЙ','ВОЛЯ ОГНЯ','НАКАМА НАВСЕГДА','ПРОБУЖДЕНИЕ ОНИ','ЧЕТЫРЕ МИРА','ЧЁРНЫЕ БЫКИ'].sort(russianOrder));
+ for(const tag of tags){assert.equal(tag.name,tag.reward_name);assert.equal(tag.image,tag.preview);assert.match(tag.image,/-ru\.png$/);const stats=await sharp('public'+tag.image).stats();assert.equal(stats.channels.at(-1).min,0)}
+ for(const name of ['pin','frame']){const stats=await sharp('public/rewards/pass/oni-final-'+name+'.png').stats();assert.equal(stats.channels.at(-1).min,0)}
  const start=globalThis.passTestTime,end=start+56*86400000;
  await engine.query("INSERT INTO users(id,identity,nick,created_at) VALUES ('tester','test:pass','Tester',0)");
  await engine.query("UPDATE pass_seasons SET starts_at=$1,ends_at=$2,timezone='UTC',tasks=$3,genres='[\"Action\",\"Adventure\"]' WHERE id='oni-awakening'",[start,end,JSON.stringify(shared.PASS_TASKS)]);

@@ -9,4 +9,4 @@ Backgrounds retain the original frames. Pins are circular crops of these frames 
 
 Text tags and frame outlines are made from editable vector typography and simple strokes; no generated illustration.
 
-The level 40 premium pin is a four-frame circular collage. The premium background is a four-panel crop of the same stills. ONI AWAKENED and FOUR WORLDS are editable SVG-rendered text badges. The circular final frame is a transparent vector ring. Source files are generated deterministically by `scripts/create-pass-finale.mjs`.
+The level 40 premium pin is a four-frame circular collage. The premium background is a four-panel crop of the same stills. ПРОБУЖДЕНИЕ ОНИ and ЧЕТЫРЕ МИРА are editable SVG-rendered text badges. The circular final frame is a transparent vector ring. Source files are generated deterministically by `scripts/create-pass-finale.mjs`.
