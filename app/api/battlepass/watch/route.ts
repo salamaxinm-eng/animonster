@@ -1,10 +1,12 @@
 import { ApiError, body, cookie, db, fail, hash, json, now, premium, requireUser, sameOrigin } from '@/lib/server/core';
 import { recordPassWatch, startPassWatch } from '@/lib/server/battlepass';
+import { requireBattlepassAccess } from '@/lib/server/battlepass-access';
 import { getAnime } from '@/lib/server/library';
 import { cachedEpisodeDuration, kodikSourceHasEpisode, kodikTranslationId } from '@/lib/watch-progress';
 export async function POST(r: Request) {
   try {
     sameOrigin(r); const user = await requireUser(r), input = await body(r);
+    requireBattlepassAccess(user);
     const authHash = await hash(cookie(r, 'am_session') || `preview:${user.id}`);
     if (input.action !== 'start') return json(await recordPassWatch(user.id, authHash, String(input.token), Number(input.seq), input.samples));
     const anime = Number(input.anime), episode = Number(input.episode);

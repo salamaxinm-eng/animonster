@@ -13,6 +13,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { sectionHref } from './shared';
+import { usePassAccess } from '@/components/pass-cosmetics';
 
 export const sections = [
   ['overview', 'Обзор', Home],
@@ -67,6 +68,7 @@ export function HubNavigation({
   moderator: boolean;
   children: React.ReactNode;
 }) {
+  const passVisible = usePassAccess();
   return (
     <div className="hub-layout">
       <aside className="hub-sidebar">
@@ -74,7 +76,7 @@ export function HubNavigation({
           <SectionLinks section={section} />
           <details className="hub-shortcuts">
             <summary>Другие возможности</summary>
-            {shortcuts.map(([url, label]) => (
+            {shortcuts.filter(([url]) => url !== '/battlepass' || passVisible).map(([url, label]) => (
               <Link key={url} href={url}>
                 {label}
               </Link>

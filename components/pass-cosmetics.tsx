@@ -2,12 +2,26 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 type Item = { id: string; slug: string; kind: string; name: string; image: string; rarity: string };
 const Catalog = createContext<Item[]>([]);
+const Access = createContext(false);
 export function usePassCosmetic(slug?: string | null) { return useContext(Catalog).find((item) => item.slug === slug); }
+export function usePassAccess() { return useContext(Access); }
 export function PassCosmeticsProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<Item[]>([]);
-  useEffect(() => { void fetch('/api/battlepass/catalog').then((r) => r.ok ? r.json() : null).then((v) => setItems(v?.cosmetics || [])).catch(() => {}); }, []);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    void fetch('/api/battlepass/access', { cache: 'no-store' })
+      .then((r) => r.ok ? r.json() : null)
+      .then(async (access) => {
+        if (!mounted || !access?.visible) return;
+        setVisible(true);
+        const response = await fetch('/api/battlepass/catalog');
+        if (mounted && response.ok) setItems((await response.json()).cosmetics || []);
+      }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
   const frames = items.filter((i) => i.kind === 'frame' && /^[a-z0-9-]+$/.test(i.slug) && /^\/api\/battlepass\/assets\/[a-f0-9-]{36}$/.test(i.image));
-  return <Catalog.Provider value={items}>
+  return <Access.Provider value={visible}><Catalog.Provider value={items}>
     <style>{`
       .pass-pin{display:inline-flex;transform-origin:center}
       .pass-pin.pass-rarity-rare:hover{animation:pass-pin-rare .9s ease-out}
@@ -27,5 +41,5 @@ export function PassCosmeticsProvider({ children }: { children: ReactNode }) {
     `}</style>
     <style>{frames.map((f) => `.profile-frame-${f.slug}>.user-avatar::after{content:"";background:url("${f.image}") center/contain no-repeat;border:0!important;border-radius:0;inset:-16%;animation:${f.rarity === 'legendary' ? 'pass-frame-legendary 5s ease-in-out infinite' : f.rarity === 'epic' ? 'pass-frame-epic 6s ease-in-out infinite' : 'none'};filter:none!important;pointer-events:none}`).join('\n')}</style>
     {children}
-  </Catalog.Provider>;
+  </Catalog.Provider></Access.Provider>;
 }

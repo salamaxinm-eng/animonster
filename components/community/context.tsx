@@ -41,7 +41,7 @@ import {
 } from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
 import { earnedPins } from '@/lib/earned-pins';
-import { PassCosmeticsProvider, usePassCosmetic } from '@/components/pass-cosmetics';
+import { PassCosmeticsProvider, usePassAccess, usePassCosmetic } from '@/components/pass-cosmetics';
 export async function api(action: string, data?: Record<string, unknown>) {
   const r = await fetch(
     data ? '/api/community' : '/api/community?action=' + action,
@@ -486,6 +486,7 @@ export function AccountNav({ minimal = false }: { minimal?: boolean }) {
 }
 export function CommunityHeader({ account = false }: { account?: boolean }) {
   const community = useCommunity();
+  const passVisible = usePassAccess();
   return (
     <header className="community-header">
       <a href="/" className="brand">
@@ -495,7 +496,7 @@ export function CommunityHeader({ account = false }: { account?: boolean }) {
         </span>
       </a>
       <nav className="community-links" aria-label="Основные разделы">
-        <a className="back-catalog" href="/battlepass">AniMonster Pass</a>
+        {passVisible && <a className="back-catalog" href="/battlepass">AniMonster Pass</a>}
         {account ? <><a className="back-catalog" href="/">Главная</a><a className="back-catalog" href="/catalog">Каталог</a><a className="back-catalog" href="/profile?section=list">Мой список</a></> : <>
         <a className="back-catalog" href="/#catalog">
           <ArrowLeft size={16} /> Каталог

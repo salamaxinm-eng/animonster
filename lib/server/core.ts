@@ -7,6 +7,7 @@ export type Runtime = {
   ADMIN_VK_USER_ID?: string;
   SITE_URL?: string;
   OWNER_PREVIEW?: string;
+  BATTLEPASS_PREVIEW_USER_ID?: string;
   PAYMENTS_ENABLED?: string;
   PLATEGA_MERCHANT_ID?: string;
   PLATEGA_SECRET_KEY?: string;

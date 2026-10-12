@@ -1,7 +1,8 @@
 import { ApiError, body, db, fail, json, requireUser, sameOrigin } from '@/lib/server/core';
 import { findSeason, eligiblePassGenres, passOverview } from '@/lib/server/battlepass';
 import { adjustPassXp, passReadiness, publishPass, savePassDraft, savePassReward, uploadPassItem, reconcilePassPayment } from '@/lib/server/battlepass-admin';
-async function admin(r: Request) { const u = await requireUser(r); if (u.role !== 'admin') throw new ApiError('Недоступно', 403); return u; }
+import { requireBattlepassAccess } from '@/lib/server/battlepass-access';
+async function admin(r: Request) { const u = await requireUser(r); requireBattlepassAccess(u); if (u.role !== 'admin') throw new ApiError('Недоступно', 403); return u; }
 export async function GET(r: Request) {
   try {
     await admin(r); const params = new URL(r.url).searchParams, id = params.get('season') || 'oni-awakening';

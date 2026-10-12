@@ -102,6 +102,18 @@
     backdrop-filter: blur(20px);
   }
 
+  .mobile-bottom-nav-pass {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .mobile-bottom-nav-pass a[href="/battlepass"] {
+    color: #d49a68;
+  }
+
+  .mobile-bottom-nav-pass a[href="/battlepass"].active {
+    color: #f0bd8b;
+  }
+
   .mobile-bottom-nav a,
   .mobile-bottom-nav button {
     min-width: 0;

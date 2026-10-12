@@ -1,9 +1,11 @@
 import { ApiError, body, db, fail, json, requireUser, runtime, sameOrigin } from '@/lib/server/core';
 import { paymentFetch, verifyPayment } from '@/lib/server/billing';
 import { reservePassOrder } from '@/lib/server/battlepass-payment';
+import { requireBattlepassAccess } from '@/lib/server/battlepass-access';
 export async function POST(r: Request) {
   try {
     sameOrigin(r); const user = await requireUser(r), input = await body(r), season = String(input.season || '');
+    requireBattlepassAccess(user);
     if (user.identity.startsWith('preview:')) throw new ApiError('Для покупки войдите в обычный аккаунт', 403);
     if (input.action === 'check') {
       const order = await db().prepare("SELECT provider_id FROM orders WHERE user_id=? AND plan='battlepass' AND pass_season_id=? AND provider_id IS NOT NULL ORDER BY created_at DESC LIMIT 1").bind(user.id, season).first<{ provider_id: string }>();
