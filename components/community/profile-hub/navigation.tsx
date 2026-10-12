@@ -27,6 +27,7 @@ export const sections = [
 ] as const;
 export type Section = (typeof sections)[number][0];
 export const shortcuts = [
+  ['/battlepass', 'AniMonster Pass'],
   ['/vpn', 'VPN'],
   ['/downloads', 'Загрузки'],
   ['/bookmarks', 'Закладки'],

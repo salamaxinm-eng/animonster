@@ -95,7 +95,7 @@ test('fundraising migration, checkout, provider verification and permanent inven
     .replace("'./core'", JSON.stringify(coreUrl))
     .replace("'./supporters'", JSON.stringify(supportersUrl))
     .replace("'./founders'", JSON.stringify(foundersUrl));
-  const billingUrl = url(billingSource);
+  const billingUrl = url(billingSource.replace(/import \{ confirmPassPayment[^\n]+\n/, 'const confirmPassPayment=async()=>{}; const revokePassPayment=async()=>{};').replace(/import \{ confirmBundlePayment[^\n]+\n/, 'const confirmBundlePayment=async()=>{}; const confirmVpnPayment=async()=>{}; const revokeBundlePayment=async()=>{}; const revokeVpnPayment=async()=>{};'));
   const billing = await import(billingUrl);
   const fundraising = await import(fundraiserUrl);
   const cosmetics = await load('lib/server/cosmetics.ts', {
@@ -107,6 +107,9 @@ test('fundraising migration, checkout, provider verification and permanent inven
     '@/lib/server/fundraising': fundraiserUrl,
     '@/lib/subscription-plans': plansUrl,
     '@/lib/fundraising': sharedUrl,
+    '@/lib/vpn-plan': url("export const VPN_PLAN={id:'vpn'};export const VPN_PLUS_PLAN={id:'vpn_plus'};"),
+    '@/lib/server/vpn': url('export const vpnBundlePurchaseAvailable=()=>false;export const vpnPurchaseAvailable=()=>false;'),
+    '@/lib/server/payment-promotions': url('export const reservePromotion=async()=>null;'),
   });
   const cosmeticUrl = url(
     stripTypeScriptTypes(

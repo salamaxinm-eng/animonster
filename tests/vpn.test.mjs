@@ -26,11 +26,12 @@ function database(engine) {
   return client(engine);
 }
 
-test('VPN devices are limited, issued per user, revoked and expired', async () => {
+void test('VPN devices are limited, issued per user, revoked and expired', async () => {
   const engine = new PGlite();
   await engine.exec('CREATE TABLE users (id text PRIMARY KEY, deleted_at bigint)');
   await engine.exec("INSERT INTO users(id) VALUES ('one'),('two')");
   await engine.exec(await readFile('migrations/postgres/0041_vpn_access.sql', 'utf8'));
+  await engine.exec("CREATE TABLE vpn_entitlements(id text PRIMARY KEY,user_id text NOT NULL REFERENCES users(id),source text NOT NULL,order_id text,awarded_at bigint NOT NULL,duration_ms bigint NOT NULL,revoked_at bigint)");
   globalThis.vpnTestDb = database(engine);
   globalThis.vpnTestRuntime = {
     VPN_CONFIG_KEY: randomBytes(32).toString('base64'),
@@ -48,9 +49,10 @@ test('VPN devices are limited, issued per user, revoked and expired', async () =
     }
   `);
   const source = stripTypeScriptTypes(await readFile('lib/server/vpn.ts', 'utf8'))
-    .replace("'./core'", JSON.stringify(core));
+    .replace("'./core'", JSON.stringify(core))
+    .replace("'../vpn-plan'", JSON.stringify(moduleUrl("export const VPN_PLAN={id:'vpn',durationDays:30};export const VPN_PLUS_PLAN={id:'vpn_plus',durationDays:30};")));
   const vpn = await import(moduleUrl(source));
-  const expires = (await vpn.grantPilotVpnDays('one', 1)).expiresAt;
+  await vpn.grantPilotVpnDays('one', 1);
 
   await assert.rejects(vpn.addVpnDevice('two', 'Phone'), /подписка/);
   const first = await vpn.addVpnDevice('one', 'Phone');

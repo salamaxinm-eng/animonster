@@ -6,6 +6,8 @@ import test from 'node:test';
 const source = (
   await readFile(new URL('../lib/server/billing.ts', import.meta.url), 'utf8')
 )
+  .replace(/import \{ confirmPassPayment[^\n]+\n/, 'const confirmPassPayment=async()=>{}; const revokePassPayment=async()=>{};')
+  .replace(/import \{ confirmBundlePayment[^\n]+\n/, 'const confirmBundlePayment=async()=>{}; const confirmVpnPayment=async()=>{}; const revokeBundlePayment=async()=>{}; const revokeVpnPayment=async()=>{};')
   .replace(
     "import { db, runtime, ApiError, now } from './core';",
     'const db = () => { throw new Error("not used"); }; const runtime = () => ({}); class ApiError extends Error {}; const now = () => 0;',

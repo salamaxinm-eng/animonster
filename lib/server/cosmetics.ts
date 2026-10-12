@@ -9,6 +9,7 @@ export type CosmeticAccess =
   | 'purchase'
   | 'admin'
   | 'founder'
+  | 'battlepass'
   | 'fundraising';
 
 export type Cosmetic = {
@@ -78,7 +79,9 @@ export async function cosmeticsCatalog(userId?: string) {
       source: grant?.source || item.access_type,
       unlocked_at: grant?.unlocked_at || null,
       condition:
-        item.access_type === 'fundraising'
+        item.access_type === 'battlepass'
+          ? 'Награда сезонного AniMonster Pass · навсегда'
+          : item.access_type === 'fundraising'
           ? item.kind === 'pin' && item.slug === 'player-supporter'
             ? 'Поддержка своего плеера · донат от 150 ₽ или Plus'
             : item.kind === 'pin' && item.slug === 'development-supporter'
