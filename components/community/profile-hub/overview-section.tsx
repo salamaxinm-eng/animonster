@@ -14,6 +14,7 @@ import {
 import { ProfileIdentity } from './profile-identity';
 import { Comments } from '../comments';
 import { StreakDisplay } from '../streak-display';
+import { BattlepassProgress } from '@/components/battlepass-progress';
 
 type Overview = {
   summary: {
@@ -39,6 +40,7 @@ export function OverviewSection({
   return (
     <>
       <ProfileIdentity user={user} own />
+      <BattlepassProgress />
       <ResourceState {...resource} />
       {resource.data && (
         <>

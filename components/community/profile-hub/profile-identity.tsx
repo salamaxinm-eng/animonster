@@ -43,6 +43,7 @@ export function ProfileIdentity({
         <div>
           <div className="hub-name">
             <Heading>{user.nick}</Heading>
+            {user.tag?.startsWith('pass-worlds-') && <UserTag id={user.tag} />}
             <Pin id={user.pin} />
             {!!user.premium_until && (
               <span className="hub-plus">
@@ -50,7 +51,7 @@ export function ProfileIdentity({
               </span>
             )}
           </div>
-          <UserTag id={user.tag} />
+          {!user.tag?.startsWith('pass-worlds-') && <UserTag id={user.tag} />}
           <p className="hub-bio">{user.bio || 'Описание пока не добавлено.'}</p>
           {user.founder_number && (
             <small className="hub-founder">

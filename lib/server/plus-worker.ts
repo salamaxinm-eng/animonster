@@ -7,6 +7,7 @@ import {
 import { liberty, normalize, type Release } from './anime';
 import { queueEpisodeNotifications } from './episode-notifications';
 import { cleanupWatchParties } from './watch-parties';
+import { settlePasses } from './battlepass';
 
 async function telegram(chatId: number, text: string) {
   const response = await fetch(
@@ -26,6 +27,7 @@ async function telegram(chatId: number, text: string) {
 }
 
 export async function runPlusWorker(limit = 20) {
+  const battlepass = await settlePasses(50);
   const partyCleanup = await cleanupWatchParties();
   if (!(await earlyAccessInitialized())) await bootstrapEpisodes();
   const [subscribedRows, recentRows] = await Promise.all([
@@ -158,5 +160,6 @@ export async function runPlusWorker(limit = 20) {
     sent,
     failed,
     watch_parties: partyCleanup,
+    battlepass,
   };
 }

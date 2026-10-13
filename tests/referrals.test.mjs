@@ -52,7 +52,7 @@ const { evaluateReferralQualification } = await import(
 test('three completed episodes qualify a referral and grant rewards once', async () => {
   const engine = new PGlite({ extensions: { pg_trgm } });
   globalThis.referralTestNow = Date.now();
-  globalThis.referralTestDatabase = {
+  const adapter = (runner) => ({
     prepare(source) {
       let values = [];
       let index = 0;
@@ -63,17 +63,19 @@ test('three completed episodes qualify a referral and grant rewards once', async
           return this;
         },
         async first() {
-          return (await engine.query(query, values)).rows[0] ?? null;
+          return (await runner.query(query, values)).rows[0] ?? null;
         },
         async all() {
-          return { results: (await engine.query(query, values)).rows };
+          return { results: (await runner.query(query, values)).rows };
         },
         async run() {
-          return engine.query(query, values);
+          return runner.query(query, values);
         },
       };
     },
-  };
+    transaction(fn) { return runner.transaction(tx => fn(adapter(tx))); },
+  });
+  globalThis.referralTestDatabase = adapter(engine);
 
   try {
     const migrations = (await readdir('migrations/postgres'))

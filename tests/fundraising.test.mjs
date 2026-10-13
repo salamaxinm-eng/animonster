@@ -94,11 +94,8 @@ test('fundraising migration, checkout, provider verification and permanent inven
   )
     .replace("'./core'", JSON.stringify(coreUrl))
     .replace("'./supporters'", JSON.stringify(supportersUrl))
-    .replace("'./founders'", JSON.stringify(foundersUrl))
-    .replace("'./vpn'", JSON.stringify(url(
-      'export const confirmVpnPayment=async()=>{}; export const revokeVpnPayment=async()=>{}; export const confirmBundlePayment=async()=>{}; export const revokeBundlePayment=async()=>{};',
-    )));
-  const billingUrl = url(billingSource);
+    .replace("'./founders'", JSON.stringify(foundersUrl));
+  const billingUrl = url(billingSource.replace(/import \{ confirmPassPayment[^\n]+\n/, 'const confirmPassPayment=async()=>{}; const revokePassPayment=async()=>{};').replace(/import \{ confirmBundlePayment[^\n]+\n/, 'const confirmBundlePayment=async()=>{}; const confirmVpnPayment=async()=>{}; const revokeBundlePayment=async()=>{}; const revokeVpnPayment=async()=>{};'));
   const billing = await import(billingUrl);
   const fundraising = await import(fundraiserUrl);
   const cosmetics = await load('lib/server/cosmetics.ts', {
@@ -110,9 +107,9 @@ test('fundraising migration, checkout, provider verification and permanent inven
     '@/lib/server/fundraising': fundraiserUrl,
     '@/lib/subscription-plans': plansUrl,
     '@/lib/fundraising': sharedUrl,
-    '@/lib/vpn-plan': url("export const VPN_PLAN={id:'vpn',days:30,price:'149.00'}; export const VPN_PLUS_PLAN={id:'vpn_plus',days:30,price:'199.00'};"),
-    '@/lib/server/vpn': url('export const vpnPurchaseAvailable=()=>false; export const vpnBundlePurchaseAvailable=()=>false;'),
-    '@/lib/server/payment-promotions': url('export async function reservePromotion(){throw new Error("Promo is unavailable for fundraising")}'),
+    '@/lib/vpn-plan': url("export const VPN_PLAN={id:'vpn'};export const VPN_PLUS_PLAN={id:'vpn_plus'};"),
+    '@/lib/server/vpn': url('export const vpnBundlePurchaseAvailable=()=>false;export const vpnPurchaseAvailable=()=>false;'),
+    '@/lib/server/payment-promotions': url('export const reservePromotion=async()=>null;'),
   });
   const cosmeticUrl = url(
     stripTypeScriptTypes(

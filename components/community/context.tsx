@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
 import { earnedPins } from '@/lib/earned-pins';
+import { PassCosmeticsProvider, usePassAccess, usePassCosmetic } from '@/components/pass-cosmetics';
 export async function api(action: string, data?: Record<string, unknown>) {
   const r = await fetch(
     data ? '/api/community' : '/api/community?action=' + action,
@@ -161,7 +162,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         login: () => setShowLogin(true),
       }}
     >
-      {children}
+      <PassCosmeticsProvider>{children}</PassCosmeticsProvider>
       <Dialog open={showLogin} onOpenChange={setShowLogin}>
         <DialogContent className="sign-dialog">
           <Ghost size={40} color="#b4ed50" />
@@ -212,6 +213,8 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   );
 }
 export function Pin({ id }: { id: string | null }) {
+  const pass = usePassCosmetic(id);
+  if (pass?.image) return <span className={`anime-pin pass-pin pass-rarity-${pass.rarity}`} title={pass.name}><img src={pass.image} alt={pass.name} /></span>;
   const founder = /^founder-(00[1-9]|010)$/.exec(id || '');
   if (founder) return <span className="anime-pin founder-pin" title="Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽." aria-label={`Founder #${founder[1]}`}>
     <img src={`/rewards/founder/${founder[0]}.svg`} alt="" />
@@ -282,6 +285,8 @@ const tagLabels: Record<string, string> = {
   recruiter: 'Вербовщик',
 };
 export function UserTag({ id }: { id?: string | null }) {
+  const pass = usePassCosmetic(id);
+  if (pass?.image) return <span className={`user-tag user-tag-pass ${pass.slug.startsWith('pass-worlds-') ? 'user-tag-pass-art' : ''} pass-rarity-${pass.rarity}`} title={pass.name}>{pass.slug.startsWith('pass-') && !pass.slug.startsWith('pass-worlds-') ? pass.name : <img src={pass.image} alt={pass.name} style={{ maxWidth: 150, maxHeight: 42, objectFit: 'contain' }} />}</span>;
   if (!id) return null;
   if (id === 'support-oni-vip' || id === 'support-oni-player') return (
     <span className="user-tag user-tag-support-oni-vip" title="Oni VIP · За поддержку AniMonster">
@@ -481,6 +486,7 @@ export function AccountNav({ minimal = false }: { minimal?: boolean }) {
 }
 export function CommunityHeader({ account = false }: { account?: boolean }) {
   const community = useCommunity();
+  const passVisible = usePassAccess();
   return (
     <header className="community-header">
       <a href="/" className="brand">
@@ -490,6 +496,7 @@ export function CommunityHeader({ account = false }: { account?: boolean }) {
         </span>
       </a>
       <nav className="community-links" aria-label="Основные разделы">
+        {passVisible && <a className="back-catalog" href="/battlepass">AniMonster Pass</a>}
         {account ? <><a className="back-catalog" href="/">Главная</a><a className="back-catalog" href="/catalog">Каталог</a><a className="back-catalog" href="/profile?section=list">Мой список</a></> : <>
         <a className="back-catalog" href="/#catalog">
           <ArrowLeft size={16} /> Каталог

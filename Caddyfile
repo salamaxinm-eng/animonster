@@ -52,7 +52,7 @@
       ipv6_prefix 64
     }
   }
-  reverse_proxy app:3000 {$CLUSTER_APP_UPSTREAM:app:3000} {
+  reverse_proxy app:3000 {
     lb_policy cookie animonster_node
     health_uri /api/health
     health_interval 10s

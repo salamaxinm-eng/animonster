@@ -11,6 +11,7 @@ import {
 } from '@/lib/anime';
 import { api, useCommunity } from '@/components/community/context';
 import { kodikEpisodeFromMessage } from '@/lib/kodik-events';
+import { usePassWatch } from '@/hooks/use-pass-watch';
 import { OfflineDownloadButton } from '@/components/offline-download-button';
 import type { PlaybackDiagnosticCode } from '@/lib/playback-diagnostics';
 
@@ -107,6 +108,9 @@ export function EpisodePlayer({
   const voiceover =
     voiceovers.find((item) => item.id === voiceoverId) || voiceovers[0];
   const isKodik = voiceover?.provider === 'kodik';
+  const passWatch = usePassWatch(user?.id, animeId, episode?.ordinal, isKodik ? 'kodik' : 'aniliberty', voiceover?.id || 'aniliberty');
+  const passSample = useRef(passWatch.sample);
+  passSample.current = passWatch.sample;
   const reportKodikDiagnostic = useCallback(
     (
       code: PlaybackDiagnosticCode,
@@ -471,6 +475,7 @@ export function EpisodePlayer({
         return;
       }
       const next = Number(timeValue);
+      if (payload?.key === 'kodik_player_time_update' && typeof payload.value === 'number') passSample.current(payload.value);
       const episodeNumber = kodikEpisodeFromMessage(payload);
       if (episodeNumber != null) {
         // Reload the exact episode link for the selected translation. Kodik's
@@ -775,9 +780,10 @@ export function EpisodePlayer({
             onPlay={() => setPlayback(true)}
             onPlaying={() => setPlayback(true)}
             onPause={() => setPlayback(false)}
-            onTimeUpdate={(event) =>
-              setCurrentTime(event.currentTarget.currentTime)
-            }
+            onTimeUpdate={(event) => {
+              setCurrentTime(event.currentTarget.currentTime);
+              if (!event.currentTarget.paused && !event.currentTarget.seeking && event.currentTarget.readyState >= 3) passSample.current(event.currentTarget.currentTime);
+            }}
             onLoadedMetadata={() => {
               if (
                 video.current &&
@@ -838,6 +844,7 @@ export function EpisodePlayer({
           </div>
         )}
       </div>
+      {passWatch.notice && <p className="muted" role="status">{passWatch.notice}</p>}
       {error && (
         <div className="playback-error" role="alert">
           {error}

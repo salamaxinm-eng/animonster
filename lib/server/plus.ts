@@ -45,9 +45,12 @@ export async function grantPlusDays(
   days: number,
   sourceKey: string,
   reason: string,
-) {
+  transaction?: ReturnType<typeof db>,
+): Promise<{ expires: number } | null> {
+  if (!transaction) return db().transaction((tx) => grantPlusDays(userId, days, sourceKey, reason, tx));
+  await transaction.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').bind(userId).first();
   const duration = Math.max(1, Math.floor(days)) * 86400000;
-  return db()
+  return transaction
     .prepare(
       `INSERT INTO grants(order_id,user_id,starts_at,expires,created_by,reason)
        SELECT ?,?,base,base+?,NULL,? FROM (

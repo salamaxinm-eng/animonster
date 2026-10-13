@@ -38,6 +38,8 @@ export default async function Page() {
       <main className="title-page">
         <span className="eyebrow">ANIMONSTER / УПРАВЛЕНИЕ</span>
         <h1>Пульс сообщества</h1>
+        <p><a href="/admin/battlepass">AniMonster Pass · сезоны, награды и прогресс →</a></p>
+        <p><a href="/admin/cosmetic-generator">Генератор пиксельных пинов и рамок →</a></p>
         <div className="dashboard-cards">
           {metrics.map(([label, value]) => (
             <section className="social-panel" key={label}>

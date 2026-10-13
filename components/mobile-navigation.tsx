@@ -8,11 +8,13 @@ import {
   Home,
   LayoutGrid,
   Search,
+  Swords,
   UserRound,
 } from 'lucide-react';
 import { MobileProfileMenu } from '@/components/community/mobile-profile-menu';
 import { BuySubscription } from '@/components/community/buy-subscription';
 import { useCommunity } from '@/components/community/context';
+import { usePassAccess } from '@/components/pass-cosmetics';
 
 type MobileNavItem = {
   href: string;
@@ -41,6 +43,12 @@ const items: MobileNavItem[] = [
       path === '/catalog' ||
       path === '/recommendations' ||
       (path === '/' && hash === '#catalog'),
+  },
+  {
+    href: '/battlepass',
+    label: 'Пропуск',
+    icon: Swords,
+    active: (path) => path === '/battlepass',
   },
   {
     href: '/profile?section=list',
@@ -76,6 +84,7 @@ function MobileNavigationContent() {
       ? '/profile?section=list'
       : pathname;
   const community = useCommunity();
+  const passVisible = usePassAccess();
   const [hash, setHash] = useState('');
   const sectionTitle =
     pathname === '/bookmarks'
@@ -144,8 +153,8 @@ function MobileNavigationContent() {
           <a href="/legal/requisites">Реквизиты</a>
         </nav>
       )}
-      <nav className="mobile-bottom-nav" aria-label="Навигация">
-        {items.map((item) => {
+      <nav className={`mobile-bottom-nav${passVisible ? ' mobile-bottom-nav-pass' : ''}`} aria-label="Навигация">
+        {items.filter((item) => item.href !== '/battlepass' || passVisible).map((item) => {
           const Icon = item.icon;
           const active =
             item.active(activePath, hash) &&
