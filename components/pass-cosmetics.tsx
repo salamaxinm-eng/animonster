@@ -10,17 +10,24 @@ export function PassCosmeticsProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     let mounted = true;
+    void fetch('/api/cosmetic-generator/catalog')
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (mounted && data?.cosmetics) setItems((current) => [...current, ...data.cosmetics]); })
+      .catch(() => {});
     void fetch('/api/battlepass/access', { cache: 'no-store' })
       .then((r) => r.ok ? r.json() : null)
       .then(async (access) => {
         if (!mounted || !access?.visible) return;
         setVisible(true);
         const response = await fetch('/api/battlepass/catalog');
-        if (mounted && response.ok) setItems((await response.json()).cosmetics || []);
+        if (mounted && response.ok) {
+          const data = await response.json();
+          setItems((current) => [...current, ...(data.cosmetics || [])]);
+        }
       }).catch(() => {});
     return () => { mounted = false; };
   }, []);
-  const frames = items.filter((i) => i.kind === 'frame' && /^[a-z0-9-]+$/.test(i.slug) && (/^\/api\/battlepass\/assets\/[a-f0-9-]{36}$/.test(i.image) || /^\/rewards\/pass-worlds-2026\/pass-worlds-[a-z0-9-]+\.png$/.test(i.image)));
+  const frames = items.filter((i) => i.kind === 'frame' && /^[a-z0-9-]+$/.test(i.slug) && (/^\/api\/(battlepass|cosmetic-generator)\/assets\/[a-f0-9-]{36}$/.test(i.image) || /^\/rewards\/pass-worlds-2026\/pass-worlds-[a-z0-9-]+\.png$/.test(i.image)));
   return <Access.Provider value={visible}><Catalog.Provider value={items}>
     <style>{`
       .user-tag-pass.user-tag-pass-art{padding:0!important;border:0!important;background:transparent!important;max-width:100%!important}
