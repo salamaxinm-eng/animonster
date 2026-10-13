@@ -1,11 +1,12 @@
+import { grantPlusDays } from './plus';
 import { ApiError, db, now, uid } from './core';
 import { PASS_TASKS, passDay, passWeek, passLevel, dayStart, addDays, emptyStats, taskProgress, mergeCoverage, coverageSeconds, confirmedDelta, type PassStats, type Range } from '../battlepass';
 
-export type PassSeason = { id: string; title: string; status: 'draft' | 'published'; timezone: string; starts_at: number; ends_at: number; price: number; tasks: typeof PASS_TASKS; genres: string[]; published_at: number | null; finalized_at: number | null };
+export type PassSeason = { id: string; title: string; status: 'draft' | 'published'; timezone: string; starts_at: number; ends_at: number; price: number; tasks: typeof PASS_TASKS; genres: string[]; published_at: number | null; finalized_at: number | null; expected_rewards?: Pick<PassReward, 'level' | 'track' | 'name' | 'kind' | 'plus_days'>[] };
 type Tx = ReturnType<typeof db>;
 type Member = { xp: number; premium: boolean; settled_at: number | null };
 type Scope = { scope: string; stats: PassStats; genre: string | null; rerolled: boolean; genre_since: number };
-export type PassReward = { season_id: string; level: number; track: 'free' | 'premium'; cosmetic_id: string; kind: 'pin' | 'tag' | 'frame' | 'background'; name: string; preview: string; slug: string; claimed?: boolean; available?: boolean };
+export type PassReward = { season_id: string; level: number; track: 'free' | 'premium'; cosmetic_id: string; kind: 'pin' | 'tag' | 'frame' | 'background' | 'plus'; name: string; preview: string; slug: string; plus_days?: number; claimed?: boolean; available?: boolean };
 export const rules = (season: PassSeason) => season.tasks.daily ? season.tasks : PASS_TASKS;
 export async function findSeason(id?: string, drafts = false, tx: Tx = db()) {
   return tx.prepare(id
@@ -146,6 +147,7 @@ export async function recordPassWatch(user: string, authHash: string, token: str
   });
 }
 export async function claimInTransaction(tx: Tx, s: PassSeason, user: string, member: Member) {
+  if (s.status !== 'published' || now() < Number(s.starts_at)) throw new ApiError('Сезон ещё не начался', 409);
   const rewards = await tx.prepare(`SELECT r.* FROM pass_rewards r WHERE r.season_id=? AND r.level<=? AND (r.track='free' OR ?) ORDER BY r.level,r.track,r.cosmetic_id`)
     .bind(s.id, passLevel(Number(member.xp)), member.premium).all<PassReward>();
   let count = 0;
@@ -153,6 +155,11 @@ export async function claimInTransaction(tx: Tx, s: PassSeason, user: string, me
     const saved = await tx.prepare(`INSERT INTO pass_claims(season_id,user_id,level,track,cosmetic_id,claimed_at) VALUES (?,?,?,?,?,?) ON CONFLICT DO NOTHING RETURNING cosmetic_id`)
       .bind(s.id, user, reward.level, reward.track, reward.cosmetic_id, now()).first();
     if (!saved) continue;
+    if (reward.kind === 'plus') {
+      await grantPlusDays(user, Number(reward.plus_days), `pass:${s.id}:${user}:${reward.level}:${reward.track}:${reward.cosmetic_id}`, `AniMonster Pass: ${s.title}, уровень ${reward.level}`, tx);
+      count++;
+      continue;
+    }
     await tx.prepare(`INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata) VALUES (?,?,?,'battlepass',?,?::jsonb) ON CONFLICT(user_id,cosmetic_id) DO NOTHING`)
       .bind(user, reward.cosmetic_id, now(), `${s.id}:${reward.level}:${reward.track}:${reward.cosmetic_id}`, JSON.stringify({ season: s.id, level: reward.level, track: reward.track })).run();
     count++;
@@ -196,7 +203,7 @@ export async function passOverview(user?: string, seasonId?: string, drafts = fa
   if (!s) return { season: null, history };
   const [member, rewards, saved, earned] = await Promise.all([
     user ? db().prepare('SELECT xp,premium,settled_at FROM pass_members WHERE season_id=? AND user_id=?').bind(s.id, user).first<Member>() : null,
-    db().prepare(`SELECT r.*,c.slug,EXISTS(SELECT 1 FROM pass_claims x WHERE x.season_id=r.season_id AND x.level=r.level AND x.track=r.track AND x.cosmetic_id=r.cosmetic_id AND x.user_id=?) AS claimed FROM pass_rewards r JOIN cosmetics c ON c.id=r.cosmetic_id WHERE r.season_id=? ORDER BY r.level,r.track,c.sort_order`).bind(user || '', s.id).all<PassReward>(),
+    db().prepare(`SELECT r.*,c.slug,EXISTS(SELECT 1 FROM pass_claims x WHERE x.season_id=r.season_id AND x.level=r.level AND x.track=r.track AND x.cosmetic_id=r.cosmetic_id AND x.user_id=?) AS claimed FROM pass_rewards r LEFT JOIN cosmetics c ON c.id=r.cosmetic_id WHERE r.season_id=? ORDER BY r.level,r.track,c.sort_order`).bind(user || '', s.id).all<PassReward>(),
     user ? db().prepare('SELECT scope,stats,genre,rerolled,genre_since FROM pass_scopes WHERE season_id=? AND user_id=?').bind(s.id, user).all<Scope>() : { results: [] },
     user ? db().prepare('SELECT key FROM pass_xp WHERE season_id=? AND user_id=?').bind(s.id, user).all<{ key: string }>() : { results: [] },
   ]);
@@ -210,7 +217,7 @@ export async function passOverview(user?: string, seasonId?: string, drafts = fa
   });
   const xp = Number(member?.xp || 0), level = passLevel(xp);
   return { season: s, history, xp, level, premium: !!member?.premium, nextXp: level === 40 ? 0 : 400 - xp % 400,
-    rewards: rewards.results.map((r) => ({ ...r, available: !!user && Number(r.level) <= level && (r.track === 'free' || !!member?.premium) })), tasks,
+    rewards: rewards.results.map((r) => ({ ...r, available: s.status === 'published' && time >= Number(s.starts_at) && !!user && Number(r.level) <= level && (r.track === 'free' || !!member?.premium) })), tasks,
     serverTime: time, active: s.status === 'published' && time >= Number(s.starts_at) && time < Number(s.ends_at), ended: !!s.ends_at && time >= Number(s.ends_at) };
 }
 export async function settlePasses(limit = 50) {

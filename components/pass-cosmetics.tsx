@@ -20,9 +20,11 @@ export function PassCosmeticsProvider({ children }: { children: ReactNode }) {
       }).catch(() => {});
     return () => { mounted = false; };
   }, []);
-  const frames = items.filter((i) => i.kind === 'frame' && /^[a-z0-9-]+$/.test(i.slug) && /^\/api\/battlepass\/assets\/[a-f0-9-]{36}$/.test(i.image));
+  const frames = items.filter((i) => i.kind === 'frame' && /^[a-z0-9-]+$/.test(i.slug) && (/^\/api\/battlepass\/assets\/[a-f0-9-]{36}$/.test(i.image) || /^\/rewards\/pass-worlds-2026\/pass-worlds-[a-z0-9-]+\.png$/.test(i.image)));
   return <Access.Provider value={visible}><Catalog.Provider value={items}>
     <style>{`
+      .user-tag-pass.user-tag-pass-art{padding:0!important;border:0!important;background:transparent!important;max-width:100%!important}
+      .user-tag-pass-art img,.pass-pin img{image-rendering:pixelated;object-fit:contain}
       .pass-pin{display:inline-flex;transform-origin:center}
       .pass-pin.pass-rarity-rare:hover{animation:pass-pin-rare .9s ease-out}
       .pass-pin.pass-rarity-epic{animation:pass-pin-epic 5s ease-in-out infinite}
@@ -39,7 +41,7 @@ export function PassCosmeticsProvider({ children }: { children: ReactNode }) {
       @keyframes pass-frame-legendary{25%{transform:rotate(-7deg)}75%{transform:rotate(7deg);filter:drop-shadow(0 0 7px #d69b5b)}}
       @media(prefers-reduced-motion:reduce){.pass-pin,.user-tag-pass,[class*=profile-frame-pass-]>.user-avatar::after{animation:none!important}}
     `}</style>
-    <style>{frames.map((f) => `.profile-frame-${f.slug}>.user-avatar::after{content:"";background:url("${f.image}") center/contain no-repeat;border:0!important;border-radius:0;inset:-16%;animation:${f.rarity === 'legendary' ? 'pass-frame-legendary 5s ease-in-out infinite' : f.rarity === 'epic' ? 'pass-frame-epic 6s ease-in-out infinite' : 'none'};filter:none!important;pointer-events:none}`).join('\n')}</style>
+    <style>{frames.map((f) => `.profile-frame-${f.slug}:not(.profile-frame-none)>.user-avatar::after{content:"";background:url("${f.image}") center/contain no-repeat;border:0!important;border-radius:0;inset:${f.slug.startsWith('pass-worlds-') ? '-25%' : '-16%'};animation:${f.rarity === 'legendary' ? 'pass-frame-legendary 5s ease-in-out infinite' : f.rarity === 'epic' ? 'pass-frame-epic 6s ease-in-out infinite' : 'none'};filter:none!important;pointer-events:none}`).join('\n')}</style>
     {children}
   </Catalog.Provider></Access.Provider>;
 }

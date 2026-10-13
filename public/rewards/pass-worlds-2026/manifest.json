@@ -1,0 +1,436 @@
+{
+  "id": "anime-worlds-2026",
+  "title": "AniMonster · Четыре мира",
+  "rewards": [
+    {
+      "level": 1,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Мугивары",
+      "source": 1,
+      "slug": "pass-worlds-premium-1",
+      "file": "pass-worlds-premium-1.png",
+      "sourceSha256": "9eeaedbb345542f786d911c2a7f547fb04cf61c65918abb42f5fa384190681a3",
+      "sha256": "bea451970f8ec0e390c8fce3c2c2bcb2add0b9944b9bba517a200bd1e6db79d8"
+    },
+    {
+      "level": 2,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Путь пирата",
+      "source": 3,
+      "slug": "pass-worlds-premium-2",
+      "file": "pass-worlds-premium-2.png",
+      "sourceSha256": "5126a22a29577e4910cec61ca34a83187611e80da884f5c38f04cc861283a419",
+      "sha256": "40c5fb5c83401152594db63a6125dd04d7e6df5b430194f983e8ddc9f36326b3"
+    },
+    {
+      "level": 3,
+      "track": "premium",
+      "kind": "tag",
+      "name": "НАКАМА",
+      "source": 2,
+      "slug": "pass-worlds-premium-3",
+      "file": "pass-worlds-premium-3.png",
+      "sourceSha256": "cd05637d3ca1d4f65bf4a591528ae688306944f0916a59eba6b1e7c59fb08b40",
+      "sha256": "7c144b406ccc7cad0edee15f488eb8bfd052a0cbceae573cb62baaae5b9b016b"
+    },
+    {
+      "level": 4,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 5,
+      "track": "premium",
+      "kind": "background",
+      "name": "Закат над Гранд Лайн",
+      "source": 4,
+      "slug": "pass-worlds-premium-5",
+      "file": "pass-worlds-premium-5.jpg",
+      "sourceSha256": "794e1ae50facb19d684bd035f1307aea6036b3328d6666a11cfb50935eac6da1",
+      "sha256": "794e1ae50facb19d684bd035f1307aea6036b3328d6666a11cfb50935eac6da1"
+    },
+    {
+      "level": 6,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Расенган",
+      "source": 5,
+      "slug": "pass-worlds-premium-6",
+      "file": "pass-worlds-premium-6.png",
+      "sourceSha256": "ca840201a035cc2fc59744303429b36cfb98b18d20430a91b5381725289318d1",
+      "sha256": "872dc464f9f2b6639e1b854d54aaabec99498d7b714feec3c9419878e9e32d97"
+    },
+    {
+      "level": 7,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Печать шиноби",
+      "source": 6,
+      "slug": "pass-worlds-premium-7",
+      "file": "pass-worlds-premium-7.png",
+      "sourceSha256": "b1208212d726d667e03a5450e37946ef160efc77683878fc4a5aab7aa177a92d",
+      "sha256": "f8f094aab0a631c4303e1b027354acd37f1df56fadbd26113061966650500e36"
+    },
+    {
+      "level": 8,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 9,
+      "track": "premium",
+      "kind": "tag",
+      "name": "ШИНОБИ",
+      "source": 7,
+      "slug": "pass-worlds-premium-9",
+      "file": "pass-worlds-premium-9.png",
+      "sourceSha256": "dc31bec01e0456274522de0e81cc894870199a6f7acfd8a55539de1de8d7ad8a",
+      "sha256": "41e7f9f35b80888b896b7bbd1887e3b4c31f79df9e0b75b9e3438383f9bdfc3b"
+    },
+    {
+      "level": 10,
+      "track": "free",
+      "kind": "pin",
+      "name": "Гримуар",
+      "source": null,
+      "slug": "pass-worlds-free-10",
+      "file": null
+    },
+    {
+      "level": 10,
+      "track": "premium",
+      "kind": "background",
+      "name": "Вечер в Конохе",
+      "source": 8,
+      "slug": "pass-worlds-premium-10",
+      "file": "pass-worlds-premium-10.jpg",
+      "sourceSha256": "a307ffae5f51396f64e941e1e53e0c881312b900bfac27df0f3b76fefe196b4a",
+      "sha256": "a307ffae5f51396f64e941e1e53e0c881312b900bfac27df0f3b76fefe196b4a"
+    },
+    {
+      "level": 11,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Занпакто",
+      "source": 9,
+      "slug": "pass-worlds-premium-11",
+      "file": "pass-worlds-premium-11.png",
+      "sourceSha256": "7c7e012035cf3227dae56c36103fa71c2b5c148af19cb5216eab10611f285e5a",
+      "sha256": "97f7f28c2cef7c6a93c951bdcfdbc21890ece2767aeb6d4fd26c6e3c66e51f25"
+    },
+    {
+      "level": 12,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 13,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Духовное пламя",
+      "source": 11,
+      "slug": "pass-worlds-premium-13",
+      "file": "pass-worlds-premium-13.png",
+      "sourceSha256": "4385c54edd2c392d441be3df400a034756f3ab1ed0642e967eaeea0f6cdb88c9",
+      "sha256": "5063af881a7e17329e6ab8ffeef1d8634e9e6e21318ab64df22bc5ba3b02c201"
+    },
+    {
+      "level": 14,
+      "track": "premium",
+      "kind": "tag",
+      "name": "БАНКАЙ",
+      "source": 10,
+      "slug": "pass-worlds-premium-14",
+      "file": "pass-worlds-premium-14.png",
+      "sourceSha256": "71cad897ccb5963ef85b775ec08722e5dd452b16695e50b9829c871ac094c49a",
+      "sha256": "351a8264a500d62c552e6b9f6974eaf892e026b30ea193237dcf41173bf112fc"
+    },
+    {
+      "level": 15,
+      "track": "premium",
+      "kind": "background",
+      "name": "Ночь в Обществе душ",
+      "source": null,
+      "slug": "pass-worlds-premium-15",
+      "file": null
+    },
+    {
+      "level": 16,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 17,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Антимагия",
+      "source": null,
+      "slug": "pass-worlds-premium-17",
+      "file": null
+    },
+    {
+      "level": 18,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Пятилистный клевер",
+      "source": null,
+      "slug": "pass-worlds-premium-18",
+      "file": null
+    },
+    {
+      "level": 19,
+      "track": "premium",
+      "kind": "tag",
+      "name": "АНТИМАГИЯ",
+      "source": 12,
+      "slug": "pass-worlds-premium-19",
+      "file": "pass-worlds-premium-19.png",
+      "sourceSha256": "13b44b3e3383ce509b6fa9c39119c81d90c133095442b8d42e390bb27caade05",
+      "sha256": "226475e9f553d3725ae051d6684df07b863656b36e22795d5cefaca5fd140c3e"
+    },
+    {
+      "level": 20,
+      "track": "free",
+      "kind": "background",
+      "name": "Лес гримуаров",
+      "source": null,
+      "slug": "pass-worlds-free-20",
+      "file": null
+    },
+    {
+      "level": 20,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 21,
+      "track": "premium",
+      "kind": "background",
+      "name": "Цитадель антимагии",
+      "source": null,
+      "slug": "pass-worlds-premium-21",
+      "file": null
+    },
+    {
+      "level": 22,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Барабаны освобождения",
+      "source": 13,
+      "slug": "pass-worlds-premium-22",
+      "file": "pass-worlds-premium-22.png",
+      "sourceSha256": "a3efc737ad0ddcf2fa578a4db5d622e4b7e29e5d6e4feca8d53fc248a0ecd30f",
+      "sha256": "8907dc1449e1f80f2b98a80977dc43a7c8e908ba08f3c419615a58b2b552316d"
+    },
+    {
+      "level": 23,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Гир пятый",
+      "source": 14,
+      "slug": "pass-worlds-premium-23",
+      "file": "pass-worlds-premium-23.png",
+      "sourceSha256": "2872d22b5a00436236188ff835bf88064097377908bc03f75f3dc99519ffa0ac",
+      "sha256": "9c2d34f252f48ba8c87db87ab53be9f14f84d5921015f6b7bd00aac564c3803e"
+    },
+    {
+      "level": 24,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 25,
+      "track": "premium",
+      "kind": "tag",
+      "name": "КОРОЛЬ ПИРАТОВ",
+      "source": 15,
+      "slug": "pass-worlds-premium-25",
+      "file": "pass-worlds-premium-25.png",
+      "sourceSha256": "831afbae73fe29e70d993132054c8bc39494c06bcb95e597e1433fb5fe31b9ef",
+      "sha256": "435070d4c5173e32d4f633e55896d343632456cfa2762d95c67f97a193ff0ef6"
+    },
+    {
+      "level": 26,
+      "track": "premium",
+      "kind": "background",
+      "name": "Небесный остров",
+      "source": 16,
+      "slug": "pass-worlds-premium-26",
+      "file": "pass-worlds-premium-26.jpg",
+      "sourceSha256": "ba148c487cd94836a7b84e6fd75503308c9143e3acf7f9e637d317fdcd72393b",
+      "sha256": "ba148c487cd94836a7b84e6fd75503308c9143e3acf7f9e637d317fdcd72393b"
+    },
+    {
+      "level": 27,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Девятихвостый",
+      "source": 17,
+      "slug": "pass-worlds-premium-27",
+      "file": "pass-worlds-premium-27.png",
+      "sourceSha256": "0622225ff7b53df707afc337e7ab19b11ebde3bdcc76c59e94a6e668371dad05",
+      "sha256": "924bf065901492a5581df20ce58880109ea1ae29688532277c9fa8ffabcea652"
+    },
+    {
+      "level": 28,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 29,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Чакра Курамы",
+      "source": 18,
+      "slug": "pass-worlds-premium-29",
+      "file": "pass-worlds-premium-29.png",
+      "sourceSha256": "55832c52daeaa4a77ded259cd02fa4a9b378fe1a9abf086a6b9d83e2208dccc6",
+      "sha256": "31157d133301e0bf39129aa9da59e3809e348b6d1f5e2725514240ea26fbc9a5"
+    },
+    {
+      "level": 30,
+      "track": "free",
+      "kind": "frame",
+      "name": "Магия клевера",
+      "source": null,
+      "slug": "pass-worlds-free-30",
+      "file": null
+    },
+    {
+      "level": 30,
+      "track": "premium",
+      "kind": "tag",
+      "name": "ДЖИНЧУРИКИ",
+      "source": 19,
+      "slug": "pass-worlds-premium-30",
+      "file": "pass-worlds-premium-30.png",
+      "sourceSha256": "1f7503a8ff17000f6f825da2e3615643accf43515a384e54eb56c9a2a51f2cb9",
+      "sha256": "16227968ce5d046408c0e569ef0eaee28628eae54d04271caa874510582a94ea"
+    },
+    {
+      "level": 31,
+      "track": "premium",
+      "kind": "background",
+      "name": "Долина завершения",
+      "source": 20,
+      "slug": "pass-worlds-premium-31",
+      "file": "pass-worlds-premium-31.jpg",
+      "sourceSha256": "0cb9fce1e541362e7f60799d8e5bc42326a5bdbd938aded13c8e4d8f4778f369",
+      "sha256": "0cb9fce1e541362e7f60799d8e5bc42326a5bdbd938aded13c8e4d8f4778f369"
+    },
+    {
+      "level": 32,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 33,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Маска Пустого",
+      "source": 21,
+      "slug": "pass-worlds-premium-33",
+      "file": "pass-worlds-premium-33.png",
+      "sourceSha256": "0db0d62cfe4a73fc49dc247e95b67ab32f0c7800f062873703a7477e1a479f1c",
+      "sha256": "6727ffd52864c0d47f57aea22baee8ed1dab59111a266b9a6f7e75ffa467464f"
+    },
+    {
+      "level": 34,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Предел банкая",
+      "source": 22,
+      "slug": "pass-worlds-premium-34",
+      "file": "pass-worlds-premium-34.png",
+      "sourceSha256": "c531a4255d1a0d7074d3fcafda7dc71680eb9e22c6fa81329febb1d3f3b0e616",
+      "sha256": "d0435c578707dafbb295a85eba0f5951b9d175db2321295aec4cbcd12b11d0fa"
+    },
+    {
+      "level": 35,
+      "track": "premium",
+      "kind": "tag",
+      "name": "КОРОЛЬ МАГОВ",
+      "source": 23,
+      "slug": "pass-worlds-premium-35",
+      "file": "pass-worlds-premium-35.png",
+      "sourceSha256": "dd96c1ccbee90586c5788a070e2ec4878a0515a4b756d03fbe858a7a911ad2b9",
+      "sha256": "edd9178367a32f81b5a3deb74ac397fbbbf5121a891c99b1b20dda8848f0c38c"
+    },
+    {
+      "level": 36,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    },
+    {
+      "level": 37,
+      "track": "premium",
+      "kind": "background",
+      "name": "Королевство клевера",
+      "source": 24,
+      "slug": "pass-worlds-premium-37",
+      "file": "pass-worlds-premium-37.jpg",
+      "sourceSha256": "a41bdf876e79f9f57ff1c8a378cb51a4c6e313d1f1c3b4d5ffd7d1738b1c741b",
+      "sha256": "a41bdf876e79f9f57ff1c8a378cb51a4c6e313d1f1c3b4d5ffd7d1738b1c741b"
+    },
+    {
+      "level": 38,
+      "track": "premium",
+      "kind": "pin",
+      "name": "Чёрные быки",
+      "source": 25,
+      "slug": "pass-worlds-premium-38",
+      "file": "pass-worlds-premium-38.png",
+      "sourceSha256": "82abebfa77d2b23db0305ea245840c9bb9eae611fe768798f9895bb25e1a26c4",
+      "sha256": "c5f33a61e4dbb17a2f38ada38aae4e377af36af7a799fff693c17a4abd03837a"
+    },
+    {
+      "level": 39,
+      "track": "premium",
+      "kind": "frame",
+      "name": "Капитан Чёрных быков",
+      "source": 26,
+      "slug": "pass-worlds-premium-39",
+      "file": "pass-worlds-premium-39.png",
+      "sourceSha256": "ac2589eb4f3e1e5dd3a8cc42cb0d9e6015f3dd6a6451d10db9b64e01ff189aab",
+      "sha256": "7819917d94a2c1599ffae9180f8f400011cc7a515a60a38e63b4265386bf7260"
+    },
+    {
+      "level": 40,
+      "track": "free",
+      "kind": "tag",
+      "name": "МАГ-НОВИЧОК",
+      "source": 27,
+      "slug": "pass-worlds-free-40",
+      "file": "pass-worlds-free-40.png",
+      "sourceSha256": "ead923f218c2b9f99355fe9943d714293862ac93ca27b2c49fe7b982bcebcf4a",
+      "sha256": "67a2db06bd1d917886aeec8bbd6e5c9745cb7904d46774ae5adf3bd144710610"
+    },
+    {
+      "level": 40,
+      "track": "premium",
+      "kind": "plus",
+      "name": "3 дня Плюса",
+      "plus_days": 3
+    }
+  ]
+}

@@ -18,8 +18,9 @@ void test('calendar, cumulative balance, coverage and discontinuous playback',()
 });
 void test('real database: watch ledger, concurrent players, claims, late payments and settlement',async()=>{
  const engine=new PGlite({extensions:{pg_trgm}});globalThis.passTestDb=database(engine);globalThis.passTestTime=Date.parse('2026-10-12T00:00:00Z');
- const core=url(`export const db=()=>globalThis.passTestDb;export const now=()=>globalThis.passTestTime;export const uid=()=>crypto.randomUUID();export class ApiError extends Error {constructor(m,status=400){super(m);this.status=status}}`);
- const serviceUrl=await module('lib/server/battlepass.ts',{'./core':core,'../battlepass':sharedUrl});const service=await import(serviceUrl);const payment=await import(await module('lib/server/battlepass-payment.ts',{'./core':core,'./battlepass':serviceUrl}));
+ const core=url(`export const db=()=>globalThis.passTestDb;export const premium=async()=>0;export const now=()=>globalThis.passTestTime;export const uid=()=>crypto.randomUUID();export class ApiError extends Error {constructor(m,status=400){super(m);this.status=status}}`);
+ const plusUrl=await module('lib/server/plus.ts',{'./core':core});
+ const serviceUrl=await module('lib/server/battlepass.ts',{'./core':core,'../battlepass':sharedUrl,'./plus':plusUrl});const service=await import(serviceUrl);const payment=await import(await module('lib/server/battlepass-payment.ts',{'./core':core,'./battlepass':serviceUrl}));
  try {
  for(const file of (await readdir('migrations/postgres')).filter(f=>f.endsWith('.sql')).sort())await engine.exec(await readFile('migrations/postgres/'+file,'utf8'));
  const finale=(await engine.query("SELECT cosmetic_id,level,track FROM pass_rewards WHERE cosmetic_id IN ('pin:pass-oni','tag:pass-oni','frame:pass-oni','background:pass-oni')")).rows;

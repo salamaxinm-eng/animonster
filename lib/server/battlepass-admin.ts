@@ -71,6 +71,8 @@ export async function uploadPassItem(actor: string, form: FormData) {
 }
 export async function savePassReward(actor: string, input: Record<string, unknown>) {
   const season = String(input.season), level = Number(input.level), track = String(input.track);
+  const plusDays = Number(input.plus_days || 0);
+  if (!Number.isInteger(plusDays) || plusDays < 0 || plusDays > 365) throw new ApiError('Неверное количество дней Плюса');
   const ids = [...new Set((Array.isArray(input.items) ? input.items : []).map(String))];
   if (!Number.isInteger(level) || level < 1 || level > 40 || !['free','premium'].includes(track) || ids.length > 10) throw new ApiError('Неверный уровень, дорожка или набор предметов');
   return db().transaction(async (tx) => {
@@ -82,6 +84,7 @@ export async function savePassReward(actor: string, input: Record<string, unknow
       if (!item || !item.image || !kinds.includes(item.kind)) throw new ApiError('Предмет не готов: загрузите поддерживаемый ассет');
       await tx.prepare('INSERT INTO pass_rewards(season_id,level,track,cosmetic_id,name,preview,kind) VALUES (?,?,?,?,?,?,?)').bind(season, level, track, id, item.name, item.image, item.kind).run();
     }
+    if (plusDays) await tx.prepare("INSERT INTO pass_rewards(season_id,level,track,cosmetic_id,name,preview,kind,plus_days) VALUES (?,?,?,?,?,'','plus',?)").bind(season, level, track, 'plus:' + level + ':' + track, plusDays + ' дня Плюса', plusDays).run();
     await audit(tx, actor, season, 'save_rewards', 'Настройка наград черновика', { level, track, items: ids });
     return { ok: true };
   });
@@ -107,7 +110,13 @@ export async function passReadiness(s: PassSeason, tx: Tx = db()) {
   for (let level = 1; level <= 40; level++) if (!rewards.some((r) => Number(r.level) === level)) errors.push(`Не заполнен уровень ${level}`);
   if (!rewards.some((r) => r.track === 'free')) errors.push('Бесплатная дорожка пуста');
   if (s.id === 'oni-awakening') for (const id of finalIds) if (!rewards.some((r) => r.cosmetic_id === id && Number(r.level) === 40 && r.track === 'premium')) errors.push(`Нет финальной награды ${id}`);
+  for (const expected of s.expected_rewards || []) {
+    const slot = rewards.filter(r => Number(r.level) === expected.level && r.track === expected.track);
+    if (slot.length !== 1 || slot[0].kind !== expected.kind || slot[0].name !== expected.name || (expected.kind === 'plus' && Number(slot[0].plus_days) !== expected.plus_days)) errors.push(`Проверьте награду: ${expected.track === 'free' ? 'Бесплатная' : 'Платная'} · ${expected.level} · ${expected.name}`);
+  }
+  if (s.expected_rewards?.length) for (const r of rewards) if (!s.expected_rewards.some(e => e.level === Number(r.level) && e.track === r.track)) errors.push(`Лишняя награда: ${r.track} / ${r.level}`);
   for (const r of rewards) {
+    if (r.kind === 'plus') continue;
     try { await inspectAsset(await rewardBytes(tx, r.preview), r.kind !== 'background'); }
     catch { errors.push(`Отсутствует или некорректен ассет: ${r.level} / ${r.name}`); }
   }
@@ -132,6 +141,7 @@ export async function publishPass(actor: string, id: string) {
     const snapshotted = new Set<string>();
     const previewByCosmetic = new Map<string,string>();
     for (const r of rewards) {
+      if (r.kind === 'plus') continue;
       if (previewByCosmetic.has(r.cosmetic_id) && previewByCosmetic.get(r.cosmetic_id) !== r.preview) throw new ApiError('Один предмет имеет разные превью в наградах', 409);
       previewByCosmetic.set(r.cosmetic_id, r.preview);
       if (snapshotted.has(r.cosmetic_id)) continue;
