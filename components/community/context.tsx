@@ -38,6 +38,7 @@ import {
   Settings,
   Trophy,
   UserRound,
+  Crown,
 } from 'lucide-react';
 import { pins, avatars, themes, type Profile } from '@/lib/community';
 import { earnedPins } from '@/lib/earned-pins';
@@ -418,6 +419,13 @@ export function AccountMenu({
         <DropdownMenuSeparator className="account-dropdown-separator" />
         <DropdownMenuItem
           className="account-dropdown-item"
+          onClick={() => openPage('/founders')}
+        >
+          <Gem />
+          Founding 10
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="account-dropdown-item"
           onClick={() => openPage(c.supportUrl || '/legal/support')}
         >
           <MessageCircle />
@@ -440,6 +448,7 @@ export function AccountMenu({
 }
 export function AccountNav({ minimal = false }: { minimal?: boolean }) {
   const c = useCommunity();
+  const passVisible = usePassAccess();
   const [activeParty, setActiveParty] = useState<{
     code: string;
     anime_title: string;
@@ -466,7 +475,7 @@ export function AccountNav({ minimal = false }: { minimal?: boolean }) {
           <UsersRound size={16} /> Вернуться в комнату
         </a>
       )}
-      {!minimal && <a href="/founders" className="referral-nav-button">FOUNDING 10</a>}
+      {!minimal && passVisible && <a href="/battlepass" className="pass-nav-button" aria-label="Боевой пропуск AniMonster Pass"><Crown size={15} aria-hidden="true" />Батлпасс</a>}
       {!minimal && <BuySubscription className="subscription-nav" />}
       {!minimal && c.moderator && <a href="/admin">Админка</a>}
       {c.user ? (
@@ -496,7 +505,7 @@ export function CommunityHeader({ account = false }: { account?: boolean }) {
         </span>
       </a>
       <nav className="community-links" aria-label="Основные разделы">
-        {passVisible && <a className="back-catalog" href="/battlepass">AniMonster Pass</a>}
+        {account && passVisible && <a className="back-catalog" href="/battlepass">AniMonster Pass</a>}
         {account ? <><a className="back-catalog" href="/">Главная</a><a className="back-catalog" href="/catalog">Каталог</a><a className="back-catalog" href="/profile?section=list">Мой список</a></> : <>
         <a className="back-catalog" href="/#catalog">
           <ArrowLeft size={16} /> Каталог

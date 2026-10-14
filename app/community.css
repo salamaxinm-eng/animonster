@@ -134,7 +134,8 @@
 .header .account-nav {
   margin-left: auto;
 }
-.referral-nav-button {
+.referral-nav-button,
+.pass-nav-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -145,6 +146,15 @@
   color: #ceb6ed;
   font-size: 11px;
   white-space: nowrap;
+}
+.pass-nav-button {
+  border-color: #bbed6544;
+  background: #bbed6510;
+  color: #bbed65;
+}
+.pass-nav-button:hover {
+  border-color: #bbed65;
+  background: #bbed6522;
 }
 .mobile-referral-button {
   display: grid;
