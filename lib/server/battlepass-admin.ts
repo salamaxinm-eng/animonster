@@ -10,7 +10,7 @@ type Tx = ReturnType<typeof db>;
 const kinds = ['pin', 'tag', 'frame', 'background'];
 const finalIds = ['pin:pass-oni', 'tag:pass-oni', 'frame:pass-oni', 'background:pass-oni'];
 async function audit(tx: Tx, actor: string, season: string | null, action: string, reason: string, detail: unknown, target: string | null = null) {
-  await tx.prepare('INSERT INTO pass_audit(id,actor_id,season_id,target_user_id,action,reason,detail,created_at) VALUES (?,?,?,?,?,?,?::jsonb,?)').bind(uid(), actor, season, target, action, reason, JSON.stringify(detail), now()).run();
+  await tx.prepare('INSERT INTO pass_audit(id,actor_id,season_id,target_user_id,action,reason,detail,created_at) VALUES (?,?,?,?,?,?,?::text::jsonb,?)').bind(uid(), actor, season, target, action, reason, JSON.stringify(detail), now()).run();
 }
 async function draft(tx: Tx, id: string) {
   const s = await tx.prepare('SELECT * FROM pass_seasons WHERE id=? FOR UPDATE').bind(id).first<PassSeason>();
@@ -33,7 +33,7 @@ export async function savePassDraft(actor: string, input: Record<string, unknown
   return db().transaction(async (tx) => {
     await tx.prepare(`INSERT INTO pass_seasons(id,title,created_at) VALUES (?,?,?) ON CONFLICT DO NOTHING`).bind(id, title, now()).run();
     const before = await draft(tx, id);
-    await tx.prepare('UPDATE pass_seasons SET title=?,timezone=?,starts_at=?,ends_at=?,price=?,tasks=?::jsonb,genres=?::jsonb WHERE id=?').bind(title, zone, dates.starts_at, dates.ends_at, price, JSON.stringify(tasks), JSON.stringify(genres), id).run();
+    await tx.prepare('UPDATE pass_seasons SET title=?,timezone=?,starts_at=?,ends_at=?,price=?,tasks=?::text::jsonb,genres=?::text::jsonb WHERE id=?').bind(title, zone, dates.starts_at, dates.ends_at, price, JSON.stringify(tasks), JSON.stringify(genres), id).run();
     await audit(tx, actor, id, 'save_draft', 'Настройка черновика', { before, after: input });
     return { id };
   });

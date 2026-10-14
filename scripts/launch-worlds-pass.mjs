@@ -56,7 +56,7 @@ if(process.argv.includes('--launch')){
   const locked=await tx.prepare('SELECT status FROM pass_seasons WHERE id=? FOR UPDATE').bind(season.id).first();
   if(locked?.status!=='draft') throw Error('Season changed');
   await tx.prepare('UPDATE pass_seasons SET starts_at=?,ends_at=? WHERE id=?').bind(start,end,season.id).run();
-  await tx.prepare('INSERT INTO pass_audit(id,actor_id,season_id,action,reason,detail,created_at) VALUES (?,?,?,?,?,?::jsonb,?)').bind(uid(),actor.id,season.id,'launch_schedule','Запуск продаж по поручению владельца',JSON.stringify({before:{starts_at:season.starts_at,ends_at:season.ends_at},after:{starts_at:start,ends_at:end}}),now()).run();
+  await tx.prepare('INSERT INTO pass_audit(id,actor_id,season_id,action,reason,detail,created_at) VALUES (?,?,?,?,?,?::text::jsonb,?)').bind(uid(),actor.id,season.id,'launch_schedule','Запуск продаж по поручению владельца',JSON.stringify({before:{starts_at:season.starts_at,ends_at:season.ends_at},after:{starts_at:start,ends_at:end}}),now()).run();
  });
  const updated=await findSeason(season.id,true);
  const errors=await passReadiness(updated);

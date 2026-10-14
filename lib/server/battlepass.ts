@@ -58,7 +58,7 @@ export async function startPassWatch(user: string, authHash: string, meta: { ani
     if (Number(count?.n) >= 20) throw new ApiError('Слишком много сессий плеера', 429);
     const token = uid(), stamp = now();
     await tx.prepare('INSERT INTO pass_watch_clock(user_id) VALUES (?) ON CONFLICT DO NOTHING').bind(user).run();
-    await tx.prepare(`INSERT INTO pass_watch_sessions(id,user_id,auth_hash,season_id,anime_id,episode,duration,genres,created_at,expires_at) VALUES (?,?,?,?,?,?,?,?::jsonb,?,?)`)
+    await tx.prepare(`INSERT INTO pass_watch_sessions(id,user_id,auth_hash,season_id,anime_id,episode,duration,genres,created_at,expires_at) VALUES (?,?,?,?,?,?,?,?::text::jsonb,?,?)`)
       .bind(token, user, authHash, s.id, meta.anime, meta.episode, meta.duration, JSON.stringify(meta.genres), stamp, stamp + 4 * 3600000).run();
     return { token, durationKnown: !!meta.duration, expiresAt: stamp + 4 * 3600000 };
   });
@@ -135,10 +135,10 @@ export async function recordPassWatch(user: string, authHash: string, token: str
       previous = sample;
     }
     for (const scope of scopes.values()) {
-      await tx.prepare('UPDATE pass_scopes SET stats=?::jsonb WHERE season_id=? AND user_id=? AND scope=?').bind(JSON.stringify(scope.stats), s.id, user, scope.scope).run();
+      await tx.prepare('UPDATE pass_scopes SET stats=?::text::jsonb WHERE season_id=? AND user_id=? AND scope=?').bind(JSON.stringify(scope.stats), s.id, user, scope.scope).run();
       await evaluateScope(tx, s, user, scope);
     }
-    for (const [key, row] of coverage) await tx.prepare(`INSERT INTO pass_coverage(season_id,user_id,scope,anime_id,episode,ranges,completed) VALUES (?,?,?,?,?,?::jsonb,?)
+    for (const [key, row] of coverage) await tx.prepare(`INSERT INTO pass_coverage(season_id,user_id,scope,anime_id,episode,ranges,completed) VALUES (?,?,?,?,?,?::text::jsonb,?)
       ON CONFLICT(season_id,user_id,scope,anime_id,episode) DO UPDATE SET ranges=excluded.ranges,completed=excluded.completed`)
       .bind(s.id, user, key, session.anime_id, session.episode, JSON.stringify(row.ranges), row.completed).run();
     await tx.prepare('UPDATE pass_watch_clock SET credited_until=? WHERE user_id=?').bind(Math.ceil(floor), user).run();
@@ -160,7 +160,7 @@ export async function claimInTransaction(tx: Tx, s: PassSeason, user: string, me
       count++;
       continue;
     }
-    await tx.prepare(`INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata) VALUES (?,?,?,'battlepass',?,?::jsonb) ON CONFLICT(user_id,cosmetic_id) DO NOTHING`)
+    await tx.prepare(`INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata) VALUES (?,?,?,'battlepass',?,?::text::jsonb) ON CONFLICT(user_id,cosmetic_id) DO NOTHING`)
       .bind(user, reward.cosmetic_id, now(), `${s.id}:${reward.level}:${reward.track}:${reward.cosmetic_id}`, JSON.stringify({ season: s.id, level: reward.level, track: reward.track })).run();
     count++;
   }
@@ -184,7 +184,7 @@ export async function rerollPassGenre(user: string, seasonId: string, week: numb
     if (!genre) throw new ApiError('Сейчас нет другого жанра с достаточным контентом', 409);
     scope.stats.episodes = 0;
     await tx.prepare('DELETE FROM pass_coverage WHERE season_id=? AND user_id=? AND scope=?').bind(s.id, user, key).run();
-    await tx.prepare('UPDATE pass_scopes SET genre=?,rerolled=true,genre_since=?,stats=?::jsonb WHERE season_id=? AND user_id=? AND scope=?').bind(genre, now(), JSON.stringify(scope.stats), s.id, user, key).run();
+    await tx.prepare('UPDATE pass_scopes SET genre=?,rerolled=true,genre_since=?,stats=?::text::jsonb WHERE season_id=? AND user_id=? AND scope=?').bind(genre, now(), JSON.stringify(scope.stats), s.id, user, key).run();
     return { genre };
   });
 }
