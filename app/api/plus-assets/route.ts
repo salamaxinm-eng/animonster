@@ -23,6 +23,8 @@ export async function POST(request: Request) {
     const form = await request.formData(),
       file = form.get('image'),
       kind = String(form.get('kind') || '');
+    if (kind === 'profile_background')
+      throw new ApiError('Загрузка своих фонов отключена. Выберите фон из коллекции.', 403, 'custom_background_disabled');
     if (
       !(file instanceof File) ||
       !['profile_background', 'list_cover'].includes(kind)

@@ -380,11 +380,6 @@ export async function POST(r: Request) {
           u.id,
         )
         .run();
-      if (!customAvatar)
-        await db()
-          .prepare('DELETE FROM user_avatars WHERE user_id=?')
-          .bind(u.id)
-          .run();
       return json({ ok: true });
     }
     if (action === 'favorite') {

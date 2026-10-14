@@ -55,6 +55,8 @@ const route = await import(
     ],
   ])
 );
+const avatarRoute = await import(await load('app/api/avatar/route.ts', [['@/lib/server/core', core]]));
+const uploadRoute = await import(await load('app/api/plus-assets/route.ts', [['@/lib/server/core', core], ['@/lib/server/plus', access], ['@/lib/server/images', images]]));
 const publicRoute = await import(
   await load('app/api/community/route.ts', [
     ['@/lib/server/core', core],
@@ -277,23 +279,28 @@ test('profile hub isolates owners, paginates and filters real data, and saves ap
     assert.equal(after.theme, 'sakura');
     assert.equal(after.nick, before.nick);
     assert.equal(after.bio, before.bio);
-    assert.equal(
-      (
-        await post(initial, {
-          avatar: new File([bytes], 'test.png', { type: 'image/png' }),
-        })
-      ).status,
-      200,
-    );
-    assert.match((await snapshot()).avatar, /^custom:owner:/);
-    assert.equal(
-      (
-        await engine.query(
-          "SELECT count(*)::int AS count FROM user_avatars WHERE user_id='owner'",
-        )
-      ).rows[0].count,
-      1,
-    );
+    // Uploads are denied even with Plus; existing images survive unrelated saves.
+    assert.equal((await post(initial, {avatar:new File([bytes], 'test.png', {type:'image/png'})})).status,403);
+    assert.equal((await post(initial, {background:new File([bytes], 'test.png', {type:'image/png'})})).status,403);
+    const direct = async (handler, path, kind) => {
+      const form = new FormData(); form.set('kind',kind); form.set('image',new File([bytes],'test.png',{type:'image/png'}));
+      return handler.POST(new Request('http://localhost'+path,{method:'POST',headers:{origin:'http://localhost','x-test-user':'owner'},body:form}));
+    };
+    assert.equal((await direct(avatarRoute,'/api/avatar','avatar')).status,403);
+    assert.equal((await direct(uploadRoute,'/api/plus-assets','profile_background')).status,403);
+    await engine.exec("INSERT INTO user_avatars(user_id,mime_type,data,updated_at) VALUES ('owner','image/png','\\x0102',123); INSERT INTO plus_assets(id,user_id,kind,mime_type,data,updated_at) VALUES ('own-bg','owner','profile_background','image/png','\\x0304',123); UPDATE users SET avatar='custom:owner:123',profile_background='asset:own-bg:123' WHERE id='owner'");
+    const old = {...initial,avatar:'custom:owner:123',background:'asset:own-bg:123'};
+    assert.equal((await post({...old,theme:'sakura'})).status,200);
+    assert.equal((await snapshot()).avatar,old.avatar);
+    assert.equal((await snapshot()).profile_background,old.background);
+    globalThis.hubTestAccess={active:false,premiumUntil:0,canChangeAvatar:false};
+    assert.equal((await post(old)).status,200);
+    globalThis.hubTestAccess={active:true,premiumUntil:Date.now()+86400000,canChangeAvatar:true};
+    assert.equal((await post({...old,avatar:'valley',background:null})).status,200);
+    assert.equal((await post({...old,avatar:'valley'})).status,403,'previous custom backgrounds cannot be re-equipped');
+    assert.equal((await post({...old,background:null})).status,400,'previous custom avatars cannot be re-equipped');
+    assert.equal((await engine.query("SELECT count(*)::int count FROM user_avatars WHERE user_id='owner'")).rows[0].count,1);
+    assert.equal((await engine.query("SELECT count(*)::int count FROM plus_assets WHERE id='own-bg'")).rows[0].count,1);
   } finally {
     await engine.close();
     delete globalThis.hubTestDb;

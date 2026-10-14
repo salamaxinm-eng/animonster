@@ -78,7 +78,6 @@ export function ProfilePage({
     [newListName, setNewListName] = useState(''),
     [showcaseAnime, setShowcaseAnime] = useState(''),
     [showcaseCharacters, setShowcaseCharacters] = useState<string[]>([]),
-    [avatarBusy, setAvatarBusy] = useState(false),
     [notifications, setNotifications] = useState<
       Array<{
         id: string;
@@ -197,37 +196,6 @@ export function ProfilePage({
       setError((e as Error).message);
     } finally {
       setBusy(false);
-    }
-  }
-  async function uploadAvatar(file?: File) {
-    if (!file) return;
-    setAvatarBusy(true);
-    setNotice('');
-    setError('');
-    try {
-      const form = new FormData();
-      form.set('avatar', file);
-      const response = await fetch('/api/avatar', {
-        method: 'POST',
-        body: form,
-      });
-      const result = await response.json();
-      if (!response.ok)
-        throw new Error(result.error || 'Не удалось загрузить аватар');
-      setDraft((current) =>
-        current ? { ...current, avatar: result.avatar } : current,
-      );
-      setData((current) =>
-        current
-          ? { ...current, user: { ...current.user, avatar: result.avatar } }
-          : current,
-      );
-      await c.refresh();
-      setNotice('Аватар обновлён');
-    } catch (uploadError) {
-      setError((uploadError as Error).message);
-    } finally {
-      setAvatarBusy(false);
     }
   }
   async function uploadPlusAsset(
@@ -916,29 +884,8 @@ export function ProfilePage({
                     <legend>Аватар</legend>
                     <div className="avatar-upload">
                       <Avatar large avatar={draft.avatar} theme={draft.theme} />
-                      <div>
-                        <label className="outline-button">
-                          <ImagePlus size={17} />
-                          {avatarBusy ? 'Загружаем…' : 'Загрузить свой аватар'}
-                          <input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            disabled={
-                              avatarBusy ||
-                              !data.user.entitlements.can_change_avatar
-                            }
-                            onChange={(event) => {
-                              void uploadAvatar(event.target.files?.[0]);
-                              event.target.value = '';
-                            }}
-                          />
-                        </label>
-                        <small>
-                          {data.user.entitlements.can_change_avatar
-                            ? 'PNG, JPEG или WebP, до 2 МБ.'
-                            : `Смена аватара откроется на 5 уровне. Сейчас уровень ${data.user.level}.`}
-                        </small>
-                      </div>
+                      <small>Выберите аватар из каталога.</small>
+
                     </div>
                     <div className="avatar-options">
                       {avatars.map((a) => (
@@ -1043,24 +990,7 @@ export function ProfilePage({
                         ))}
                     </NativeSelect>
                   </label>
-                  <fieldset>
-                    <legend>Фон профиля · Plus</legend>
-                    <label className="outline-button">
-                      <ImagePlus size={17} /> Загрузить фон
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        disabled={!data.user.premium_until || busy}
-                        onChange={(event) => {
-                          void uploadPlusAsset(
-                            'profile_background',
-                            event.target.files?.[0],
-                          );
-                          event.target.value = '';
-                        }}
-                      />
-                    </label>
-                  </fieldset>
+
                   <fieldset disabled={!data.user.premium_until}>
                     <legend>Расширенная витрина · Plus</legend>
                     <label>

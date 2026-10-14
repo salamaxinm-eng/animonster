@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Check, Upload } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { avatars, themes, type Profile } from '@/lib/community';
 import { Avatar } from '../context';
 import { ProfileIdentity } from './profile-identity';
@@ -17,19 +17,6 @@ import {
 } from './shared';
 import { ShowcaseEditor } from './showcase-editor';
 
-function useFilePreview(file: File | null) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!file) {
-      setUrl(null);
-      return;
-    }
-    const preview = URL.createObjectURL(file);
-    setUrl(preview);
-    return () => URL.revokeObjectURL(preview);
-  }, [file]);
-  return url;
-}
 export function AppearanceSection({
   profile,
   onChanged,
@@ -43,24 +30,17 @@ export function AppearanceSection({
   );
   const [draft, setDraft] = useState<Profile>(user);
   const [tab, setTab] = useState('frame');
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [backgroundFile, setBackgroundFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const avatarPreview = useFilePreview(avatarFile);
-  const backgroundPreview = useFilePreview(backgroundFile);
   const items = resource.data?.cosmetics.filter((item) => item.unlocked) || [];
   useEffect(() => setDraft(user), [user]);
   function cancel() {
     setDraft(user);
-    setAvatarFile(null);
-    setBackgroundFile(null);
     setError('');
     setNotice('Изменения отменены');
   }
   function choose(item: Cosmetic) {
-    if (item.kind === 'background') setBackgroundFile(null);
     setDraft((old) => ({
       ...old,
       [item.kind === 'frame'
@@ -78,21 +58,7 @@ export function AppearanceSection({
     }));
     setNotice('');
   }
-  function file(kind: 'avatar' | 'background', value?: File) {
-    if (!value) return;
-    const max = (kind === 'avatar' ? 2 : 5) * 1024 * 1024;
-    if (value.size > max) {
-      setError(`Размер файла: не более ${max / 1024 / 1024} МБ`);
-      return;
-    }
-    setError('');
-    if (kind === 'avatar') setAvatarFile(value);
-    else setBackgroundFile(value);
-    setNotice('');
-  }
   const dirty =
-    avatarFile ||
-    backgroundFile ||
     [
       'avatar',
       'theme',
@@ -105,7 +71,7 @@ export function AppearanceSection({
     tab === 'frame'
       ? draft.profile_frame === 'none'
       : tab === 'background'
-        ? !draft.profile_background && !backgroundFile
+        ? !draft.profile_background
         : !draft[tab as 'pin' | 'tag'];
   async function save() {
     if (busy || !dirty) return;
@@ -131,16 +97,12 @@ export function AppearanceSection({
           background: background?.slug || draft.profile_background,
         }),
       );
-      if (avatarFile) form.set('avatar', avatarFile);
-      if (backgroundFile) form.set('background', backgroundFile);
       const response = await fetch('/api/profile-hub', {
         method: 'POST',
         body: form,
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error);
-      setAvatarFile(null);
-      setBackgroundFile(null);
       await onChanged();
       setNotice('Оформление сохранено');
     } catch (cause) {
@@ -157,8 +119,6 @@ export function AppearanceSection({
       <ProfileIdentity
         user={draft}
         preview
-        avatarPreview={avatarPreview}
-        backgroundPreview={backgroundPreview}
       />
       <ResourceState {...resource} />
       {error && (
@@ -201,32 +161,14 @@ export function AppearanceSection({
             </h2>
             {tab === 'avatar' ? (
               <>
-                <p className="hub-lead">
-                  {user.entitlements.can_change_avatar
-                    ? 'PNG, JPEG или WebP, до 2 МБ.'
-                    : 'Смена аватара откроется на 5 уровне или с AniMonster Plus.'}
-                </p>
-                <label className="hub-upload">
-                  <Upload size={17} aria-hidden="true" />
-                  Загрузить аватар
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp"
-                    disabled={busy || !user.entitlements.can_change_avatar}
-                    onChange={(event) => {
-                      file('avatar', event.target.files?.[0]);
-                      event.target.value = '';
-                    }}
-                  />
-                </label>
+                <p className="hub-lead">Выберите аватар из каталога. Загрузка своих изображений отключена.</p>
                 <div className="hub-item-grid">
                   {user.avatar.startsWith('custom:') && (
                     <button
-                      className={`hub-choice ${draft.avatar === user.avatar && !avatarFile ? 'selected' : ''}`}
-                      aria-pressed={draft.avatar === user.avatar && !avatarFile}
+                      className={`hub-choice ${draft.avatar === user.avatar ? 'selected' : ''}`}
+                      aria-pressed={draft.avatar === user.avatar}
                       disabled={busy}
                       onClick={() => {
-                        setAvatarFile(null);
                         setDraft({ ...draft, avatar: user.avatar });
                       }}
                     >
@@ -237,17 +179,16 @@ export function AppearanceSection({
                   {avatars.map((item) => (
                     <button
                       key={item.id}
-                      className={`hub-choice ${draft.avatar === item.id && !avatarFile ? 'selected' : ''}`}
-                      aria-pressed={draft.avatar === item.id && !avatarFile}
+                      className={`hub-choice ${draft.avatar === item.id ? 'selected' : ''}`}
+                      aria-pressed={draft.avatar === item.id}
                       disabled={busy || !user.entitlements.can_change_avatar}
                       onClick={() => {
-                        setAvatarFile(null);
                         setDraft({ ...draft, avatar: item.id });
                       }}
                     >
                       <Avatar avatar={item.id} />
                       <span>{item.name}</span>
-                      {draft.avatar === item.id && !avatarFile && (
+                      {draft.avatar === item.id && (
                         <Check size={16} />
                       )}
                     </button>
@@ -280,40 +221,17 @@ export function AppearanceSection({
               </div>
             ) : (
               <>
-                {tab === 'background' && (
-                  <label className="hub-upload">
-                    <Upload size={17} aria-hidden="true" />
-                    Загрузить свой фон
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      disabled={
-                        busy || !user.entitlements.can_customize_profile
-                      }
-                      onChange={(event) => {
-                        file('background', event.target.files?.[0]);
-                        event.target.value = '';
-                      }}
-                    />
-                    <small>
-                      {user.entitlements.can_customize_profile
-                        ? 'PNG, JPEG или WebP, до 5 МБ.'
-                        : 'Загрузка своего фона доступна с Plus.'}
-                    </small>
-                  </label>
-                )}
                 <div className="hub-item-grid">
                   {tab === 'background' &&
                     user.profile_background?.startsWith('asset:') && (
                       <button
-                        className={`hub-choice ${draft.profile_background === user.profile_background && !backgroundFile ? 'selected' : ''}`}
+                        className={`hub-choice ${draft.profile_background === user.profile_background ? 'selected' : ''}`}
                         aria-pressed={
                           draft.profile_background ===
-                            user.profile_background && !backgroundFile
+                            user.profile_background
                         }
                         disabled={busy}
                         onClick={() => {
-                          setBackgroundFile(null);
                           setDraft({
                             ...draft,
                             profile_background: user.profile_background,
@@ -331,7 +249,6 @@ export function AppearanceSection({
                     aria-pressed={!!noneSelected}
                     disabled={busy}
                     onClick={() => {
-                      if (tab === 'background') setBackgroundFile(null);
                       setDraft({
                         ...draft,
                         [tab === 'frame'
