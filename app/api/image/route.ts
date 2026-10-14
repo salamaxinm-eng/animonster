@@ -65,7 +65,7 @@ async function upstream(start: URL) {
         'User-Agent': 'AniMonster-Image-Gateway/1.0',
       },
       redirect: 'manual',
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(6_000),
       next: { revalidate: 30 * 86400 },
     });
     if (![301, 302, 303, 307, 308].includes(response.status)) return response;
@@ -99,7 +99,7 @@ export async function GET(request: Request) {
     let task = pending.get(cacheKey);
     const shared = !!task;
     if (!task) {
-      task = loadImage(source, width).then(image => { remember(cacheKey, image); return image; });
+      task = loadWithRetry(source, width).then(image => { remember(cacheKey, image); return image; });
       pending.set(cacheKey, task);
     }
     try { return cachedResponse(await task, shared ? 'HIT' : 'MISS'); }
@@ -107,6 +107,17 @@ export async function GET(request: Request) {
   } catch (error) {
     return fail(error);
   }
+}
+
+async function loadWithRetry(source: URL, width: number): Promise<CachedImage> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try { return await loadImage(source, width); }
+    catch (error) {
+      if (error instanceof ApiError && [400, 413].includes(error.status)) throw error;
+      if (attempt === 1) throw new ApiError('Изображение временно недоступно', 502);
+    }
+  }
+  throw new ApiError('Изображение временно недоступно', 502);
 }
 
 async function loadImage(source: URL, width: number): Promise<CachedImage> {

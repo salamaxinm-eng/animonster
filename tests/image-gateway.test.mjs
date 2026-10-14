@@ -29,6 +29,8 @@ test('image gateway shares downloads, caches resized WebP, preserves transparenc
   globalThis.fetch=async()=>{calls++;return new Response(null,{status:503})};
   assert.equal((await route.GET(request('https://shikimori.one/retry'))).status,502);
   globalThis.fetch=async()=>{calls++;return new Response(bytes,{headers:{'Content-Type':'image/png'}})};
-  assert.equal((await route.GET(request('https://shikimori.one/retry'))).status,200);assert.equal(calls,5);
+  assert.equal((await route.GET(request('https://shikimori.one/retry'))).status,200);assert.equal(calls,6);
+  let attempts=0;globalThis.fetch=async()=>{if(++attempts===1)throw Error('timeout');return new Response(bytes,{headers:{'Content-Type':'image/png'}})};
+  assert.equal((await route.GET(request('https://shikimori.one/transient'))).status,200);assert.equal(attempts,2);
  }finally{globalThis.fetch=originalFetch;delete globalThis.__animonsterImageCache;}
 });
