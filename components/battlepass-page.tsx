@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Check, ChevronLeft, ChevronRight, Crown, Gift, Lock, RotateCcw } from 'lucide-react';
+import { Check, ArrowUpRight, Crown, Gift, Lock, RotateCcw, Sparkles } from 'lucide-react';
 import { CommunityHeader, useCommunity } from './community/context';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
@@ -16,7 +16,8 @@ export function BattlepassPage() {
   const community = useCommunity(), params = useSearchParams();
   const [data, setData] = useState<Overview | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<keyof typeof labels>('daily'), [selected, setSelected] = useState<PassReward | null>(null), [clock, setClock] = useState(Date.now());
-  const rail = useRef<HTMLDivElement>(null), positioned = useRef(''), checkedPayment = useRef('');
+  const [chapter, setChapter] = useState(0);
+  const positioned = useRef(''), checkedPayment = useRef('');
   const seasonId = params.get('season') || '', preview = params.get('preview') === '1';
   const load = useCallback(async () => {
     const r = await fetch(`/api/battlepass?${new URLSearchParams({ ...(seasonId ? { season: seasonId } : {}), ...(preview ? { preview: '1' } : {}) })}`, { cache: 'no-store' });
@@ -28,8 +29,8 @@ export function BattlepassPage() {
   const ready = data?.season ? data as Ready : null;
   useEffect(() => {
     if (!ready?.season || positioned.current === ready.season.id) return;
-    const target = rail.current?.querySelector<HTMLElement>(`[data-level="${Math.max(1, ready.level)}"]`);
-    if (target && rail.current) { rail.current.scrollLeft = Math.max(0, target.offsetLeft - rail.current.offsetLeft - 20); positioned.current = ready.season.id; }
+    setChapter(Math.min(3, Math.floor(Math.max(0, ready.level - 1) / 10)));
+    positioned.current = ready.season.id;
   }, [ready]);
   const mutate = async (path: string, input: unknown) => {
     const r = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
@@ -52,31 +53,49 @@ export function BattlepassPage() {
   }
   const previewUser: Profile | null = community.user && selected && selected.kind !== 'plus' ? { ...community.user,
     ...(selected.kind === 'frame' ? { profile_frame: selected.slug } : selected.kind === 'background' ? { profile_background: selected.preview } : { [selected.kind]: selected.slug }) } : null;
+  const kindLabels = {pin:'Пин',frame:'Рамка',tag:'Тег',background:'Фон профиля',plus:'AniMonster Plus'};
+  function rewardCard(r: PassReward) {
+    const claimable = r.available && !r.claimed;
+    return <button key={r.cosmetic_id} className={`pass-card ${r.kind} ${r.track} ${r.claimed ? 'claimed' : claimable ? 'available' : ''}`} onClick={() => setSelected(r)} aria-label={`Уровень ${r.level}: ${r.name}. ${r.claimed ? 'Получено' : claimable ? 'Можно забрать' : 'Посмотреть награду'}`}>
+      <span className="pass-card-top"><b>{String(r.level).padStart(2,'0')} <small>ур.</small></b><span>{kindLabels[r.kind]}</span></span>
+      <span className="pass-card-art">{r.kind === 'plus' ? <span className="pass-plus-art"><Crown size={34} /><b>+{r.plus_days}<small>дня Плюса</small></b></span> : <img src={r.preview} alt="" loading="lazy" />}</span>
+      <strong>{r.name}</strong><span className="pass-card-state">{r.claimed ? <><Check size={13} /> Получено</> : claimable ? <><Gift size={13} /> Можно забрать</> : <><Lock size={12} /> {r.level > (ready?.level || 0) ? `${r.level * 400} XP` : season?.status === 'draft' ? 'Скоро в коллекции' : r.track === 'premium' ? 'Нужен премиум' : 'Откроется в сезоне'}</>}</span>
+    </button>;
+  }
   return <div className="social-site pass-site"><CommunityHeader account /><main className="pass-main">
     <div className="pass-heading"><span>ANIMONSTER PASS</span>{data?.canManage && <a href="/admin/battlepass">Управление сезонами</a>}</div>
     {error && <p className="pass-message error" role="alert">{error}</p>}{notice && <p className="pass-message" role="status">{notice}</p>}
     {!data ? <p role="status">Загружаем сезон…</p> : !season || !ready ? <section className="pass-empty"><Gift size={40} /><h1>Следующий сезон готовится</h1><p>Здесь появятся задания и коллекция AniMonster Pass.</p>{data?.canManage && <a href="/battlepass?season=oni-awakening&preview=1">Открыть черновик «Пробуждение Oni»</a>}</section> : <>
       {season.status === 'draft' && <p className="pass-message">Черновик · доступен только администратору. Участие и оплата ещё не открыты.</p>}
       <section className="pass-hero">
-        <div className="pass-hero-copy"><p className="pass-kicker">СЕЗОН · 8 НЕДЕЛЬ</p><h1>{season.title}</h1><p className="pass-subtitle">Твои истории становятся частью тебя.<br />Смотри аниме. Собирай оформление навсегда.</p>
-          <p className="pass-dates">{season.starts_at ? `${date(season.starts_at, season.timezone)} — ${date(season.ends_at, season.timezone)}` : 'Даты будут объявлены'} · {season.timezone}</p>
-          {season.ends_at > 0 && <p className="pass-countdown">{clock >= Number(season.ends_at) ? 'Сезон завершён' : clock < Number(season.starts_at) ? 'Сезон скоро начнётся' : `Осталось ${Math.ceil((Number(season.ends_at) - clock) / 86400000)} дн.`}</p>}
-          <div className="pass-level"><strong>{ready.level}<small> / 40</small></strong><div><b>Текущий уровень</b><span>{ready.nextXp ? `${ready.nextXp} XP до следующего уровня` : 'Все уровни открыты'} · {ready.xp.toLocaleString('ru-RU')} XP</span></div></div>
-          <progress className="pass-progress" max={16000} value={Math.min(16000, ready.xp)} aria-label="Прогресс сезона" />
-          <div className="pass-purchase">{ready.premium ? <span className="pass-unlocked"><Check size={18} /> Премиум открыт</span> : <Button disabled={busy || !ready.active} onClick={() => void action('purchase')}><Crown size={17} /> Открыть премиум · {season.price.toLocaleString('ru-RU')} ₽</Button>}
-            {!community.user && <Button variant="outline" onClick={community.login}>Войти для участия</Button>}</div>
-          <p className="pass-fine">Дополнительные награды сезона «{season.title}». Без автопродления. Общий XP для обеих дорожек. {ready.rewards.some(r => r.kind === 'plus') ? 'В наградах платной дорожки — 30 дней Плюса.' : 'Plus приобретается отдельно.'}</p>
-          {community.user && !ready.premium && <button className="pass-text-button" onClick={() => void action('check')} disabled={busy}>Проверить оплату</button>}
+        <img className="pass-hero-landscape" src={ready.rewards.find(r => r.kind === 'background' && r.level === 5)?.preview || ready.rewards.find(r => r.kind === 'background')?.preview} alt="" />
+        <div className="pass-hero-copy">
+          <p className="pass-kicker"><Sparkles size={14} /> КОЛЛЕКЦИЯ СЕЗОНА · 8 НЕДЕЛЬ</p>
+          <h1>{season.id === 'anime-worlds-2026' ? <>Четыре мира.<br /><em>Твоя история.</em></> : season.title}</h1>
+          <p className="pass-subtitle">Смотри любимое аниме, открывай уровни<br className="pass-desktop-break" /> и собирай оформление, которое останется с тобой.</p>
+          <div className="pass-season-stats"><span><b>40</b> уровней</span><span><b>{ready.rewards.filter(r => r.kind !== 'plus').length}</b> предмета</span><span><b>{ready.rewards.filter(r => r.track === 'premium').reduce((n,r) => n + Number(r.plus_days || 0),0)}</b> дней Плюса</span></div>
+          <div className="pass-purchase">{ready.premium ? <span className="pass-unlocked"><Check size={18} /> Премиум открыт</span> : <Button disabled={busy || !ready.active} onClick={() => void action('purchase')}><Crown size={18} /> Открыть премиум <span>{season.price.toLocaleString('ru-RU')} ₽</span><ArrowUpRight size={18} /></Button>}</div>
+          <p className="pass-fine">Одна покупка на сезон · Без автопродления</p>
+          {!community.user ? <button className="pass-text-button" onClick={community.login}>Войти и начать бесплатно →</button> : !ready.premium && <button className="pass-text-button" onClick={() => void action('check')} disabled={busy}>Уже оплатили? Проверить платёж</button>}
         </div>
-        <div className="pass-finale"><div className="pass-final-label"><span>ФИНАЛЬНЫЙ КОМПЛЕКТ</span><b>УРОВЕНЬ 40</b></div><div className="pass-final-art">{ready.rewards.filter((r) => r.level === 40 && r.track === 'premium').map((r) => <button key={r.cosmetic_id} onClick={() => setSelected(r)} className={`pass-final-${r.kind}`} aria-label={`Посмотреть ${r.name}`}>{r.kind === 'plus' ? <span className="pass-plus-reward"><Crown size={44} /><b>+{r.plus_days} дня Плюса</b></span> : <img src={r.preview} alt={r.name} />}</button>)}{!ready.rewards.some((r) => r.level === 40 && r.track === 'premium') && <div className="pass-unfilled"><Gift size={44} /><span>Финальный комплект ожидает загрузки</span><small>Пин · ПРОБУЖДЕНИЕ ОНИ · рамка · фон</small></div>}</div><p>{season.id === 'oni-awakening' ? 'ПРОБУЖДЕНИЕ ОНИ' : 'НАГРАДА 40-ГО УРОВНЯ'}</p><small>{season.id === 'oni-awakening' ? 'Четыре предмета. Останутся с тобой после сезона.' : 'Дни Плюса добавляются к уже оплаченному сроку.'}</small></div>
+        <div className="pass-hero-showcase" aria-label="Предметы коллекции">
+          <span className="pass-showcase-eyebrow">СОБЕРИ СВОЮ ЛЕГЕНДУ</span>
+          {ready.rewards.filter(r => r.track === 'premium' && (r.level === 23 || r.level === 22 || r.level === 25)).map(r => <button key={r.cosmetic_id} className={`pass-showcase-${r.kind}`} onClick={() => setSelected(r)} aria-label={`Посмотреть ${r.name}`}><img src={r.preview} alt={r.name} /></button>)}
+          <span className="pass-showcase-caption">Пины · Рамки · Теги · Фоны</span>
+        </div>
+        <div className="pass-hero-footer"><span>{season.starts_at ? `${date(season.starts_at, season.timezone)} — ${date(season.ends_at, season.timezone)}` : 'Даты скоро появятся'}</span><span className="pass-countdown">{season.ends_at > 0 ? clock >= Number(season.ends_at) ? 'Сезон завершён' : clock < Number(season.starts_at) ? 'Скоро старт' : `Осталось ${Math.ceil((Number(season.ends_at) - clock) / 86400000)} дн.` : 'Новый сезон'}</span></div>
       </section>
-      <section className="pass-rewards"><div className="pass-section-heading"><div><span className="pass-kicker">КОЛЛЕКЦИЯ СЕЗОНА</span><h2>Каждый уровень — новая история</h2></div><Button variant="outline" disabled={busy || !ready.rewards.some((r) => r.available && !r.claimed)} onClick={() => void action('claim')}><Gift size={16} /> Забрать всё</Button></div>
-        <div className="pass-rail-nav"><span><i /> Бесплатно <i className="premium" /> Премиум</span><div><button aria-label="Предыдущие уровни" onClick={() => rail.current?.scrollBy({ left: -450, behavior: 'smooth' })}><ChevronLeft /></button><button aria-label="Следующие уровни" onClick={() => rail.current?.scrollBy({ left: 450, behavior: 'smooth' })}><ChevronRight /></button></div></div>
-        <div ref={rail} className="pass-rail" aria-label="40 уровней наград">{Array.from({ length: 40 }, (_, i) => i + 1).map((level) => <div className={`pass-column ${level === Math.max(1, ready.level) ? 'current' : ''}`} data-level={level} key={level}><div className="pass-level-marker"><b>{level}</b><span>{level * 400} XP</span></div>{(['free','premium'] as const).map((track) => {
-          const items = ready.rewards.filter((r) => r.level === level && r.track === track);
-          return <div className={`pass-reward ${track} ${level > ready.level ? 'locked' : ''}`} key={track}><small>{track === 'free' ? 'БЕСПЛАТНО' : 'ПРЕМИУМ'}</small>{items.length ? <><div className="pass-item-images">{items.map((r) => <button key={r.cosmetic_id} onClick={() => setSelected(r)} aria-label={`Посмотреть награду ${r.name}`}>{r.kind === 'plus' ? <Crown size={46} aria-label={r.name} /> : <img src={r.preview} alt={r.name} loading="lazy" />}</button>)}</div><strong>{items.length > 1 ? `Комплект · ${items.length} предмета` : items[0].name}</strong><span className="pass-reward-state">{items.every((r) => r.claimed) ? <><Check size={14} /> Получено</> : items.some((r) => r.available) ? <><Gift size={14} /> Можно забрать</> : <><Lock size={13} /> {level > ready.level ? `Нужен уровень ${level}` : season.status === 'draft' ? 'Черновик' : 'Нужен премиум сезона'}</>}</span></> : <div className="pass-no-reward">{season.status === 'draft' ? (season.expected_rewards?.find(r => r.level === level && r.track === track)?.name ? 'Нужен файл: ' + season.expected_rewards.find(r => r.level === level && r.track === track)!.name : track === 'free' ? '—' : 'Награда не назначена') : '—'}</div>}</div>;
-        })}</div>)}</div>
+      <section className="pass-progress-panel" aria-label="Ваш прогресс">
+        <div className="pass-level-badge">{ready.level}<small>УРОВЕНЬ</small></div>
+        <div className="pass-progress-copy"><div><b>{community.user ? 'Твой путь к 40 уровню' : 'Твоя коллекция начинается здесь'}</b><span>{ready.xp.toLocaleString('ru-RU')} / 16 000 XP</span></div><progress max={16000} value={Math.min(16000, ready.xp)} aria-label="Прогресс сезона" /><small>{ready.nextXp ? `${ready.nextXp} XP до следующего уровня` : 'Все уровни открыты'} · Общий прогресс обеих веток</small></div>
+        <Button variant="outline" disabled={busy || !ready.rewards.some(r => r.available && !r.claimed)} onClick={() => void action('claim')}><Gift size={17} /> Забрать награды</Button>
       </section>
+      <section className="pass-rewards">
+        <div className="pass-section-heading"><div><span className="pass-kicker"><Crown size={14} /> ПРЕМИАЛЬНАЯ ВЕТКА</span><h2>Новый уровень. Новая награда.</h2></div><span>Нажми на предмет, чтобы рассмотреть</span></div>
+        <div className="pass-chapters" role="group" aria-label="Группы уровней">{['Начало пути','Новая сила','За горизонтом','Твоя легенда'].map((name,i) => <button key={name} aria-pressed={chapter === i} onClick={() => setChapter(i)}><span>{String(i * 10 + 1).padStart(2,'0')}—{(i + 1) * 10}</span><b>{name}</b></button>)}</div>
+        <div className="pass-collection-grid">{Array.from({length:10},(_,i) => chapter * 10 + i + 1).map(level => <div key={level} className="pass-collection-slot">{ready.rewards.filter(r => r.track === 'premium' && r.level === level).map(r => rewardCard(r))}{!ready.rewards.some(r => r.track === 'premium' && r.level === level) && <div className="pass-missing">Уровень {level}<span>Награда готовится</span></div>}</div>)}</div>
+      </section>
+      <section className="pass-free-section"><div className="pass-section-heading"><div><span className="pass-kicker"><Gift size={14} /> БЕСПЛАТНАЯ ВЕТКА</span><h2>Награды для каждого</h2></div><span>На уровнях 10, 20, 30 и 40 · Премиум не нужен</span></div><div className="pass-free-grid">{ready.rewards.filter(r => r.track === 'free').map(r => rewardCard(r))}</div></section>
       <section className="pass-quests"><div className="pass-section-heading"><div><span className="pass-kicker">ТВОЙ ПУТЬ</span><h2>Смотри в своём ритме</h2></div><span>Пропущенный день не отнимает XP</span></div>
         <div className="pass-tabs" role="tablist" aria-label="Задания">{Object.entries(labels).map(([key, label]) => <button role="tab" aria-selected={tab === key} aria-controls="pass-task-panel" id={`pass-tab-${key}`} key={key} onClick={() => setTab(key as keyof typeof labels)}>{label}</button>)}</div>
         <div role="tabpanel" id="pass-task-panel" aria-labelledby={`pass-tab-${tab}`}>{ready.tasks.filter((g) => g.group === tab).map((group) => <div className="pass-task-group" key={group.scope}><div className="pass-task-heading"><h3>{tab === 'weekly' ? `Комплект недели ${group.scope.split(':')[1]}` : tab === 'daily' ? 'Сегодня' : 'На весь сезон'}</h3><span>{group.endsAt ? `До ${date(group.endsAt, season.timezone)}` : 'Срок будет объявлен'}</span></div>

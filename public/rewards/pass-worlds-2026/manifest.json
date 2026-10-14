@@ -98,9 +98,11 @@
       "track": "free",
       "kind": "pin",
       "name": "Гримуар",
-      "source": null,
+      "source": "5-exec-f38b1d10-154b-4dcf-b003-8f89dbcae562.png",
       "slug": "pass-worlds-free-10",
-      "file": null
+      "file": "pass-worlds-free-10.png",
+      "sourceSha256": "4f3e091c7498b38f1936cb11a68b317a4614c9723852a5513986d53c8bd30cd1",
+      "sha256": "4f3e091c7498b38f1936cb11a68b317a4614c9723852a5513986d53c8bd30cd1"
     },
     {
       "level": 10,
@@ -158,9 +160,11 @@
       "track": "premium",
       "kind": "background",
       "name": "Ночь в Обществе душ",
-      "source": null,
+      "source": "4-exec-e02de479-bdc8-44ca-8b9b-1aed597a51bb.png",
       "slug": "pass-worlds-premium-15",
-      "file": null
+      "file": "pass-worlds-premium-15.png",
+      "sourceSha256": "150218d30421e4db76493b42e8c2e9263b238f421b49de3486c0436202988d2c",
+      "sha256": "150218d30421e4db76493b42e8c2e9263b238f421b49de3486c0436202988d2c"
     },
     {
       "level": 16,
@@ -174,18 +178,22 @@
       "track": "premium",
       "kind": "pin",
       "name": "Антимагия",
-      "source": null,
+      "source": "6-exec-a6690663-8127-46b4-80ab-0238cb22846b.png",
       "slug": "pass-worlds-premium-17",
-      "file": null
+      "file": "pass-worlds-premium-17.png",
+      "sourceSha256": "6f4dc4923fa060b13755167d89532811615e511cc2aedfdf4bb83f5b3d9790c3",
+      "sha256": "6f4dc4923fa060b13755167d89532811615e511cc2aedfdf4bb83f5b3d9790c3"
     },
     {
       "level": 18,
       "track": "premium",
       "kind": "frame",
       "name": "Пятилистный клевер",
-      "source": null,
+      "source": "7-exec-f83809e0-b31c-417a-8a32-2da3942db6ee.png",
       "slug": "pass-worlds-premium-18",
-      "file": null
+      "file": "pass-worlds-premium-18.png",
+      "sourceSha256": "1ec5ff6c95f9fee8f4b9465170e479bfda3ec17b03cba7b2ad5a5e9d77415848",
+      "sha256": "1ec5ff6c95f9fee8f4b9465170e479bfda3ec17b03cba7b2ad5a5e9d77415848"
     },
     {
       "level": 19,
@@ -203,9 +211,11 @@
       "track": "free",
       "kind": "background",
       "name": "Лес гримуаров",
-      "source": null,
+      "source": "3-exec-61596103-ba2a-484e-a117-614b7a591854.png",
       "slug": "pass-worlds-free-20",
-      "file": null
+      "file": "pass-worlds-free-20.png",
+      "sourceSha256": "e26b1f426a38b1097031df0b77040806692ff6aed41600ff668e37d84dbf18a5",
+      "sha256": "e26b1f426a38b1097031df0b77040806692ff6aed41600ff668e37d84dbf18a5"
     },
     {
       "level": 20,
@@ -219,9 +229,11 @@
       "track": "premium",
       "kind": "background",
       "name": "Цитадель антимагии",
-      "source": null,
+      "source": "1-exec-30db7229-72b3-47c1-a2a9-51d972f023e3.png",
       "slug": "pass-worlds-premium-21",
-      "file": null
+      "file": "pass-worlds-premium-21.png",
+      "sourceSha256": "410f82e869feea9edd69593198e95c299328e7b12be6c3a3b64e3b4e3bfddd55",
+      "sha256": "410f82e869feea9edd69593198e95c299328e7b12be6c3a3b64e3b4e3bfddd55"
     },
     {
       "level": 22,
@@ -308,9 +320,11 @@
       "track": "free",
       "kind": "frame",
       "name": "Магия клевера",
-      "source": null,
+      "source": "2-exec-db75c8a3-c65f-46db-bd78-faca0d3fb9d4.png",
       "slug": "pass-worlds-free-30",
-      "file": null
+      "file": "pass-worlds-free-30.png",
+      "sourceSha256": "8ca15edd70f19ffd892657ebd8e5067063fa090554cdde33c10a01a5bedc0152",
+      "sha256": "8ca15edd70f19ffd892657ebd8e5067063fa090554cdde33c10a01a5bedc0152"
     },
     {
       "level": 30,

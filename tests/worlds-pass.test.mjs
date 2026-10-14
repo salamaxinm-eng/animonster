@@ -10,13 +10,13 @@ const url=s=>'data:text/javascript;base64,'+Buffer.from(s).toString('base64');
 async function module(file,replacements={}){let s=stripTypeScriptTypes(await readFile(file,'utf8'));for(const[a,b]of Object.entries(replacements))s=s.replaceAll("'"+a+"'",JSON.stringify(b));return url(s)}
 function database(engine){return {prepare(source){let values=[],i=0;const sql=source.replace(/\?/g,()=>'$'+ ++i);return {bind(...v){values=v;return this},async first(){return(await engine.query(sql,values)).rows[0]??null},async all(){return{results:(await engine.query(sql,values)).rows}},async run(){return engine.query(sql,values)}}},transaction(fn){return engine.transaction(tx=>fn(database(tx)))}}}
 const manifest=JSON.parse(await readFile('public/rewards/pass-worlds-2026/manifest.json','utf8'));
-test('44 exact slots, 27 real assets, 7 missing files, transparency and unchanged artwork dimensions',async()=>{
+test('44 exact slots, 34 real assets, no missing files, transparency and unchanged artwork dimensions',async()=>{
  assert.equal(manifest.rewards.length,44);assert.equal(manifest.rewards.filter(r=>r.track==='premium').length,40);
  assert.deepEqual(manifest.rewards.filter(r=>r.track==='free').map(r=>r.level),[10,20,30,40]);
- assert.equal(manifest.rewards.filter(r=>r.file).length,27);assert.equal(manifest.rewards.filter(r=>r.kind!=='plus'&&!r.file).length,7);
+ assert.equal(manifest.rewards.filter(r=>r.file).length,34);assert.equal(manifest.rewards.filter(r=>r.kind!=='plus'&&!r.file).length,0);
  assert.deepEqual(manifest.rewards.filter(r=>r.kind==='plus').map(r=>r.level),[4,8,12,16,20,24,28,32,36,40]);
  assert.equal(manifest.rewards.reduce((n,r)=>n+(r.plus_days||0),0),30);
- assert.equal(new Set(manifest.rewards.filter(r=>r.file).map(r=>r.source)).size,27);
+ assert.equal(new Set(manifest.rewards.filter(r=>r.file).map(r=>r.source)).size,34);
  for(const r of manifest.rewards.filter(r=>r.file)){
   const bytes=await readFile('public/rewards/pass-worlds-2026/'+r.file);assert.equal(createHash('sha256').update(bytes).digest('hex'),r.sha256);
   const {data,info}=await sharp(bytes).ensureAlpha().raw().toBuffer({resolveWithObject:true});
@@ -40,21 +40,21 @@ test('existing ledger: draft protection, paid eligibility, exactly-once Plus, pa
   for(const missing of manifest.rewards.filter(r=>r.kind!=='plus'&&!r.file))assert.ok(problems.some(p=>p.includes(missing.name)),missing.name);
   assert.ok(!problems.some(p=>p.includes('ассет:')),'all assigned images validate, Plus does not need artwork');
   await assert.rejects(admin.publishPass('test-worlds',manifest.id));
-  const overview=await service.passOverview(null,manifest.id,true);assert.equal(overview.rewards.length,37);assert.equal(overview.rewards.filter(r=>r.kind==='plus').length,10);
+  const overview=await service.passOverview(null,manifest.id,true);assert.equal(overview.rewards.length,44);assert.equal(overview.rewards.filter(r=>r.kind==='plus').length,10);
   await engine.exec("INSERT INTO users(id,identity,nick,created_at) VALUES ('test-worlds','test:worlds','Test',0)");
   await assert.rejects(service.claimPass('test-worlds',manifest.id));
   await assert.rejects(globalThis.worldsDb.transaction(tx=>service.claimInTransaction(tx,draft,'test-worlds',{xp:16000,premium:true})));
-  // Test database only: release the incomplete draft to exercise the production claim implementation.
+  // Test database only: release the draft to exercise the production claim implementation.
   await engine.query("UPDATE pass_seasons SET starts_at=$1,ends_at=$2,tasks=$3,status='published' WHERE id=$4",[globalThis.worldsNow-1,globalThis.worldsNow+86400000,JSON.stringify(shared.PASS_TASKS),manifest.id]);
   await engine.query('INSERT INTO pass_members(season_id,user_id,xp,premium,joined_at) VALUES ($1,$2,16000,false,0)',[manifest.id,'test-worlds']);
-  assert.equal((await service.claimPass('test-worlds',manifest.id)).count,1);assert.equal(await n('SELECT count(*)::int n FROM grants'),0);
+  assert.equal((await service.claimPass('test-worlds',manifest.id)).count,4);assert.equal(await n('SELECT count(*)::int n FROM grants'),0);
   await engine.exec("UPDATE pass_members SET premium=true,xp=1200 WHERE user_id='test-worlds'");
   assert.equal((await service.claimPass('test-worlds',manifest.id)).count,3);assert.equal(await n('SELECT count(*)::int n FROM grants'),0);
   const expiry=globalThis.worldsNow+14*86400000;
   await engine.query("INSERT INTO grants(order_id,user_id,starts_at,expires) VALUES ('paid-existing','test-worlds',$1,$2)",[globalThis.worldsNow,expiry]);
   await engine.exec("UPDATE pass_members SET xp=16000 WHERE user_id='test-worlds'");
   await Promise.all([service.claimPass('test-worlds',manifest.id),service.claimPass('test-worlds',manifest.id)]);
-  assert.equal(await n('SELECT count(*)::int n FROM grants'),11);assert.equal(await n('SELECT count(*)::int n FROM pass_claims'),37);assert.equal(await n('SELECT count(*)::int n FROM user_cosmetics'),27);
+  assert.equal(await n('SELECT count(*)::int n FROM grants'),11);assert.equal(await n('SELECT count(*)::int n FROM pass_claims'),44);assert.equal(await n('SELECT count(*)::int n FROM user_cosmetics'),34);
   assert.equal(Number((await engine.query("SELECT max(expires) expiry FROM grants WHERE user_id='test-worlds'")).rows[0].expiry),expiry+30*86400000);
   assert.equal((await service.claimPass('test-worlds',manifest.id)).count,0);
   await engine.exec("INSERT INTO users(id,identity,nick,created_at) VALUES ('rollback','test:rollback','Rollback',0)");
