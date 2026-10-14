@@ -318,7 +318,7 @@ export function Avatar({
         src={
           custom
             ? `/api/avatar/${encodeURIComponent(custom[1])}?v=${custom[2]}`
-            : '/hero.png'
+            : '/hero.webp'
         }
         style={{
           objectPosition: custom

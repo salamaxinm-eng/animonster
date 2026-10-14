@@ -105,7 +105,7 @@ export function percentage(value: number, total: number) {
 export function backgroundUrl(value: string | null) {
   return value?.startsWith('asset:')
     ? `/api/plus-assets/${value.split(':')[1]}`
-    : value || '/hero.png';
+    : value || '/hero.webp';
 }
 export function groupByDate<T>(items: T[], getTime: (item: T) => number) {
   const groups = new Map<string, T[]>();

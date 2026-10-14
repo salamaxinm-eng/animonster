@@ -25,16 +25,16 @@ export type SkipSegment = {
   start: number;
   stop: number;
 };
-export function proxyImageUrl(source?: string) {
+export function proxyImageUrl(source?: string, width: 240 | 480 | 960 = 480) {
   if (!source) return '';
   if (source.startsWith('/') && !source.startsWith('//')) return source;
   const absolute = source.startsWith('https://')
     ? source
     : 'https://shikimori.one' + source;
-  return '/api/image?url=' + encodeURIComponent(absolute);
+  return '/api/image?url=' + encodeURIComponent(absolute) + '&w=' + width + '&v=2';
 }
 
-export const posterUrl = (anime: Anime) => proxyImageUrl(anime.image.original);
+export const posterUrl = (anime: Anime, width: 240 | 480 | 960 = 480) => proxyImageUrl(anime.image.original, width);
 
 export function kodikPlayerPath(animeId: number, translation: string) {
   return `/api/kodik/player?anime_id=${animeId}&translation=${encodeURIComponent(translation)}`;

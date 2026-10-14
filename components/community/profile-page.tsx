@@ -296,7 +296,7 @@ export function ProfilePage({
                   ? `/api/plus-assets/${data.user.profile_background.split(':')[1]}`
                   : data.user.profile_background?.startsWith('/rewards/')
                     ? data.user.profile_background
-                  : '/hero.png'
+                  : '/hero.webp'
               }
               alt="Обложка профиля"
             />

@@ -1,5 +1,6 @@
 import { ApiError, fail } from '@/lib/server/core';
 import { safeRemoteImageUrl } from '@/lib/server/images';
+import { IMAGE_WIDTHS, optimizeRemoteImage } from '@/lib/server/optimized-image';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,7 @@ type CachedImage = {
 type ImageCacheState = {
   images: Map<string, CachedImage>;
   bytes: number;
+  pending?: Map<string, Promise<CachedImage>>;
 };
 const globalCache = globalThis as typeof globalThis & {
   __animonsterImageCache?: ImageCacheState;
@@ -21,8 +23,10 @@ const globalCache = globalThis as typeof globalThis & {
 const cacheState = (globalCache.__animonsterImageCache ??= {
   images: new Map(),
   bytes: 0,
+  pending: new Map<string, Promise<CachedImage>>(),
 });
 const imageCache = cacheState.images;
+const pending = (cacheState.pending ??= new Map<string, Promise<CachedImage>>());
 
 function cachedResponse(image: CachedImage, status: 'HIT' | 'MISS') {
   return new Response(image.bytes.slice(), {
@@ -75,10 +79,13 @@ async function upstream(start: URL) {
 
 export async function GET(request: Request) {
   try {
+    const params = new URL(request.url).searchParams;
+    const width = Number(params.get('w') || 480);
+    if (!IMAGE_WIDTHS.some(value => value === width)) throw new ApiError('Неподдерживаемый размер изображения', 400);
     const source = safeRemoteImageUrl(
-      new URL(request.url).searchParams.get('url') || '',
+      params.get('url') || '',
     );
-    const cacheKey = source.href;
+    const cacheKey = source.href + '|webp-v2|' + width;
     const cached = imageCache.get(cacheKey);
     if (cached && cached.cachedAt > Date.now() - MEMORY_TTL) {
       imageCache.delete(cacheKey);
@@ -89,6 +96,20 @@ export async function GET(request: Request) {
       imageCache.delete(cacheKey);
       cacheState.bytes -= cached.bytes.byteLength;
     }
+    let task = pending.get(cacheKey);
+    const shared = !!task;
+    if (!task) {
+      task = loadImage(source, width).then(image => { remember(cacheKey, image); return image; });
+      pending.set(cacheKey, task);
+    }
+    try { return cachedResponse(await task, shared ? 'HIT' : 'MISS'); }
+    finally { if (pending.get(cacheKey) === task) pending.delete(cacheKey); }
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+async function loadImage(source: URL, width: number): Promise<CachedImage> {
     const response = await upstream(source);
     if (!response.ok) {
       await response.body?.cancel();
@@ -107,10 +128,6 @@ export async function GET(request: Request) {
     const bytes = new Uint8Array(await response.arrayBuffer());
     if (bytes.byteLength > MAX_IMAGE_BYTES)
       throw new ApiError('Изображение слишком большое', 413);
-    const image = { bytes, contentType, cachedAt: Date.now() };
-    remember(cacheKey, image);
-    return cachedResponse(image, 'MISS');
-  } catch (error) {
-    return fail(error);
-  }
+    const optimized = await optimizeRemoteImage(bytes, contentType, width);
+    return { ...optimized, cachedAt: Date.now() };
 }

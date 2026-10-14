@@ -118,7 +118,7 @@ export function GlobalSearch() {
               aria-selected="false"
               key={anime.id}
             >
-              <img src={posterUrl(anime)} alt="" />
+              <img src={posterUrl(anime, 240)} alt="" />
               <span>
                 <strong>{anime.russian}</strong>
                 <small>

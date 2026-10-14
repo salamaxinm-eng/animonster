@@ -178,7 +178,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
         <section className="title-intro">
           <img
             className="title-poster"
-            src={posterUrl(anime)}
+            src={posterUrl(anime, 960)}
             alt={anime.russian}
           />
           <div>
