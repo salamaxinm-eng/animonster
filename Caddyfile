@@ -18,6 +18,8 @@
     zone api {
       match {
         path /api/*
+        # Immutable reward images use the site asset limits.
+        not path /api/battlepass/assets/*
       }
       key {remote_host}
       window 1m
@@ -27,6 +29,7 @@
     zone api_burst {
       match {
         path /api/*
+        not path /api/battlepass/assets/*
       }
       key {remote_host}
       window 1s
