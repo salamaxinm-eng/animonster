@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import sharp from 'sharp';
 import { ApiError, db, now, uid } from './core';
 import { PASS_TASKS, seasonDates } from '../battlepass';
-import { findSeason, memberLock, claimInTransaction, eligiblePassGenres, type PassSeason, type PassReward } from './battlepass';
+import { assertLive, findSeason, memberLock, claimInTransaction, eligiblePassGenres, type PassSeason, type PassReward } from './battlepass';
 import { paymentFetch, verifyPayment } from './billing';
 type Tx = ReturnType<typeof db>;
 const kinds = ['pin', 'tag', 'frame', 'background'];
@@ -182,5 +182,20 @@ export async function adjustPassXp(actor: string, season: string, user: string, 
     await audit(tx, actor, season, 'adjust_xp', reason, { delta, before: member.xp, requestId }, user);
     if (now() >= Number(s.ends_at)) await claimInTransaction(tx, s, user, { ...member, xp: Number(member.xp) + delta });
     return { ok: true };
+  });
+}
+export async function grantPassPremium(actor: string, season: string, user: string, reason: string) {
+  reason = reason.trim();
+  if (reason.length < 5 || reason.length > 1000) throw new ApiError('Укажите причину выдачи: от 5 до 1000 символов');
+  return db().transaction(async (tx) => {
+    const s = await findSeason(season, false, tx);
+    assertLive(s);
+    if (!await tx.prepare('SELECT id FROM users WHERE id=?').bind(user).first()) throw new ApiError('Пользователь не найден', 404);
+    const member = await memberLock(tx, season, user);
+    if (member.premium) return { ok: true, duplicate: true };
+    await tx.prepare('UPDATE pass_members SET premium=true WHERE season_id=? AND user_id=?').bind(season, user).run();
+    await audit(tx, actor, season, 'grant_premium', reason, { xp: member.xp }, user);
+    const count = await claimInTransaction(tx, s, user, { ...member, premium: true });
+    return { ok: true, count };
   });
 }

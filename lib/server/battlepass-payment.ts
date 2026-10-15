@@ -45,6 +45,6 @@ export async function revokePassPayment(orderId: string, status: 'canceled' | 'c
     const changed = await tx.prepare(`UPDATE orders SET status=? WHERE id=? AND (status NOT IN ('succeeded','chargebacked') OR ?='chargebacked') RETURNING id`).bind(status, orderId, status).first();
     if (!changed) return;
     await tx.prepare('UPDATE pass_purchases SET state=? WHERE order_id=?').bind(status, orderId).run();
-    if (status === 'chargebacked') await tx.prepare(`UPDATE pass_members SET premium=false WHERE season_id=? AND user_id=? AND NOT EXISTS(SELECT 1 FROM orders WHERE user_id=? AND pass_season_id=? AND status='succeeded' AND is_test=false)`).bind(order.pass_season_id, order.user_id, order.user_id, order.pass_season_id).run();
+    if (status === 'chargebacked') await tx.prepare(`UPDATE pass_members SET premium=false WHERE season_id=? AND user_id=? AND NOT EXISTS(SELECT 1 FROM orders WHERE user_id=? AND pass_season_id=? AND status='succeeded' AND is_test=false) AND NOT EXISTS(SELECT 1 FROM pass_audit WHERE season_id=pass_members.season_id AND target_user_id=pass_members.user_id AND action='grant_premium')`).bind(order.pass_season_id, order.user_id, order.user_id, order.pass_season_id).run();
   });
 }

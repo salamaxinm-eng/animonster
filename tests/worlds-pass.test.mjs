@@ -42,6 +42,7 @@ test('existing ledger: draft protection, paid eligibility, exactly-once Plus, pa
   await assert.rejects(admin.publishPass('test-worlds',manifest.id));
   const overview=await service.passOverview(null,manifest.id,true);assert.equal(overview.rewards.length,44);assert.equal(overview.rewards.filter(r=>r.kind==='plus').length,10);
   await engine.exec("INSERT INTO users(id,identity,nick,created_at) VALUES ('test-worlds','test:worlds','Test',0)");
+  await assert.rejects(admin.grantPassPremium('test-worlds',manifest.id,'test-worlds','Test grant'));
   await assert.rejects(service.claimPass('test-worlds',manifest.id));
   await assert.rejects(globalThis.worldsDb.transaction(tx=>service.claimInTransaction(tx,draft,'test-worlds',{xp:16000,premium:true})));
   // Test database only: release the draft to exercise the production claim implementation.
@@ -63,5 +64,26 @@ test('existing ledger: draft protection, paid eligibility, exactly-once Plus, pa
   assert.equal(await n("SELECT count(*)::int n FROM grants WHERE user_id='rollback'"),0);
   await plus.grantPlusDays('rollback',3,'expired-test','Test');await plus.grantPlusDays('rollback',3,'expired-test','Test');
   assert.equal(Number((await engine.query("SELECT expires FROM grants WHERE user_id='rollback'")).rows[0].expires),globalThis.worldsNow+3*86400000);
+  // Admin actions use the real ledger and claims; retrying must not award twice.
+  await engine.exec("INSERT INTO users(id,identity,nick,created_at) VALUES ('admin-target','test:admin-target','Admin target',0)");
+  const requestId=crypto.randomUUID();
+  await admin.adjustPassXp('test-worlds',manifest.id,'admin-target',40000,'Test adjustment',requestId);
+  assert.equal((await admin.adjustPassXp('test-worlds',manifest.id,'admin-target',40000,'Test adjustment',requestId)).duplicate,true);
+  await assert.rejects(admin.adjustPassXp('test-worlds',manifest.id,'admin-target',-40001,'Negative balance',crypto.randomUUID()));
+  assert.equal(Number((await engine.query("SELECT xp FROM pass_members WHERE user_id='admin-target'")).rows[0].xp),40000);
+  assert.equal(await n("SELECT count(*)::int n FROM pass_xp WHERE user_id='admin-target'"),1);
+  await assert.rejects(admin.grantPassPremium('test-worlds',manifest.id,'admin-target','   '));
+  await assert.rejects(admin.grantPassPremium('test-worlds',manifest.id,'missing-target','Test grant'));
+  const payment=await import(await module('lib/server/battlepass-payment.ts',{'./core':core,'./battlepass':serviceUrl}));
+  const pendingOrder=await payment.reservePassOrder('admin-target',manifest.id);
+  assert.equal((await admin.grantPassPremium('test-worlds',manifest.id,'admin-target','Test grant')).count,44);
+  assert.equal((await admin.grantPassPremium('test-worlds',manifest.id,'admin-target','Repeated grant')).duplicate,true);
+  assert.equal(await n("SELECT count(*)::int n FROM pass_claims WHERE user_id='admin-target'"),44);
+  assert.equal(await n("SELECT count(*)::int n FROM grants WHERE user_id='admin-target'"),10);
+  assert.equal(await n("SELECT count(*)::int n FROM pass_audit WHERE target_user_id='admin-target' AND action='grant_premium'"),1);
+  await payment.revokePassPayment(pendingOrder.id,'chargebacked');
+  assert.equal((await engine.query("SELECT premium FROM pass_members WHERE user_id='admin-target'")).rows[0].premium,true);
+  globalThis.worldsNow+=2*86400000;
+  await assert.rejects(admin.grantPassPremium('test-worlds',manifest.id,'rollback','Season ended'));
  }finally{await engine.close();delete globalThis.worldsDb;delete globalThis.worldsNow}
 });

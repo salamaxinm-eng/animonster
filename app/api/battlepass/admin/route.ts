@@ -1,6 +1,6 @@
 import { ApiError, body, db, fail, json, requireUser, sameOrigin } from '@/lib/server/core';
 import { findSeason, eligiblePassGenres, passOverview } from '@/lib/server/battlepass';
-import { adjustPassXp, passReadiness, publishPass, savePassDraft, savePassReward, uploadPassItem, reconcilePassPayment } from '@/lib/server/battlepass-admin';
+import { adjustPassXp, grantPassPremium, passReadiness, publishPass, savePassDraft, savePassReward, uploadPassItem, reconcilePassPayment } from '@/lib/server/battlepass-admin';
 import { requireBattlepassAccess } from '@/lib/server/battlepass-access';
 async function admin(r: Request) { const u = await requireUser(r); requireBattlepassAccess(u); if (u.role !== 'admin') throw new ApiError('Недоступно', 403); return u; }
 export async function GET(r: Request) {
@@ -32,6 +32,7 @@ export async function POST(r: Request) {
     if (input.action === 'reward') return json(await savePassReward(actor.id, input));
     if (input.action === 'publish') return json(await publishPass(actor.id, String(input.season)));
     if (input.action === 'adjust') return json(await adjustPassXp(actor.id, String(input.season), String(input.user), Number(input.delta), String(input.reason), String(input.requestId)));
+    if (input.action === 'grant_premium') return json(await grantPassPremium(actor.id, String(input.season), String(input.user), String(input.reason || '')));
     throw new ApiError('Неизвестное действие');
   } catch (error) { return fail(error); }
 }
