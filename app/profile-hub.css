@@ -922,7 +922,7 @@
   --hub-muted: #a9b3bc;
   --hub-accent: #b5ed49;
 }
-.social-site.profile-hub {
+.site-shell.profile-hub {
   max-width: none;
   padding: 0;
   background: var(--hub-bg);
@@ -1503,7 +1503,7 @@
   }
 }
 @media (max-width: 767px) {
-  .social-site.profile-hub {
+  .site-shell.profile-hub {
     padding: 64px 0 calc(80px + env(safe-area-inset-bottom)) !important;
   }
   .profile-hub .community-header {

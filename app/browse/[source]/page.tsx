@@ -57,7 +57,7 @@ export default function BrowsePage() {
 
   const back = source === 'recommended' ? '/recommendations' : '/';
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page browse-page">
         <span className="eyebrow">ANIMONSTER / ПОДБОРКА</span>

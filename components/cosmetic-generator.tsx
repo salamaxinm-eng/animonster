@@ -58,7 +58,7 @@ export function CosmeticGenerator() {
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Ошибка сохранения'); }
     finally { setBusy(false); }
   }
-  return <div className="social-site"><CommunityHeader /><main className="generator-main">
+  return <div className="site-shell"><CommunityHeader /><main className="generator-main">
     <div className="generator-top"><a href="/admin">← Админка</a><span>ANIMONSTER / МАСТЕРСКАЯ</span></div>
     <h1>Пины и рамки</h1>
     <p className="generator-lead">Пиксельные предметы в общей стилистике AniMonster. Генерации сохраняются как черновики; публикацию и выдачу вы подтверждаете отдельно.</p>

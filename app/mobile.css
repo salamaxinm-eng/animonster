@@ -28,7 +28,7 @@
   }
 
   body:has(.mobile-topbar) .site,
-  body:has(.mobile-topbar) .social-site {
+  body:has(.mobile-topbar) .site-shell {
     width: 100%;
     max-width: none;
     margin: 0;
@@ -162,7 +162,7 @@
   }
 
   .site > .header,
-  .social-site > .community-header,
+  .site-shell > .community-header,
   body:has(.mobile-topbar) > footer,
   body:has(.mobile-topbar) .site > footer,
   body:has(.mobile-topbar) .site-footer {
@@ -174,7 +174,7 @@
   }
 
   .site > main,
-  .social-site > main,
+  .site-shell > main,
   .title-page,
   .genre-hub {
     width: 100%;

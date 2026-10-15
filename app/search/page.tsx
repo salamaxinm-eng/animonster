@@ -231,7 +231,7 @@ export default function SearchPage() {
   const hasSearch = !!query.trim() || activeCount > 0;
 
   return (
-    <div className="mobile-search-page social-site">
+    <div className="mobile-search-page site-shell">
       <form className="mobile-search-form" onSubmit={submit}>
         <button type="button" onClick={() => history.back()} aria-label="Назад">
           <ArrowLeft />

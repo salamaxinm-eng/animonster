@@ -33,7 +33,7 @@ export default async function Page() {
     ['Жалобы на проверке', d.openReports],
   ];
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page">
         <span className="eyebrow">ANIMONSTER / УПРАВЛЕНИЕ</span>

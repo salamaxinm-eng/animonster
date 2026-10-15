@@ -120,7 +120,7 @@ export default function ReferralsPage() {
     }
   }
   return (
-    <div className="social-site referrals-page">
+    <div className="site-shell referrals-page">
       <CommunityHeader />
       <main>
         <section className="referral-hero">

@@ -170,7 +170,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
     }
   }
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page">
         <a className="muted" href="/#catalog">

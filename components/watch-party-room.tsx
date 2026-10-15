@@ -640,7 +640,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
 
   if (!community.loaded || loading)
     return (
-      <div className="social-site">
+      <div className="site-shell">
         <CommunityHeader />
         <main className="party-loading" role="status">
           Готовим комнату…
@@ -650,7 +650,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
 
   if (!community.user)
     return (
-      <div className="social-site">
+      <div className="site-shell">
         <CommunityHeader />
         <main className="party-gate">
           <UsersRound size={44} />
@@ -665,7 +665,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
 
   if (!snapshot)
     return (
-      <div className="social-site">
+      <div className="site-shell">
         <CommunityHeader />
         <main className="party-gate">
           <ShieldBan size={44} />
@@ -686,7 +686,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
   );
 
   return (
-    <div className="social-site watch-party-site">
+    <div className="site-shell watch-party-site">
       <CommunityHeader />
       <main className="watch-party-page">
         <header className="party-topbar">

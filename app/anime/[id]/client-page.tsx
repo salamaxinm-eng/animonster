@@ -42,7 +42,7 @@ export default function ClientAnimePage() {
   if (anime) return <AnimePage anime={anime} />;
 
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page title-load-state">
         {loading ? (

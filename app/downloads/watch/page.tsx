@@ -8,7 +8,7 @@ import { OfflinePlayer } from '@/components/offline-player';
 function OfflineWatchContent() {
   const id = useSearchParams().get('id') || '';
   return (
-    <div className="social-site offline-page">
+    <div className="site-shell offline-page">
       <CommunityHeader />
       <main>
         <a href="/downloads">← Загрузки</a>

@@ -28,7 +28,7 @@ export function BattlepassAdmin() {
     if (result) setSeason(id);
   }
   const s = data?.season, frozen = s?.status === 'published';
-  return <div className="social-site pass-site"><CommunityHeader account /><main className="pass-admin"><a href="/admin">← Админка</a><h1>AniMonster Pass · управление</h1>
+  return <div className="site-shell pass-site"><CommunityHeader account /><main className="pass-admin"><a href="/admin">← Админка</a><h1>AniMonster Pass · управление</h1>
     {error && <p className="pass-message error" role="alert">{error}</p>}{message && <p className="pass-message" role="status">{message}</p>}
     <nav>{data?.seasons.map((v: any) => <button key={v.id} onClick={() => setSeason(v.id)} aria-pressed={season === v.id}>{v.title} · {v.status === 'draft' ? 'Черновик' : 'Опубликован'}</button>)}<button onClick={() => { setSeason('new-season'); setTasks(structuredClone(PASS_TASKS)); }}>+ Новый сезон</button></nav>
     {!data ? <p>Загрузка…</p> : <><div className="pass-admin-grid"><section><h2>Условия сезона</h2><form key={season + ':' + String(s?.published_at)} onSubmit={save}><fieldset disabled={busy || frozen} style={{ display: 'contents' }}>

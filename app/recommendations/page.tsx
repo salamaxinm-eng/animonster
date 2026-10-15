@@ -36,7 +36,7 @@ export default function Page() {
     return () => a.abort();
   }, [user?.id, attempt]);
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page">
         <span className="eyebrow">ТВОЯ СЛЕДУЮЩАЯ ИСТОРИЯ</span>

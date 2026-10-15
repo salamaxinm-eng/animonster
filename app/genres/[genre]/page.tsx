@@ -11,7 +11,7 @@ export default async function Page({
     genre = decodeURIComponent(genre);
   } catch {}
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page">
         <h1>{genre}</h1>

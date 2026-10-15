@@ -72,7 +72,7 @@ export default function BookmarksPage() {
   );
 
   return (
-    <div className="social-site bookmarks-page">
+    <div className="site-shell bookmarks-page">
       <CommunityHeader />
       <main className="title-page">
         <nav className="bookmarks-tabs" aria-label="Разделы закладок">

@@ -19,7 +19,7 @@ export default async function FoundersPage() {
   const seats = Array.from({ length: 10 }, (_, index) =>
     founders.find((founder) => founder.founder_number === index + 1),
   );
-  return <div className="social-site">
+  return <div className="site-shell">
     <CommunityHeader />
     <main className="founders-page">
       <span className="eyebrow">ANIMONSTER / LEGACY</span>

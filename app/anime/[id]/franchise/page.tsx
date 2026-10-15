@@ -22,7 +22,7 @@ export default async function FranchisePage({
     relations = await animeRelations(animeId);
   } catch {
     return (
-      <div className="social-site franchise-page">
+      <div className="site-shell franchise-page">
         <CommunityHeader />
         <main>
           <a className="muted" href={`/anime/${animeId}`}>
@@ -40,7 +40,7 @@ export default async function FranchisePage({
   const active = cards.find((card) => card.active) || cards[0];
 
   return (
-    <div className="social-site franchise-page">
+    <div className="site-shell franchise-page">
       <CommunityHeader />
       <main>
         <a className="muted" href={`/anime/${animeId}`}>

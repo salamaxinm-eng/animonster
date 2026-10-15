@@ -217,7 +217,7 @@ export default async function LegalPage({
   }).format(new Date());
   const sections = document.sections();
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page legal-page">
         <span className="eyebrow">ANIMONSTER / ДОКУМЕНТЫ</span>

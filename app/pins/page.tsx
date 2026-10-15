@@ -78,7 +78,7 @@ export default function PinsPage() {
     }
   }
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="pins-page">
         <div className="pins-intro">

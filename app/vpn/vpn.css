@@ -71,7 +71,7 @@
 .vpn-message { padding: 14px 18px; border: 1px solid #2a6244; border-radius: 10px; background: #173b29; }
 .vpn-error { border-color: #84404d; background: #4a202b; }
 @media (max-width: 767px) {
-  .social-site > .vpn-page { padding: 28px 16px 118px; }
+  .site-shell > .vpn-page { padding: 28px 16px 118px; }
   .vpn-page h1 { margin-top: 16px; }
   .vpn-card { padding: 20px; }
   .vpn-status-card { min-height: 0; align-items: flex-start; flex-direction: column; }

@@ -142,7 +142,7 @@ export function VpnPage() {
 
   const count = overview?.devices.length || 0;
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="vpn-page">
         <nav className="vpn-breadcrumb" aria-label="Навигация"><a href="/">Главная</a><ChevronRight size={15} aria-hidden="true" /><span>VPN</span></nav>

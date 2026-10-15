@@ -50,7 +50,7 @@ export default function CatalogPage() {
   }, [tab, page, sort]);
 
   return (
-    <div className="social-site mobile-catalog-page">
+    <div className="site-shell mobile-catalog-page">
       <CommunityHeader />
       <main className="title-page">
         <MobileCatalogTabs active={tab} />

@@ -50,7 +50,7 @@ export function PublicProfile({ id }: { id: string }) {
   }, [search]);
   const user = profile.data?.user;
   return (
-    <div className={`social-site profile-hub theme-${user?.theme || 'lime'}`}>
+    <div className={`site-shell profile-hub theme-${user?.theme || 'lime'}`}>
       <CommunityHeader account />
       <main className="hub-public-main">
         <Link className="hub-button" href="/catalog">

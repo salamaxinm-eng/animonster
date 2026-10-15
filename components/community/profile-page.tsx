@@ -256,7 +256,7 @@ export function ProfilePage({
       ) || themes[0];
   return (
     <div
-      className={`social-site account-page ${tab === 'settings' && data?.own ? 'account-editing' : ''}`}
+      className={`site-shell account-page ${tab === 'settings' && data?.own ? 'account-editing' : ''}`}
       style={{ '--profile-accent': theme.color } as React.CSSProperties}
     >
       <CommunityHeader />

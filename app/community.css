@@ -242,7 +242,7 @@
   box-shadow: 0 0 12px
     color-mix(in srgb, var(--am-accent-alt) 12.2%, transparent);
 }
-.social-site {
+.site-shell {
   max-width: 1440px;
   margin: auto;
   padding: 0 5% 70px;
@@ -252,7 +252,7 @@
 /* The search route is shared by desktop and mobile. Mobile overrides live in
    mobile.css; these rules keep the standalone desktop page fully styled. */
 @media (min-width: 768px) {
-  .mobile-search-page.social-site {
+  .mobile-search-page.site-shell {
     min-height: 100vh;
     padding-top: 34px;
   }
@@ -2343,7 +2343,7 @@ button:disabled {
   }
 }
 @media (max-width: 760px) {
-  .social-site {
+  .site-shell {
     padding: 0 4% 40px;
   }
   .community-header {

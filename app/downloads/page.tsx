@@ -50,7 +50,7 @@ export default function DownloadsPage() {
     load();
   }
   return (
-    <div className="social-site offline-page">
+    <div className="site-shell offline-page">
       <CommunityHeader />
       <main>
         <div className="offline-heading">

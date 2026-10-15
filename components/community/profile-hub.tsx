@@ -98,7 +98,7 @@ export function ProfileHub() {
       .catch((cause) => setPaymentError(cause.message));
   }, [params, community.user?.id]);
   return (
-    <div className="social-site profile-hub">
+    <div className="site-shell profile-hub">
       <CommunityHeader account />
       {!community.loaded ? (
         <p className="hub-state" role="status">

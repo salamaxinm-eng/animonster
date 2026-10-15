@@ -3,7 +3,7 @@ import { PlusCollections } from '@/components/community/plus-collections';
 
 export default function Page() {
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
       <main className="title-page plus-page">
         <span className="eyebrow">ANIMONSTER PLUS</span>

@@ -131,7 +131,7 @@ export default function StatisticsPage() {
   const remaining = selectedGoal?.remaining ?? 0;
 
   return (
-    <div className="social-site stats-site">
+    <div className="site-shell stats-site">
       <CommunityHeader />
       <main className="stats-page">
         <div className="stats-intro">

@@ -150,7 +150,7 @@ export default async function GenresPage() {
   });
 
   return (
-    <div className="social-site">
+    <div className="site-shell">
       <CommunityHeader />
 
       <main className="genre-hub">
