@@ -92,3 +92,15 @@
   .pass-claim-dialog, .pass-claim-dialog *, .pass-card.just-claimed, .pass-card.just-claimed::after { animation: none !important; transition: none !important; }
   .pass-claim-sparks, .pass-card.just-claimed::after { display: none; }
 }
+
+/* Sized reward images keep scroll loading lightweight and show failures. */
+.pass-image{display:block;position:relative;min-width:0;width:100%;height:100%}
+.pass-image>img{display:block;width:100%;height:100%;object-fit:contain}
+.pass-image[data-state=loading]{background:radial-gradient(ellipse,#ffffff09,transparent 70%)}
+.pass-image[data-state=error]>img{opacity:0}
+.pass-image-error{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;padding:8px;color:#99a9ab;text-align:center;font-size:10px;line-height:1.4}
+.pass-image.pass-hero-landscape{position:absolute}
+.pass-image.pass-hero-landscape>img{object-fit:cover}
+.pass-image.pass-large-preview{height:260px}
+.pass-message>button{border:0;background:transparent;color:var(--pass-accent);text-decoration:underline;padding:8px;cursor:pointer}
+@media(max-width:640px){.pass-image.pass-large-preview{height:210px}}

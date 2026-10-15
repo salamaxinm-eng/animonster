@@ -1,4 +1,5 @@
 'use client';
+import { passImageUrl } from '@/lib/pass-images';
 import {
   createContext,
   useContext,
@@ -215,7 +216,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 }
 export function Pin({ id }: { id: string | null }) {
   const pass = usePassCosmetic(id);
-  if (pass?.image) return <span className={`anime-pin pass-pin pass-rarity-${pass.rarity}`} title={pass.name}><img src={pass.image} alt={pass.name} /></span>;
+  if (pass?.image) return <span className={`anime-pin pass-pin pass-rarity-${pass.rarity}`} title={pass.name}><img src={passImageUrl(pass.image, 256)} alt={pass.name} /></span>;
   const founder = /^founder-(00[1-9]|010)$/.exec(id || '');
   if (founder) return <span className="anime-pin founder-pin" title="Один из первых 10 пользователей, поддержавших AniMonster донатом от 1000 ₽." aria-label={`Founder #${founder[1]}`}>
     <img src={`/rewards/founder/${founder[0]}.svg`} alt="" />
@@ -289,7 +290,7 @@ export function UserTag({ id }: { id?: string | null }) {
   const pass = usePassCosmetic(id);
   if (pass?.image) {
     const artwork = !pass.slug.startsWith('pass-') || pass.slug.startsWith('pass-worlds-');
-    return <span className={`user-tag user-tag-pass ${artwork ? 'user-tag-pass-art' : ''} pass-rarity-${pass.rarity}`} title={pass.name}>{artwork ? <img src={pass.image} alt={pass.name} style={{ maxWidth: 150, maxHeight: 42, objectFit: 'contain' }} /> : pass.name}</span>;
+    return <span className={`user-tag user-tag-pass ${artwork ? 'user-tag-pass-art' : ''} pass-rarity-${pass.rarity}`} title={pass.name}>{artwork ? <img src={passImageUrl(pass.image, 512)} alt={pass.name} style={{ maxWidth: 150, maxHeight: 42, objectFit: 'contain' }} /> : pass.name}</span>;
   }
   if (!id) return null;
   if (id === 'support-oni-vip' || id === 'support-oni-player') return (

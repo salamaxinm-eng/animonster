@@ -9,6 +9,7 @@ import { ProfileIdentity } from './community/profile-hub/profile-identity';
 import type { Profile } from '@/lib/community';
 import type { PassReward, passOverview } from '@/lib/server/battlepass';
 import { PassClaimCelebration, claimRewardKey } from './pass-claim-celebration';
+import { PassImage } from './pass-image';
 type Overview = Awaited<ReturnType<typeof passOverview>> & { canManage: boolean };
 type Ready = Extract<Overview, { xp: number }>;
 const labels = { daily: 'Ежедневные', weekly: 'Недельные', seasonal: 'Сезонные' };
@@ -18,6 +19,8 @@ export function BattlepassPage() {
   const [data, setData] = useState<Overview | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<keyof typeof labels>('daily'), [selected, setSelected] = useState<PassReward | null>(null), [clock, setClock] = useState(Date.now());
   const [chapter, setChapter] = useState(0);
+  const [imagesFailed, setImagesFailed] = useState(false), [imageRetry, setImageRetry] = useState(0);
+  const retryImages = () => { setImagesFailed(false); setImageRetry(value => value + 1); };
   const [received, setReceived] = useState<PassReward[]>([]), [highlighted, setHighlighted] = useState<string[]>([]);
   const claimButton = useRef<HTMLButtonElement>(null), actionPending = useRef(false);
   const optimisticClaims = useRef(new Set<string>());
@@ -86,7 +89,7 @@ export function BattlepassPage() {
     const claimable = r.available && !r.claimed;
     return <button key={r.cosmetic_id} className={`pass-card ${r.kind} ${r.track} ${r.claimed ? 'claimed' : claimable ? 'available' : ''}${highlighted.includes(claimRewardKey(r)) ? ' just-claimed' : ''}`} onClick={() => setSelected(r)} aria-label={`Уровень ${r.level}: ${r.name}. ${r.claimed ? 'Получено' : claimable ? 'Можно забрать' : 'Посмотреть награду'}`}>
       <span className="pass-card-top"><b>{String(r.level).padStart(2,'0')} <small>ур.</small></b><span>{kindLabels[r.kind]}</span></span>
-      <span className="pass-card-art">{r.kind === 'plus' ? <span className="pass-plus-art"><Crown size={34} /><b>+{r.plus_days}<small>дня Плюса</small></b></span> : <img src={r.preview} alt="" loading="lazy" />}</span>
+      <span className="pass-card-art">{r.kind === 'plus' ? <span className="pass-plus-art"><Crown size={34} /><b>+{r.plus_days}<small>дня Плюса</small></b></span> : <PassImage src={r.preview} alt="" sizes="(max-width: 640px) calc((100vw - 58px) / 2), 220px" retryToken={imageRetry} onFailure={() => setImagesFailed(true)} />}</span>
       <strong>{r.name}</strong><span className="pass-card-state">{r.claimed ? <><Check size={13} /> Получено</> : claimable ? <><Gift size={13} /> Можно забрать</> : <><Lock size={12} /> {r.level > (ready?.level || 0) ? `${r.level * 400} XP` : season?.status === 'draft' ? 'Скоро в коллекции' : r.track === 'premium' ? 'Нужен премиум' : 'Откроется в сезоне'}</>}</span>
     </button>;
   }
@@ -96,7 +99,7 @@ export function BattlepassPage() {
     {!data ? <p role="status">Загружаем сезон…</p> : !season || !ready ? <section className="pass-empty"><Gift size={40} /><h1>Следующий сезон готовится</h1><p>Здесь появятся задания и коллекция AniMonster Pass.</p>{data?.canManage && <a href="/battlepass?season=oni-awakening&preview=1">Открыть черновик «Пробуждение Oni»</a>}</section> : <>
       {season.status === 'draft' && <p className="pass-message">Черновик · доступен только администратору. Участие и оплата ещё не открыты.</p>}
       <section className="pass-hero">
-        <img className="pass-hero-landscape" src={ready.rewards.find(r => r.kind === 'background' && r.level === 5)?.preview || ready.rewards.find(r => r.kind === 'background')?.preview} alt="" />
+        <PassImage className="pass-hero-landscape" size={1024} sizes="100vw" loading="eager" fetchPriority="high" src={ready.rewards.find(r => r.kind === 'background' && r.level === 5)?.preview || ready.rewards.find(r => r.kind === 'background')?.preview} alt="" retryToken={imageRetry} onFailure={() => setImagesFailed(true)} />
         <div className="pass-hero-copy">
           <p className="pass-kicker"><Sparkles size={14} /> КОЛЛЕКЦИЯ СЕЗОНА · 8 НЕДЕЛЬ</p>
           <h1>{season.id === 'anime-worlds-2026' ? <>Четыре мира.<br /><em>Твоя история.</em></> : season.title}</h1>
@@ -108,7 +111,7 @@ export function BattlepassPage() {
         </div>
         <div className="pass-hero-showcase" aria-label="Предметы коллекции">
           <span className="pass-showcase-eyebrow">СОБЕРИ СВОЮ ЛЕГЕНДУ</span>
-          {ready.rewards.filter(r => r.track === 'premium' && (r.level === 23 || r.level === 22 || r.level === 25)).map(r => <button key={r.cosmetic_id} className={`pass-showcase-${r.kind}`} onClick={() => setSelected(r)} aria-label={`Посмотреть ${r.name}`}><img src={r.preview} alt={r.name} /></button>)}
+          {ready.rewards.filter(r => r.track === 'premium' && (r.level === 23 || r.level === 22 || r.level === 25)).map(r => <button key={r.cosmetic_id} className={`pass-showcase-${r.kind}`} onClick={() => setSelected(r)} aria-label={`Посмотреть ${r.name}`}><PassImage src={r.preview} alt={r.name} sizes={r.kind === 'pin' ? '160px' : '360px'} loading="eager" retryToken={imageRetry} onFailure={() => setImagesFailed(true)} /></button>)}
           <span className="pass-showcase-caption">Пины · Рамки · Теги · Фоны</span>
         </div>
         <div className="pass-hero-footer"><span>{season.starts_at ? `${date(season.starts_at, season.timezone)} — ${date(season.ends_at, season.timezone)}` : 'Даты скоро появятся'}</span><span className="pass-countdown">{season.ends_at > 0 ? clock >= Number(season.ends_at) ? 'Сезон завершён' : clock < Number(season.starts_at) ? 'Скоро старт' : `Осталось ${Math.ceil((Number(season.ends_at) - clock) / 86400000)} дн.` : 'Новый сезон'}</span></div>
@@ -119,6 +122,7 @@ export function BattlepassPage() {
         <Button ref={claimButton} variant="outline" aria-disabled={busy || !ready.rewards.some(r => r.available && !r.claimed)} onClick={() => { if (ready.rewards.some(r => r.available && !r.claimed)) void action('claim'); }}><Gift size={17} /> Забрать награды</Button>
       </section>
       <section className="pass-rewards">
+        {imagesFailed && <p className="pass-message" role="status">Часть изображений не загрузилась. <button type="button" onClick={retryImages}>Повторить загрузку картинок</button></p>}
         <div className="pass-section-heading"><div><span className="pass-kicker"><Crown size={14} /> ПРЕМИАЛЬНАЯ ВЕТКА</span><h2>Новый уровень. Новая награда.</h2></div><span>Нажми на предмет, чтобы рассмотреть</span></div>
         <div className="pass-chapters" role="group" aria-label="Группы уровней">{['Начало пути','Новая сила','За горизонтом','Твоя легенда'].map((name,i) => <button key={name} aria-pressed={chapter === i} onClick={() => setChapter(i)}><span>{String(i * 10 + 1).padStart(2,'0')}—{(i + 1) * 10}</span><b>{name}</b></button>)}</div>
         <div className="pass-collection-grid">{Array.from({length:10},(_,i) => chapter * 10 + i + 1).map(level => <div key={level} className="pass-collection-slot">{ready.rewards.filter(r => r.track === 'premium' && r.level === level).map(r => rewardCard(r))}{!ready.rewards.some(r => r.track === 'premium' && r.level === level) && <div className="pass-missing">Уровень {level}<span>Награда готовится</span></div>}</div>)}</div>
@@ -134,7 +138,7 @@ export function BattlepassPage() {
       </section>
     </>}
     {!!data?.history.length && <section className="pass-history"><h2>История сезонов</h2>{data.history.map((h: any) => <a href={`/battlepass?season=${encodeURIComponent(h.id)}`} key={h.id}>{h.title}<span>{h.xp} XP · {h.premium ? 'Премиум' : 'Бесплатный'}</span></a>)}</section>}
-    <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="pass-reward-dialog"><DialogTitle>{selected?.name}</DialogTitle><DialogDescription>Уровень {selected?.level} · {selected?.track === 'premium' ? 'Премиальная' : 'Бесплатная'} дорожка. {selected?.kind === 'plus' ? 'Продлевает Плюс с сохранением оплаченного срока.' : 'Оформление остаётся навсегда.'}</DialogDescription>{selected && (selected.kind === 'plus' ? <div className="pass-plus-reward"><Crown size={64} /><strong>+{selected.plus_days} дня Плюса</strong></div> : <img className="pass-large-preview" src={selected.preview} alt={selected.name} />)}{previewUser && <ProfileIdentity user={previewUser} preview />}{selected?.kind === 'plus' ? <p className="pass-fine">{selected.claimed ? 'Дни Плюса уже начислены.' : 'Начисляется один раз после получения награды.'}</p> : selected?.claimed ? <a className="hub-button" href="/profile?section=appearance">Применить в оформлении профиля →</a> : <p className="pass-fine">{previewUser ? 'Примерка: оформление профиля пока не изменено.' : 'Войдите, чтобы примерить награду на свой профиль.'}</p>}</DialogContent></Dialog>
+    <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="pass-reward-dialog"><DialogTitle>{selected?.name}</DialogTitle><DialogDescription>Уровень {selected?.level} · {selected?.track === 'premium' ? 'Премиальная' : 'Бесплатная'} дорожка. {selected?.kind === 'plus' ? 'Продлевает Плюс с сохранением оплаченного срока.' : 'Оформление остаётся навсегда.'}</DialogDescription>{selected && (selected.kind === 'plus' ? <div className="pass-plus-reward"><Crown size={64} /><strong>+{selected.plus_days} дня Плюса</strong></div> : <PassImage className="pass-large-preview" src={selected.preview} alt={selected.name} size={512} sizes="(max-width: 640px) 90vw, 600px" loading="eager" retryToken={imageRetry} onFailure={() => setImagesFailed(true)} />)}{imagesFailed && <Button type="button" variant="outline" onClick={retryImages}>Повторить загрузку картинок</Button>}{previewUser && <ProfileIdentity user={previewUser} preview />}{selected?.kind === 'plus' ? <p className="pass-fine">{selected.claimed ? 'Дни Плюса уже начислены.' : 'Начисляется один раз после получения награды.'}</p> : selected?.claimed ? <a className="hub-button" href="/profile?section=appearance">Применить в оформлении профиля →</a> : <p className="pass-fine">{previewUser ? 'Примерка: оформление профиля пока не изменено.' : 'Войдите, чтобы примерить награду на свой профиль.'}</p>}</DialogContent></Dialog>
     <PassClaimCelebration rewards={received} returnFocus={claimButton} onClose={() => { setHighlighted(received.map(claimRewardKey)); setReceived([]); }} />
   </main></div>;
 }

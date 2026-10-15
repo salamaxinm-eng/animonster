@@ -1,4 +1,5 @@
 'use client';
+import { passImageUrl } from '@/lib/pass-images';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 type Item = { id: string; slug: string; kind: string; name: string; image: string; rarity: string };
 const Catalog = createContext<Item[]>([]);
@@ -49,7 +50,7 @@ export function PassCosmeticsProvider({ children }: { children: ReactNode }) {
       @keyframes pass-frame-legendary{25%{transform:rotate(-7deg)}75%{transform:rotate(7deg);filter:drop-shadow(0 0 7px #d69b5b)}}
       @media(prefers-reduced-motion:reduce){.pass-pin,.user-tag-pass,[class*=profile-frame-pass-]>.user-avatar::after{animation:none!important}}
     `}</style>
-    <style>{frames.map((f) => `.profile-frame-${f.slug}:not(.profile-frame-none)>.user-avatar::after{content:"";background:url("${f.image}") center/contain no-repeat;border:0!important;border-radius:0;inset:${f.slug.startsWith('pass-worlds-') ? '-25%' : '-16%'};animation:${f.rarity === 'legendary' ? 'pass-frame-legendary 5s ease-in-out infinite' : f.rarity === 'epic' ? 'pass-frame-epic 6s ease-in-out infinite' : 'none'};filter:none!important;pointer-events:none}`).join('\n')}</style>
+    <style>{frames.map((f) => `.profile-frame-${f.slug}:not(.profile-frame-none)>.user-avatar::after{content:"";background:url("${passImageUrl(f.image, 512)}") center/contain no-repeat;border:0!important;border-radius:0;inset:${f.slug.startsWith('pass-worlds-') ? '-25%' : '-16%'};animation:${f.rarity === 'legendary' ? 'pass-frame-legendary 5s ease-in-out infinite' : f.rarity === 'epic' ? 'pass-frame-epic 6s ease-in-out infinite' : 'none'};filter:none!important;pointer-events:none}`).join('\n')}</style>
     {children}
   </Catalog.Provider></Access.Provider>;
 }
