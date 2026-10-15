@@ -122,7 +122,7 @@ function AnimeCard({
         <span className="score">★ {anime.score}</span>
       </a>
       <div className="card-title">
-        <a href={'/anime/' + anime.id}>{anime.russian}</a>
+        <a href={'/anime/' + anime.id} title={anime.russian}>{anime.russian}</a>
         <button
           aria-label="В избранное"
           className={saved ? 'saved' : ''}

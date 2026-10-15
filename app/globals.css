@@ -552,6 +552,24 @@ main {
 .home-rail + .home-rail {
   margin-top: 38px;
 }
+@media (min-width: 768px) {
+  .home-discovery {
+    padding-top: 24px;
+  }
+  .home-rail {
+    margin-top: 16px;
+  }
+  .home-rail + .home-rail {
+    margin-top: 26px;
+  }
+  .home-rail .anime-slider {
+    padding: 16px 0 8px;
+    align-items: stretch;
+  }
+  .home-discovery + .catalog {
+    padding-top: 26px;
+  }
+}
 .home-rail-heading {
   display: flex;
   align-items: end;

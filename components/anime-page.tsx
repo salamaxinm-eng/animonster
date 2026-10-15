@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { EpisodeNotifications } from '@/components/episode-notifications';
 import { AnimeThemes } from '@/components/anime-themes';
+import { AnimeDescription } from '@/components/anime-description';
 import { SeasonNavigation } from '@/components/season-navigation';
 import { UsersRound } from 'lucide-react';
 import { ADULT_CONSENT_COOKIE } from '@/lib/adult-consent';
@@ -199,9 +200,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
               ))}
             </div>
             <AnimeThemes animeId={anime.id} />
-            <p className="title-description">
-              {anime.description?.replace(/<[^>]*>/g, '')}
-            </p>
+            <AnimeDescription key={anime.id} text={anime.description} />
             <CollectionControl anime={anime} />
             <EpisodeNotifications animeId={anime.id} title={anime.russian} />
           </div>

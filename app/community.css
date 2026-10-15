@@ -3134,6 +3134,42 @@ button:disabled {
   font-size: 15px;
   margin: 23px 0;
 }
+.anime-description-toggle {
+  display: none;
+}
+@media (max-width: 760px) {
+  .anime-description {
+    margin: 18px 0;
+    min-width: 0;
+    grid-column: 1 / -1;
+  }
+  .anime-description .title-description {
+    margin: 0;
+  }
+  .anime-description .title-description:not(.is-expanded) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    overflow: hidden;
+  }
+  .anime-description-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 9px;
+    min-height: 36px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--am-accent);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .anime-description-toggle[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+}
 .genre-links {
   display: flex;
   flex-wrap: wrap;
@@ -3573,31 +3609,31 @@ a.franchise-card:hover {
   right: 8px;
 }
 @media (min-width: 768px) {
-  .recommend-section .anime-slider .card {
+  :is(.recommend-section, .home-rail) .anime-slider .card {
     display: grid;
-    grid-template-rows: auto 62px 24px 36px;
+    grid-template-rows: auto 54px 22px 36px;
     align-content: start;
     min-width: 0;
   }
-  .recommend-section .anime-slider .card-title {
+  :is(.recommend-section, .home-rail) .anime-slider .card-title {
     min-height: 0;
-    margin-top: 13px;
+    margin-top: 10px;
     overflow: hidden;
   }
-  .recommend-section .anime-slider .card-title > a {
+  :is(.recommend-section, .home-rail) .anime-slider .card-title > a {
     display: -webkit-box;
     min-width: 0;
     overflow: hidden;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
   }
-  .recommend-section .anime-slider .card > p {
+  :is(.recommend-section, .home-rail) .anime-slider .card > p {
     min-width: 0;
     margin: 4px 0 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .recommend-section .anime-slider .card > .recommendation-reason {
+  :is(.recommend-section, .home-rail) .anime-slider .card > .recommendation-reason {
     display: -webkit-box;
     margin-top: 0;
     -webkit-box-orient: vertical;
