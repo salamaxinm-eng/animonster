@@ -9,13 +9,17 @@ function dayWord(days: number) {
   return plural === 'one' ? 'день' : plural === 'few' ? 'дня' : 'дней';
 }
 
-export function StreakDisplay({ streak }: { streak: Streak }) {
+export function StreakDisplay({ streak, compact = false }: { streak: Streak; compact?: boolean }) {
   const source = streakAsset(streak.tier);
   const [missingAsset, setMissingAsset] = useState(false);
   useEffect(() => setMissingAsset(false), [source]);
 
   return (
-    <section className={`profile-streak profile-streak-tier-${streak.tier} ${streak.current ? '' : 'profile-streak-inactive'}`} aria-label="Ежедневный огонёк">
+    <section
+      className={`profile-streak profile-streak-tier-${streak.tier} ${streak.current ? '' : 'profile-streak-inactive'}${compact ? ' profile-streak-compact' : ''}`}
+      aria-label={`Ежедневный огонёк: ${streak.current} ${dayWord(streak.current)} подряд. Рекорд: ${streak.longest} ${dayWord(streak.longest)}.`}
+      title={`Серия просмотра: ${streak.current} ${dayWord(streak.current)} подряд. Рекорд: ${streak.longest} ${dayWord(streak.longest)}.`}
+    >
       <span className="profile-streak-art" aria-hidden="true">
         {missingAsset ? (
           <Flame className="profile-streak-fallback" strokeWidth={1.8} />
@@ -24,12 +28,14 @@ export function StreakDisplay({ streak }: { streak: Streak }) {
         )}
       </span>
       <div className="profile-streak-copy">
-        {streak.current ? (
+        {compact ? (
+          <><strong><span>{streak.current}</span> {dayWord(streak.current)}</strong><small>{streak.current ? 'подряд' : 'серия просмотра'}</small></>
+        ) : streak.current ? (
           <strong><span>{streak.current}</span> {dayWord(streak.current)} подряд</strong>
         ) : (
           <strong>Начни серию просмотра</strong>
         )}
-        {(streak.current > 0 || streak.longest > 0) && (
+        {!compact && (streak.current > 0 || streak.longest > 0) && (
           <small>Лучший: {streak.longest} {dayWord(streak.longest)}</small>
         )}
       </div>

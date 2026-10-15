@@ -4,6 +4,7 @@ import { Crown, Pencil } from 'lucide-react';
 import type { Profile } from '@/lib/community';
 import { Avatar, Pin, UserTag } from '../context';
 import { Art, backgroundUrl, sectionHref } from './shared';
+import { StreakDisplay } from '../streak-display';
 
 export function ProfileIdentity({
   user,
@@ -43,15 +44,17 @@ export function ProfileIdentity({
         <div>
           <div className="hub-name">
             <Heading>{user.nick}</Heading>
-            {user.tag?.startsWith('pass-worlds-') && <UserTag id={user.tag} />}
-            <Pin id={user.pin} />
-            {!!user.premium_until && (
-              <span className="hub-plus">
-                <Crown size={13} aria-hidden="true" /> Plus
-              </span>
-            )}
+            <div className="hub-profile-badges">
+              <UserTag id={user.tag} />
+              <Pin id={user.pin} />
+              <StreakDisplay streak={user.streak} compact />
+              {!!user.premium_until && (
+                <span className="hub-plus">
+                  <Crown size={13} aria-hidden="true" /> Plus
+                </span>
+              )}
+            </div>
           </div>
-          {!user.tag?.startsWith('pass-worlds-') && <UserTag id={user.tag} />}
           <p className="hub-bio">{user.bio || 'Описание пока не добавлено.'}</p>
           {user.founder_number && (
             <small className="hub-founder">

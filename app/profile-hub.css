@@ -1678,12 +1678,47 @@
   cursor: pointer;
   color: var(--hub-accent);
 }
-.hub-profile-extras .profile-streak {
-  margin: 0;
-  flex: 1;
-  min-width: 220px;
+.hub-profile-badges {
+  display: flex;
+  align-items: center;
+  justify-content: inherit;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+.hub-profile-badges .profile-streak-compact {
+  grid-area: auto;
+  flex: none;
+  min-height: 44px;
+  gap: 6px;
+  padding: 4px 12px 4px 6px;
+  border: 1px solid rgba(var(--streak-rgb), .26);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(var(--streak-rgb), .14), rgba(var(--streak-rgb), .04));
+  box-shadow: inset 0 1px 0 rgba(var(--streak-rgb), .08);
+  text-align: left;
+}
+.profile-streak-compact .profile-streak-art {
+  flex-basis: 34px;
+  width: 34px;
+  height: 34px;
+}
+.profile-streak-compact .profile-streak-copy strong {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.profile-streak-compact .profile-streak-copy strong span {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.profile-streak-compact .profile-streak-copy small {
+  color: var(--hub-muted);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.hub-profile-badges .profile-streak-inactive {
+  border-color: var(--hub-line);
   background: var(--hub-surface);
-  border: 1px solid var(--hub-line);
 }
 .hub-custom-list p {
   white-space: pre-wrap;

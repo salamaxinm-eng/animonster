@@ -13,7 +13,6 @@ import {
 } from './shared';
 import { ProfileIdentity } from './profile-identity';
 import { Comments } from '../comments';
-import { StreakDisplay } from '../streak-display';
 import { BattlepassProgress } from '@/components/battlepass-progress';
 
 type Overview = {
@@ -156,7 +155,6 @@ export function OverviewSection({
         </Link>
       </div>
       <div className="hub-profile-extras">
-        <StreakDisplay streak={user.streak} />
         {profile.passport_public && (
           <Link className="hub-button" href="/passport">
             Аниме-паспорт
