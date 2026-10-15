@@ -8,6 +8,7 @@ import { Button } from './ui/button';
 import { ProfileIdentity } from './community/profile-hub/profile-identity';
 import type { Profile } from '@/lib/community';
 import type { PassReward, passOverview } from '@/lib/server/battlepass';
+import { PassClaimCelebration, claimRewardKey } from './pass-claim-celebration';
 type Overview = Awaited<ReturnType<typeof passOverview>> & { canManage: boolean };
 type Ready = Extract<Overview, { xp: number }>;
 const labels = { daily: 'Ежедневные', weekly: 'Недельные', seasonal: 'Сезонные' };
@@ -17,16 +18,31 @@ export function BattlepassPage() {
   const [data, setData] = useState<Overview | null>(null), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<keyof typeof labels>('daily'), [selected, setSelected] = useState<PassReward | null>(null), [clock, setClock] = useState(Date.now());
   const [chapter, setChapter] = useState(0);
+  const [received, setReceived] = useState<PassReward[]>([]), [highlighted, setHighlighted] = useState<string[]>([]);
+  const claimButton = useRef<HTMLButtonElement>(null), actionPending = useRef(false);
+  const optimisticClaims = useRef(new Set<string>());
   const positioned = useRef(''), checkedPayment = useRef('');
   const seasonId = params.get('season') || '', preview = params.get('preview') === '1';
+  const scope = `${seasonId}:${community.user?.id || ''}`;
+  const currentScope = useRef(scope);
+  currentScope.current = scope;
+  useEffect(() => {
+    if (!highlighted.length) return;
+    const timeout = setTimeout(() => setHighlighted([]), 1200);
+    return () => clearTimeout(timeout);
+  }, [highlighted]);
   const load = useCallback(async () => {
     const r = await fetch(`/api/battlepass?${new URLSearchParams({ ...(seasonId ? { season: seasonId } : {}), ...(preview ? { preview: '1' } : {}) })}`, { cache: 'no-store' });
-    const value = await r.json(); if (!r.ok) throw new Error(value.error); setData(value);
-  }, [seasonId, preview]);
+    const value = await r.json(); if (!r.ok) throw new Error(value.error);
+    if (currentScope.current !== scope) return;
+    if (value.rewards) value.rewards = value.rewards.map((reward: PassReward) => optimisticClaims.current.has(claimRewardKey(reward)) ? { ...reward, claimed: true } : reward);
+    setData(value);
+  }, [seasonId, preview, scope]);
   useEffect(() => { if (community.loaded) void load().catch((e) => setError(e.message)); }, [load, community.loaded, community.user?.id]);
   useEffect(() => { const tick = setInterval(() => setClock(Date.now()), 30000); const refresh = setInterval(() => void load().catch(() => {}), 30000); return () => { clearInterval(tick); clearInterval(refresh); }; }, [load]);
   const season = data?.season;
   const ready = data?.season ? data as Ready : null;
+  useEffect(() => { optimisticClaims.current = new Set(); setReceived([]); setHighlighted([]); }, [scope, season?.id]);
   useEffect(() => {
     if (!ready?.season || positioned.current === ready.season.id) return;
     setChapter(Math.min(3, Math.floor(Math.max(0, ready.level - 1) / 10)));
@@ -43,20 +59,32 @@ export function BattlepassPage() {
   }, [community.user?.id, season?.id, params, load]);
   async function action(kind: 'claim' | 'purchase' | 'check' | 'reroll', week?: number) {
     if (!community.user) { community.login(); return; }
-    if (!season || busy) return;
+    if (!season || actionPending.current) return;
+    const requestScope = scope;
+    actionPending.current = true;
     setBusy(true); setError(''); setNotice('');
     try {
       const result = await mutate(kind === 'purchase' || kind === 'check' ? '/api/battlepass/purchase' : '/api/battlepass', { action: kind, season: season.id, week });
+      if (currentScope.current !== requestScope) return;
       if (result.url) window.location.assign(result.url);
-      else { setNotice(kind === 'claim' ? `Наград получено: ${result.count}. Награды добавлены в аккаунт.` : kind === 'check' ? `Статус платежа: ${result.status === 'succeeded' ? 'подтверждён' : result.status === 'pending' ? 'ожидает оплаты' : result.status === 'not_found' ? 'платёж не найден' : result.status}` : 'Жанр заменён. Прогресс остальных заданий сохранён.'); await load(); }
-    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+      else {
+        if (kind === 'claim') {
+          const rewards: PassReward[] = result.rewards || [];
+          rewards.forEach(reward => optimisticClaims.current.add(claimRewardKey(reward)));
+          setData(previous => previous?.season ? { ...previous, rewards: (previous as Ready).rewards.map(reward => optimisticClaims.current.has(claimRewardKey(reward)) ? { ...reward, claimed: true } : reward) } as Overview : previous);
+          if (rewards.length) { setSelected(null); setReceived(rewards); setHighlighted(rewards.map(claimRewardKey)); }
+          setNotice(result.count ? `Наград получено: ${result.count}. Награды добавлены в аккаунт.` : 'Новых наград пока нет. Уже полученные сохранены в аккаунте.');
+          try { await load(); } catch { if (currentScope.current === requestScope) setNotice('Награды сохранены в аккаунте. Не удалось обновить прогресс — он обновится при следующей загрузке.'); }
+        } else { setNotice(kind === 'check' ? `Статус платежа: ${result.status === 'succeeded' ? 'подтверждён' : result.status === 'pending' ? 'ожидает оплаты' : result.status === 'not_found' ? 'платёж не найден' : result.status}` : 'Жанр заменён. Прогресс остальных заданий сохранён.'); await load(); }
+      }
+    } catch (e) { if (currentScope.current === requestScope) setError((e as Error).message); } finally { actionPending.current = false; setBusy(false); }
   }
   const previewUser: Profile | null = community.user && selected && selected.kind !== 'plus' ? { ...community.user,
     ...(selected.kind === 'frame' ? { profile_frame: selected.slug } : selected.kind === 'background' ? { profile_background: selected.preview } : { [selected.kind]: selected.slug }) } : null;
   const kindLabels = {pin:'Пин',frame:'Рамка',tag:'Тег',background:'Фон профиля',plus:'AniMonster Plus'};
   function rewardCard(r: PassReward) {
     const claimable = r.available && !r.claimed;
-    return <button key={r.cosmetic_id} className={`pass-card ${r.kind} ${r.track} ${r.claimed ? 'claimed' : claimable ? 'available' : ''}`} onClick={() => setSelected(r)} aria-label={`Уровень ${r.level}: ${r.name}. ${r.claimed ? 'Получено' : claimable ? 'Можно забрать' : 'Посмотреть награду'}`}>
+    return <button key={r.cosmetic_id} className={`pass-card ${r.kind} ${r.track} ${r.claimed ? 'claimed' : claimable ? 'available' : ''}${highlighted.includes(claimRewardKey(r)) ? ' just-claimed' : ''}`} onClick={() => setSelected(r)} aria-label={`Уровень ${r.level}: ${r.name}. ${r.claimed ? 'Получено' : claimable ? 'Можно забрать' : 'Посмотреть награду'}`}>
       <span className="pass-card-top"><b>{String(r.level).padStart(2,'0')} <small>ур.</small></b><span>{kindLabels[r.kind]}</span></span>
       <span className="pass-card-art">{r.kind === 'plus' ? <span className="pass-plus-art"><Crown size={34} /><b>+{r.plus_days}<small>дня Плюса</small></b></span> : <img src={r.preview} alt="" loading="lazy" />}</span>
       <strong>{r.name}</strong><span className="pass-card-state">{r.claimed ? <><Check size={13} /> Получено</> : claimable ? <><Gift size={13} /> Можно забрать</> : <><Lock size={12} /> {r.level > (ready?.level || 0) ? `${r.level * 400} XP` : season?.status === 'draft' ? 'Скоро в коллекции' : r.track === 'premium' ? 'Нужен премиум' : 'Откроется в сезоне'}</>}</span>
@@ -88,7 +116,7 @@ export function BattlepassPage() {
       <section className="pass-progress-panel" aria-label="Ваш прогресс">
         <div className="pass-level-badge">{ready.level}<small>УРОВЕНЬ</small></div>
         <div className="pass-progress-copy"><div><b>{community.user ? 'Твой путь к 40 уровню' : 'Твоя коллекция начинается здесь'}</b><span>{ready.xp.toLocaleString('ru-RU')} / 16 000 XP</span></div><progress max={16000} value={Math.min(16000, ready.xp)} aria-label="Прогресс сезона" /><small>{ready.nextXp ? `${ready.nextXp} XP до следующего уровня` : 'Все уровни открыты'} · Общий прогресс обеих веток</small></div>
-        <Button variant="outline" disabled={busy || !ready.rewards.some(r => r.available && !r.claimed)} onClick={() => void action('claim')}><Gift size={17} /> Забрать награды</Button>
+        <Button ref={claimButton} variant="outline" aria-disabled={busy || !ready.rewards.some(r => r.available && !r.claimed)} onClick={() => { if (ready.rewards.some(r => r.available && !r.claimed)) void action('claim'); }}><Gift size={17} /> Забрать награды</Button>
       </section>
       <section className="pass-rewards">
         <div className="pass-section-heading"><div><span className="pass-kicker"><Crown size={14} /> ПРЕМИАЛЬНАЯ ВЕТКА</span><h2>Новый уровень. Новая награда.</h2></div><span>Нажми на предмет, чтобы рассмотреть</span></div>
@@ -107,5 +135,6 @@ export function BattlepassPage() {
     </>}
     {!!data?.history.length && <section className="pass-history"><h2>История сезонов</h2>{data.history.map((h: any) => <a href={`/battlepass?season=${encodeURIComponent(h.id)}`} key={h.id}>{h.title}<span>{h.xp} XP · {h.premium ? 'Премиум' : 'Бесплатный'}</span></a>)}</section>}
     <Dialog open={!!selected} onOpenChange={(open) => { if (!open) setSelected(null); }}><DialogContent className="pass-reward-dialog"><DialogTitle>{selected?.name}</DialogTitle><DialogDescription>Уровень {selected?.level} · {selected?.track === 'premium' ? 'Премиальная' : 'Бесплатная'} дорожка. {selected?.kind === 'plus' ? 'Продлевает Плюс с сохранением оплаченного срока.' : 'Оформление остаётся навсегда.'}</DialogDescription>{selected && (selected.kind === 'plus' ? <div className="pass-plus-reward"><Crown size={64} /><strong>+{selected.plus_days} дня Плюса</strong></div> : <img className="pass-large-preview" src={selected.preview} alt={selected.name} />)}{previewUser && <ProfileIdentity user={previewUser} preview />}{selected?.kind === 'plus' ? <p className="pass-fine">{selected.claimed ? 'Дни Плюса уже начислены.' : 'Начисляется один раз после получения награды.'}</p> : selected?.claimed ? <a className="hub-button" href="/profile?section=appearance">Применить в оформлении профиля →</a> : <p className="pass-fine">{previewUser ? 'Примерка: оформление профиля пока не изменено.' : 'Войдите, чтобы примерить награду на свой профиль.'}</p>}</DialogContent></Dialog>
+    <PassClaimCelebration rewards={received} returnFocus={claimButton} onClose={() => { setHighlighted(received.map(claimRewardKey)); setReceived([]); }} />
   </main></div>;
 }

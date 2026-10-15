@@ -146,7 +146,7 @@ export async function recordPassWatch(user: string, authHash: string, token: str
     return { accepted: true, seconds: credited, previousXp: member.xp };
   });
 }
-export async function claimInTransaction(tx: Tx, s: PassSeason, user: string, member: Member) {
+export async function claimInTransaction(tx: Tx, s: PassSeason, user: string, member: Member, claimedRewards?: PassReward[]) {
   if (s.status !== 'published' || now() < Number(s.starts_at)) throw new ApiError('Сезон ещё не начался', 409);
   const rewards = await tx.prepare(`SELECT r.* FROM pass_rewards r WHERE r.season_id=? AND r.level<=? AND (r.track='free' OR ?) ORDER BY r.level,r.track,r.cosmetic_id`)
     .bind(s.id, passLevel(Number(member.xp)), member.premium).all<PassReward>();
@@ -158,18 +158,24 @@ export async function claimInTransaction(tx: Tx, s: PassSeason, user: string, me
     if (reward.kind === 'plus') {
       await grantPlusDays(user, Number(reward.plus_days), `pass:${s.id}:${user}:${reward.level}:${reward.track}:${reward.cosmetic_id}`, `AniMonster Pass: ${s.title}, уровень ${reward.level}`, tx);
       count++;
+      claimedRewards?.push(reward);
       continue;
     }
     await tx.prepare(`INSERT INTO user_cosmetics(user_id,cosmetic_id,unlocked_at,source,source_key,metadata) VALUES (?,?,?,'battlepass',?,?::text::jsonb) ON CONFLICT(user_id,cosmetic_id) DO NOTHING`)
       .bind(user, reward.cosmetic_id, now(), `${s.id}:${reward.level}:${reward.track}:${reward.cosmetic_id}`, JSON.stringify({ season: s.id, level: reward.level, track: reward.track })).run();
     count++;
+    claimedRewards?.push(reward);
   }
   return count;
 }
 export async function claimPass(user: string, seasonId: string) {
   const s = await findSeason(seasonId);
   if (!s || now() < Number(s.starts_at)) throw new ApiError('Сезон ещё не начался', 409);
-  return db().transaction(async (tx) => ({ count: await claimInTransaction(tx, s, user, await memberLock(tx, s.id, user)) }));
+  return db().transaction(async (tx) => {
+    const rewards: PassReward[] = [];
+    const count = await claimInTransaction(tx, s, user, await memberLock(tx, s.id, user), rewards);
+    return { count, rewards };
+  });
 }
 export async function rerollPassGenre(user: string, seasonId: string, week: number) {
   const s = await findSeason(seasonId); assertLive(s);

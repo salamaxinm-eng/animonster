@@ -23,3 +23,72 @@
 @media(max-width:1000px){.pass-main{padding:24px 24px 100px}.pass-hero-copy{padding:32px 0 24px 28px}.pass-hero-showcase{margin-right:16px}.pass-hero h1{font-size:46px}.pass-season-stats{gap:14px}.pass-chapters button{flex-direction:column;gap:5px}.pass-card{padding:11px}.pass-card-art,.pass-card.background .pass-card-art{height:108px}.pass-plus-art{gap:8px}.pass-plus-art>b{font-size:32px}.pass-plus-art>svg{width:26px}.pass-card-top>span{font-size:8px}}
 @media(max-width:640px){.pass-main{padding:20px 14px 100px}.pass-heading{font-size:9px;letter-spacing:.1em;margin:12px 0 18px}.pass-hero{grid-template-columns:1fr;min-height:0;border-radius:18px}.pass-hero-copy{padding:26px 22px 16px}.pass-hero h1{font-size:44px;margin:18px 0 14px;letter-spacing:-.05em}.pass-kicker{font-size:9px;letter-spacing:.12em}.pass-subtitle{font-size:12px;max-width:290px}.pass-desktop-break{display:none}.pass-season-stats{gap:18px;margin:18px 0;font-size:10px}.pass-season-stats span{display:block}.pass-season-stats b{display:block;font-size:23px;margin-bottom:2px}.pass-purchase>button{width:100%;font-size:12px;min-height:46px;padding:10px;gap:8px}.pass-purchase>button span{margin-left:auto;padding-left:8px}.pass-hero .pass-fine{font-size:10px}.pass-hero-showcase{height:208px;width:260px;max-width:100%;margin:-4px auto 18px}.pass-showcase-eyebrow{display:none}.pass-showcase-frame{height:86%;top:-2%}.pass-showcase-pin{height:37%;top:22%}.pass-showcase-tag{height:22%;bottom:6%}.pass-showcase-caption{font-size:8px;bottom:0}.pass-hero:before{background:linear-gradient(90deg,#0c181eed,#0c181e55),linear-gradient(0deg,#0c181ec0,transparent)}.pass-hero-footer{padding:14px 16px;font-size:9px;gap:8px}.pass-progress-panel{padding:16px;gap:12px;flex-wrap:wrap;border-radius:13px;margin-top:12px}.pass-level-badge{width:51px;height:55px;border-radius:11px;font-size:23px}.pass-level-badge small{font-size:7px}.pass-progress-copy>div{display:block;margin-bottom:9px}.pass-progress-copy b{font-size:11px;display:block;margin-bottom:4px}.pass-progress-copy span,.pass-progress-copy small{font-size:9px}.pass-progress-panel>button{width:100%;min-height:36px;font-size:11px}.pass-rewards,.pass-free-section,.pass-quests{padding-top:30px}.pass-section-heading{display:block;margin-bottom:16px}.pass-section-heading h2{font-size:21px}.pass-section-heading>span{display:block;margin-top:9px;font-size:10px}.pass-chapters{gap:3px;padding:4px;margin-bottom:12px}.pass-chapters button{padding:10px 3px;gap:4px}.pass-chapters span{font-size:11px}.pass-chapters b{font-size:8px;white-space:nowrap}.pass-collection-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pass-card{padding:12px;border-radius:11px}.pass-card-top>span{font-size:8px}.pass-card-art,.pass-card.background .pass-card-art{height:118px;margin:10px 0}.pass-card>strong{font-size:11px;min-height:32px}.pass-card-state{font-size:9px}.pass-free-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pass-free-grid .pass-card-art{height:110px}.pass-free-grid .pass-card>strong{min-height:32px}.pass-plus-art>b{font-size:36px}.pass-task-grid{grid-template-columns:1fr}.pass-task-grid article>div{min-height:32px}.pass-tabs{gap:22px}.pass-tabs button{font-size:12px}.pass-reward-dialog{width:calc(100vw - 24px)!important;max-width:none!important;padding:18px!important}.pass-large-preview{height:210px}.pass-history a{gap:12px}.pass-history span{font-size:10px}.pass-admin .pass-admin-grid{grid-template-columns:1fr}.pass-admin{padding:25px 16px 80px}.pass-admin h1{font-size:26px}}
 @media(prefers-reduced-motion:reduce){.pass-main *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Reward reveal: finite motion, and no animation library or rendering loop. */
+.pass-claim-dialog {
+  --claim-color: #bbed65;
+  --claim-rgb: 187, 237, 101;
+  width: min(760px, calc(100vw - 28px));
+  max-width: 760px !important;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--claim-rgb), .35);
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 0, rgba(var(--claim-rgb), .13), transparent 65%), #121c20;
+  color: #edf2ed;
+  box-shadow: 0 24px 100px #0008;
+}
+.pass-claim-dialog.premium { --claim-color: #f7cd79; --claim-rgb: 247, 205, 121; }
+.pass-claim-dialog[data-open] { animation: pass-claim-open 250ms ease-out both; }
+.pass-claim-heading { padding-right: 28px; }
+.pass-claim-kicker { display: flex; align-items: center; gap: 7px; color: var(--claim-color); font-size: 9px; letter-spacing: .14em; font-weight: 650; margin-bottom: 12px; }
+.pass-claim-heading [data-slot=dialog-title] { font-size: clamp(24px, 4vw, 32px); line-height: 1.15; letter-spacing: -.035em; margin: 0 0 10px; }
+.pass-claim-heading [data-slot=dialog-description] { color: #a6b5b6; font-size: 12px; line-height: 1.6; margin: 0; }
+.pass-claim-stage { min-height: 0; overflow-y: auto; overscroll-behavior: contain; position: relative; padding: 4px; }
+.pass-claim-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.pass-claim-grid.single { grid-template-columns: minmax(0, 1fr); max-width: 390px; margin: auto; }
+.pass-claim-item { --item-rgb: 187, 237, 101; --item-color: #bbed65; min-width: 0; padding: 14px; border: 1px solid rgba(var(--item-rgb), .25); border-radius: 16px; background: radial-gradient(ellipse at 50% 35%, rgba(var(--item-rgb), .12), transparent 70%), #182328; animation: pass-claim-item 350ms cubic-bezier(.16, 1, .3, 1) var(--reveal-delay) both; }
+.pass-claim-item.premium { --item-rgb: 247, 205, 121; --item-color: #f7cd79; }
+.pass-claim-item-meta { display: flex; justify-content: space-between; gap: 6px; font-size: 9px; color: #a5b5b7; }
+.pass-claim-art { display: flex; align-items: center; justify-content: center; height: 130px; margin: 12px 0; }
+.pass-claim-art img { max-width: 100%; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.pass-claim-item.background img { image-rendering: auto; border-radius: 8px; }
+.pass-claim-item h3 { margin: 0 0 10px; font-size: 13px; line-height: 1.45; overflow-wrap: anywhere; }
+.pass-claim-received { display: flex; gap: 5px; align-items: center; color: var(--item-color); font-size: 10px; }
+.pass-claim-plus { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--item-color); }
+.pass-claim-plus strong { font-size: 36px; line-height: 1; }
+.pass-claim-plus span { font-size: 11px; }
+.pass-claim-grid.single .pass-claim-art { height: 230px; }
+.pass-claim-grid.single .pass-claim-item h3 { font-size: 19px; }
+.pass-claim-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; }
+.pass-claim-actions button { min-height: 44px; padding: 10px 30px; background: var(--claim-color); color: #162019; border: 0; border-radius: 10px; font-weight: 650; }
+.pass-claim-actions a { color: var(--claim-color); font-size: 12px; padding: 10px 0; }
+.pass-claim-sparks { position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+.pass-claim-sparks i { position: absolute; top: 45%; left: 50%; width: 5px; height: 5px; border-radius: 2px; background: var(--claim-color); opacity: 0; animation: pass-claim-spark 900ms ease-out both; }
+.pass-card.just-claimed { animation: pass-claim-card 1s ease-out both; }
+.pass-card.just-claimed::after { content: ''; pointer-events: none; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 20%, #bbed6538, transparent 80%); animation: pass-claim-sweep 800ms ease-out both; }
+.pass-card.premium.just-claimed::after { background: linear-gradient(110deg, transparent 20%, #f7cd7938, transparent 80%); }
+.pass-progress-panel button[aria-disabled=true] { opacity: .5; cursor: default; }
+@keyframes pass-claim-open { from { opacity: 0; transform: scale(.94) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes pass-claim-item { from { opacity: 0; transform: translateY(14px) scale(.88); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes pass-claim-spark { 0% { opacity: 0; transform: translate(0, 0) scale(.3); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--spark-x), var(--spark-y)) scale(.2) rotate(120deg); } }
+@keyframes pass-claim-card { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.025); } }
+@keyframes pass-claim-sweep { from { opacity: 0; transform: translateX(-100%); } 25% { opacity: 1; } to { opacity: 0; transform: translateX(100%); } }
+@media (max-width: 640px) {
+  .pass-claim-dialog { gap: 16px; padding: 20px 16px; border-radius: 18px; }
+  .pass-claim-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+  .pass-claim-item { padding: 10px; border-radius: 12px; }
+  .pass-claim-art { height: 105px; }
+  .pass-claim-item h3 { font-size: 11px; }
+  .pass-claim-grid.single .pass-claim-art { height: min(230px, 30dvh); }
+  .pass-claim-actions { justify-content: center; gap: 6px; }
+  .pass-claim-actions button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pass-claim-dialog, .pass-claim-dialog *, .pass-card.just-claimed, .pass-card.just-claimed::after { animation: none !important; transition: none !important; }
+  .pass-claim-sparks, .pass-card.just-claimed::after { display: none; }
+}

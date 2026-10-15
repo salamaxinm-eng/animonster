@@ -48,16 +48,22 @@ test('existing ledger: draft protection, paid eligibility, exactly-once Plus, pa
   // Test database only: release the draft to exercise the production claim implementation.
   await engine.query("UPDATE pass_seasons SET starts_at=$1,ends_at=$2,tasks=$3,status='published' WHERE id=$4",[globalThis.worldsNow-1,globalThis.worldsNow+86400000,JSON.stringify(shared.PASS_TASKS),manifest.id]);
   await engine.query('INSERT INTO pass_members(season_id,user_id,xp,premium,joined_at) VALUES ($1,$2,16000,false,0)',[manifest.id,'test-worlds']);
-  assert.equal((await service.claimPass('test-worlds',manifest.id)).count,4);assert.equal(await n('SELECT count(*)::int n FROM grants'),0);
+  const freeClaim=await service.claimPass('test-worlds',manifest.id);
+  assert.equal(freeClaim.count,4);assert.deepEqual(freeClaim.rewards.map(r=>r.level),[10,20,30,40]);assert.ok(freeClaim.rewards.every(r=>r.track==='free'));assert.equal(await n('SELECT count(*)::int n FROM grants'),0);
   await engine.exec("UPDATE pass_members SET premium=true,xp=1200 WHERE user_id='test-worlds'");
   assert.equal((await service.claimPass('test-worlds',manifest.id)).count,3);assert.equal(await n('SELECT count(*)::int n FROM grants'),0);
   const expiry=globalThis.worldsNow+14*86400000;
   await engine.query("INSERT INTO grants(order_id,user_id,starts_at,expires) VALUES ('paid-existing','test-worlds',$1,$2)",[globalThis.worldsNow,expiry]);
+  await engine.exec("UPDATE pass_members SET xp=1600 WHERE user_id='test-worlds'");
+  const plusClaim=await service.claimPass('test-worlds',manifest.id);
+  assert.equal(plusClaim.count,1);assert.equal(plusClaim.rewards.length,1);assert.equal(plusClaim.rewards[0].kind,'plus');assert.equal(plusClaim.rewards[0].plus_days,3);
   await engine.exec("UPDATE pass_members SET xp=16000 WHERE user_id='test-worlds'");
-  await Promise.all([service.claimPass('test-worlds',manifest.id),service.claimPass('test-worlds',manifest.id)]);
+  const concurrent=await Promise.all([service.claimPass('test-worlds',manifest.id),service.claimPass('test-worlds',manifest.id)]);
+  const awarded=concurrent.flatMap(result=>{assert.equal(result.count,result.rewards.length);return result.rewards});
+  assert.equal(awarded.length,36);assert.equal(new Set(awarded.map(r=>`${r.level}:${r.track}:${r.cosmetic_id}`)).size,36);assert.ok(awarded.some(r=>r.kind==='plus'));assert.ok(awarded.some(r=>r.kind!=='plus'));
   assert.equal(await n('SELECT count(*)::int n FROM grants'),11);assert.equal(await n('SELECT count(*)::int n FROM pass_claims'),44);assert.equal(await n('SELECT count(*)::int n FROM user_cosmetics'),34);
   assert.equal(Number((await engine.query("SELECT max(expires) expiry FROM grants WHERE user_id='test-worlds'")).rows[0].expiry),expiry+30*86400000);
-  assert.equal((await service.claimPass('test-worlds',manifest.id)).count,0);
+  assert.deepEqual(await service.claimPass('test-worlds',manifest.id),{count:0,rewards:[]});
   await engine.exec("INSERT INTO users(id,identity,nick,created_at) VALUES ('rollback','test:rollback','Rollback',0)");
   const plus=await import(plusUrl);
   await assert.rejects(globalThis.worldsDb.transaction(async tx=>{await plus.grantPlusDays('rollback',3,'rollback','Test',tx);throw Error('rollback')}));
