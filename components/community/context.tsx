@@ -287,7 +287,10 @@ const tagLabels: Record<string, string> = {
 };
 export function UserTag({ id }: { id?: string | null }) {
   const pass = usePassCosmetic(id);
-  if (pass?.image) return <span className={`user-tag user-tag-pass ${pass.slug.startsWith('pass-worlds-') ? 'user-tag-pass-art' : ''} pass-rarity-${pass.rarity}`} title={pass.name}>{pass.slug.startsWith('pass-') && !pass.slug.startsWith('pass-worlds-') ? pass.name : <img src={pass.image} alt={pass.name} style={{ maxWidth: 150, maxHeight: 42, objectFit: 'contain' }} />}</span>;
+  if (pass?.image) {
+    const artwork = !pass.slug.startsWith('pass-') || pass.slug.startsWith('pass-worlds-');
+    return <span className={`user-tag user-tag-pass ${artwork ? 'user-tag-pass-art' : ''} pass-rarity-${pass.rarity}`} title={pass.name}>{artwork ? <img src={pass.image} alt={pass.name} style={{ maxWidth: 150, maxHeight: 42, objectFit: 'contain' }} /> : pass.name}</span>;
+  }
   if (!id) return null;
   if (id === 'support-oni-vip' || id === 'support-oni-player') return (
     <span className="user-tag user-tag-support-oni-vip" title="Oni VIP · За поддержку AniMonster">

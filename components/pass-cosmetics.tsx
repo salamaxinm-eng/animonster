@@ -30,7 +30,8 @@ export function PassCosmeticsProvider({ children }: { children: ReactNode }) {
   const frames = items.filter((i) => i.kind === 'frame' && /^[a-z0-9-]+$/.test(i.slug) && (/^\/api\/(battlepass|cosmetic-generator)\/assets\/[a-f0-9-]{36}$/.test(i.image) || /^\/rewards\/pass-worlds-2026\/pass-worlds-[a-z0-9-]+\.png$/.test(i.image)));
   return <Access.Provider value={visible}><Catalog.Provider value={items}>
     <style>{`
-      .user-tag-pass.user-tag-pass-art{padding:0!important;border:0!important;background:transparent!important;max-width:100%!important}
+      .user-tag-pass.user-tag-pass-art{padding:0!important;border:0!important;background:transparent!important;max-width:100%!important;gap:0;box-shadow:none;text-shadow:none}
+      .user-tag-pass-art::before,.user-tag-pass-art::after{content:none;display:none}
       .user-tag-pass-art img,.pass-pin img{image-rendering:pixelated;object-fit:contain}
       .pass-pin{display:inline-flex;transform-origin:center}
       .pass-pin.pass-rarity-rare:hover{animation:pass-pin-rare .9s ease-out}
