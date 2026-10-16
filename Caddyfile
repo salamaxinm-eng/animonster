@@ -1,3 +1,11 @@
+{
+  # Only advertise protocols actually reachable through the published TCP ports.
+  # VPNs often drop QUIC/UDP; HTTP/2 keeps multiplexing without QUIC fallback waits.
+  servers {
+    protocols h1 h2
+  }
+}
+
 {$SITE_ADDRESS:http://31.77.10.81} {
   encode zstd gzip
   # Limit abusive clients before requests reach either Next.js node.
@@ -83,6 +91,8 @@
     fail_duration 30s
   }
   header {
+    # Expire the previous 30-day HTTP/3 advertisement in returning browsers.
+    Alt-Svc clear
     Strict-Transport-Security "max-age=31536000; includeSubDomains"
     -Server
   }
