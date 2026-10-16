@@ -1,6 +1,36 @@
 /* Layout polish shared by all themes; colours follow the viewer's selection. */
 html, body { background: var(--background); color: var(--foreground); }
 .site, .site-shell { background: var(--background); }
+/* Static scenery belongs to Eclipse only; chosen alternative themes stay intact. */
+html:not([data-site-theme^='v2-']) body { isolation: isolate; }
+html:not([data-site-theme^='v2-']) body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--background);
+  background-image:
+    linear-gradient(180deg, #090c1426, #090c1433 55%, #090c14a6),
+    url('/themes/eclipse/night-garden.webp');
+  background-position: center, center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+html:not([data-site-theme^='v2-']) :is(.site, .site-shell, .profile-hub, .pass-site, .passport-site) {
+  background: transparent;
+}
+html:not([data-site-theme^='v2-']) :is(.header, .community-header) {
+  background: color-mix(in srgb, var(--background) 90%, transparent);
+}
+@media (max-width: 767px) {
+  html:not([data-site-theme^='v2-']) body::before {
+    background-image:
+      linear-gradient(180deg, #090c1440, #090c1466 55%, #090c14b3),
+      url('/themes/eclipse/night-garden-mobile.webp');
+    background-position: center, center;
+  }
+}
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--am-accent-light);
   outline-offset: 3px;

@@ -112,7 +112,7 @@ test('responses marked private or no-store cannot enter the public data cache', 
 test('public shell allowlist still rejects a private HTML response', async () => {
   const app = harness(() => response('account data', 'text/html', 'private, no-store'));
   await app.dispatch('install');
-  const shell = await app.caches.open('animonster-shell-v4-eclipse');
+  const shell = await app.caches.open('animonster-shell-v5-eclipse-garden');
   assert.equal(await shell.match('/'), undefined);
   assert.equal((await app.dispatch('fetch', request('/', 'navigate'))).status, 200);
   assert.equal(await shell.match('/'), undefined);
