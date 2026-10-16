@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'animonster-shell-v3';
+const SHELL_CACHE = 'animonster-shell-v4-eclipse';
 const DATA_CACHE = 'animonster-public-data-v1';
 const SHELL_PAGES = [
   '/',
