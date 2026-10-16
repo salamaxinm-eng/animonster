@@ -5,7 +5,7 @@ import { stripTypeScriptTypes } from 'node:module';
 
 const source = (await readFile('lib/server/payment-gateway.ts', 'utf8')).replace(
   "import { ApiError, runtime } from './core';",
-  'const runtime=()=>globalThis.casheraTestConfig; class ApiError extends Error { constructor(message,status){super(message);this.status=status;} }',
+  'const runtime=()=>globalThis.casheraTestConfig; class ApiError extends Error { constructor(message,status,code){super(message);this.status=status;this.code=code;} }',
 );
 const gateway = await import('data:text/javascript;base64,' + Buffer.from(stripTypeScriptTypes(source)).toString('base64'));
 
@@ -67,6 +67,14 @@ void test('Cashera configuration, checkout timeout recovery and invalid provider
       globalThis.fetch = async () => Response.json({...transaction, [field]: value});
       await assert.rejects(gateway.createCasheraCheckout(input));
     }
+    let rejectedRequests = 0;
+    globalThis.fetch = async () => {
+      rejectedRequests++;
+      return Response.json({message:'No payment methods are available on checkout.'}, {status:422});
+    };
+    await assert.rejects(gateway.createCasheraCheckout(input), error =>
+      error.code === 'payment_methods_unavailable' && error.status === 503);
+    assert.equal(rejectedRequests,1);
     config.PAYMENTS_ENABLED = 'false';
     assert.equal(gateway.paymentsReady(), false);
     globalThis.fetch = async () => Response.json(transaction);

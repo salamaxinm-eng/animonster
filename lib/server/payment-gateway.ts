@@ -42,11 +42,17 @@ export async function casheraFetch(path: string, init: RequestInit = {}) {
       redirect: 'error',
     });
   } catch {
-    throw new ApiError('Не удалось связаться с платёжным сервисом. Проверьте оплату позже.', 502);
+    throw new ApiError('Не удалось связаться с платёжным сервисом. Проверьте оплату позже.', 502, 'payment_provider_uncertain');
   }
   if (!response.ok) {
     console.error('Cashera API error', response.status);
-    throw new ApiError('Платёжный сервис временно недоступен', 502);
+    if (response.status === 422) {
+      const error = await response.json().catch(() => null) as { message?: unknown } | null;
+      if (error?.message === 'No payment methods are available on checkout.')
+        throw new ApiError('Оплата недоступна: в Cashera пока не подключены способы оплаты.', 503, 'payment_methods_unavailable');
+    }
+    throw new ApiError('Платёжный сервис временно недоступен', 502,
+      response.status >= 500 ? 'payment_provider_uncertain' : 'payment_provider_rejected');
   }
   return await response.json() as CasheraTransaction;
 }
@@ -74,6 +80,8 @@ export async function createCasheraCheckout(input: {
   try {
     transaction = await casheraFetch('', { method: 'POST', body: payload });
   } catch (error) {
+    // Validation/authentication failures are definite rejections, not lost responses.
+    if (!(error instanceof ApiError) || error.code !== 'payment_provider_uncertain') throw error;
     // The provider may have accepted a request before its response was lost.
     // Recover that same order; never create a second transaction with a new ID.
     try { transaction = await casheraFetch('/by-external-id/' + encodeURIComponent(input.orderId)); }
