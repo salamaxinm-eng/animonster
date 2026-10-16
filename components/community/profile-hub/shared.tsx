@@ -125,7 +125,7 @@ export function equipped(item: Cosmetic, user: Profile) {
     );
   if (item.kind === 'frame') return user.profile_frame === item.slug;
   if (item.kind === 'theme')
-    return user.theme === (item.slug === 'bleach-theme' ? 'bleach' : item.slug);
+    return user.theme === (item.slug === 'bleach-theme' ? 'v2-bleach' : item.slug);
   return user[item.kind] === item.slug;
 }
 export const rarityLabels: Record<string, string> = {

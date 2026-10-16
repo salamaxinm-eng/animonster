@@ -77,7 +77,7 @@ export function CosmeticGenerator() {
       {message && <p className="generator-notice" role="status">{message}</p>}
       {!items.length && <p className="generator-empty">Пока нет генераций.</p>}
       <div className="generator-grid">{items.map((item) => <article key={item.id} className={`generator-card ${item.rarity}`}>
-        <div className="generator-art">{item.kind === 'frame' ? <div className="generator-avatar"><Avatar avatar={user?.avatar || 'moon'} theme={user?.theme || 'neon'} large /><img className="generator-overlay" src={`/api/cosmetic-generator/assets/${item.id}`} alt="Примерка рамки" /></div> : <img className="generator-pin" src={`/api/cosmetic-generator/assets/${item.id}`} alt={item.concept} />}</div>
+        <div className="generator-art">{item.kind === 'frame' ? <div className="generator-avatar"><Avatar avatar={user?.avatar || 'moon'} theme={user?.theme || 'eclipse'} large /><img className="generator-overlay" src={`/api/cosmetic-generator/assets/${item.id}`} alt="Примерка рамки" /></div> : <img className="generator-pin" src={`/api/cosmetic-generator/assets/${item.id}`} alt={item.concept} />}</div>
         <div className="generator-meta"><span>{item.kind === 'pin' ? 'ПИН' : 'РАМКА'} · {item.rarity === 'common' ? 'ОБЫЧНАЯ' : 'ЛЕГЕНДАРНАЯ'}</span><span>{item.status === 'published' ? 'В КАТАЛОГЕ' : 'ЧЕРНОВИК'}</span></div>
         <h3>{item.anime}</h3><p>{item.concept}</p><small>{new Date(item.created_at).toLocaleString('ru-RU')} · {item.model}</small>
         <div className="generator-actions"><a href={`/api/cosmetic-generator/assets/${item.id}`} target="_blank" rel="noreferrer">Крупно</a><a href={`/api/cosmetic-generator/assets/${item.id}`} download={`${item.anime}-${item.kind}-${item.rarity}.png`}>Скачать PNG</a>

@@ -4,17 +4,23 @@ export const themes: Array<{
   color: string;
   cosmetic?: string;
 }> = [
-  { id: 'neon', name: 'Неон', color: '#b4ed50' },
-  { id: 'sakura', name: 'Сакура', color: '#ff94c2' },
-  { id: 'mage', name: 'Тёмный маг', color: '#b29aff' },
-  { id: 'cyber', name: 'Киберпанк', color: '#65d9ff' },
+  { id: 'eclipse', name: 'Violet Eclipse · стандартная', color: '#A855F7' },
+  { id: 'v2-neon', name: 'Неон', color: '#b4ed50' },
+  { id: 'v2-sakura', name: 'Сакура', color: '#ff94c2' },
+  { id: 'v2-mage', name: 'Тёмный маг', color: '#b29aff' },
+  { id: 'v2-cyber', name: 'Киберпанк', color: '#65d9ff' },
   {
-    id: 'bleach',
+    id: 'v2-bleach',
     name: 'Блич',
     color: '#ff2638',
     cosmetic: 'bleach-theme',
   },
 ];
+// Legacy preferences display Eclipse until the viewer explicitly chooses again.
+// Versioned choices persist across devices without rewriting existing accounts.
+export function resolveSiteTheme(value?: string | null): string {
+  return themes.some((theme) => theme.id === value) ? value! : 'eclipse';
+}
 export const avatars = [
   { id: 'moon', name: 'Странница', position: '77% 40%' },
   { id: 'valley', name: 'Долина', position: '20% 50%' },

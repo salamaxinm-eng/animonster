@@ -19,8 +19,8 @@
   overflow-wrap: anywhere;
 }
 .fundraising-goal-switch > button[aria-pressed='true'] {
-  border-color: #b9eb67;
-  background: #b9eb67;
+  border-color: var(--am-accent);
+  background: var(--am-accent);
   color: #152011;
 }
 .fundraising-goal-switch > button:focus-visible {
@@ -116,7 +116,7 @@
   padding: 26px !important;
   gap: 16px !important;
   border-radius: 20px;
-  background: #11171e;
+  background: var(--card);
 }
 .donation-dialog [data-slot='dialog-close'] {
   min-width: 44px;

@@ -52,7 +52,7 @@ export function AppearanceSection({
           ? item.image
           : item.kind === 'theme'
             ? item.slug === 'bleach-theme'
-              ? 'bleach'
+              ? 'v2-bleach'
               : item.slug
             : item.slug,
     }));

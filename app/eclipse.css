@@ -1,0 +1,102 @@
+/* Layout polish shared by all themes; colours follow the viewer's selection. */
+html, body { background: var(--background); color: var(--foreground); }
+.site, .site-shell { background: var(--background); }
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--am-accent-light);
+  outline-offset: 3px;
+}
+:where(button, a) { transition: color 200ms, background-color 200ms, border-color 200ms, box-shadow 200ms, transform 200ms; }
+::selection { background: var(--am-accent-alt); color: #fff; }
+.brand svg, .mobile-brand svg { filter: drop-shadow(0 0 6px var(--am-glow)); }
+.brand span span, .mobile-brand strong { color: var(--am-accent-light); }
+.community-header, .header { border-bottom-color: var(--border); }
+.global-search, .account-menu-trigger { background: var(--card); border-color: var(--border); }
+.global-search:focus-within { border-color: var(--am-accent-light); box-shadow: 0 0 0 3px var(--am-soft); }
+.pass-nav-button, .plus-link { border-color: color-mix(in srgb, var(--am-accent) 38%, var(--border)); color: var(--am-accent-light); }
+.popular-hero { border: 1px solid var(--border); border-radius: 16px; }
+.popular-hero .hero { border: 0; background: var(--card); }
+.anime-hero > img.hero-backdrop { filter: none; transform: none; opacity: 1; }
+.anime-hero .hero-shade {
+  background: linear-gradient(90deg, var(--background) 1%, color-mix(in srgb, var(--background) 94%, transparent) 32%, color-mix(in srgb, var(--background) 48%, transparent) 58%, transparent 84%), linear-gradient(0deg, var(--background), transparent 45%);
+}
+.eyebrow, .anime-meta { color: var(--muted-foreground); }
+.anime-meta strong, .card .score { color: var(--am-accent-light); }
+.card .score { background: color-mix(in srgb, var(--background) 90%, transparent); backdrop-filter: none; }
+.hero h1 { color: var(--foreground); }
+.primary { background: var(--am-button); border: 1px solid color-mix(in srgb, var(--am-accent-light) 65%, transparent); box-shadow: 0 4px 20px var(--am-glow); }
+.primary:hover { background: var(--am-button-hover); box-shadow: 0 6px 26px var(--am-glow); transform: translateY(-1px); }
+.home-section-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.home-section-tabs > button, .home-section-tabs > a { flex-shrink: 0; }
+.home-section-tabs button.active { background: var(--am-button); box-shadow: 0 3px 14px var(--am-glow); color: var(--am-on-accent); }
+.account-dropdown { background: var(--popover) !important; border-color: var(--border) !important; }
+.card { transition: transform 200ms, box-shadow 200ms; }
+@media (hover: hover) {
+  .anime-slider .card:hover { transform: translateY(-3px); }
+  .card:hover .poster { box-shadow: 0 0 0 1px var(--am-accent), 0 5px 20px var(--am-glow); }
+}
+.profile-hub { --hub-bg: var(--background); --hub-surface: var(--card); --hub-line: var(--border); --hub-text: var(--foreground); --hub-muted: var(--muted-foreground); --hub-accent: var(--am-accent); }
+.hub-primary, .hub-save .hub-primary { background: var(--am-button); color: var(--am-on-accent); }
+.pass-site { --pass-accent: var(--am-accent); --pass-muted: var(--muted-foreground); --pass-border: var(--border); background: var(--background); }
+.pass-progress-panel, .pass-card, .pass-chapters, .pass-task-grid article { background-color: var(--card); }
+.pass-purchase > button { background: var(--am-button); color: var(--am-on-accent); }
+.pass-purchase > button:hover { background: var(--am-button-hover); }
+.pass-progress-panel > button { background: var(--am-soft); border-color: var(--border); color: var(--am-accent-light); }
+.vpn-page .vpn-buy { background: var(--am-button); border-color: var(--am-accent); color: var(--am-on-accent); box-shadow: 0 4px 20px var(--am-glow); }
+.vpn-page .vpn-buy:hover:not(:disabled) { background: var(--am-button-hover); border-color: var(--am-accent-light); }
+.vpn-page button:hover:not(:disabled):not(.vpn-danger), .vpn-downloads a:hover { border-color: var(--am-accent-light); }
+.vpn-bundle-card { background: var(--card); border-color: color-mix(in srgb, var(--am-accent) 35%, var(--border)); }
+.vpn-bundle-card .vpn-label, .vpn-bundle-card .vpn-label::before { color: var(--am-accent-light); }
+[data-slot='dialog-content'], [data-slot='dropdown-menu-content'], [data-slot='popover-content'] { background-color: var(--popover); color: var(--foreground); border-color: var(--border); }
+[data-slot='dropdown-menu-item']:focus { background: var(--am-hover); }
+@media (min-width: 768px) {
+  .popular-hero .hero { height: clamp(400px, 34vw, 490px); min-height: 400px; }
+  .header { gap: 18px; padding-inline: 4%; }
+  .header nav { gap: 15px; font-size: 13px; }
+  .header .account-nav { gap: 10px; min-width: 0; }
+  .header .account-menu-trigger { max-width: 140px; }
+  .header .global-search { flex: 1 1 180px; width: auto; min-width: 160px; }
+  .community-header { gap: 18px; }
+  .community-header .community-links { gap: 16px; }
+  .community-header .account-nav { gap: 10px; }
+  .community-header .account-menu-trigger { max-width: 140px; }
+  .community-header .global-search { min-width: 160px; flex: 1 1 160px; }
+}
+@media (min-width: 768px) and (max-width: 1250px) {
+  .header { display: grid; grid-template-columns: auto minmax(150px, 1fr) auto; gap: 10px 18px; height: auto; padding-block: 16px; }
+  .header > .brand { grid-column: 1; grid-row: 1; }
+  .header > .global-search { grid-column: 2; grid-row: 1; width: 100%; }
+  .header > .account-nav { grid-column: 3; grid-row: 1; }
+  .header > nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 26px; }
+  .header .account-menu-nick { display: none; }
+  .header .brand { font-size: 22px; }
+  .community-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 18px; height: auto; padding-block: 16px; }
+  .community-header > .brand { grid-column: 1; grid-row: 1; }
+  .community-header > .account-nav { grid-column: 2; grid-row: 1; }
+  .community-header > .global-search { grid-column: 1; grid-row: 2; width: 100%; margin: 0; min-width: 0; }
+  .community-header > .community-links { grid-column: 2; grid-row: 2; gap: 14px; justify-content: flex-end; }
+  .community-header .account-menu-nick { display: none; }
+  .community-header .brand { font-size: 22px; }
+}
+@media (max-width: 767px) {
+  .mobile-topbar { background: var(--background); backdrop-filter: none; border-color: var(--border); }
+  .mobile-bottom-nav { background: var(--card); backdrop-filter: none; border-color: var(--border); }
+  .mobile-bottom-nav-pass a[href='/battlepass'] { color: var(--muted-foreground); }
+  .mobile-bottom-nav .active, .mobile-bottom-nav-pass a[href='/battlepass'].active { color: var(--am-accent-light); }
+  .mobile-bottom-nav .active svg { filter: drop-shadow(0 0 5px var(--am-glow)); }
+  .popular-hero { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
+  .popular-hero .anime-hero .hero-shade { background: linear-gradient(180deg, transparent 15%, color-mix(in srgb, var(--background) 30%, transparent) 35%, var(--background) 75%); }
+  .popular-hero .anime-hero .hero-copy { background: linear-gradient(transparent, var(--background) 38%); }
+  .popular-hero .hero-controls { background: var(--background); }
+  .popular-hero .anime-hero .mobile-hero-bookmark { border-radius: 10px; border-color: var(--border); background: var(--card); color: var(--am-accent-light); }
+  .popular-hero .anime-hero .hero-copy > .primary { border-radius: 10px; font-size: 14px; }
+}
+@media (max-width: 359px) {
+  .mobile-topbar { padding-left: 12px; padding-right: 12px; }
+  .mobile-brand { font-size: 19px; gap: 5px; }
+  .mobile-search-button { width: 38px; }
+  .mobile-plus-button { padding-inline: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

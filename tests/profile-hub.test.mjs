@@ -212,7 +212,7 @@ test('profile hub isolates owners, paginates and filters real data, and saves ap
     assert.deepEqual((await publicCompact.json()).entries, []);
     const initial = {
       avatar: 'moon',
-      theme: 'neon',
+      theme: 'v2-neon',
       frame: 'none',
       pin: null,
       tag: null,
@@ -271,12 +271,12 @@ test('profile hub isolates owners, paginates and filters real data, and saves ap
       canChangeAvatar: true,
     };
     assert.equal(
-      (await post({ ...initial, avatar: 'valley', theme: 'sakura' })).status,
+      (await post({ ...initial, avatar: 'valley', theme: 'v2-sakura' })).status,
       200,
     );
     const after = await snapshot();
     assert.equal(after.avatar, 'valley');
-    assert.equal(after.theme, 'sakura');
+    assert.equal(after.theme, 'v2-sakura');
     assert.equal(after.nick, before.nick);
     assert.equal(after.bio, before.bio);
     // Uploads are denied even with Plus; existing images survive unrelated saves.
@@ -290,7 +290,7 @@ test('profile hub isolates owners, paginates and filters real data, and saves ap
     assert.equal((await direct(uploadRoute,'/api/plus-assets','profile_background')).status,403);
     await engine.exec("INSERT INTO user_avatars(user_id,mime_type,data,updated_at) VALUES ('owner','image/png','\\x0102',123); INSERT INTO plus_assets(id,user_id,kind,mime_type,data,updated_at) VALUES ('own-bg','owner','profile_background','image/png','\\x0304',123); UPDATE users SET avatar='custom:owner:123',profile_background='asset:own-bg:123' WHERE id='owner'");
     const old = {...initial,avatar:'custom:owner:123',background:'asset:own-bg:123'};
-    assert.equal((await post({...old,theme:'sakura'})).status,200);
+    assert.equal((await post({...old,theme:'v2-sakura'})).status,200);
     assert.equal((await snapshot()).avatar,old.avatar);
     assert.equal((await snapshot()).profile_background,old.background);
     globalThis.hubTestAccess={active:false,premiumUntil:0,canChangeAvatar:false};

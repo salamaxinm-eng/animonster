@@ -110,7 +110,9 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     void fetch('/api/activity', { method: 'POST' });
   }, [refresh]);
   useEffect(() => {
-    const theme = me.user?.theme === 'bleach' ? 'bleach' : '';
+    const theme = themes.some((item) => item.id === me.user?.theme)
+      ? me.user!.theme
+      : 'eclipse';
     if (theme) document.documentElement.dataset.siteTheme = theme;
     else delete document.documentElement.dataset.siteTheme;
     return () => {
@@ -167,7 +169,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       <PassCosmeticsProvider>{children}</PassCosmeticsProvider>
       <Dialog open={showLogin} onOpenChange={setShowLogin}>
         <DialogContent className="sign-dialog">
-          <Ghost size={40} color="#b4ed50" />
+          <Ghost size={40} color="var(--am-accent)" />
           <DialogTitle>Твой мир на AniMonster</DialogTitle>
           <DialogDescription>
             Сохраняй историю, собирай коллекцию и обсуждай серии.
@@ -306,7 +308,7 @@ export function UserTag({ id }: { id?: string | null }) {
 }
 export function Avatar({
   avatar = 'moon',
-  theme = 'neon',
+  theme = 'eclipse',
   large = false,
 }: {
   avatar?: string;

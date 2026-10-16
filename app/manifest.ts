@@ -8,8 +8,8 @@ export default function manifest(): MetadataRoute.Manifest {
       'Смотри аниме онлайн и сохраняй серии AniMonster Plus для офлайна.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#080b10',
-    theme_color: '#080b10',
+    background_color: '#090C14',
+    theme_color: '#090C14',
     orientation: 'any',
     icons: [
       {

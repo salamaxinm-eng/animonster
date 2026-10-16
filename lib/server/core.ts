@@ -1,4 +1,5 @@
 import postgres from 'postgres';
+import { resolveSiteTheme } from '../community';
 
 export type Runtime = {
   DATABASE_URL?: string;
@@ -402,7 +403,7 @@ export async function publicUser(u: User) {
     id: u.id,
     nick: u.nick,
     bio: u.bio,
-    theme: u.theme,
+    theme: resolveSiteTheme(u.theme),
     avatar: u.avatar,
     pin: cosmetics.pin,
     tag: cosmetics.tag,

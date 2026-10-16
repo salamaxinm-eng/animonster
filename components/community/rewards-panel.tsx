@@ -97,7 +97,7 @@ export function RewardsPanel({
     if (item.kind === 'frame')
       return community.user?.profile_frame === item.slug;
     if (item.kind === 'theme')
-      return community.user?.theme === 'bleach' && item.slug === 'bleach-theme';
+      return community.user?.theme === 'v2-bleach' && item.slug === 'bleach-theme';
     if (item.kind === 'background')
       return community.user?.profile_background === item.image || community.user?.profile_background === item.slug;
     return community.user?.[item.kind] === item.slug;

@@ -179,7 +179,7 @@
   margin-top: 44px;
 }
 .referral-profile-gallery .referral-section-title > p {
-  color: #929aaa;
+  color: var(--muted-foreground);
   font-size: 12px;
   line-height: 1.7;
 }
@@ -247,7 +247,7 @@
 .referral-gallery-note {
   font-size: 11px;
   line-height: 1.7;
-  color: #929aaa;
+  color: var(--muted-foreground);
   margin-top: 14px;
 }
 .referral-hero-cta:focus-visible,
@@ -401,7 +401,7 @@
 }
 .referrals-page .referral-progress span {
   z-index: 1;
-  background: #11151d;
+  background: var(--card);
 }
 .referrals-page .referral-progress .next span {
   background: #b49af2;
@@ -521,7 +521,7 @@
   gap: 28px;
   margin-top: 36px;
   padding: 28px 0;
-  border-top: 1px solid #29313d;
+  border-top: 1px solid var(--border);
 }
 .referral-how > div {
   display: grid;
@@ -536,7 +536,7 @@
 }
 .referral-how p {
   font-size: 12px;
-  color: #929aaa;
+  color: var(--muted-foreground);
   line-height: 1.7;
   margin: 0;
 }

@@ -1,10 +1,10 @@
 .profile-hub {
-  --hub-bg: #0c1013;
-  --hub-surface: #151b21;
-  --hub-line: #283139;
-  --hub-text: #f3f6f6;
+  --hub-bg: var(--background);
+  --hub-surface: var(--card);
+  --hub-line: var(--border);
+  --hub-text: var(--foreground);
   --hub-muted: #a9b3bc;
-  --hub-accent: #b5ed49;
+  --hub-accent: var(--am-accent);
   background: var(--hub-bg);
   color: var(--hub-text);
   min-height: 100vh;
@@ -57,7 +57,7 @@
 }
 .hub-sidebar a:hover,
 .hub-sidebar a.active {
-  background: #202a25;
+  background: var(--am-soft);
   color: var(--hub-accent);
 }
 .hub-sidebar a.active {
@@ -124,7 +124,7 @@
 .hub-primary {
   background: var(--hub-accent);
   border-color: var(--hub-accent);
-  color: #10170a !important;
+  color: var(--am-on-accent) !important;
 }
 .hub-button:disabled,
 .hub-primary:disabled {
@@ -190,7 +190,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #2a3c20;
+  background: var(--am-soft);
   color: var(--hub-accent);
   padding: 4px 10px;
   border-radius: 20px;
@@ -267,7 +267,7 @@
   right: 16px;
   top: 130px;
   background: var(--hub-accent);
-  color: #111;
+  color: var(--am-on-accent);
   padding: 8px;
   border-radius: 50%;
   box-sizing: content-box;
@@ -345,7 +345,7 @@
 .hub-tabs button.active {
   color: var(--hub-accent);
   border-color: var(--hub-accent);
-  background: #202b21;
+  background: var(--am-soft);
 }
 .hub-tabs small {
   margin-left: 5px;
@@ -599,7 +599,7 @@
   width: 46px;
   height: 46px;
   border-radius: 12px;
-  background: #253126;
+  background: var(--am-soft);
   color: var(--hub-accent);
   font-size: 22px;
 }
@@ -775,7 +775,7 @@
   }
   .hub-mobile-menu a[aria-current] {
     color: var(--hub-accent);
-    background: #243025;
+    background: var(--am-soft);
   }
   .hub-identity {
     padding-inline: 16px;
@@ -915,12 +915,12 @@
 .profile-hub,
 .hub-drawer,
 .hub-dialog {
-  --hub-bg: #0c1013;
-  --hub-surface: #151b21;
-  --hub-line: #283139;
-  --hub-text: #f3f6f6;
+  --hub-bg: var(--background);
+  --hub-surface: var(--card);
+  --hub-line: var(--border);
+  --hub-text: var(--foreground);
   --hub-muted: #a9b3bc;
-  --hub-accent: #b5ed49;
+  --hub-accent: var(--am-accent);
 }
 .site-shell.profile-hub {
   max-width: none;
@@ -1272,7 +1272,7 @@
   min-height: 44px;
   border: 1px solid var(--hub-line);
   border-radius: 8px;
-  background: #243026;
+  background: var(--am-soft);
   color: var(--hub-text);
   margin-right: 10px;
   padding: 8px;
@@ -1461,7 +1461,7 @@
 }
 .hub-drawer a.active {
   color: var(--hub-accent);
-  background: #243025;
+  background: var(--am-soft);
   font-weight: 600;
   border-left: 3px solid var(--hub-accent);
 }
@@ -1594,7 +1594,7 @@
 .hub-tabs a.active {
   color: var(--hub-accent);
   border-color: var(--hub-accent);
-  background: #202b21;
+  background: var(--am-soft);
 }
 .hub-showcase-editor > div {
   display: grid;

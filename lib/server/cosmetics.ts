@@ -198,7 +198,7 @@ export async function safeEquippedCosmetics(
 }
 
 export async function cosmeticEquipValue(kind: CosmeticKind, slug: string | null) {
-  if (kind === 'theme') return slug === 'bleach-theme' ? 'bleach' : slug || 'neon';
+  if (kind === 'theme') return slug === 'bleach-theme' ? 'v2-bleach' : slug || 'eclipse';
   if (kind !== 'background' || !slug) return slug;
   const item = await db().prepare("SELECT image FROM cosmetics WHERE kind='background' AND slug=?")
     .bind(slug).first<{ image: string | null }>();

@@ -21,9 +21,9 @@
 .account-menu-trigger {
   min-height: 42px;
   padding: 4px 8px 4px 5px;
-  border: 1px solid #2b3543;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: linear-gradient(145deg, #141b24, #0d1219);
+  background: linear-gradient(145deg, var(--card), #0d1219);
   color: #edf2f7;
   cursor: pointer;
   transition:
@@ -33,7 +33,7 @@
 }
 .account-menu-trigger:hover,
 .account-menu-trigger[data-popup-open] {
-  border-color: color-mix(in srgb, var(--am-accent) 55%, #2b3543);
+  border-color: color-mix(in srgb, var(--am-accent) 55%, var(--border));
   background: #171f29;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--am-accent) 10%, transparent);
 }
@@ -43,7 +43,7 @@
 }
 .account-menu-chevron {
   flex: 0 0 auto;
-  color: #8994a3;
+  color: var(--muted-foreground);
   transition: transform 0.18s ease;
 }
 .account-menu-trigger[data-popup-open] .account-menu-chevron {
@@ -55,7 +55,7 @@
   border: 1px solid #2d3745 !important;
   border-radius: 18px !important;
   background:
-    radial-gradient(circle at 100% 0%, #b7fa6420, transparent 38%), #10161e !important;
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--am-accent) 12.55%, transparent), transparent 38%), var(--card) !important;
   color: #e8edf4 !important;
   box-shadow:
     0 20px 55px #000b,
@@ -78,7 +78,7 @@
 }
 .account-dropdown-item:focus,
 .account-dropdown-item[data-highlighted] {
-  background: color-mix(in srgb, var(--am-accent) 12%, #171e27) !important;
+  background: color-mix(in srgb, var(--am-accent) 12%, var(--am-hover)) !important;
   color: #fff !important;
 }
 .account-dropdown-item:focus svg,
@@ -98,7 +98,7 @@
 }
 .account-dropdown-separator {
   margin: 7px 4px !important;
-  background: #27313e !important;
+  background: var(--am-hover) !important;
 }
 .account-nav .user-avatar {
   width: 31px;
@@ -108,7 +108,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #c1a3ff;
+  color: var(--am-accent-light);
 }
 .vk-mini,
 .vk-button {
@@ -148,13 +148,13 @@
   white-space: nowrap;
 }
 .pass-nav-button {
-  border-color: #bbed6544;
-  background: #bbed6510;
-  color: #bbed65;
+  border-color: color-mix(in srgb, var(--am-accent) 26.67%, transparent);
+  background: color-mix(in srgb, var(--am-accent) 6.27%, transparent);
+  color: var(--am-accent);
 }
 .pass-nav-button:hover {
-  border-color: #bbed65;
-  background: #bbed6522;
+  border-color: var(--am-accent);
+  background: color-mix(in srgb, var(--am-accent) 13.33%, transparent);
 }
 .mobile-referral-button {
   display: grid;
@@ -179,7 +179,7 @@
   border-radius: 50%;
   overflow: hidden;
   padding: 3px;
-  background: #121820;
+  background: var(--card);
 }
 .user-avatar img {
   width: 100%;
@@ -193,7 +193,7 @@
   height: 112px;
   border-width: 3px;
   padding: 5px;
-  box-shadow: 0 0 0 7px #0b0e13;
+  box-shadow: 0 0 0 7px var(--background);
 }
 .anime-pin {
   display: inline-flex;
@@ -238,7 +238,7 @@
 .user-tag-mugiwara {
   border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
   background: #141b11;
-  color: #cfef99;
+  color: var(--am-accent-light);
   box-shadow: 0 0 12px
     color-mix(in srgb, var(--am-accent-alt) 12.2%, transparent);
 }
@@ -271,7 +271,7 @@
     height: 44px;
     display: grid;
     place-items: center;
-    border: 1px solid #293241;
+    border: 1px solid var(--border);
     border-radius: 12px;
     background: #121821;
     color: #c4ceda;
@@ -289,10 +289,10 @@
     align-items: center;
     gap: 10px;
     padding: 0 7px 0 16px;
-    border: 1px solid #303947;
+    border: 1px solid var(--border);
     border-radius: 14px;
-    background: #151b24;
-    color: #7f8a98;
+    background: var(--card);
+    color: var(--muted-foreground);
     transition:
       border-color 160ms ease,
       box-shadow 160ms ease;
@@ -310,7 +310,7 @@
     border: 0;
     outline: 0;
     background: transparent;
-    color: #eef2f6;
+    color: var(--foreground);
     font-size: 16px;
   }
 
@@ -319,7 +319,7 @@
     height: 40px;
     display: grid;
     place-items: center;
-    color: #8793a1;
+    color: var(--muted-foreground);
   }
 
   .mobile-search-results {
@@ -338,9 +338,9 @@
     align-items: center;
     gap: 9px;
     padding: 0 14px;
-    border: 1px solid #303947;
+    border: 1px solid var(--border);
     border-radius: 999px;
-    background: #141a23;
+    background: var(--card);
     color: #c4ceda;
     font-size: 13px;
   }
@@ -348,7 +348,7 @@
   .search-theme-toggle:hover,
   .search-theme-toggle.active {
     border-color: color-mix(in srgb, var(--am-accent-alt) 50.2%, transparent);
-    color: #d7f1a7;
+    color: var(--am-accent-light);
   }
 
   .search-theme-toggle > svg:first-child {
@@ -366,7 +366,7 @@
   .search-theme-panel {
     margin-top: 12px;
     padding: 20px;
-    border: 1px solid #293442;
+    border: 1px solid var(--border);
     border-radius: 16px;
     background: linear-gradient(145deg, #131a22, #10151c);
     box-shadow: 0 18px 50px #00000026;
@@ -404,10 +404,10 @@
     align-items: center;
     gap: 9px;
     padding: 0 12px;
-    border: 1px solid #303947;
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: #0e141c;
-    color: #7f8a98;
+    background: var(--card);
+    color: var(--muted-foreground);
   }
 
   .search-theme-input:focus-within {
@@ -419,7 +419,7 @@
     border: 0;
     outline: 0;
     background: transparent;
-    color: #eef2f6;
+    color: var(--foreground);
     font-size: 14px;
   }
 
@@ -448,7 +448,7 @@
   .search-theme-options button.selected {
     border-color: var(--am-accent-alt);
     background: color-mix(in srgb, var(--am-accent-alt) 8.6%, transparent);
-    color: #d9f4a7;
+    color: var(--am-accent-light);
   }
 
   .mobile-search-results > h2,
@@ -482,9 +482,9 @@
   .recent-searches nav button {
     min-height: 38px;
     padding: 0 14px;
-    border: 1px solid #2d3744;
+    border: 1px solid var(--border);
     border-radius: 999px;
-    background: #151c25;
+    background: var(--card);
     color: #b9c3cf;
   }
 
@@ -495,7 +495,7 @@
     justify-items: center;
     gap: 10px;
     text-align: center;
-    color: #8793a1;
+    color: var(--muted-foreground);
   }
 
   .mobile-empty h3,
@@ -547,9 +547,9 @@
   width: min(600px, 90%);
   margin: 12vh auto;
   padding: 40px;
-  border: 1px solid #303b47;
+  border: 1px solid var(--border);
   border-radius: 22px;
-  background: #111820;
+  background: var(--card);
   text-align: center;
 }
 .party-gate > svg {
@@ -792,7 +792,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  border-bottom: 1px solid #27323d;
+  border-bottom: 1px solid var(--border);
 }
 .party-sidebar-head div {
   display: grid;
@@ -917,7 +917,7 @@
   grid-template-columns: minmax(0, 1fr) 42px;
   gap: 7px;
   padding: 12px;
-  border-top: 1px solid #27323d;
+  border-top: 1px solid var(--border);
 }
 .party-chat-form input {
   min-width: 0;
@@ -933,7 +933,7 @@
   place-items: center;
   border-radius: 11px;
   background: var(--am-accent);
-  color: #10150b;
+  color: var(--am-on-accent);
 }
 .party-chat-form button:disabled {
   opacity: 0.4;
@@ -980,7 +980,7 @@
     padding: 12px 17px;
     border-radius: 999px;
     background: var(--am-accent);
-    color: #11170b;
+    color: var(--am-on-accent);
     box-shadow: 0 10px 30px #0008;
     font-weight: 800;
   }
@@ -1060,14 +1060,14 @@
   align-items: center;
   gap: 8px;
   padding: 0 14px;
-  border: 1px solid #2d3744;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #151b24;
+  background: var(--card);
   color: #c4ced9;
 }
 .search-filter-toggle.active {
   border-color: color-mix(in srgb, var(--am-accent-alt) 50.2%, transparent);
-  color: #d9f4a7;
+  color: var(--am-accent-light);
 }
 .search-filter-toggle span {
   min-width: 22px;
@@ -1076,7 +1076,7 @@
   place-items: center;
   border-radius: 999px;
   background: var(--am-accent);
-  color: #11170b;
+  color: var(--am-on-accent);
   font-size: 11px;
   font-weight: 800;
 }
@@ -1097,9 +1097,9 @@
   gap: 18px;
   margin-bottom: 14px;
   padding: 20px;
-  border: 1px solid #27313e;
+  border: 1px solid var(--am-hover);
   border-radius: 14px;
-  background: #10161e;
+  background: var(--card);
 }
 .search-filter-panel > header {
   grid-column: 1 / -1;
@@ -1113,7 +1113,7 @@
   gap: 4px;
 }
 .search-filter-panel > header span {
-  color: #7f8a98;
+  color: var(--muted-foreground);
   font-size: 12px;
 }
 .search-filter-panel > header button {
@@ -1125,7 +1125,7 @@
   justify-content: flex-end;
   gap: 10px;
   padding-top: 14px;
-  border-top: 1px solid #27313e;
+  border-top: 1px solid var(--am-hover);
 }
 .search-filter-actions button {
   min-height: 44px;
@@ -1142,7 +1142,7 @@
   justify-content: center;
   gap: 8px;
   background: var(--am-accent);
-  color: #10170a;
+  color: var(--am-on-accent);
 }
 .search-filter-group {
   min-width: 0;
@@ -1164,9 +1164,9 @@
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  border: 1px solid #293442;
+  border: 1px solid var(--border);
   border-radius: 9px;
-  background: #171e28;
+  background: var(--am-hover);
   color: #798594;
 }
 .search-filter-input input {
@@ -1192,16 +1192,16 @@
   align-items: center;
   gap: 5px;
   padding: 0 11px;
-  border: 1px solid #303b49;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: #171e28;
+  background: var(--am-hover);
   color: #b9c4d0;
   font-size: 12px;
 }
 .search-filter-options button.selected {
   border-color: var(--am-accent-alt);
   background: color-mix(in srgb, var(--am-accent-alt) 8.6%, transparent);
-  color: #d9f4a7;
+  color: var(--am-accent-light);
 }
 .search-filter-chips {
   flex-wrap: wrap;
@@ -1209,7 +1209,7 @@
 }
 .search-filter-chips button {
   border-color: color-mix(in srgb, var(--am-accent-alt) 31.4%, transparent);
-  color: #d3eba8;
+  color: var(--am-accent-light);
 }
 .search-results-heading {
   justify-content: space-between;
@@ -1220,7 +1220,7 @@
   font-size: 26px;
 }
 .search-results-heading span {
-  color: #7f8a98;
+  color: var(--muted-foreground);
   font-size: 13px;
 }
 .search-franchise-block {
@@ -1228,7 +1228,7 @@
   padding: 18px;
   border: 1px solid #2b3542;
   border-radius: 16px;
-  background: linear-gradient(135deg, #151c25, #0f141b);
+  background: linear-gradient(135deg, var(--card), #0f141b);
 }
 .search-franchise-carousel > header {
   display: flex;
@@ -1276,7 +1276,7 @@
   padding: 9px;
   border: 1px solid #2c3744;
   border-radius: 11px;
-  background: #121820;
+  background: var(--card);
 }
 .search-franchise-block a.branch {
   border-style: dashed;
@@ -1290,7 +1290,7 @@
 }
 .search-franchise-block a span,
 .search-franchise-block a small {
-  color: #84909e;
+  color: var(--muted-foreground);
   font-size: 10px;
 }
 .search-franchise-block a strong {
@@ -1349,7 +1349,7 @@
   inset: 0;
   background:
     linear-gradient(90deg, #09151bc9, transparent),
-    linear-gradient(0deg, #0b0e1399, transparent);
+    linear-gradient(0deg, color-mix(in srgb, var(--background) 60.0%, transparent), transparent);
 }
 .profile-cover > span {
   position: absolute;
@@ -1359,13 +1359,13 @@
   letter-spacing: 3px;
   color: #c9dddf99;
 }
-.theme-sakura img {
+.theme-v2-sakura img {
   filter: hue-rotate(115deg);
 }
-.theme-mage img {
+.theme-v2-mage img {
   filter: hue-rotate(65deg);
 }
-.theme-cyber img {
+.theme-v2-cyber img {
   filter: saturate(1.5);
 }
 .profile-identity {
@@ -1452,8 +1452,8 @@
   gap: 8px;
   padding: 11px 16px;
   border-radius: 8px;
-  border: 1px solid #303b47;
-  background: #171d26;
+  border: 1px solid var(--border);
+  background: var(--am-hover);
   color: #c6d0dc;
   font-size: 14px;
 }
@@ -1570,9 +1570,9 @@
   min-width: 0;
   width: 100%;
   padding: 9px 10px;
-  border: 1px solid #34404e;
+  border: 1px solid var(--border);
   border-radius: 7px;
-  background: #0e141c;
+  background: var(--card);
   color: #e5eaf2;
 }
 .create-list-form button {
@@ -1582,7 +1582,7 @@
   font-size: 12px;
 }
 .create-list-form button:first-of-type {
-  color: #10160d;
+  color: var(--am-on-accent);
   background: var(--profile-accent);
   font-weight: 700;
 }
@@ -1729,7 +1729,7 @@
   display: flex;
   gap: 18px;
   padding: 17px 0;
-  border-bottom: 1px solid #29313a;
+  border-bottom: 1px solid var(--border);
 }
 .collection-entry:last-child {
   border: 0;
@@ -1784,8 +1784,8 @@
 .profile-editor input,
 .profile-editor textarea,
 .edit-comment {
-  border: 1px solid #34404e;
-  background: #0e141c;
+  border: 1px solid var(--border);
+  background: var(--card);
   padding: 12px 14px;
   border-radius: 7px;
   outline: none;
@@ -1881,7 +1881,7 @@
   flex-direction: column;
   gap: 17px;
   padding: 20px 0;
-  border-top: 1px solid #29313a;
+  border-top: 1px solid var(--border);
 }
 .privacy-settings label {
   display: flex;
@@ -1894,7 +1894,7 @@
 }
 .text-link {
   font-size: 14px;
-  color: #c1a3ff;
+  color: var(--am-accent-light);
 }
 .blocked-row {
   display: flex;
@@ -1902,7 +1902,7 @@
   font-size: 14px;
 }
 .blocked-row button {
-  color: #c1a3ff;
+  color: var(--am-accent-light);
   font-size: 12px;
 }
 .notification {
@@ -1910,7 +1910,7 @@
   gap: 15px;
   align-items: center;
   padding: 20px 12px;
-  border-bottom: 1px solid #29313a;
+  border-bottom: 1px solid var(--border);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -1923,7 +1923,7 @@
   color: #a0abbd;
 }
 .report-card {
-  border-top: 1px solid #29313a;
+  border-top: 1px solid var(--border);
   padding: 20px 0;
 }
 .report-card div {
@@ -1934,7 +1934,7 @@
   color: #bea2ec;
 }
 .discussion {
-  background: #111720;
+  background: var(--card);
   border: 1px solid #273140;
   border-radius: 10px;
   padding: 23px;
@@ -2166,7 +2166,7 @@
 }
 .pins-intro h1 em {
   font-style: normal;
-  color: #c1a3ff;
+  color: var(--am-accent-light);
 }
 .pins-intro > div > p {
   font-size: 16px;
@@ -2237,7 +2237,7 @@
   color: #bdc7d5;
 }
 .preview-features svg {
-  color: #c1a3ff;
+  color: var(--am-accent-light);
 }
 .pin-preview-card > p {
   font-size: 12px !important;
@@ -2266,7 +2266,7 @@
   gap: 16px;
 }
 .pin-card.selected {
-  border-color: #c1a3ff;
+  border-color: var(--am-accent-light);
   background: #241e32;
 }
 .pin-art {
@@ -2509,8 +2509,8 @@ button:disabled {
   gap: 20px;
   padding: 28px clamp(18px, 4vw, 64px);
   border-top: 1px solid #202b34;
-  color: #84909c;
-  background: #080d12;
+  color: var(--muted-foreground);
+  background: var(--background);
   font-size: 14px;
 }
 .site-footer nav {
@@ -2628,7 +2628,7 @@ button:disabled {
       #0a13196b 64%,
       #0a131917
     ),
-    linear-gradient(0deg, #090e16 1%, transparent 50%);
+    linear-gradient(0deg, var(--background) 1%, transparent 50%);
 }
 .anime-hero .hero-copy {
   position: absolute;
@@ -2733,8 +2733,8 @@ button:disabled {
   padding: 0 18px;
   border: 1px solid var(--am-accent);
   border-radius: 7px;
-  background: #0b1016e8;
-  color: #dfffa3;
+  background: color-mix(in srgb, var(--background) 90.98%, transparent);
+  color: var(--am-accent-light);
   font-size: 14px;
   font-weight: 700;
   box-shadow: 0 8px 30px #0009;
@@ -2769,7 +2769,7 @@ button:disabled {
 }
 .auto-skip-question button:first-child {
   background: var(--am-accent);
-  color: #152006;
+  color: var(--am-on-accent);
   font-weight: 700;
 }
 .episode-toolbar {
@@ -2890,7 +2890,7 @@ button:disabled {
   .anime-hero .hero-shade {
     background:
       linear-gradient(90deg, #0a1319e8, #0a1319b3 50%, #0a131929),
-      linear-gradient(0deg, #090e16, transparent 60%);
+      linear-gradient(0deg, var(--background), transparent 60%);
   }
   .hero-controls {
     gap: 8px;
@@ -3182,7 +3182,7 @@ button:disabled {
   background: color-mix(in srgb, var(--am-accent) 4.3%, transparent);
   border-radius: 20px;
   font-size: 12px;
-  color: #d5e8b2;
+  color: var(--am-accent-light);
 }
 .genre-links a:hover {
   border-color: var(--am-accent);
@@ -3210,7 +3210,7 @@ button:disabled {
   padding: 0;
   border: 1px solid #344051;
   border-radius: 999px;
-  background: #141b24;
+  background: var(--card);
   color: #c3cfdd;
   font-size: 12px;
   line-height: 1.35;
@@ -3225,7 +3225,7 @@ button:disabled {
 .anime-themes li:hover,
 .anime-themes li:focus-within {
   border-color: color-mix(in srgb, var(--am-accent-alt) 60%, transparent);
-  color: #d5e8b2;
+  color: var(--am-accent-light);
 }
 .season-navigation {
   width: 100%;
@@ -3235,14 +3235,14 @@ button:disabled {
   gap: 24px;
   margin: 18px 0 38px;
   padding: 22px;
-  border: 1px solid #293442;
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background: linear-gradient(135deg, #121922, #0d1218);
+  background: linear-gradient(135deg, var(--card), #0d1218);
 }
 .season-navigation.loading {
   min-height: 90px;
   place-items: center;
-  color: #84909e;
+  color: var(--muted-foreground);
 }
 .season-navigation-heading,
 .season-relation-heading {
@@ -3283,7 +3283,7 @@ button:disabled {
   padding: 0 11px;
   border: 1px solid #465465;
   border-radius: 8px;
-  background: #18212c;
+  background: var(--am-hover);
   color: #dfe7ef;
   font-size: 12px;
   font-weight: 700;
@@ -3314,7 +3314,7 @@ button:disabled {
   place-items: center;
   border: 1px solid #465465;
   border-radius: 8px;
-  background: #18212c;
+  background: var(--am-hover);
   color: #eef3f8;
   cursor: pointer;
   visibility: visible !important;
@@ -3373,7 +3373,7 @@ button:disabled {
   grid-template-rows: auto 1fr auto;
   column-gap: 11px;
   padding: 9px;
-  border: 1px solid #303b49;
+  border: 1px solid var(--border);
   border-radius: 11px;
   background: #161d26;
   transition:
@@ -3399,7 +3399,7 @@ a.season-card:hover {
   object-fit: cover;
 }
 .season-card span {
-  color: #a9dc55;
+  color: var(--am-accent-light);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -3448,9 +3448,9 @@ a.season-card:hover {
   grid-template-columns: 92px minmax(0, 1fr);
   gap: 14px;
   padding: 12px;
-  border: 1px solid #303b49;
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: #141b24;
+  background: var(--card);
   transition:
     border-color 150ms ease,
     transform 150ms ease;
@@ -3486,7 +3486,7 @@ a.franchise-card:hover {
   text-align: center;
 }
 .franchise-relation-label {
-  color: #a9dc55;
+  color: var(--am-accent-light);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -3547,7 +3547,7 @@ a.franchise-card:hover {
   margin: 0;
 }
 .recommendation-reason {
-  color: var(--lime, #a8f03c) !important;
+  color: var(--muted-foreground) !important;
   font-size: 0.75rem !important;
   line-height: 1.35;
 }
@@ -3599,7 +3599,7 @@ a.franchise-card:hover {
 .anime-carousel-controls button {
   z-index: 3;
   border-color: #465465;
-  background: #18212cef;
+  background: color-mix(in srgb, var(--am-hover) 93.73%, transparent);
   color: #eef3f8;
 }
 .anime-carousel-controls button:first-child {
@@ -3671,7 +3671,7 @@ a.franchise-card:hover {
   display: block;
   font-size: 38px;
   margin: 8px 0;
-  color: #dff6af;
+  color: var(--am-accent-light);
 }
 .journey-stats small {
   font-size: 11px;
@@ -4009,7 +4009,7 @@ a.franchise-card:hover {
   max-width: 560px !important;
   gap: 16px !important;
   border: 1px solid #2b3442;
-  background: #111720;
+  background: var(--card);
   box-shadow: 0 24px 80px #0009;
 }
 .plus-benefits {
@@ -4023,9 +4023,9 @@ a.franchise-card:hover {
   position: relative;
   list-style: none;
   padding: 9px 12px 9px 36px;
-  border: 1px solid #29323e;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #171e28;
+  background: var(--am-hover);
   line-height: 1.45;
 }
 .plus-benefits li::before {
@@ -4066,7 +4066,7 @@ a.franchise-card:hover {
   line-height: 1.5;
 }
 .plus-legal-links a {
-  color: #c1a3ff;
+  color: var(--am-accent-light);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -4220,7 +4220,7 @@ a.franchise-card:hover {
   --rarity-color: #9caebb;
   position: relative;
   background:
-    radial-gradient(ellipse at 50% 5%, #a687e51a, transparent 70%), #10161e;
+    radial-gradient(ellipse at 50% 5%, #a687e51a, transparent 70%), var(--card);
   transition:
     border-color 0.2s,
     transform 0.2s;
@@ -4287,14 +4287,14 @@ a.franchise-card:hover {
   outline-offset: 3px;
 }
 .cosmetic-card.unlocked {
-  border-color: color-mix(in srgb, var(--rarity-color) 40%, #26303d);
+  border-color: color-mix(in srgb, var(--rarity-color) 40%, var(--border));
   background:
     radial-gradient(
       ellipse at 50% 0%,
       color-mix(in srgb, var(--rarity-color) 13%, transparent),
       transparent 65%
     ),
-    #10161e;
+    var(--card);
   color: #e0e5ef;
 }
 [class*='profile-frame-']:not(.profile-frame-none) > .user-avatar {
@@ -4323,7 +4323,7 @@ a.franchise-card:hover {
 }
 .admin-tool-tabs button[aria-pressed='true'] {
   background: var(--am-accent);
-  color: #10170b;
+  color: var(--am-on-accent);
 }
 .admin-tools > [hidden] {
   display: none;
@@ -4389,8 +4389,8 @@ a.franchise-card:hover {
   padding: 15px;
   border: 1px solid #2c3542;
   border-radius: 12px;
-  background: #10161e;
-  color: #8793a1;
+  background: var(--card);
+  color: var(--muted-foreground);
 }
 .reward-card.unlocked {
   border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
@@ -4447,8 +4447,8 @@ a.franchise-card:hover {
 .referral-summary,
 .referral-progress,
 .referral-rewards article {
-  border: 1px solid #2b3441;
-  background: #10161e;
+  border: 1px solid var(--border);
+  background: var(--card);
 }
 .referral-login-card {
   padding: 28px;
@@ -4474,7 +4474,7 @@ a.franchise-card:hover {
   align-content: center;
   min-width: 0;
   padding: 20px;
-  background: #121922;
+  background: var(--card);
 }
 .referral-summary > div > strong {
   overflow: hidden;
@@ -4514,7 +4514,7 @@ a.franchise-card:hover {
   color: #687482;
 }
 .referral-progress > div + div {
-  border-left: 1px solid #2b3441;
+  border-left: 1px solid var(--border);
 }
 .referral-progress span {
   width: 32px;
@@ -4589,7 +4589,7 @@ a.franchise-card:hover {
     justify-items: start;
   }
   .referral-progress > div + div {
-    border-top: 1px solid #2b3441;
+    border-top: 1px solid var(--border);
     border-left: 0;
   }
   .rewards-panel > header {
@@ -4771,7 +4771,7 @@ a.franchise-card:hover {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #080d12;
+  background: var(--background);
 }
 .auth-card {
   width: min(100%, 480px);
@@ -4809,7 +4809,7 @@ a.franchise-card:hover {
   margin-bottom: 12px;
 }
 .preview-label {
-  color: #84909c;
+  color: var(--muted-foreground);
   font-size: 13px;
 }
 .age-actions,
@@ -4836,7 +4836,7 @@ a.franchise-card:hover {
   max-width: 170px;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #84909c;
+  color: var(--muted-foreground);
 }
 .admin-comment-preview {
   max-width: 380px;
@@ -4979,7 +4979,7 @@ a.franchise-card:hover {
       color-mix(in srgb, var(--am-accent) 7.8%, transparent),
       transparent 45%
     ),
-    #11171e;
+    var(--card);
 }
 .plus-dialog-scroll,
 .plus-checkout-footer {
@@ -5022,11 +5022,11 @@ a.franchise-card:hover {
   gap: 12px;
   margin: 14px 0;
   padding: 14px 16px;
-  border: 1px solid #537342;
+  border: 1px solid var(--border);
   border-radius: 12px;
   color: #e7f5dd;
   text-decoration: none;
-  background: #18301d;
+  background: var(--am-soft);
   font-size: 13px;
 }
 .plus-bundle-link strong { white-space: nowrap; }
@@ -5049,7 +5049,7 @@ a.franchise-card:hover {
 }
 .plus-price-card span,
 .plus-price-card p {
-  color: #b3c1aa;
+  color: var(--am-accent-light);
   font-size: 13px;
 }
 .plus-price-card p {
@@ -5121,7 +5121,7 @@ a.franchise-card:hover {
   content: '';
   width: 9px;
   height: 5px;
-  border: solid #111720;
+  border: solid var(--card);
   border-width: 0 0 2px 2px;
   transform: rotate(-45deg) scale(0);
   transition: transform 120ms ease;
@@ -5134,7 +5134,7 @@ a.franchise-card:hover {
   transform: rotate(-45deg) scale(1);
 }
 .plus-dialog .plus-agreement-label input:focus-visible {
-  outline: 2px solid #d1f887;
+  outline: 2px solid var(--am-accent-light);
   outline-offset: 3px;
 }
 .plus-dialog .plus-agreement-label .plus-agreement-link {
@@ -5160,7 +5160,7 @@ a.franchise-card:hover {
   min-width: 0;
   min-height: 40px;
   padding: 7px 10px;
-  border: 1px solid #293241;
+  border: 1px solid var(--border);
   border-radius: 9px;
   background: #ffffff04;
   color: #c2cad5;
@@ -5176,7 +5176,7 @@ a.franchise-card:hover {
 }
 .plus-dialog .plus-legal-links .plus-legal-link svg {
   flex-shrink: 0;
-  color: #94d936;
+  color: var(--am-accent);
 }
 .plus-dialog .plus-legal-links .plus-legal-link:hover {
   border-color: color-mix(in srgb, var(--am-accent-alt) 40%, transparent);
@@ -5213,7 +5213,7 @@ a.franchise-card:hover {
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    scrollbar-color: #46533c #11171e;
+    scrollbar-color: var(--border) var(--card);
   }
   .plus-checkout-footer {
     display: grid;
@@ -5221,8 +5221,8 @@ a.franchise-card:hover {
     gap: 9px;
     padding-top: 12px;
     border-top: 1px solid #ffffff22;
-    background: #11171e;
-    box-shadow: 0 -10px 25px #11171e;
+    background: var(--card);
+    box-shadow: 0 -10px 25px var(--card);
   }
   .plus-checkout-footer .plus-agreement-label {
     min-height: 40px;
@@ -5253,8 +5253,8 @@ a.franchise-card:hover {
 
 .payment-doc-links a:hover,
 .payment-doc-links a:focus-visible {
-  border-color: #a0e542;
-  color: #b9f176;
+  border-color: var(--am-accent);
+  color: var(--am-accent-light);
 }
 
 @media (max-width: 767px) {
@@ -5401,7 +5401,7 @@ a.franchise-card:hover {
 }
 .profile-save-bar span {
   font-size: 12px;
-  color: #b6c5b0;
+  color: var(--am-accent-light);
 }
 .profile-editor .profile-save-bar .primary {
   margin: 0;
@@ -5409,7 +5409,7 @@ a.franchise-card:hover {
 }
 .plus-dialog.sign-dialog {
   scrollbar-width: thin;
-  scrollbar-color: #46533c #11171e;
+  scrollbar-color: var(--border) var(--card);
 }
 @media (min-width: 768px) {
   .plus-dialog.sign-dialog {
