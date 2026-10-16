@@ -98,7 +98,14 @@
   }
   log {
     output stdout
-    format json
+    format filter {
+      wrap json
+      fields {
+        request>headers>X-Secret delete
+        request>headers>X-Api-Key delete
+        request>headers>X-Merchantid delete
+      }
+    }
   }
 }
 

@@ -5,7 +5,7 @@ import sharp from 'sharp';
 import { ApiError, db, now, uid } from './core';
 import { PASS_TASKS, seasonDates } from '../battlepass';
 import { assertLive, findSeason, memberLock, claimInTransaction, eligiblePassGenres, type PassSeason, type PassReward } from './battlepass';
-import { paymentFetch, verifyPayment } from './billing';
+import { paymentFetch, verifyPayment, verifyOrderPayment } from './billing';
 type Tx = ReturnType<typeof db>;
 const kinds = ['pin', 'tag', 'frame', 'background'];
 const finalIds = ['pin:pass-oni', 'tag:pass-oni', 'frame:pass-oni', 'background:pass-oni'];
@@ -162,11 +162,18 @@ export async function publishPass(actor: string, id: string) {
 }
 export async function reconcilePassPayment(actor: string, providerId: string) {
   if (!/^[a-zA-Z0-9-]{10,100}$/.test(providerId)) throw new ApiError('Некорректный ID транзакции');
-  const payment = await paymentFetch('transaction/' + encodeURIComponent(providerId));
-  const order = await db().prepare("SELECT id,pass_season_id FROM orders WHERE id=? AND plan='battlepass'").bind(payment.payload || payment.externalId || '').first<{ id: string; pass_season_id: string }>();
+  let order = await db().prepare("SELECT id,provider,provider_id,pass_season_id FROM orders WHERE (id=? OR provider_id=?) AND plan='battlepass'")
+    .bind(providerId, providerId).first<{ id: string; provider: string; provider_id: string | null; pass_season_id: string }>();
+  if (!order) {
+    // Legacy Platega requests could time out before saving their transaction ID.
+    const payment = await paymentFetch('transaction/' + encodeURIComponent(providerId));
+    order = await db().prepare("SELECT id,provider,provider_id,pass_season_id FROM orders WHERE id=? AND provider='platega' AND plan='battlepass'")
+      .bind(payment.payload || payment.externalId || '').first();
+  }
   if (!order) throw new ApiError('Транзакция не относится к заказу AniMonster Pass');
-  const status = await verifyPayment(providerId);
-  await audit(db(), actor, order.pass_season_id, 'reconcile_payment', 'Проверка статуса напрямую в Platega', { providerId, orderId: order.id, status });
+  const status = order.provider_id || order.provider === 'cashera'
+    ? await verifyOrderPayment(order) : await verifyPayment(providerId, order.provider);
+  await audit(db(), actor, order.pass_season_id, 'reconcile_payment', `Проверка статуса напрямую в ${order.provider}`, { providerId, orderId: order.id, status });
   return { status };
 }
 export async function adjustPassXp(actor: string, season: string, user: string, delta: number, reason: string, requestId: string) {

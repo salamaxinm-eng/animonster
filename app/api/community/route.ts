@@ -1,3 +1,4 @@
+import { paymentsReady } from '@/lib/server/payment-gateway';
 import { getAnime } from '@/lib/server/library';
 import {
   db,
@@ -47,9 +48,7 @@ export async function GET(r: Request) {
         invite_required: inviteRequired(),
         email_verification_required: emailVerificationEnabled(),
         payments_ready:
-          runtime().PAYMENTS_ENABLED === 'true' &&
-          !!runtime().PLATEGA_MERCHANT_ID &&
-          !!runtime().PLATEGA_SECRET_KEY,
+          paymentsReady(),
         support_url: runtime().TELEGRAM_URL || null,
       });
     if (action === 'profile') {

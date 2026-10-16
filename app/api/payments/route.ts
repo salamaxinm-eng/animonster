@@ -1,3 +1,4 @@
+import { paymentProvider, paymentsReady } from '@/lib/server/payment-gateway';
 import {
   requireUser,
   sameOrigin,
@@ -10,7 +11,7 @@ import {
   ApiError,
   runtime,
 } from '@/lib/server/core';
-import { paymentFetch, verifyPayment } from '@/lib/server/billing';
+import { createCheckout, verifyOrderPayment } from '@/lib/server/billing';
 import { requireActiveFundraisingGoal } from '@/lib/server/fundraising';
 import { DONATION_PLAN, DONATION_MIN_AMOUNT, donationAmount } from '@/lib/fundraising';
 import { VPN_PLAN, VPN_PLUS_PLAN } from '@/lib/vpn-plan';
@@ -37,29 +38,25 @@ export async function POST(r: Request) {
         b.plan === VPN_PLUS_PLAN.id ? 'vpn_plus' : 'plus';
       const order = await db()
         .prepare(
-          `SELECT provider_id FROM orders WHERE provider=? AND user_id=?
-           AND provider_id IS NOT NULL AND
+          `SELECT provider,provider_id,id FROM orders WHERE provider IN ('platega','cashera') AND user_id=?
+           AND (provider_id IS NOT NULL OR provider='cashera') AND
            ((?='vpn' AND plan='vpn') OR (?='vpn_plus' AND plan='vpn_plus') OR
             (?='plus' AND plan NOT IN ('vpn','vpn_plus','battlepass')))
            ORDER BY created_at DESC LIMIT 1`,
         )
-        .bind('platega', u.id, checkPlan, checkPlan, checkPlan)
-        .first<{ provider_id: string }>();
+        .bind(u.id, checkPlan, checkPlan, checkPlan)
+        .first<{ provider: string; provider_id: string | null; id: string }>();
       if (!order) return json({ status: 'not_found' });
-      return json({ status: await verifyPayment(order.provider_id) });
+      return json({ status: await verifyOrderPayment(order) });
     }
     if (
-      runtime().PAYMENTS_ENABLED !== 'true' ||
-      !runtime().PLATEGA_MERCHANT_ID ||
-      !runtime().PLATEGA_SECRET_KEY
+      !paymentsReady()
     )
       throw new ApiError(
         'Оплата пока не подключена. Деньги не списываются.',
         503,
       );
-    // Platega does not document an idempotency header for transaction creation.
-    // Give each checkout a distinct order so independent successful payments
-    // are never collapsed into one order/grant.
+    const provider = paymentProvider();
     const requestedPlan = b.plan ?? 'monthly';
     if (requestedPlan === VPN_PLAN.id && !vpnPurchaseAvailable())
       throw new ApiError('Покупка VPN пока не открыта', 503);
@@ -87,7 +84,7 @@ export async function POST(r: Request) {
       days: requestedPlan === DONATION_PLAN ? 0 : 30,
       price: chosenAmount!.toFixed(2),
     };
-    const promotion = b.promoCode ? await reservePromotion(u.id,b.promoCode,plan.id) : null;
+    const promotion = b.promoCode ? await reservePromotion(u.id,b.promoCode,plan.id,provider) : null;
     if (promotion && 'url' in promotion) return json({ url: promotion.url });
     const id = promotion?.id || uid();
     const price = promotion && 'quote' in promotion ? promotion.quote.amount.toFixed(2) : plan.price;
@@ -96,35 +93,22 @@ export async function POST(r: Request) {
       .prepare(
         'INSERT INTO orders(id,user_id,created_at,provider,plan,amount,duration_days,fundraising_goal_id) VALUES (?,?,?,?,?,?,?,?)',
       )
-      .bind(id, u.id, now(), 'platega', plan.id, plan.price, plan.days, goal?.id || null)
+      .bind(id, u.id, now(), provider, plan.id, plan.price, plan.days, goal?.id || null)
       .run();
-    const p = await paymentFetch('v2/transaction/process', {
-      method: 'POST',
-      body: JSON.stringify({
-        paymentDetails: {
-          amount: Number(price),
-          currency: 'RUB',
-        },
-        description: plan.id === VPN_PLAN.id ? `AniMonster VPN — ${VPN_PLAN.label}` :
+    const origin = runtime().SITE_URL || new URL(r.url).origin;
+    const p = await createCheckout({
+      provider, orderId: id, amount: Number(price), origin,
+      description: plan.id === VPN_PLAN.id ? `AniMonster VPN — ${VPN_PLAN.label}` :
           plan.id === VPN_PLUS_PLAN.id ? `AniMonster — ${VPN_PLUS_PLAN.label}` :
           `${goal!.title} · ${plan.id === DONATION_PLAN ? 'Поддержка AniMonster' : `AniMonster Plus — ${plan.label}`}`,
-        return: `${runtime().SITE_URL || new URL(r.url).origin}/${isVpnPlan ? 'vpn' : 'pins'}?payment=return${isVpnPlan ? `&plan=${plan.id}` : ''}`,
-        failedUrl: `${runtime().SITE_URL || new URL(r.url).origin}/${isVpnPlan ? 'vpn' : 'pins'}?payment=failed${isVpnPlan ? `&plan=${plan.id}` : ''}`,
-        payload: id,
-        metadata: { userId: u.id },
-      }),
+      successUrl: `${origin}/${isVpnPlan ? 'vpn' : 'pins'}?payment=return${isVpnPlan ? `&plan=${plan.id}` : ''}`,
+      failUrl: `${origin}/${isVpnPlan ? 'vpn' : 'pins'}?payment=failed${isVpnPlan ? `&plan=${plan.id}` : ''}`,
+      metadata: { userId: u.id },
     });
-    const providerId = p.transactionId || p.id;
-    await db()
-      .prepare('UPDATE orders SET provider_id=? WHERE id=?')
-      .bind(providerId || null, id)
-      .run();
-    const paymentUrl =
-      (p as typeof p & { url?: string; redirect?: string }).url ||
-      (p as typeof p & { redirect?: string }).redirect;
-    if (!providerId || !paymentUrl)
-      throw new ApiError('Не получена ссылка на оплату', 502);
-    if (promotion) await db().prepare('UPDATE orders SET payment_url=? WHERE id=?').bind(paymentUrl,id).run();
+    await db().prepare('UPDATE orders SET provider_id=? WHERE id=? AND (provider_id IS NULL OR provider_id=?)')
+      .bind(p.id, id, p.id).run();
+    if (promotion) await db().prepare('UPDATE orders SET payment_url=? WHERE id=?').bind(p.url,id).run();
+    const paymentUrl = p.url;
     return json({ url: paymentUrl });
   } catch (e) {
     return fail(e);

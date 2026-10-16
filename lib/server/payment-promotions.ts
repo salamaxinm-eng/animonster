@@ -22,7 +22,7 @@ export async function quotePromotion(userId: string, value: unknown, plan: strin
     discountAmount: discountCents/100, amount: (originalCents-discountCents)/100,
     expiresAt: Number(promotion.expires_at) };
 }
-export async function reservePromotion(userId: string, value: unknown, plan: string) {
+export async function reservePromotion(userId: string, value: unknown, plan: string, provider: 'platega' | 'cashera' = 'platega') {
   if (plan !== VPN_PLAN.id) throw new ApiError('Промокод действует только на VPN на 30 дней');
   return db().transaction(async (tx) => {
     await tx.prepare('SELECT id FROM users WHERE id=? FOR UPDATE').bind(userId).first();
@@ -38,8 +38,8 @@ export async function reservePromotion(userId: string, value: unknown, plan: str
     const quote=await quotePromotion(userId,code,plan,tx);
     const id=uid();
     await tx.prepare(`INSERT INTO orders(id,user_id,created_at,provider,plan,amount,duration_days,
-      promo_code,original_amount,discount_amount) VALUES (?,?,?,'platega','vpn',?,30,?,?,?)`)
-      .bind(id,userId,now(),quote.amount.toFixed(2),code,quote.originalAmount,quote.discountAmount).run();
+      promo_code,original_amount,discount_amount) VALUES (?,?,?,?,'vpn',?,30,?,?,?)`)
+      .bind(id,userId,now(),provider,quote.amount.toFixed(2),code,quote.originalAmount,quote.discountAmount).run();
     await tx.prepare('INSERT INTO payment_promo_claims(code,user_id,order_id) VALUES (?,?,?)')
       .bind(code,userId,id).run();
     return { id, quote };

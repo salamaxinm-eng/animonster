@@ -1,12 +1,12 @@
 import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from 'node:crypto';
 import { ApiError, db, now, runtime, uid } from './core';
+import { paymentsReady } from './payment-gateway';
 import { VPN_PLAN, VPN_PLUS_PLAN } from '../vpn-plan';
 
 export const VPN_DEVICE_LIMIT = 5;
 export function vpnPurchaseAvailable() {
   const config = runtime();
-  return config.VPN_PAYMENTS_ENABLED === 'true' && config.PAYMENTS_ENABLED === 'true' &&
-    !!config.PLATEGA_MERCHANT_ID && !!config.PLATEGA_SECRET_KEY;
+  return config.VPN_PAYMENTS_ENABLED === 'true' && paymentsReady();
 }
 export function vpnBundlePurchaseAvailable() {
   return vpnPurchaseAvailable() && runtime().VPN_BUNDLE_PAYMENTS_ENABLED === 'true';

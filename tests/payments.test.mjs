@@ -3,9 +3,12 @@ import { stripTypeScriptTypes } from 'node:module';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+const gatewaySource = (await readFile('lib/server/payment-gateway.ts', 'utf8')).replace("import { ApiError, runtime } from './core';", 'const runtime=()=>({}); class ApiError extends Error {}');
+const gatewayUrl = 'data:text/javascript;base64,' + Buffer.from(stripTypeScriptTypes(gatewaySource)).toString('base64');
 const source = (
   await readFile(new URL('../lib/server/billing.ts', import.meta.url), 'utf8')
 )
+  .replace("'./payment-gateway'", JSON.stringify(gatewayUrl))
   .replace(/import \{ confirmPassPayment[^\n]+\n/, 'const confirmPassPayment=async()=>{}; const revokePassPayment=async()=>{};')
   .replace(/import \{ confirmBundlePayment[^\n]+\n/, 'const confirmBundlePayment=async()=>{}; const confirmVpnPayment=async()=>{}; const revokeBundlePayment=async()=>{}; const revokeVpnPayment=async()=>{};')
   .replace(

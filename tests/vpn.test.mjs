@@ -49,6 +49,7 @@ void test('VPN devices are limited, issued per user, revoked and expired', async
     }
   `);
   const source = stripTypeScriptTypes(await readFile('lib/server/vpn.ts', 'utf8'))
+    .replace("'./payment-gateway'", JSON.stringify(moduleUrl("export const paymentsReady=()=>false;")))
     .replace("'./core'", JSON.stringify(core))
     .replace("'../vpn-plan'", JSON.stringify(moduleUrl("export const VPN_PLAN={id:'vpn',durationDays:30};export const VPN_PLUS_PLAN={id:'vpn_plus',durationDays:30};")));
   const vpn = await import(moduleUrl(source));

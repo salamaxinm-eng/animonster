@@ -30,7 +30,7 @@ test('existing ledger: draft protection, paid eligibility, exactly-once Plus, pa
  const sharedUrl=await module('lib/battlepass.ts');const shared=await import(sharedUrl);
  const plusUrl=await module('lib/server/plus.ts',{'./core':core});
  const serviceUrl=await module('lib/server/battlepass.ts',{'./core':core,'./plus':plusUrl,'../battlepass':sharedUrl});const service=await import(serviceUrl);
- const admin=await import(await module('lib/server/battlepass-admin.ts',{'./core':core,'../battlepass':sharedUrl,'./battlepass':serviceUrl,'sharp':import.meta.resolve('sharp'),'./billing':url('export const paymentFetch=()=>{};export const verifyPayment=()=>{}')}));
+ const admin=await import(await module('lib/server/battlepass-admin.ts',{'./core':core,'../battlepass':sharedUrl,'./battlepass':serviceUrl,'sharp':import.meta.resolve('sharp'),'./billing':url('export const paymentFetch=()=>{};export const verifyPayment=()=>{};export const verifyOrderPayment=()=>{}')}));
  try{
   for(const file of(await readdir('migrations/postgres')).filter(f=>f.endsWith('.sql')).sort())await engine.exec(await readFile('migrations/postgres/'+file,'utf8'));
   const n=async sql=>(await engine.query(sql)).rows[0].n;
@@ -81,7 +81,7 @@ test('existing ledger: draft protection, paid eligibility, exactly-once Plus, pa
   await assert.rejects(admin.grantPassPremium('test-worlds',manifest.id,'admin-target','   '));
   await assert.rejects(admin.grantPassPremium('test-worlds',manifest.id,'missing-target','Test grant'));
   const payment=await import(await module('lib/server/battlepass-payment.ts',{'./core':core,'./battlepass':serviceUrl}));
-  const pendingOrder=await payment.reservePassOrder('admin-target',manifest.id);
+  const pendingOrder=await payment.reservePassOrder('admin-target',manifest.id,'cashera');
   assert.equal((await admin.grantPassPremium('test-worlds',manifest.id,'admin-target','Test grant')).count,44);
   assert.equal((await admin.grantPassPremium('test-worlds',manifest.id,'admin-target','Repeated grant')).duplicate,true);
   assert.equal(await n("SELECT count(*)::int n FROM pass_claims WHERE user_id='admin-target'"),44);

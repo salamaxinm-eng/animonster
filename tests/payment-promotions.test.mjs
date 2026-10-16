@@ -45,7 +45,8 @@ test('VPN promo reserves once, confirms once, releases cancellation and survives
       export const json=v=>Response.json(v);export const fail=e=>Response.json({error:e.message},{status:400});export class ApiError extends Error{}`);
     const imports={
       '@/lib/server/core':apiCore,
-      '@/lib/server/billing':moduleUrl('export const paymentFetch=(...args)=>globalThis.promoTestPayment(...args);export const verifyPayment=async()=>"pending";'),
+      '@/lib/server/payment-gateway':moduleUrl('export const paymentProvider=()=>"platega",paymentsReady=()=>true;'),
+      '@/lib/server/billing':moduleUrl('export const createCheckout=async input=>{const p=await globalThis.promoTestPayment(null,{body:JSON.stringify({paymentDetails:{amount:input.amount}})});return {id:p.transactionId,url:p.url};};export const verifyOrderPayment=async()=>"pending";'),
       '@/lib/server/fundraising':moduleUrl('export const requireActiveFundraisingGoal=async()=>null;'),
       '@/lib/fundraising':moduleUrl('export const DONATION_PLAN="donation",DONATION_MIN_AMOUNT=150;export const donationAmount=()=>null;'),
       '@/lib/vpn-plan':moduleUrl('export const VPN_PLAN={id:"vpn",price:"149.00",days:30,label:"VPN"},VPN_PLUS_PLAN={id:"vpn_plus"};'),

@@ -1,5 +1,6 @@
+import { paymentProvider, paymentsReady } from '@/lib/server/payment-gateway';
 import { ApiError, body, db, fail, json, requireUser, runtime, sameOrigin } from '@/lib/server/core';
-import { paymentFetch, verifyPayment } from '@/lib/server/billing';
+import { createCheckout, verifyOrderPayment } from '@/lib/server/billing';
 import { reservePassOrder } from '@/lib/server/battlepass-payment';
 import { requireBattlepassAccess } from '@/lib/server/battlepass-access';
 export async function POST(r: Request) {
@@ -8,24 +9,22 @@ export async function POST(r: Request) {
     requireBattlepassAccess(user);
     if (user.identity.startsWith('preview:')) throw new ApiError('Для покупки войдите в обычный аккаунт', 403);
     if (input.action === 'check') {
-      const order = await db().prepare("SELECT provider_id FROM orders WHERE user_id=? AND plan='battlepass' AND pass_season_id=? AND provider_id IS NOT NULL ORDER BY created_at DESC LIMIT 1").bind(user.id, season).first<{ provider_id: string }>();
-      return json({ status: order ? await verifyPayment(order.provider_id) : 'not_found' });
+      const order = await db().prepare("SELECT id,provider,provider_id FROM orders WHERE user_id=? AND plan='battlepass' AND pass_season_id=? AND (provider_id IS NOT NULL OR provider='cashera') ORDER BY created_at DESC LIMIT 1").bind(user.id, season).first<{ id: string; provider: string; provider_id: string | null }>();
+      return json({ status: order ? await verifyOrderPayment(order) : 'not_found' });
     }
-    const env = runtime();
-    if (env.PAYMENTS_ENABLED !== 'true' || !env.PLATEGA_MERCHANT_ID || !env.PLATEGA_SECRET_KEY) throw new ApiError('Оплата пока не подключена', 503);
-    const reservation = await reservePassOrder(user.id, season);
+    const provider = paymentProvider();
+    if (!paymentsReady()) throw new ApiError('Оплата пока не подключена', 503);
+    const reservation = await reservePassOrder(user.id, season, provider);
     if ('url' in reservation) return json({ url: reservation.url });
     try {
       const origin = runtime().SITE_URL || new URL(r.url).origin;
-      const p = await paymentFetch('v2/transaction/process', { method: 'POST', body: JSON.stringify({
-        paymentDetails: { amount: reservation.season.price, currency: 'RUB' },
+      const { id, url } = await createCheckout({
+        provider, orderId: reservation.id, amount: reservation.season.price, origin,
         description: `AniMonster Pass — ${reservation.season.title}. Дополнительные награды одного сезона. Без продления.`,
-        return: `${origin}/battlepass?season=${encodeURIComponent(season)}&payment=return`,
-        failedUrl: `${origin}/battlepass?season=${encodeURIComponent(season)}&payment=failed`, payload: reservation.id,
+        successUrl: `${origin}/battlepass?season=${encodeURIComponent(season)}&payment=return`,
+        failUrl: `${origin}/battlepass?season=${encodeURIComponent(season)}&payment=failed`,
         metadata: { userId: user.id, seasonId: season },
-      }) });
-      const id = p.transactionId || p.id, url = (p as typeof p & { url?: string; redirect?: string }).url || (p as typeof p & { redirect?: string }).redirect;
-      if (!id || !url || new URL(url).protocol !== 'https:') throw new Error('Платёжный сервис не вернул ссылку');
+      });
       await db().transaction(async (tx) => {
         await tx.prepare('UPDATE orders SET provider_id=? WHERE id=? AND (provider_id IS NULL OR provider_id=?)').bind(id, reservation.id, id).run();
         await tx.prepare('UPDATE pass_purchases SET payment_url=? WHERE order_id=?').bind(url, reservation.id).run();

@@ -67,6 +67,7 @@ test('Founder threshold, permanent seats, rewards, and historical ordering', asy
     assert.equal(await founder.assignFounder(first), 1);
     assert.equal(await founder.assignFounder(await order(users[0], 1500)), 1);
     const second = await order(users[1], 1500);
+    await engine.query("UPDATE orders SET provider='cashera' WHERE id=$1", [second]);
     assert.equal(await founder.assignFounder(second), 2);
     for (let n = 2; n < 4; n++)
       assert.equal(await founder.assignFounder(await order(users[n], 1000)), n + 1);

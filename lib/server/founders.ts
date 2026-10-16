@@ -30,7 +30,7 @@ export async function assignFounder(orderId: string) {
     const order = await tx.prepare(
       `SELECT o.id,o.user_id,o.amount,o.status,COALESCE(o.confirmed_at,o.created_at) AS qualifying_at
        FROM orders o JOIN users u ON u.id=o.user_id
-       WHERE o.id=? AND o.provider='platega' AND u.deleted_at IS NULL
+       WHERE o.id=? AND o.provider IN ('platega','cashera') AND u.deleted_at IS NULL
          AND NOT o.is_test AND u.identity NOT LIKE 'preview:%' AND u.identity NOT LIKE 'test:%'`,
     ).bind(orderId).first<{
       id: string; user_id: string; amount: string | number;

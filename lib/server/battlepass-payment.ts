@@ -1,7 +1,7 @@
 import { ApiError, db, now, uid } from './core';
 import { assertLive, findSeason, memberLock, claimInTransaction } from './battlepass';
 
-export async function reservePassOrder(user: string, seasonId: string) {
+export async function reservePassOrder(user: string, seasonId: string, provider: 'platega' | 'cashera' = 'platega') {
   return db().transaction(async (tx) => {
     const season = await findSeason(seasonId, false, tx); assertLive(season);
     const member = await memberLock(tx, season.id, user);
@@ -12,7 +12,7 @@ export async function reservePassOrder(user: string, seasonId: string) {
       throw new ApiError(old.state === 'review' ? 'Статус платежа проверяется. Новый платёж пока не создаётся.' : 'Платёж уже создаётся или доступ был отозван. Обратитесь в поддержку.', 409);
     }
     const id = uid(), time = now();
-    await tx.prepare(`INSERT INTO orders(id,user_id,created_at,provider,plan,amount,duration_days,pass_season_id) VALUES (?,?,?,'platega','battlepass',?,0,?)`).bind(id, user, time, season.price, season.id).run();
+    await tx.prepare(`INSERT INTO orders(id,user_id,created_at,provider,plan,amount,duration_days,pass_season_id) VALUES (?,?,?,?,'battlepass',?,0,?)`).bind(id, user, time, provider, season.price, season.id).run();
     await tx.prepare(`INSERT INTO pass_purchases(season_id,user_id,order_id,state,created_at) VALUES (?,?,?,'pending',?) ON CONFLICT(season_id,user_id) DO UPDATE SET order_id=excluded.order_id,state='pending',payment_url=NULL,created_at=excluded.created_at`).bind(season.id, user, id, time).run();
     return { id, season };
   });

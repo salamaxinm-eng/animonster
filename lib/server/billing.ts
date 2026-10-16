@@ -1,4 +1,5 @@
 import { db, runtime, ApiError, now } from './core';
+import { casheraFetch, casheraMatches, createCasheraCheckout, paymentProvider, paymentsReady, type PaymentProvider } from './payment-gateway';
 import { refreshSupporterChampion } from './supporters';
 import { assignFounder, syncFounderRewards } from './founders';
 import { confirmPassPayment, revokePassPayment } from './battlepass-payment';
@@ -42,7 +43,6 @@ export function validPaymentAmount(
 export async function paymentFetch(path: string, init: RequestInit = {}) {
   const e = runtime();
   if (
-    e.PAYMENTS_ENABLED !== 'true' ||
     !e.PLATEGA_MERCHANT_ID ||
     !e.PLATEGA_SECRET_KEY
   )
@@ -67,10 +67,50 @@ export async function paymentFetch(path: string, init: RequestInit = {}) {
   return (await r.json()) as PlategaTransaction;
 }
 
-export async function verifyPayment(providerId: string) {
+export async function createCheckout(input: {
+  provider: PaymentProvider; orderId: string; amount: number; description: string;
+  origin: string; successUrl: string; failUrl: string; metadata: Record<string, string>;
+}) {
+  if (!paymentsReady() || input.provider !== paymentProvider())
+    throw new ApiError('Оплата пока не подключена', 503);
+  if (input.provider === 'cashera') return createCasheraCheckout(input);
+  const p = await paymentFetch('v2/transaction/process', { method: 'POST', body: JSON.stringify({
+    paymentDetails: { amount: input.amount, currency: 'RUB' }, description: input.description,
+    return: input.successUrl, failedUrl: input.failUrl, payload: input.orderId, metadata: input.metadata,
+  }) });
+  const id = p.transactionId || p.id;
+  const url = (p as typeof p & { url?: string; redirect?: string }).url || (p as typeof p & { redirect?: string }).redirect;
+  if (!id || !url || new URL(url).protocol !== 'https:') throw new ApiError('Не получена ссылка на оплату', 502);
+  return { id, url };
+}
+
+export async function verifyOrderPayment(order: { id: string; provider: string; provider_id: string | null }) {
+  let id = order.provider_id;
+  if (!id && order.provider === 'cashera') {
+    const remote = await casheraFetch('/by-external-id/' + encodeURIComponent(order.id));
+    if (remote.external_id !== order.id) throw new ApiError('Платёж не совпадает', 400);
+    id = remote.uuid;
+  }
+  return id ? verifyPayment(id, order.provider) : 'pending';
+}
+
+// Provider is read from the stored order, never inferred from the currently active gateway.
+export async function verifyPayment(providerId: string, provider: string = 'platega') {
   if (!/^[a-zA-Z0-9-]{10,100}$/.test(providerId))
     throw new ApiError('Некорректный платёж');
-  const p = await paymentFetch('transaction/' + encodeURIComponent(providerId));
+  if (provider !== 'platega' && provider !== 'cashera') throw new ApiError('Неизвестный платёжный сервис');
+  let p: PlategaTransaction;
+  if (provider === 'cashera') {
+    const remote = await casheraFetch('/' + encodeURIComponent(providerId));
+    if (!casheraMatches(remote, remote.external_id, remote.amount / 100) || remote.uuid !== providerId)
+      throw new ApiError('Платёж не подтверждён', 400);
+    const statuses: Record<string, string> = { paid: 'CONFIRMED', pending: 'PENDING',
+      canceled: 'CANCELED', failed: 'CANCELED', expired: 'CANCELED',
+      refunded: 'CHARGEBACKED', chargeback: 'CHARGEBACKED' };
+    if (!statuses[remote.status]) throw new ApiError('Неизвестный статус платежа', 502);
+    p = { id: remote.uuid, payload: remote.external_id, amount: remote.amount / 100,
+      currency: remote.currency, status: statuses[remote.status] };
+  } else p = await paymentFetch('transaction/' + encodeURIComponent(providerId));
   const paymentId = p.id || p.transactionId;
   const orderId = p.payload || p.externalId || '';
   const amount = Number(p.paymentDetails?.amount ?? p.amount);
@@ -78,7 +118,7 @@ export async function verifyPayment(providerId: string) {
   const currency = p.paymentDetails?.currency || p.currency;
   const order = await db()
     .prepare('SELECT * FROM orders WHERE id=? AND provider=?')
-    .bind(orderId, 'platega')
+    .bind(orderId, provider)
     .first<{
       id: string;
       user_id: string;

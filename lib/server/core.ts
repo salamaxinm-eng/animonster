@@ -10,6 +10,9 @@ export type Runtime = {
   OWNER_PREVIEW?: string;
   BATTLEPASS_PREVIEW_USER_ID?: string;
   PAYMENTS_ENABLED?: string;
+  PAYMENTS_PROVIDER?: string;
+  CASHERA_API_KEY?: string;
+  CASHERA_API_SECRET?: string;
   PLATEGA_MERCHANT_ID?: string;
   PLATEGA_SECRET_KEY?: string;
   KODIK_API_TOKEN?: string;

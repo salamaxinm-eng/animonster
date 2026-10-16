@@ -89,10 +89,12 @@ test('fundraising migration, checkout, provider verification and permanent inven
   const foundersUrl = url(
     'export const assignFounder = async () => {}; export const syncFounderRewards = async () => {};',
   );
+  const gatewayUrl = url(stripTypeScriptTypes(await readFile('lib/server/payment-gateway.ts', 'utf8')).replace("'./core'", JSON.stringify(coreUrl)));
   const billingSource = stripTypeScriptTypes(
     await readFile('lib/server/billing.ts', 'utf8'),
   )
     .replace("'./core'", JSON.stringify(coreUrl))
+    .replace("'./payment-gateway'", JSON.stringify(gatewayUrl))
     .replace("'./supporters'", JSON.stringify(supportersUrl))
     .replace("'./founders'", JSON.stringify(foundersUrl));
   const billingUrl = url(billingSource.replace(/import \{ confirmPassPayment[^\n]+\n/, 'const confirmPassPayment=async()=>{}; const revokePassPayment=async()=>{};').replace(/import \{ confirmBundlePayment[^\n]+\n/, 'const confirmBundlePayment=async()=>{}; const confirmVpnPayment=async()=>{}; const revokeBundlePayment=async()=>{}; const revokeVpnPayment=async()=>{};'));
@@ -104,6 +106,7 @@ test('fundraising migration, checkout, provider verification and permanent inven
   const checkout = await load('app/api/payments/route.ts', {
     '@/lib/server/core': coreUrl,
     '@/lib/server/billing': billingUrl,
+    '@/lib/server/payment-gateway': gatewayUrl,
     '@/lib/server/fundraising': fundraiserUrl,
     '@/lib/subscription-plans': plansUrl,
     '@/lib/fundraising': sharedUrl,
@@ -125,6 +128,7 @@ test('fundraising migration, checkout, provider verification and permanent inven
   const webhook = await load('app/api/payments/webhook/route.ts', {
     '@/lib/server/core': coreUrl,
     '@/lib/server/billing': billingUrl,
+    '@/lib/server/payment-gateway': gatewayUrl,
   });
   const transactions = new Map();
   globalThis.fetch = async (address, init = {}) => {
@@ -736,6 +740,87 @@ test('fundraising migration, checkout, provider verification and permanent inven
         );
       },
     );
+    await t.test('Cashera checkout, authenticated callbacks, exact sums, recovery and refund are idempotent', async () => {
+      config.PAYMENTS_PROVIDER = 'cashera';
+      config.CASHERA_API_KEY = 'pk_test';
+      config.CASHERA_API_SECRET = 'sk_test';
+      const legacyFetch = globalThis.fetch;
+      const casheraTransactions = new Map();
+      globalThis.fetch = async (address, init = {}) => {
+        if (String(address).startsWith('https://app.platega.io/')) return legacyFetch(address, init);
+        assert.ok(String(address).startsWith('https://api.cashera.cash/api/v1/integration/transactions'));
+        assert.equal(init.headers['X-Api-Key'], 'pk_test');
+        assert.equal(init.headers['X-Secret'], undefined);
+        assert.equal(init.cache, 'no-store');
+        if (init.method === 'POST') {
+          const input = JSON.parse(init.body);
+          assert.equal(input.payment_method, undefined);
+          assert.equal(input.callback_url, 'https://example.test/api/payments/cashera/webhook');
+          assert.equal(input.currency, 'RUB');
+          assert.equal(input.amount, 10900);
+          const uuid = crypto.randomUUID();
+          const tx = { ...input, uuid, type: 'deposit', status: 'pending', payment_url: 'https://pay.cashera.cash/' + uuid };
+          casheraTransactions.set(uuid, tx);
+          return Response.json(tx, { status: 201 });
+        }
+        const last = String(address).split('/').at(-1);
+        const tx = String(address).includes('/by-external-id/')
+          ? [...casheraTransactions.values()].find(value => value.external_id === last)
+          : casheraTransactions.get(last);
+        return tx ? Response.json(tx) : Response.json({}, {status:404});
+      };
+      const casheraWebhook = await load('app/api/payments/cashera/webhook/route.ts', {
+        '@/lib/server/core': coreUrl, '@/lib/server/billing': billingUrl,
+      });
+      const callback = (event, headers = { 'x-api-key': 'pk_test', 'x-secret': 'sk_test' }) =>
+        new Request('https://example.test/api/payments/cashera/webhook', {
+          method: 'POST', headers, body: JSON.stringify(event),
+        });
+      assert.equal((await casheraWebhook.POST(callback({event:'webhook.test'}))).status, 200);
+      assert.equal((await casheraWebhook.POST(callback({event:'future.event'}))).status, 200);
+      assert.equal((await casheraWebhook.POST(callback({}, {}))).status, 401);
+      assert.equal((await casheraWebhook.POST(callback({}, {'x-api-key':'pk_test','x-secret':'wrong'}))).status, 401);
+      assert.equal((await casheraWebhook.POST(callback({event:'transaction.status_updated',transaction:{uuid:'bad'}}))).status, 400);
+      config.PAYMENTS_ENABLED = 'false';
+      assert.equal((await checkout.POST(request({plan:'monthly'}))).status,503);
+      config.PAYMENTS_ENABLED = 'true';
+      const result = await checkout.POST(request({plan:'monthly',goalSlug:'player'}));
+      assert.equal(result.status,200,await result.clone().text());
+      const id = (await result.json()).url.split('/').at(-1);
+      const tx = casheraTransactions.get(id);
+      let order = (await query('SELECT * FROM orders WHERE provider_id=$1',[id]))[0];
+      assert.equal(order.provider,'cashera');
+      assert.equal(await billing.verifyOrderPayment(order),'pending');
+      const grantCount = Number((await query("SELECT count(*) n FROM grants WHERE user_id='dev'"))[0].n);
+      tx.status='paid';
+      for (const [field,value] of [['amount',10899],['amount',10901],['currency','USD'],['type','withdraw'],['uuid',crypto.randomUUID()],['external_id',crypto.randomUUID()]]) {
+        const saved=tx[field]; tx[field]=value;
+        await assert.rejects(billing.verifyPayment(id,'cashera'));
+        tx[field]=saved;
+      }
+      assert.equal(Number((await query("SELECT count(*) n FROM grants WHERE user_id='dev'"))[0].n),grantCount);
+      tx.status='expired';
+      assert.equal(await billing.verifyPayment(id,'cashera'),'canceled');
+      tx.status='paid';
+      // Recover a payment accepted before its UUID was saved locally.
+      await engine.query('UPDATE orders SET provider_id=NULL WHERE id=$1',[order.id]);
+      order = {...order,provider_id:null};
+      assert.equal(await billing.verifyOrderPayment(order),'succeeded');
+      const event={event:'transaction.status_updated',transaction:{uuid:id,status:'paid',amount:1}};
+      // The payload amount is ignored; the API provides authoritative values.
+      for (const response of await Promise.all([casheraWebhook.POST(callback(event)),casheraWebhook.POST(callback(event))])) assert.equal(response.status,200);
+      assert.equal(Number((await query("SELECT count(*) n FROM grants WHERE user_id='dev'"))[0].n),grantCount+1);
+      // Disabling new sales must not block confirmation/revocation of existing payments.
+      config.PAYMENTS_ENABLED='false';
+      tx.status='refunded';
+      assert.equal((await casheraWebhook.POST(callback(event))).status,200);
+      assert.equal((await query('SELECT status FROM orders WHERE id=$1',[order.id]))[0].status,'chargebacked');
+      assert.ok((await query('SELECT revoked_at FROM grants WHERE order_id=$1',[order.id]))[0].revoked_at);
+      tx.status='paid';
+      assert.equal(await billing.verifyPayment(id,'cashera'),'chargebacked');
+      const legacyId=[...transactions.keys()][0];
+      assert.ok(await billing.verifyPayment(legacyId));
+    });
   } finally {
     globalThis.fetch = originalFetch;
     delete globalThis.fundraisingTestDb;
