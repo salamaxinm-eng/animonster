@@ -1,19 +1,34 @@
-# AniMonster VPN server
+# AniMonster VPN — серверный пилот
 
-The VPN server runs on DE-2 separately from the AniMonster web application.
-`deploy/compose.yaml` starts AmneziaWG and XRay. `deploy/vpn-agent.py` polls the
-website for device jobs and reconciles both server configurations.
+VPN работает на VPS `31.77.10.81`. Приложение AniMonster находится на `2.26.48.72`; на 17 октября 2026 года публичный A-record `animonster.su` указывает непосредственно на этот сервер. Caddy на `31.77.10.81` также сохраняет проксирование через внутренний туннель. Порты VPN — `51821/UDP` для AmneziaWG 3.1 и `8443/TCP` для XRay Reality. Существующий `wg0` (`51820/UDP`) сохраняется.
 
-The deployment root is `/opt/animonster-vpn`. Copy the contents of this
-directory there before running the services. The agent service file expects
-that path. Runtime configuration, keys, pilot client profiles, agent token,
-managed device state, and backups belong in the server's `secrets/` or
-`managed/` directories. Never commit those directories or client profiles.
+`deploy/compose.yaml` запускает оба сервиса в сети хоста. Секретные конфигурации хранятся только на VPS в `/opt/animonster-vpn/secrets` и не входят в Git. AmneziaWG собирается из официального тега `amnezia-vpn/amneziawg-go/v3.1.20260828`; модуль ядра не используется из-за риска для текущего Ubuntu 26.04 / Linux 7.0.0-34. XRay использует `animonster.su:443` как маскировочный TLS-сайт, поэтому перенос сайта не требует менять его адрес в конфигурации XRay.
 
-The service requires `VPN_AGENT_TOKEN` and `VPN_PUBLIC_IP` in
-`/opt/animonster-vpn/secrets/agent.env`. See
-[`../deploy/VPN_ACCESS_DEPLOY.md`](../deploy/VPN_ACCESS_DEPLOY.md) for the site
-migration and deployment order.
+Проверки пилота: состояние контейнеров, фактические слушающие порты, рукопожатие тестового клиента, внешний IP и DNS через каждый протокол, перезапуск контейнеров, доступность AniMonster и прежнего `wg0`. Продажа подписок и автоматическая выдача ключей относятся к следующим слайсам.
 
-Run agent unit tests with `python -m unittest discover -s tests` from this
-directory.
+## Текущее состояние
+
+9 октября 2026 года оба сервиса запущены на VPS. AmneziaWG установил тестовое рукопожатие, а проверка полного IPv4-маршрута показала выход через `31.77.10.81`. XRay Reality прошёл тест через отдельный SOCKS-клиент с тем же внешним IP. После перезапуска обе проверки повторились; `/api/health` сайта возвращает `200`, прежний `wg0` активен. Пользователь подтвердил подключение AmneziaWG с телефона через мобильную сеть. XRay ещё следует проверить на внешнем устройстве.
+
+Тестовые файлы для импорта хранятся в `C:\Users\salam\Downloads\AniMonster-VPN-test`; на VPS их исходники находятся в `/opt/animonster-vpn/secrets`. Это приватные ключи, их нельзя публиковать или добавлять в Git.
+
+## Управление
+
+На VPS:
+
+```sh
+cd /opt/animonster-vpn
+docker compose -f deploy/compose.yaml ps
+docker exec deploy-awg-1 awg show awg0
+docker compose -f deploy/compose.yaml logs --tail=50 awg xray
+```
+
+Публичный вход AniMonster на DE-2 занимает `443/TCP`, поэтому Reality работает на `8443/TCP`. Для перевода Reality на `443/TCP` позже потребуется изменить публичную схему сайта и обновить порт в клиентских профилях. До продаж тестовые ключи следует заменить на отдельные ключи для каждого пользователя и устройства.
+
+## Слайс 2: кабинет и выдача
+
+Кабинет `/vpn` работает в коде AniMonster на сервере `2.26.48.72`; публичный `animonster.su` продолжает входить через DE-2 и внутренний туннель. База сайта получила отдельные таблицы VPN-подписок, устройств и заданий. Агент `deploy/vpn-agent.py` запущен на DE-2 через `animonster-vpn-agent.service` и сам забирает задания с сайта по HTTPS. Входящий управляющий порт на DE-2 не открывался.
+
+Проверка полного цикла прошла на одноразовом тестовом аккаунте: создание устройства, выдача отдельных AmneziaWG и XRay профилей, отзыв и запрет повторного скачивания. После теста аккаунт удалён, у агента нет управляемых устройств; пилотные ключи и прежний `wg0` остались. Ограничение пяти устройств и обработка истечения срока проверены тестом базы в проекте сайта. Для окончательной приёмки нужен вход владельца в `/vpn` с тестовым доступом на своём аккаунте.
+
+Резервные копии перед выпуском: на сервере сайта `/root/animonster-vpn-rollout/db-before.dump` и `site-files-before.tar.gz`; на DE-2 `/opt/animonster-vpn/backups/slice2-20261009/vpn-secrets-before.tar.gz`. Они содержат приватные данные и должны оставаться доступными только администратору. Порядок развёртывания и проверки описан в `deploy/VPN_ACCESS_DEPLOY.md` проекта AniMonster.
