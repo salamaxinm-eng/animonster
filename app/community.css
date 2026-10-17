@@ -2818,6 +2818,28 @@ button:disabled {
   gap: 10px;
   margin: 14px 0 18px;
 }
+.admin-skip-form.title-restrictions-form {
+  grid-template-columns: minmax(0, 1fr);
+}
+.title-restrictions-form label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.title-restrictions-form textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  resize: vertical;
+}
+.title-restrictions-form textarea:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
 .admin-skip-form button {
   min-height: 40px;
 }

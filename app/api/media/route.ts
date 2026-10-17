@@ -7,6 +7,7 @@ import {
   validateMediaUrl,
 } from '@/lib/server/media';
 import { premium, viewer } from '@/lib/server/core';
+import { titleRestrictionResponse } from '@/lib/server/title-restrictions';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +46,10 @@ export async function GET(request: Request) {
     const token = new URL(request.url).searchParams.get('token') || '';
     const details = await readMediaTokenDetails(token),
       source = details.url;
+    if (details.access?.animeId) {
+      const denied = await titleRestrictionResponse(request.headers, details.access.animeId);
+      if (denied) return denied;
+    }
     if (details.access?.freeAt && details.access.freeAt > Date.now()) {
       const user = await viewer(request);
       if (

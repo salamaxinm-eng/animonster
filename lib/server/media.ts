@@ -5,7 +5,7 @@ const decoder = new TextDecoder();
 const MAX_MANIFEST_BYTES = 2 * 1024 * 1024;
 const TOKEN_LIFETIME_MS = 6 * 60 * 60 * 1000;
 
-type MediaAccess = { userId?: string; freeAt?: number };
+type MediaAccess = { userId?: string; freeAt?: number; animeId?: number };
 type MediaToken = { url: string; expires: number; access?: MediaAccess };
 
 const base64url = (bytes: Uint8Array) =>

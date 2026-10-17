@@ -14,7 +14,7 @@ const media = await import(
     Buffer.from(stripTypeScriptTypes(source)).toString('base64')
 );
 
-test('media URLs fail closed when the gateway is disabled', async () => {
+void test('media URLs fail closed when the gateway is disabled', async () => {
   process.env.MEDIA_PROXY_ENABLED = 'false';
   await assert.rejects(
     media.mediaProxyUrl('https://cache.libria.fun/show/index.m3u8'),
@@ -25,7 +25,7 @@ test('media URLs fail closed when the gateway is disabled', async () => {
   );
 });
 
-test('media proxy follows numbered CDN hosts with legacy deployment configuration', async () => {
+void test('media proxy follows numbered CDN hosts with legacy deployment configuration', async () => {
   process.env.MEDIA_PROXY_HOSTS = 'cache.libria.fun,cache1.libria.fun';
   process.env.MEDIA_PROXY_ENABLED = 'true';
   process.env.MEDIA_PROXY_SECRET =
@@ -70,7 +70,7 @@ test('media proxy follows numbered CDN hosts with legacy deployment configuratio
   });
 });
 
-test('media access binding survives manifest rewriting', async () => {
+void test('media access binding survives manifest rewriting', async () => {
   process.env.MEDIA_PROXY_HOSTS = 'cache.libria.fun';
   process.env.MEDIA_PROXY_ENABLED = 'true';
   process.env.MEDIA_PROXY_SECRET =
@@ -80,7 +80,7 @@ test('media access binding survives manifest rewriting', async () => {
   const manifest = await media.rewriteManifest(
     '#EXTM3U\nsegment.ts',
     new URL('https://cache.libria.fun/show/index.m3u8'),
-    { userId, freeAt },
+    { userId, freeAt, animeId: 60058 },
   );
   const child = manifest.split('\n')[1];
   const details = await media.readMediaTokenDetails(
@@ -88,4 +88,5 @@ test('media access binding survives manifest rewriting', async () => {
   );
   assert.equal(details.access.userId, userId);
   assert.equal(details.access.freeAt, freeAt);
+  assert.equal(details.access.animeId, 60058);
 });

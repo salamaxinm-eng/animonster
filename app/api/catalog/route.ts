@@ -12,20 +12,31 @@ import {
   compactAnime,
 } from '@/lib/server/anime';
 import { animeWithTheme } from '@/lib/server/anime-themes';
+import { titleRestrictionResponse } from '@/lib/server/title-restrictions';
 export async function GET(request: Request) {
   const p = new URL(request.url).searchParams,
     id = Number(p.get('anime_id'));
   try {
     if (id) {
+      const denied = await titleRestrictionResponse(request.headers, id);
+      if (denied) return denied;
       if (!Number.isInteger(id) || id < 1 || id > 999999999)
         return Response.json({ error: 'Некорректный тайтл' }, { status: 400 });
       const result = await getAnime(id);
-      return Response.json(result ? [result.anime] : []);
+      const resolvedDenied = result && await titleRestrictionResponse(request.headers, result.anime);
+      if (resolvedDenied) return resolvedDenied;
+      return Response.json(result ? [result.anime] : [], {
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
     }
     const alias = p.get('alias') || '';
     if (alias) {
       const result = await getAnimeByAlias(alias);
-      return Response.json(result ? [result.anime] : []);
+      const denied = result && await titleRestrictionResponse(request.headers, result.anime);
+      if (denied) return denied;
+      return Response.json(result ? [result.anime] : [], {
+        headers: { 'Cache-Control': 'private, no-store' },
+      });
     }
     const tag = p.get('tag')?.trim() || '';
     if (tag) {

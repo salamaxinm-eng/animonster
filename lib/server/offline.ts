@@ -218,6 +218,7 @@ export async function prepareOfflineDownloads(user: User, raw: unknown) {
       voiceoverName: 'AniLiberty',
       provider: 'aniliberty' as const,
       manifestUrl: await mediaProxyUrl(source, expiresAt, {
+        animeId: anime.id,
         userId: user.id,
         freeAt,
       }),
@@ -297,6 +298,7 @@ export async function prepareOfflineDownload(user: User, raw: unknown) {
     voiceoverName: 'AniLiberty',
     provider: 'aniliberty' as const,
     manifestUrl: await mediaProxyUrl(source, expiresAt, {
+      animeId: anime.id,
       userId: user.id,
       freeAt,
     }),

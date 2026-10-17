@@ -6,6 +6,7 @@ import {
   safeKodikPlayerUrl,
   type KodikResult,
 } from '@/lib/server/kodik';
+import { titleRestrictionResponse } from '@/lib/server/title-restrictions';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
   try {
     const params = new URL(request.url).searchParams;
     const animeId = Number(params.get('anime_id'));
+    const denied = await titleRestrictionResponse(request.headers, animeId);
+    if (denied) return denied;
     const translationId = Number(params.get('translation'));
     const episode = Number(params.get('episode'));
     if (

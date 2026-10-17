@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { titleBlocked } from '@/lib/server/title-restrictions';
 import { AnimePage } from '@/components/anime-page';
 import { getAnime, getAnimeByAlias } from '@/lib/server/library';
 import { posterUrl, type Anime } from '@/lib/anime';
@@ -51,6 +54,10 @@ export async function generateMetadata({
   const { id: slug } = await params;
   const anime = await loadAnime(slug);
 
+  if (anime && await titleBlocked(await headers(), anime)) {
+    return { title: 'Тайтл заблокирован', robots: { index: false, follow: false } };
+  }
+
   if (!anime) {
     return {
       title: 'Аниме онлайн',
@@ -96,6 +103,8 @@ export async function generateMetadata({
 export default async function Page({ params }: PageProps) {
   const { id: slug } = await params;
   const anime = await loadAnime(slug);
+
+  if (anime && await titleBlocked(await headers(), anime)) redirect('/title-blocked');
 
   if (!anime) return <ClientAnimePage />;
 

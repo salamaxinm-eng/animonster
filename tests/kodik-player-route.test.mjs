@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { stripTypeScriptTypes } from 'node:module';
 import test from 'node:test';
+import { titleRestrictionsUrl } from './helpers/title-restrictions.mjs';
 
 const moduleUrl = (source) =>
   'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
@@ -38,6 +39,7 @@ globalThis.kodikPlayerRouteCore = {
 const routeSource = stripTypeScriptTypes(
   await readFile(new URL('../app/api/kodik/player/route.ts', import.meta.url), 'utf8'),
 )
+  .replace("'@/lib/server/title-restrictions'", JSON.stringify(titleRestrictionsUrl))
   .replace(
     /import \{ ApiError, db, fail, now, premium, viewer \} from '@\/lib\/server\/core';/,
     'const { ApiError, db, fail, now, premium, viewer } = globalThis.kodikPlayerRouteCore;',
@@ -97,29 +99,42 @@ function setup({ lockedEpisode = 0, plus = false } = {}) {
 const request = () =>
   new Request('https://animonster.su/api/kodik/player?anime_id=21&translation=91&episode=1');
 
-test('Kodik keeps native season controls when every episode is free', async () => {
+void test('Kodik keeps native season controls when every episode is free', async () => {
   setup();
   const response = await route.GET(request());
   assert.equal(response.status, 302);
   assert.equal(response.headers.get('location'), `${season}?episode=1`);
 });
 
-test('Kodik uses the exact episode player if another season episode is Plus locked', async () => {
+void test('Kodik uses the exact episode player if another season episode is Plus locked', async () => {
   setup({ lockedEpisode: 2 });
   const response = await route.GET(request());
   assert.equal(response.status, 302);
   assert.equal(response.headers.get('location'), `${exact}?episode=1`);
 });
 
-test('Plus users can open the native season player', async () => {
+void test('Plus users can open the native season player', async () => {
   setup({ lockedEpisode: 2, plus: true });
   const response = await route.GET(request());
   assert.equal(response.status, 302);
   assert.equal(response.headers.get('location'), `${season}?episode=1`);
 });
 
-test('a locked requested episode stays unavailable to non-Plus users', async () => {
+void test('a locked requested episode stays unavailable to non-Plus users', async () => {
   setup({ lockedEpisode: 1 });
   const response = await route.GET(request());
   assert.equal(response.status, 403);
+});
+
+void test('Russian visitors cannot obtain the disputed title player even with Plus', async () => {
+  setup({ plus: true });
+  globalThis.kodikPlayerRouteDb = { prepare() { throw Error('Restricted title must not reach player lookup'); } };
+  const response = await route.GET(new Request(
+    'https://animonster.su/api/kodik/player?anime_id=60058&translation=91&episode=1',
+    { headers: { 'x-animonster-client-ip': '77.88.8.8', 'cf-ipcountry': 'DE' } },
+  ));
+  assert.equal(response.status, 451);
+  const result = await response.json();
+  assert.equal(result.redirect, '/vpn');
+  assert.equal(response.headers.get('location'), null);
 });

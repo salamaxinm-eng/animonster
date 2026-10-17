@@ -9,6 +9,7 @@ import {
 } from '@/lib/server/core';
 import { OFFLINE_LICENSE_MS } from '@/lib/server/offline';
 import { plusEntitlements } from '@/lib/server/plus';
+import { titleRestrictionResponse } from '@/lib/server/title-restrictions';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
     const user = await requireUser(request);
     const input = (await body(request)) as Record<string, unknown>;
     const animeId = Number(input.animeId);
+    const denied = await titleRestrictionResponse(request.headers, animeId);
+    if (denied) return denied;
     const episode = Number(input.episode);
     if (!Number.isInteger(animeId) || !Number.isInteger(episode))
       throw new ApiError('Некорректная серия.');

@@ -3,6 +3,10 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   poweredByHeader: false,
+  serverExternalPackages: ['geoip-country'],
+  outputFileTracingIncludes: {
+    '/*': ['./node_modules/geoip-country/data/**/*'],
+  },
   allowedDevOrigins: process.env.DEV_ALLOWED_ORIGINS?.split(',')
     .map((origin) => origin.trim())
     .filter(Boolean),

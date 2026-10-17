@@ -11,12 +11,15 @@ import {
 import { ApiError, fail, json, viewer, premium } from '@/lib/server/core';
 import { kodikVoiceovers } from '@/lib/server/kodik';
 import { syncEpisodeAccess } from '@/lib/server/episode-access';
+import { titleRestrictionResponse } from '@/lib/server/title-restrictions';
 
 export async function GET(request: Request) {
   try {
-    const currentUser = await viewer(request);
     const params = new URL(request.url).searchParams;
     const id = Number(params.get('id'));
+    const denied = await titleRestrictionResponse(request.headers, id);
+    if (denied) return denied;
+    const currentUser = await viewer(request);
     if (!Number.isInteger(id) || id < 1 || id > 999999999)
       throw new ApiError('Некорректный тайтл');
     const cached = await getAnime(id);
@@ -61,6 +64,8 @@ export async function GET(request: Request) {
         'adult_confirmation_required',
       );
 
+    const resolvedDenied = await titleRestrictionResponse(request.headers, anime);
+    if (resolvedDenied) return resolvedDenied;
     const kodik = await kodikVoiceovers(anime);
     if (!kodik.voiceovers.length)
       return json({

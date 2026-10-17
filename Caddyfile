@@ -84,6 +84,8 @@
     }
   }
   reverse_proxy app:3000 {
+    # Always replace a visitor-supplied value; app ports must remain private.
+    header_up X-AniMonster-Client-IP {remote_host}
     lb_policy cookie animonster_node
     health_uri /api/health
     health_interval 10s

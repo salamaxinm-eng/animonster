@@ -3,6 +3,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/native-select';
+import { TitleRestrictionsAdmin } from './title-restrictions-admin';
 
 function commentLocation(scope: string, commentId: string) {
   const anchor = `#comment-${encodeURIComponent(commentId)}`;
@@ -44,6 +45,7 @@ export function AdminTools() {
     if (response.ok) setData(await response.json());
   };
   useEffect(() => {
+    if (window.location.hash === '#title-restrictions') setSection('restrictions');
     void load();
   }, []);
   async function createInvite(event: FormEvent<HTMLFormElement>) {
@@ -149,6 +151,7 @@ export function AdminTools() {
           ['users', 'Пользователи и Plus'],
           ['moderation', 'Модерация'],
           ['catalog', 'Каталог'],
+          ...(data.can_manage_roles ? [['restrictions', 'Блокировки тайтлов']] : []),
         ].map(([id, label]) => (
           <button
             key={id}
@@ -160,6 +163,7 @@ export function AdminTools() {
           </button>
         ))}
       </nav>
+      {section === 'restrictions' && data.can_manage_roles && <TitleRestrictionsAdmin />}
       {data.invite_required && (
         <section className="social-panel" hidden={section !== 'users'}>
           <h2>Приглашения в бету</h2>
