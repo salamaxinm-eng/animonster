@@ -522,8 +522,8 @@
   min-width: 0;
 }
 .hub-achievement.earned {
-  border-color: #526b32;
-  background: #19231a;
+  border-color: color-mix(in srgb, var(--am-accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--am-accent) 8%, var(--card));
 }
 .hub-achievement > img {
   width: 76px;

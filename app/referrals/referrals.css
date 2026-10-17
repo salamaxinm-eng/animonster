@@ -52,8 +52,8 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #b4ed50;
-  color: #172208;
+  background: var(--am-button);
+  color: var(--am-on-accent);
   padding: 13px 18px;
   border-radius: 9px;
   font-weight: 750;
@@ -119,7 +119,7 @@
     inset 0 0 12px #b49af233;
 }
 .portrait-lime {
-  --portrait-color: #b4ed50;
+  --portrait-color: var(--am-accent-light);
 }
 .portrait-gold {
   --portrait-color: #f4ce78;
@@ -197,7 +197,7 @@
     radial-gradient(ellipse at 10% 70%, #9e7bf11c, transparent 75%), #11151e;
 }
 .example-lime {
-  border-color: #b4ed5033;
+  border-color: color-mix(in srgb, var(--am-accent) 20.00%, transparent);
 }
 .example-gold {
   border-color: #f4ce7844;
@@ -253,7 +253,7 @@
 .referral-hero-cta:focus-visible,
 .referrals-page button:focus-visible,
 .referrals-page a:focus-visible {
-  outline: 2px solid #b4ed50;
+  outline: 2px solid var(--am-accent);
   outline-offset: 4px;
 }
 @media (max-width: 1000px) {

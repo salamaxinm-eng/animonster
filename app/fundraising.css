@@ -8,10 +8,10 @@
   flex: 1 1 140px;
   min-width: 0;
   padding: 11px 14px;
-  border: 1px solid #b3ed7940;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 25.10%, transparent);
   border-radius: 11px;
-  background: #08120965;
-  color: #c0cfba;
+  background: color-mix(in srgb, color-mix(in srgb, var(--am-accent) 8%, var(--card)) 39.61%, transparent);
+  color: var(--muted-foreground);
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -20,11 +20,11 @@
 }
 .fundraising-goal-switch > button[aria-pressed='true'] {
   border-color: var(--am-accent);
-  background: var(--am-accent);
-  color: #152011;
+  background: var(--am-button);
+  color: var(--am-on-accent);
 }
 .fundraising-goal-switch > button:focus-visible {
-  outline: 2px solid #d1f6a1;
+  outline: 2px solid var(--am-accent);
   outline-offset: 3px;
 }
 .fundraising-goal-switch > button:disabled,
@@ -38,33 +38,33 @@
 }
 .fundraising-choice h3 {
   margin: 0;
-  color: #eef5e8;
+  color: var(--foreground);
   font-size: 16px;
 }
 .fundraising-selected {
-  color: #aebfa9;
+  color: var(--muted-foreground);
   font-size: 13px;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .fundraising-selected strong {
-  color: #e4f6d3;
+  color: var(--am-accent-light);
 }
 .fundraising-reward {
   min-width: 0;
   padding: 14px;
-  border: 1px solid #b3ed7929;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 16.08%, transparent);
   border-radius: 14px;
-  background: #08120965;
+  background: color-mix(in srgb, color-mix(in srgb, var(--am-accent) 8%, var(--card)) 39.61%, transparent);
 }
 .fundraising-reward > strong {
-  color: #e4f6d3;
+  color: var(--am-accent-light);
   font-size: 13px;
 }
 .fundraising-reward > p,
 .stats-fund-reward > p {
   margin: 10px 0 0;
-  color: #b1c2b4;
+  color: var(--muted-foreground);
   font-size: 12px;
   line-height: 1.6;
 }
@@ -89,7 +89,7 @@
 }
 .fundraising-reward-items figcaption {
   margin-top: 5px;
-  color: #aebfa9;
+  color: var(--muted-foreground);
   font-size: 10px;
 }
 .fundraising-reward-compact {
@@ -140,7 +140,7 @@
   align-items: flex-start;
 }
 .donation-dialog .plus-agreement-label a {
-  color: #c8f45a;
+  color: var(--am-accent-light);
   text-decoration: underline;
 }
 .profile-frame-support-oni > .user-avatar {

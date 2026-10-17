@@ -84,11 +84,11 @@
   box-shadow: inset 0 0 18px #ac7aff15;
 }
 .plus-plan-options button:focus-visible {
-  outline: 2px solid #c1ff79;
+  outline: 2px solid var(--am-accent);
   outline-offset: 3px;
 }
 .plus-plan-options b {
-  color: #c5ff87;
+  color: var(--am-accent-light);
   font-size: 11px;
 }
 .plus-plan-options strong {
@@ -129,9 +129,9 @@
   width: min(calc(100% - 28px), 850px) !important;
   max-width: 850px !important;
   padding: 30px !important;
-  border: 1px solid #a9ec4730;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 18.82%, transparent);
   background:
-    radial-gradient(circle at 8% 0%, #a9ec4720, transparent 28%),
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--am-accent) 12.55%, transparent), transparent 28%),
     radial-gradient(circle at 92% 22%, #8b5cf61c, transparent 31%),
     linear-gradient(145deg, #111a1d, #0c1219 65%, #11131f);
   box-shadow:
@@ -151,7 +151,7 @@
   font-size: 72px;
   font-weight: 900;
   letter-spacing: -5px;
-  -webkit-text-stroke: 1px #b5f6551f;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--am-accent) 12.16%, transparent);
   pointer-events: none;
 }
 .plus-dialog-layout {
@@ -181,16 +181,16 @@
 }
 .plus-dialog .plus-plan-options button:hover {
   transform: translateY(-2px);
-  border-color: #b8ef6460;
+  border-color: color-mix(in srgb, var(--am-accent) 37.65%, transparent);
 }
 .plus-dialog .plus-plan-options button[aria-pressed='true'] {
-  border-color: #c5ff78;
+  border-color: var(--am-accent);
   background:
-    radial-gradient(circle at 100% 0, #c7ff6d20, transparent 45%),
-    linear-gradient(145deg, #26331c, #19221a);
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--am-accent) 12.55%, transparent), transparent 45%),
+    linear-gradient(145deg, color-mix(in srgb, var(--am-accent) 8%, var(--card)), var(--card));
   box-shadow:
-    0 0 0 1px #b7f35a33,
-    inset 0 0 24px #a9ed4010;
+    0 0 0 1px color-mix(in srgb, var(--am-accent) 20.00%, transparent),
+    inset 0 0 24px color-mix(in srgb, var(--am-accent) 6.27%, transparent);
 }
 .plus-dialog .plus-plan-options button[aria-pressed='true']::after {
   content: '';
@@ -200,8 +200,8 @@
   top: 11px;
   right: 11px;
   border-radius: 50%;
-  background: #baff5d;
-  box-shadow: 0 0 12px #baff5d;
+  background: var(--am-accent);
+  box-shadow: 0 0 12px var(--am-accent);
 }
 .plus-dialog .plus-plan-options .plus-support-plan {
   grid-column: 1 / -1;
@@ -218,13 +218,13 @@
 .plus-support-plan strong {
   grid-column: 2;
   grid-row: 1 / span 2;
-  color: #caff7b;
+  color: var(--am-accent-light);
 }
 .support-amount-picker {
   display: grid;
   gap: 10px;
   padding: 15px;
-  border: 1px solid #b9f36e42;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 25.88%, transparent);
   border-radius: 15px;
   background: linear-gradient(
     135deg,
@@ -233,21 +233,21 @@
   );
 }
 .support-amount-picker > label {
-  color: #eaf5df;
+  color: var(--foreground);
   font-size: 12px;
   font-weight: 700;
 }
 .support-amount-input {
   display: flex;
   align-items: center;
-  border: 1px solid #65774d;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 40%, var(--border));
   border-radius: 12px;
   background: #0b1117;
   overflow: hidden;
 }
 .support-amount-input:focus-within {
-  border-color: #bdff62;
-  box-shadow: 0 0 0 3px #a8ef3c18;
+  border-color: var(--am-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--am-accent) 9.41%, transparent);
 }
 .support-amount-input input {
   min-width: 0;
@@ -265,7 +265,7 @@
 }
 .support-amount-input > span {
   padding-right: 15px;
-  color: #b8c7ad;
+  color: var(--muted-foreground);
   font-size: 18px;
   font-weight: 800;
 }
@@ -283,8 +283,8 @@
   cursor: pointer;
 }
 .support-amount-presets button:hover {
-  border-color: #b7f26173;
-  color: #dfffad;
+  border-color: color-mix(in srgb, var(--am-accent) 45.10%, transparent);
+  color: var(--am-accent-light);
 }
 .support-amount-picker > small {
   color: #879494;
@@ -460,7 +460,7 @@
 }
 .plus-feature-strip svg {
   flex-shrink: 0;
-  color: #b9f55c;
+  color: var(--am-accent-light);
 }
 .plus-feature-strip span,
 .plus-feature-strip strong,
@@ -660,9 +660,9 @@
   animation: reward-sparkle 3.8s ease-in-out infinite alternate;
 }
 .user-tag-plus {
-  --tag-color: #b7ff64;
-  --tag-end: #37cfab;
-  --tag-light: #eeffc9;
+  --tag-color: var(--am-accent-light);
+  --tag-end: var(--am-accent-alt);
+  --tag-light: var(--am-accent-light);
   --tag-icon: url('/frames/plus-crystal.svg');
 }
 .user-tag-supporter {
@@ -693,9 +693,9 @@
   --tag-icon: url('/pins/achievement-one-piece.svg');
 }
 .user-tag-recruiter {
-  --tag-color: #8fee6f;
-  --tag-end: #27bca7;
-  --tag-light: #e9ffc5;
+  --tag-color: var(--am-accent-light);
+  --tag-end: var(--am-accent-alt);
+  --tag-light: var(--am-accent-light);
   --tag-icon: url('/pins/referral-scout.svg');
 }
 
@@ -792,7 +792,7 @@
   color: #c4afd9;
 }
 .achievement-watch {
-  color: #c4f78e;
+  color: var(--am-accent-light);
   font-size: 12px;
   padding-top: 6px;
 }
@@ -817,7 +817,7 @@
 }
 .reward-source-tabs button:focus-visible,
 .achievement-watch:focus-visible {
-  outline: 2px solid #c5ff85;
+  outline: 2px solid var(--am-accent);
   outline-offset: 4px;
 }
 .anime-pin:has(img[src$='.svg']) {

@@ -237,7 +237,7 @@
 .user-tag-hundred-episodes,
 .user-tag-mugiwara {
   border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
-  background: #141b11;
+  background: color-mix(in srgb, var(--am-accent) 8%, var(--card));
   color: var(--am-accent-light);
   box-shadow: 0 0 12px
     color-mix(in srgb, var(--am-accent-alt) 12.2%, transparent);
@@ -535,7 +535,7 @@
   min-height: 100vh;
   background:
     radial-gradient(circle at 20% 0%, #43246022, transparent 35%),
-    radial-gradient(circle at 90% 25%, #a8ef3920, transparent 30%), #090e13;
+    radial-gradient(circle at 90% 25%, color-mix(in srgb, var(--am-accent) 12.55%, transparent), transparent 30%), #090e13;
 }
 .watch-party-page {
   width: min(1500px, 94%);
@@ -598,9 +598,9 @@
   color: #ffc4d0;
 }
 .party-notice {
-  border-color: #4f6636;
-  background: #172315;
-  color: #cdec9d;
+  border-color: color-mix(in srgb, var(--am-accent) 40%, var(--border));
+  background: color-mix(in srgb, var(--am-accent) 8%, var(--card));
+  color: var(--am-accent-light);
 }
 .party-alert button {
   color: inherit;
@@ -1325,7 +1325,7 @@
 .preview-note {
   font-size: 12px;
   padding: 10px 16px;
-  color: #a4b69c;
+  color: var(--muted-foreground);
   background: color-mix(in srgb, var(--am-accent) 3.5%, transparent);
   border: 1px solid color-mix(in srgb, var(--am-accent) 11.4%, transparent);
   border-radius: 8px;
@@ -3674,7 +3674,7 @@ a.franchise-card:hover {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
-  background: linear-gradient(110deg, #172218, #131a24);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--am-accent) 8%, var(--card)), #131a24);
   border: 1px solid color-mix(in srgb, var(--am-accent) 14.5%, transparent);
   border-radius: 14px;
   padding: 25px;
@@ -3737,7 +3737,7 @@ a.franchise-card:hover {
 }
 .achievement.unlocked {
   border-color: color-mix(in srgb, var(--am-accent) 26.7%, transparent);
-  color: #c7e4a0;
+  color: var(--am-accent-light);
   background: color-mix(in srgb, var(--am-accent) 2.7%, transparent);
 }
 .achievement [data-slot='progress'] {
@@ -4416,8 +4416,8 @@ a.franchise-card:hover {
 }
 .reward-card.unlocked {
   border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
-  background: #141a16;
-  color: #d8e6c1;
+  background: var(--card);
+  color: var(--am-accent-light);
 }
 .reward-card strong,
 .reward-card p {
@@ -4548,7 +4548,7 @@ a.franchise-card:hover {
 }
 .referral-progress .done,
 .referral-progress .next {
-  color: #dce8cc;
+  color: var(--muted-foreground);
 }
 .referral-progress .done span {
   border-color: var(--am-accent-alt);
@@ -4570,7 +4570,7 @@ a.franchise-card:hover {
 }
 .referral-rewards article.unlocked {
   border-color: color-mix(in srgb, var(--am-accent-alt) 33.3%, transparent);
-  color: #d8e6c1;
+  color: var(--am-accent-light);
 }
 .referral-rewards article.next {
   border-color: #9e7bf188;
@@ -5046,7 +5046,7 @@ a.franchise-card:hover {
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  color: #e7f5dd;
+  color: var(--foreground);
   text-decoration: none;
   background: var(--am-soft);
   font-size: 13px;
@@ -5061,7 +5061,7 @@ a.franchise-card:hover {
 .plus-price-card strong {
   font-size: 38px;
   letter-spacing: -1.5px;
-  color: #edf9db;
+  color: var(--foreground);
 }
 .plus-promo strong s {
   margin-right: 7px;
@@ -5416,9 +5416,9 @@ a.franchise-card:hover {
   justify-content: space-between;
   gap: 16px;
   padding: 14px;
-  border: 1px solid #354134;
+  border: 1px solid var(--border);
   border-radius: 14px;
-  background: #141d18;
+  background: color-mix(in srgb, var(--am-accent) 8%, var(--card));
   box-shadow: 0 8px 32px #0006;
 }
 .profile-save-bar span {

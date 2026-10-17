@@ -482,7 +482,7 @@ main {
 .hero-meta i {
   height: 3px;
   width: 3px;
-  background: #758b8a;
+  background: var(--card);
   border-radius: 50%;
 }
 .hero-corner {
@@ -491,11 +491,11 @@ main {
   right: 30px;
   font-size: 10px;
   letter-spacing: 2px;
-  color: #d9e5e17a;
+  color: color-mix(in srgb, var(--muted-foreground) 47.84%, transparent);
 }
 .hero-corner span {
   margin-left: 30px;
-  color: #c9d9cd;
+  color: var(--muted-foreground);
 }
 .catalog {
   padding: 43px 0 0;
@@ -533,7 +533,7 @@ main {
 .home-section-tabs a:hover,
 .home-section-tabs button.active {
   border-color: color-mix(in srgb, var(--am-accent) 43.1%, transparent);
-  color: #ecfbd2;
+  color: var(--foreground);
 }
 .home-section-tabs button.active {
   background: var(--am-accent);
@@ -808,7 +808,7 @@ footer p {
   line-height: 1.7;
 }
 footer p a {
-  color: #a5bba8;
+  color: var(--muted-foreground);
 }
 footer > span {
   margin-left: auto;

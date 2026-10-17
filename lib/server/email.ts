@@ -18,7 +18,7 @@ export async function sendMail(
     console.info(JSON.stringify({ event: 'development_email', recipient, subject, action }));
     return;
   }
-  const html = `<div style="font:16px/1.5 Arial,sans-serif;color:#10151c"><h1 style="font-size:24px">AniMonster</h1><p>${escapeHtml(text)}</p>${action ? `<p><a href="${escapeHtml(action.url)}" style="display:inline-block;padding:12px 18px;border-radius:8px;background:#a7f432;color:#10151c;text-decoration:none;font-weight:700">${escapeHtml(action.label)}</a></p>` : ''}<p style="color:#667085;font-size:13px">Если это были не вы, проигнорируйте письмо.</p></div>`;
+  const html = `<div style="font:16px/1.5 Arial,sans-serif;color:#10151c"><h1 style="font-size:24px">AniMonster</h1><p>${escapeHtml(text)}</p>${action ? `<p><a href="${escapeHtml(action.url)}" style="display:inline-block;padding:12px 18px;border-radius:8px;background:#8a46cd;color:#ffffff;text-decoration:none;font-weight:700">${escapeHtml(action.label)}</a></p>` : ''}<p style="color:#667085;font-size:13px">Если это были не вы, проигнорируйте письмо.</p></div>`;
   try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',

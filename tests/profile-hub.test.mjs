@@ -59,6 +59,7 @@ const avatarRoute = await import(await load('app/api/avatar/route.ts', [['@/lib/
 const uploadRoute = await import(await load('app/api/plus-assets/route.ts', [['@/lib/server/core', core], ['@/lib/server/plus', access], ['@/lib/server/images', images]]));
 const publicRoute = await import(
   await load('app/api/community/route.ts', [
+    ['@/lib/server/payment-gateway', url('export const paymentsReady=()=>false;')],
     ['@/lib/server/core', core],
     ['@/lib/community', community],
     ['@/lib/server/cosmetics', cosmetics],
