@@ -3,7 +3,7 @@
   --hub-surface: var(--card);
   --hub-line: var(--border);
   --hub-text: var(--foreground);
-  --hub-muted: #a9b3bc;
+  --hub-muted: var(--muted-foreground);
   --hub-accent: var(--am-accent);
   background: var(--hub-bg);
   color: var(--hub-text);
@@ -38,6 +38,8 @@
 }
 .hub-sidebar {
   border-right: 1px solid var(--hub-line);
+  background: color-mix(in srgb, var(--hub-bg) 88%, transparent);
+  backdrop-filter: blur(14px);
   padding: 24px 12px;
 }
 .hub-sidebar nav {
@@ -52,16 +54,19 @@
   align-items: center;
   gap: 14px;
   padding: 10px 14px;
+  border: 1px solid transparent;
   border-radius: 12px;
   color: var(--hub-muted);
 }
 .hub-sidebar a:hover,
 .hub-sidebar a.active {
-  background: var(--am-soft);
-  color: var(--hub-accent);
+  background: color-mix(in srgb, var(--hub-accent) 10%, var(--hub-surface));
+  border-color: color-mix(in srgb, var(--hub-accent) 25%, var(--hub-line));
+  color: var(--am-accent-light);
 }
 .hub-sidebar a.active {
   border-left: 3px solid var(--hub-accent);
+  background: color-mix(in srgb, var(--hub-accent) 16%, var(--hub-surface));
 }
 .hub-main {
   min-width: 0;
@@ -114,12 +119,17 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid var(--hub-line);
+  border: 1px solid color-mix(in srgb, var(--hub-accent) 38%, var(--hub-line));
   border-radius: 11px;
   padding: 10px 17px;
-  background: #1a222a;
+  background: color-mix(in srgb, var(--hub-accent) 12%, var(--hub-surface));
   color: var(--hub-text);
   font-weight: 600;
+}
+.hub-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--hub-accent) 58%, var(--hub-line));
+  background: color-mix(in srgb, var(--hub-accent) 16%, var(--hub-surface));
+  color: var(--foreground);
 }
 .hub-primary {
   background: var(--hub-accent);
@@ -919,7 +929,7 @@
   --hub-surface: var(--card);
   --hub-line: var(--border);
   --hub-text: var(--foreground);
-  --hub-muted: #a9b3bc;
+  --hub-muted: var(--muted-foreground);
   --hub-accent: var(--am-accent);
 }
 .site-shell.profile-hub {

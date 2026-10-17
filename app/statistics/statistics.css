@@ -57,7 +57,12 @@
   border-radius: 24px;
   background:
     radial-gradient(circle at 75% -15%, color-mix(in srgb, var(--am-accent) 23.92%, transparent), transparent 47%),
-    linear-gradient(120deg, color-mix(in srgb, var(--am-accent) 8%, var(--card)), #111a1d 54%, #171b23);
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--am-accent) 8%, var(--card)),
+      color-mix(in srgb, var(--card) 96%, var(--am-accent)) 54%,
+      var(--card)
+    );
   box-shadow: 0 22px 80px #0003;
 }
 
@@ -208,9 +213,13 @@
 .stats-board {
   min-width: 0;
   overflow: hidden;
-  border: 1px solid #2b3942;
+  border: 1px solid color-mix(in srgb, var(--am-accent) 15%, var(--border));
   border-radius: 18px;
-  background: linear-gradient(160deg, #1a2429, #111920 68%);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--card) 96%, var(--am-accent)),
+    var(--card) 68%
+  );
 }
 
 .stats-board-heading {
