@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'animonster-shell-v5-eclipse-garden';
+const SHELL_CACHE = 'animonster-shell-v6-shared-palette';
 const DATA_CACHE = 'animonster-public-data-v1';
 const SHELL_PAGES = [
   '/',
