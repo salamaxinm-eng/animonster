@@ -11,6 +11,7 @@ import {
   sectionHref,
   useResource,
 } from './shared';
+import { ContinueWatchingArt } from './continue-watching-art';
 import { ProfileIdentity } from './profile-identity';
 import { Comments } from '../comments';
 import { BattlepassProgress } from '@/components/battlepass-progress';
@@ -72,7 +73,7 @@ export function OverviewSection({
                   href={`/anime/${item.anime_id}?episode=${item.episode}`}
                   key={item.anime_id}
                 >
-                  <Art src={item.image} />
+                  <ContinueWatchingArt animeId={item.anime_id} poster={item.image} />
                   <div>
                     <strong>{item.title}</strong>
                     <span>

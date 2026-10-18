@@ -301,15 +301,20 @@ export function Progress({
 }
 export function Art({
   src,
+  fallbackSrc,
   alt = '',
   className,
 }: {
   src?: string | null;
+  fallbackSrc?: string | null;
   alt?: string;
   className?: string;
 }) {
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [src]);
+  if ((!src || failed) && fallbackSrc && fallbackSrc !== src) {
+    return <Art src={fallbackSrc} alt={alt} className={className} />;
+  }
   if (!src || failed)
     return (
       <span
