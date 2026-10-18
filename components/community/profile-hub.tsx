@@ -99,7 +99,7 @@ export function ProfileHub() {
   }, [params, community.user?.id]);
   return (
     <div className="site-shell profile-hub">
-      <CommunityHeader account />
+      <CommunityHeader />
       {!community.loaded ? (
         <p className="hub-state" role="status">
           Проверяем аккаунт…

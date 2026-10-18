@@ -51,7 +51,7 @@ export function PublicProfile({ id }: { id: string }) {
   const user = profile.data?.user;
   return (
     <div className={`site-shell profile-hub theme-${user?.theme || 'eclipse'}`}>
-      <CommunityHeader account />
+      <CommunityHeader />
       <main className="hub-public-main">
         <Link className="hub-button" href="/catalog">
           <ArrowLeft size={18} />

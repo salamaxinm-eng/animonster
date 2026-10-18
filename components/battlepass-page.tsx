@@ -93,7 +93,7 @@ export function BattlepassPage() {
       <strong>{r.name}</strong><span className="pass-card-state">{r.claimed ? <><Check size={13} /> Получено</> : claimable ? <><Gift size={13} /> Можно забрать</> : <><Lock size={12} /> {r.level > (ready?.level || 0) ? `${r.level * 400} XP` : season?.status === 'draft' ? 'Скоро в коллекции' : r.track === 'premium' ? 'Нужен премиум' : 'Откроется в сезоне'}</>}</span>
     </button>;
   }
-  return <div className="site-shell pass-site"><CommunityHeader account /><main className="pass-main">
+  return <div className="site-shell pass-site"><CommunityHeader /><main className="pass-main">
     <div className="pass-heading"><span>ANIMONSTER PASS</span>{data?.canManage && <a href="/admin/battlepass">Управление сезонами</a>}</div>
     {error && <p className="pass-message error" role="alert">{error}</p>}{notice && <p className="pass-message" role="status">{notice}</p>}
     {!data ? <p role="status">Загружаем сезон…</p> : !season || !ready ? <section className="pass-empty"><Gift size={40} /><h1>Следующий сезон готовится</h1><p>Здесь появятся задания и коллекция AniMonster Pass.</p>{data?.canManage && <a href="/battlepass?season=oni-awakening&preview=1">Открыть черновик «Пробуждение Oni»</a>}</section> : <>

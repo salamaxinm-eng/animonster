@@ -29,7 +29,6 @@ import {
   Ghost,
   Bell,
   Gem,
-  ArrowLeft,
   MessageCircle,
   UsersRound,
   ChevronDown,
@@ -499,49 +498,53 @@ export function AccountNav({ minimal = false }: { minimal?: boolean }) {
     </div>
   );
 }
-export function CommunityHeader({ account = false }: { account?: boolean }) {
+export function CommunityHeader({
+  savedCount,
+  onMoviesAction,
+  onSavedAction,
+}: {
+  savedCount?: number;
+  onMoviesAction?: () => void;
+  onSavedAction?: () => void;
+} = {}) {
   const community = useCommunity();
-  const passVisible = usePassAccess();
+  const [listCount, setListCount] = useState(0);
+  useEffect(() => {
+    if (savedCount !== undefined || !community.user) {
+      setListCount(0);
+      return;
+    }
+    let cancelled = false;
+    api('profile')
+      .then((profile) => {
+        if (!cancelled) setListCount(profile.entries.length);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [community.user?.id, savedCount]);
+
   return (
-    <header className="community-header">
-      <a href="/" className="brand">
-        <Ghost size={26} />
-        <span>
-          Ani<span>Monster</span>
-        </span>
+    <header className="header site-header">
+      <a className="brand" href="/" aria-label="AniMonster — главная">
+        <Ghost size={30} fill="currentColor" strokeWidth={1.7} />
+        <span>Ani<span>Monster</span></span>
       </a>
-      <nav className="community-links" aria-label="Основные разделы">
-        {account && passVisible && <a className="back-catalog" href="/battlepass">AniMonster Pass</a>}
-        {account ? <><a className="back-catalog" href="/">Главная</a><a className="back-catalog" href="/catalog">Каталог</a><a className="back-catalog" href="/profile?section=list">Мой список</a></> : <>
-        <a className="back-catalog" href="/#catalog">
-          <ArrowLeft size={16} /> Каталог
-        </a>
-        <a className="back-catalog" href="/genres">
-          Жанры
-        </a>
-        <a className="back-catalog" href="/recommendations">
-          Рекомендации
-        </a>
-        <a className="back-catalog" href="/vpn">
-          VPN
-        </a>
-        <a className="back-catalog" href="/downloads">
-          Загрузки
-        </a>
-        </>}
+      <nav aria-label="Основные разделы">
+        <a href="/#catalog">Каталог</a>
+        <a href="/genres">Жанры</a>
+        <a href="/recommendations">Рекомендации</a>
+        <a href="/statistics">Статистика</a>
+        <a href="/?tab=movies#catalog" onClick={onMoviesAction ? (event) => {
+          event.preventDefault();
+          onMoviesAction();
+        } : undefined}>Фильмы</a>
+        <a href="/?tab=saved#catalog" onClick={onSavedAction ? (event) => {
+          event.preventDefault();
+          onSavedAction();
+        } : undefined}>Мой список <span className="count">{savedCount ?? listCount}</span></a>
       </nav>
       <GlobalSearch />
-      <AccountNav minimal={account} />
-      {!community.user && community.supportUrl && (
-        <a
-          className="support-link"
-          href={community.supportUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <MessageCircle size={17} /> Поддержка
-        </a>
-      )}
+      <AccountNav />
     </header>
   );
 }

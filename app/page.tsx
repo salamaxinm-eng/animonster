@@ -5,9 +5,7 @@ import {
   Bookmark,
   ArrowUpRight,
   Sparkles,
-  Ghost,
   ChevronRight,
-  Shuffle,
   Heart,
   Film,
   SlidersHorizontal,
@@ -18,8 +16,7 @@ import { PopularHero } from '@/components/popular-hero';
 import { HomeDiscovery } from '@/components/home-discovery';
 import { posterUrl, type Anime } from '@/lib/anime';
 import { fetchJsonWithRetry } from '@/lib/client/fetch-json';
-import { AccountNav, api, useCommunity } from '@/components/community/context';
-import { GlobalSearch } from '@/components/global-search';
+import { CommunityHeader, api, useCommunity } from '@/components/community/context';
 export default function Home() {
   const community = useCommunity();
   const firstCatalogLoad = useRef(true);
@@ -128,6 +125,8 @@ export default function Home() {
   useEffect(() => {
     const p = new URLSearchParams(location.search),
       id = Number(p.get('anime'));
+    const requestedTab = p.get('tab');
+    if (requestedTab === 'movies' || requestedTab === 'saved') setTab(requestedTab);
     if (id > 0)
       location.replace(
         '/anime/' + id + '?episode=' + (Number(p.get('episode')) || 1),
@@ -136,53 +135,18 @@ export default function Home() {
   const shown = tab !== 'saved' ? items : saved;
   return (
     <div className="site">
-      <header className="header">
-        <a className="brand" href="/" aria-label="AniMonster — главная">
-          <Ghost size={30} fill="currentColor" strokeWidth={1.7} />
-          <span>
-            Ani<span>Monster</span>
-          </span>
-        </a>
-        <nav>
-          <a href="#catalog">Каталог</a>
-          <a href="/genres">Жанры</a>
-          <a href="/recommendations">Рекомендации</a>
-          <a href="/statistics">Статистика</a>
-          <button
-            onClick={() => {
-              setTab('movies');
-              setPage(1);
-              document
-                .getElementById('catalog')
-                ?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            Фильмы
-          </button>
-          <button
-            onClick={() => {
-              setTab('saved');
-              document
-                .getElementById('catalog')
-                ?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            Мой список <span className="count">{saved.length}</span>
-          </button>
-        </nav>
-        <GlobalSearch />
-        <button
-          className="random"
-          onClick={() =>
-            items.length &&
-            open(items[Math.floor(Math.random() * items.length)])
-          }
-        >
-          <Shuffle size={17} />
-          <span>Случайное аниме</span>
-        </button>
-        <AccountNav />
-      </header>
+      <CommunityHeader
+        savedCount={saved.length}
+        onMoviesAction={() => {
+          setTab('movies');
+          setPage(1);
+          document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onSavedAction={() => {
+          setTab('saved');
+          document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
       <main>
         <PopularHero initial={[]} onOpen={open} />
         <HomeDiscovery />

@@ -162,6 +162,7 @@
   }
 
   .site > .header,
+  .site-shell > .site-header,
   .site-shell > .community-header,
   body:has(.mobile-topbar) > footer,
   body:has(.mobile-topbar) .site > footer,

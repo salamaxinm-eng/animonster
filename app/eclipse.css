@@ -91,7 +91,7 @@ html:not([data-site-theme^='v2-']) :is(.header, .community-header) {
   .community-header .account-menu-trigger { max-width: 140px; }
   .community-header .global-search { min-width: 160px; flex: 1 1 160px; }
 }
-@media (min-width: 768px) and (max-width: 1250px) {
+@media (min-width: 768px) and (max-width: 1450px) {
   .header { display: grid; grid-template-columns: auto minmax(150px, 1fr) auto; gap: 10px 18px; height: auto; padding-block: 16px; }
   .header > .brand { grid-column: 1; grid-row: 1; }
   .header > .global-search { grid-column: 2; grid-row: 1; width: 100%; }
@@ -129,4 +129,19 @@ html:not([data-site-theme^='v2-']) :is(.header, .community-header) {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+/* Keep the shared header aligned to the homepage, independent of page gutters. */
+@media (min-width: 768px) {
+  .site-header {
+    width: min(100vw, 1600px);
+    margin-inline: calc((100% - min(100vw, 1600px)) / 2);
+    padding-inline: min(4vw, 64px);
+  }
+  .site-header > .brand,
+  .site-header > nav,
+  .site-header > .account-nav {
+    flex-shrink: 0;
+  }
+  .site-header > nav { white-space: nowrap; }
 }
