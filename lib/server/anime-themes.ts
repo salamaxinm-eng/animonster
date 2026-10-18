@@ -1,4 +1,5 @@
 import { db, now } from './core';
+import { taxonomyCatalog } from './anime-taxonomy';
 import type { Anime } from '@/lib/anime';
 import { available, findRelease, normalize } from './anime';
 import { rememberAnime } from './library';
@@ -37,10 +38,6 @@ type ShikimoriGenre = {
   kind: string;
 };
 
-let cachedThemeCatalog:
-  | { expiresAt: number; themes: ShikimoriGenre[] }
-  | undefined;
-
 async function searchShikimori(variables: { ids?: string; search?: string }) {
   const response = await fetch(SHIKIMORI_GRAPHQL, {
     method: 'POST',
@@ -78,17 +75,7 @@ async function shikimoriGraphql(query: string, variables?: object) {
 }
 
 export async function animeThemeCatalog() {
-  if (cachedThemeCatalog && cachedThemeCatalog.expiresAt > now())
-    return cachedThemeCatalog.themes;
-
-  const data = await shikimoriGraphql(
-    'query { genres(entryType: Anime) { id russian kind } }',
-  );
-  const themes = (data?.genres || [])
-    .filter((item) => item.kind === 'theme' && item.russian?.trim())
-    .sort((a, b) => a.russian.localeCompare(b.russian, 'ru'));
-  cachedThemeCatalog = { expiresAt: now() + 6 * 60 * 60 * 1000, themes };
-  return themes;
+  return (await taxonomyCatalog()).filter((item) => item.kind === 'theme');
 }
 
 async function mapLimit<T, R>(

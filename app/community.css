@@ -5584,3 +5584,37 @@ a.franchise-card:hover {
 .anime-details > summary svg { transition: transform 160ms; }
 .anime-details[open] > summary svg { transform: rotate(180deg); }
 .anime-details .anime-themes { margin-top: 8px; }
+
+/* Catalogue navigation is shared by desktop and mobile. */
+@media (min-width: 768px) {
+  .mobile-catalog-page-tabs {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    scrollbar-width: thin;
+  }
+  .mobile-catalog-page-tabs a {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    min-height: 47px;
+    border-bottom: 2px solid transparent;
+    color: var(--muted-foreground);
+    font-size: 14px;
+    font-weight: 650;
+  }
+  .mobile-catalog-page-tabs .active {
+    color: var(--foreground);
+    border-color: var(--am-accent);
+  }
+}
+.genre-tile.theme-tile {
+  background: linear-gradient(135deg, var(--card), var(--background));
+}
+.genre-tile.theme-tile:hover {
+  border-color: var(--am-accent);
+  background: linear-gradient(135deg, var(--am-soft), var(--card));
+}

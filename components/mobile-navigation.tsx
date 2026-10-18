@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { PhotoSearchButton } from '@/components/photo-search-button';
 import {
   Bookmark,
   Ghost,
@@ -37,6 +38,7 @@ const items: MobileNavItem[] = [
     icon: LayoutGrid,
     active: (path, hash) =>
       path === '/genres' ||
+      path === '/themes' ||
       path.startsWith('/genres/') ||
       path.startsWith('/anime/') ||
       path.startsWith('/browse/') ||
@@ -95,7 +97,7 @@ function MobileNavigationContent() {
           ? 'Статистика'
           : pathname.startsWith('/downloads')
             ? 'Загрузки'
-            : pathname === '/catalog' || pathname === '/genres'
+            : pathname === '/catalog' || pathname === '/genres' || pathname === '/themes'
               ? 'Каталог'
               : '';
 
@@ -133,6 +135,7 @@ function MobileNavigationContent() {
         )}
         <div className="mobile-topbar-actions">
           <BuySubscription compact className="mobile-plus-button" />
+          <PhotoSearchButton />
           <a
             className="mobile-search-button"
             href="/search"

@@ -45,6 +45,14 @@ let source = stripTypeScriptTypes(
   await readFile(new URL('../lib/server/search.ts', import.meta.url), 'utf8'),
 );
 const replacements = {
+  '@/lib/anime-taxonomy': url(
+    stripTypeScriptTypes(
+      await readFile(
+        new URL('../lib/anime-taxonomy.ts', import.meta.url),
+        'utf8',
+      ),
+    ),
+  ),
   './core': url('export const db=()=>globalThis.__searchIdTest.database;'),
   './anime': url('export const compactAnime=items=>items;'),
   './shikimori-matching': url(
@@ -149,6 +157,38 @@ await test('text search still uses the franchise grouping path', async () => {
   const response = await searchAnime({ query: 'Attack on Titan' });
   assert.equal(groupedCalls, 1);
   assert.ok(response.results.some((result) => result.item.id === 16498));
+});
+await test('genre and theme filters combine and support themes in legacy genre data', async () => {
+  await engine.query(
+    'UPDATE anime_search_metadata SET themes=\'["Исекай"]\' WHERE anime_id=16498',
+  );
+  await engine.query(
+    'UPDATE anime_cache SET genres_index=\'["Romance","Исекай"]\' WHERE id=86',
+  );
+  const matching = await searchAnime({
+    genres: ['Action'],
+    themes: ['Исекай'],
+  });
+  assert.deepEqual(
+    matching.results.map((result) => result.item.id),
+    [16498],
+  );
+  const legacy = await searchAnime({ genres: ['Romance'], themes: ['Исекай'] });
+  assert.deepEqual(
+    (
+      await searchAnime({ genres: ['Romance'], themes: ['Исэкай'] })
+    ).results.map((result) => result.item.id),
+    [86],
+  );
+  assert.deepEqual(
+    legacy.results.map((result) => result.item.id),
+    [86],
+  );
+  assert.equal(
+    (await searchAnime({ genres: ['Comedy'], themes: ['Исекай'] })).results
+      .length,
+    0,
+  );
 });
 await engine.close();
 delete globalThis.__searchIdTest;

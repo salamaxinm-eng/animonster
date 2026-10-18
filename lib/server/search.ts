@@ -1,4 +1,5 @@
 import type { Anime } from '@/lib/anime';
+import { themeAliases } from '@/lib/anime-taxonomy';
 import { db } from './core';
 import { compactAnime } from './anime';
 import { normalizeMatchTitle } from './shikimori-matching';
@@ -74,11 +75,19 @@ export async function searchAnime({
     where.push('a.genres_index @> ?::text::jsonb');
     values.push(JSON.stringify(genres));
   }
-  if (themes.length) {
+  for (const theme of themes) {
+    const aliases = themeAliases(theme);
     where.push(
-      `(m.themes || COALESCE(t.themes::jsonb,'[]'::jsonb) || a.genres_index) @> ?::text::jsonb`,
+      '(' +
+        aliases
+          .map(
+            () =>
+              `(COALESCE(m.themes,'[]'::jsonb) || COALESCE(t.themes::jsonb,'[]'::jsonb) || COALESCE(a.genres_index,'[]'::jsonb)) @> ?::text::jsonb`,
+          )
+          .join(' OR ') +
+        ')',
     );
-    values.push(JSON.stringify(themes));
+    values.push(...aliases.map((alias) => JSON.stringify([alias])));
   }
   if (kind) {
     where.push('a.kind_index=?');

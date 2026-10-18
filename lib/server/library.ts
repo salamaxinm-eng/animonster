@@ -1,4 +1,5 @@
 import { db, now } from './core';
+import { genreEntries } from './anime-taxonomy';
 import {
   findRelease,
   liberty,
@@ -277,13 +278,15 @@ export async function genreList(): Promise<Genre[]> {
       )
       .all<{ name: string; total_releases: number }>();
     if (rows.results.length)
-      return rows.results.map((genre, index) => ({
-        id: index + 1,
-        name: genre.name,
-        total_releases: Number(genre.total_releases),
-      }));
+      return genreEntries(
+        rows.results.map((genre, index) => ({
+          id: index + 1,
+          name: genre.name,
+          total_releases: Number(genre.total_releases),
+        })),
+      );
   }
-  return liberty('/anime/genres');
+  return genreEntries((await liberty('/anime/genres')) as Genre[]);
 }
 export async function genresCatalog(genres: string[], ongoing = false) {
   const cached = await cachedCatalog({ genre: genres[0], limit: 50 });

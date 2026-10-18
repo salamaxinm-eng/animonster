@@ -68,6 +68,7 @@ const metadata = await load('../lib/server/search-metadata.ts', {
 });
 globalThis.__identityTest.canonicalize = metadata.canonicalizeAnimeIdentities;
 const library = await load('../lib/server/library.ts', {
+  './anime-taxonomy': moduleUrl('export const genreEntries=async items=>items;'),
   './core': core,
   './anime': moduleUrl(
     'export const findRelease=()=>{}; export const liberty=()=>{}; export const available=()=>true; export const normalize=x=>x;',

@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronDown, Filter, Search, X } from 'lucide-react';
 import { AnimeGrid } from '@/components/anime-grid';
+import { PhotoSearchButton } from '@/components/photo-search-button';
 import { posterUrl, type Anime } from '@/lib/anime';
 import {
   Carousel,
@@ -100,7 +101,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/search/facets?v=2', { signal: controller.signal })
+    fetch('/api/search/facets?v=3', { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error();
         return (await response.json()) as Facets;
@@ -255,6 +256,7 @@ export default function SearchPage() {
             </button>
           )}
         </label>
+        <PhotoSearchButton />
       </form>
       <main className="mobile-search-results">
         <div className="search-filter-toolbar">

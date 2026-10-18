@@ -3,23 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const tagKey = (value: string) =>
-  value
-    .trim()
-    .toLocaleLowerCase('ru-RU')
-    .replace(/ё/g, 'е')
-    .replace(/\s+/g, ' ');
-function uniqueTags(values: string[]) {
-  const seen = new Set<string>();
-  return values
-    .filter((value) => {
-      const key = tagKey(value);
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .map((value) => value.trim());
-}
+import { tagKey, uniqueTags, partitionTags } from '@/lib/anime-taxonomy';
 
 export function AnimeThemes({
   animeId,
@@ -31,17 +15,27 @@ export function AnimeThemes({
   children?: ReactNode;
 }) {
   const [themes, setThemes] = useState<string[]>([]);
+  const [classifiedGenres, setClassifiedGenres] = useState<string[] | null>(
+    null,
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/anime-tags?anime_id=' + animeId, { signal: controller.signal })
+    fetch('/api/anime-tags?v=2&anime_id=' + animeId, {
+      signal: controller.signal,
+    })
       .then(async (response) => {
         if (!response.ok) throw new Error('Не удалось загрузить темы');
-        return (await response.json()) as { themes?: string[] };
+        return (await response.json()) as {
+          themes?: string[];
+          genres?: string[];
+        };
       })
       .then((result) => {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
           setThemes(uniqueTags(result.themes || []));
+          setClassifiedGenres(result.genres ? uniqueTags(result.genres) : null);
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted) setThemes([]);
@@ -49,10 +43,8 @@ export function AnimeThemes({
     return () => controller.abort();
   }, [animeId]);
 
-  const themeKeys = new Set(themes.map(tagKey));
-  const visibleGenres = uniqueTags(genres).filter(
-    (genre) => !themeKeys.has(tagKey(genre)),
-  );
+  const visibleGenres =
+    classifiedGenres ?? partitionTags(genres, themes).genres;
 
   return (
     <>
@@ -80,7 +72,7 @@ export function AnimeThemes({
             <ul>
               {themes.map((theme) => (
                 <li key={tagKey(theme)}>
-                  <a href={'/search?tag=' + encodeURIComponent(theme)}>
+                  <a href={'/search?theme=' + encodeURIComponent(theme)}>
                     {theme}
                   </a>
                 </li>

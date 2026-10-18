@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { posterUrl, type Anime } from '@/lib/anime';
+import { PhotoSearchButton } from '@/components/photo-search-button';
 
 export function GlobalSearch() {
   const root = useRef<HTMLFormElement>(null);
@@ -100,6 +101,7 @@ export function GlobalSearch() {
           <X size={15} />
         </button>
       )}
+      <PhotoSearchButton />
       {open && (
         <div
           className="global-search-results"
