@@ -7,7 +7,10 @@ import {
   type Release,
 } from './anime';
 import type { Anime, Episode } from '@/lib/anime';
-import { ensureSearchMetadata } from './search-metadata';
+import {
+  canonicalizeAnimeIdentities,
+  ensureSearchMetadata,
+} from './search-metadata';
 import { ensureRelationState } from './anime-relations';
 type CachedCatalogOptions = {
   genre?: string;
@@ -119,11 +122,21 @@ export async function saveAnime(
     .prepare(
       `INSERT INTO anime_cache(id,data,episodes,updated_at,primary_provider,search_text,kind_index,status_index,year_index,score_index,genres_index)
        VALUES (?,?,?,?,?,?,?,?,?,?,?::text::jsonb)
-       ON CONFLICT(id) DO UPDATE SET data=excluded.data,
+       ON CONFLICT(id) DO UPDATE SET data=CASE
+         WHEN anime_cache.data::jsonb->>'aired_on_source'='shikimori'
+           AND COALESCE(excluded.data::jsonb->>'aired_on_source','')<>'shikimori'
+         THEN (excluded.data::jsonb || jsonb_build_object(
+           'aired_on',anime_cache.data::jsonb->'aired_on',
+           'aired_on_source','shikimori',
+           'identity_checked_at',anime_cache.data::jsonb->'identity_checked_at'))::text
+         ELSE excluded.data END,
        episodes=CASE WHEN excluded.episodes='[]' THEN anime_cache.episodes ELSE excluded.episodes END,
        updated_at=excluded.updated_at,primary_provider=excluded.primary_provider,
        search_text=excluded.search_text,kind_index=excluded.kind_index,status_index=excluded.status_index,
-       year_index=excluded.year_index,score_index=excluded.score_index,genres_index=excluded.genres_index`,
+       year_index=CASE
+         WHEN anime_cache.data::jsonb->>'aired_on_source'='shikimori'
+           AND COALESCE(excluded.data::jsonb->>'aired_on_source','')<>'shikimori'
+         THEN anime_cache.year_index ELSE excluded.year_index END,score_index=excluded.score_index,genres_index=excluded.genres_index`,
     )
     .bind(
       anime.id,
@@ -190,11 +203,19 @@ export async function getAnime(id: number) {
         anime.providers?.includes('kodik') &&
         process.env.KODIK_CATALOG_ENABLED === 'true'
       )
-        return { ...cached, anime };
+        return {
+          ...cached,
+          anime: (await canonicalizeAnimeIdentities([anime]))[0],
+        };
     } catch {}
   }
   if (cached && cached.episodes !== '[]' && cached.updated_at > now() - 3600000)
-    return { ...cached, anime: JSON.parse(cached.data) as Anime };
+    return {
+      ...cached,
+      anime: (
+        await canonicalizeAnimeIdentities([JSON.parse(cached.data) as Anime])
+      )[0],
+    };
   const known: Anime | undefined = cached ? JSON.parse(cached.data) : undefined;
   const found: Release | undefined = known?.release_id
     ? await liberty('/anime/releases/' + known.release_id)
@@ -205,7 +226,7 @@ export async function getAnime(id: number) {
   const anime = normalize(release);
   await cacheAnime(anime, release.episodes);
   return {
-    anime,
+    anime: (await canonicalizeAnimeIdentities([anime]))[0],
     episodes: JSON.stringify(
       release.episodes?.map((e) => ({
         ordinal: e.ordinal,
@@ -224,7 +245,7 @@ export async function getAnimeByAlias(alias: string) {
     const anime = normalize(release);
     await cacheAnime(anime, release.episodes);
     return {
-      anime,
+      anime: (await canonicalizeAnimeIdentities([anime]))[0],
       episodes: JSON.stringify(
         release.episodes?.map((e) => ({
           ordinal: e.ordinal,

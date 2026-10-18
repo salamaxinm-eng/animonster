@@ -161,15 +161,24 @@ function normalizeKodikAnime(
     score: String(
       canonical?.score || data?.shikimori_rating || current?.score || '—',
     ),
-    kind: canonical?.kind === 'movie' ? 'movie' : kind(item),
+    kind: canonical?.kind || current?.kind || kind(item),
     episodes: Math.max(
       kodikLastEpisode(item),
       Number(data?.episodes_aired || data?.episodes_total) || 0,
       current?.episodes || 0,
     ),
     aired_on: String(
-      canonical?.aired_on || data?.year || item.year || current?.aired_on || '',
+      canonical?.aired_on ||
+        (current?.aired_on_source === 'shikimori' ? current.aired_on : '') ||
+        item.year ||
+        data?.year ||
+        current?.aired_on ||
+        '',
     ),
+    ...(canonical?.aired_on && {
+      aired_on_source: 'shikimori' as const,
+      identity_checked_at: now(),
+    }),
     description:
       data?.anime_description ||
       data?.description ||

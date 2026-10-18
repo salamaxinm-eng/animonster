@@ -10,6 +10,8 @@ export type Anime = {
   kind: string;
   episodes: number;
   aired_on: string;
+  aired_on_source?: 'shikimori';
+  identity_checked_at?: number;
   description?: string;
   genres?: string[];
   popularity?: number;

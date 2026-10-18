@@ -9,7 +9,7 @@ import {
 const ENDPOINT = 'https://shikimori.one/api/graphql';
 const QUERY = `query ($ids: String!) {
   animes(ids: $ids, limit: 50) {
-    id name russian synonyms rating airedOn { date } poster { originalUrl }
+    id name russian synonyms rating kind airedOn { date } poster { originalUrl }
     genres { russian kind }
   }
 }`;
@@ -53,67 +53,80 @@ async function fetchCandidates(ids: number[]) {
   return payload.data?.animes || [];
 }
 
-function identitySignature(anime: Anime) {
-  return `${anime.image?.original || ''}|${String(anime.aired_on || '').slice(0, 4)}`;
+const IDENTITY_TTL = 7 * 24 * 60 * 60 * 1000;
+
+function canonicalIdentity(
+  anime: Anime,
+  candidate: ShikimoriAnimeCandidate,
+): Anime {
+  const canonicalAge = shikimoriAgeRating(candidate.rating);
+  const date = candidate.airedOn?.date?.trim();
+  return {
+    ...anime,
+    russian: candidate.russian?.trim() || anime.russian,
+    name: candidate.name?.trim() || anime.name,
+    kind: candidate.kind?.trim() || anime.kind,
+    aired_on: date || anime.aired_on,
+    ...(date && { aired_on_source: 'shikimori' as const }),
+    identity_checked_at: now(),
+    image: {
+      original: candidate.poster?.originalUrl?.trim() || anime.image.original,
+    },
+    ...(canonicalAge && {
+      age_rating: canonicalAge.label,
+      is_adult: canonicalAge.isAdult,
+      age_rating_source: 'shikimori' as const,
+    }),
+  };
+}
+
+async function saveCanonicalIdentity(anime: Anime) {
+  await db()
+    .prepare(
+      'UPDATE anime_cache SET data=?,search_text=?,year_index=?,kind_index=? WHERE id=?',
+    )
+    .bind(
+      JSON.stringify(anime),
+      `${anime.russian} ${anime.name}`.toLocaleLowerCase('ru-RU'),
+      Number(String(anime.aired_on || '').slice(0, 4)) || 0,
+      anime.kind || '',
+      anime.id,
+    )
+    .run();
 }
 
 export async function canonicalizeAnimeIdentities(items: Anime[]) {
-  if (items.length < 2) return items;
-  const signatures = new Map<string, number>();
-  for (const item of items) {
-    const signature = identitySignature(item);
-    signatures.set(signature, (signatures.get(signature) || 0) + 1);
-  }
-  if (![...signatures.values()].some((count) => count > 1)) return items;
+  const stale = items.filter(
+    (item) =>
+      !item.identity_checked_at ||
+      item.identity_checked_at <= now() - IDENTITY_TTL,
+  );
   const ids = [
     ...new Set(
-      items
+      stale
         .map((item) => item.shikimori_id || (item.id < 100000000 ? item.id : 0))
         .filter(Boolean),
     ),
   ];
-  if (!ids.length) return items;
-  try {
-    const candidates = await fetchCandidates(ids.slice(0, 50));
-    const byId = new Map(candidates.map((item) => [Number(item.id), item]));
-    return await Promise.all(
-      items.map(async (anime) => {
-        const candidate = byId.get(anime.shikimori_id || anime.id);
-        if (!candidate) return anime;
-        const canonicalAge = shikimoriAgeRating(candidate.rating);
-        const repaired: Anime = {
-          ...anime,
-          russian: candidate.russian?.trim() || anime.russian,
-          name: candidate.name?.trim() || anime.name,
-          aired_on: candidate.airedOn?.date?.trim() || anime.aired_on,
-          image: {
-            original:
-              candidate.poster?.originalUrl?.trim() || anime.image.original,
-          },
-          ...(canonicalAge && {
-            age_rating: canonicalAge.label,
-            is_adult: canonicalAge.isAdult,
-            age_rating_source: 'shikimori' as const,
-          }),
-        };
-        if (JSON.stringify(repaired) !== JSON.stringify(anime))
-          await db()
-            .prepare(
-              `UPDATE anime_cache SET data=?,search_text=?,year_index=? WHERE id=?`,
-            )
-            .bind(
-              JSON.stringify(repaired),
-              `${repaired.russian} ${repaired.name}`.toLocaleLowerCase('ru-RU'),
-              Number(String(repaired.aired_on || '').slice(0, 4)) || 0,
-              repaired.id,
-            )
-            .run();
-        return repaired;
-      }),
-    );
-  } catch {
-    return items;
+  const repairedById = new Map<number, Anime>();
+  for (let offset = 0; offset < ids.length; offset += 50) {
+    try {
+      const candidates = await fetchCandidates(ids.slice(offset, offset + 50));
+      const byId = new Map(candidates.map((item) => [Number(item.id), item]));
+      await Promise.all(
+        stale.map(async (anime) => {
+          const candidate = byId.get(anime.shikimori_id || anime.id);
+          if (!candidate) return;
+          const repaired = canonicalIdentity(anime, candidate);
+          await saveCanonicalIdentity(repaired);
+          repairedById.set(anime.id, repaired);
+        }),
+      );
+    } catch {
+      // Keep the cached entries available when the metadata source is unavailable.
+    }
   }
+  return items.map((item) => repairedById.get(item.id) || item);
 }
 
 export async function refreshSearchMetadata(limit = 40) {
@@ -122,11 +135,12 @@ export async function refreshSearchMetadata(limit = 40) {
     .prepare(
       `SELECT m.anime_id,a.data FROM anime_search_metadata m
        JOIN anime_cache a ON a.id=m.anime_id
-       WHERE m.version<3 OR m.status='pending' OR (m.status='error' AND m.checked_at<?)
+       WHERE m.version<4 OR m.status='pending' OR (m.status='error' AND m.checked_at<?)
+          OR (m.status='ok' AND m.checked_at<?)
        ORDER BY CASE WHEN a.data::jsonb->>'is_adult'='true' THEN 0 ELSE 1 END,
        m.checked_at,m.anime_id LIMIT ?`,
     )
-    .bind(now() - 15 * 60 * 1000, safeLimit)
+    .bind(now() - 15 * 60 * 1000, now() - IDENTITY_TTL, safeLimit)
     .all<PendingRow>();
   if (!rows.results.length) return { processed: 0, completed: 0, failed: 0 };
 
@@ -160,39 +174,14 @@ export async function refreshSearchMetadata(limit = 40) {
         .filter((genre) => genre.kind === 'theme' && genre.russian?.trim())
         .map((genre) => genre.russian!.trim());
       if (candidate) {
-        const canonicalAge = shikimoriAgeRating(candidate.rating);
-        const repaired: Anime = {
-          ...identity.anime,
-          russian: candidate.russian?.trim() || identity.anime.russian,
-          name: candidate.name?.trim() || identity.anime.name,
-          aired_on: candidate.airedOn?.date?.trim() || identity.anime.aired_on,
-          image: {
-            original:
-              candidate.poster?.originalUrl?.trim() ||
-              identity.anime.image.original,
-          },
-          ...(canonicalAge && {
-            age_rating: canonicalAge.label,
-            is_adult: canonicalAge.isAdult,
-            age_rating_source: 'shikimori' as const,
-          }),
-        };
-        await db()
-          .prepare(
-            `UPDATE anime_cache SET data=?,search_text=?,year_index=? WHERE id=?`,
-          )
-          .bind(
-            JSON.stringify(repaired),
-            `${repaired.russian} ${repaired.name}`.toLocaleLowerCase('ru-RU'),
-            Number(String(repaired.aired_on || '').slice(0, 4)) || 0,
-            repaired.id,
-          )
-          .run();
+        await saveCanonicalIdentity(
+          canonicalIdentity(identity.anime, candidate),
+        );
       }
       await db()
         .prepare(
           `UPDATE anime_search_metadata SET aliases=?::text::jsonb,normalized_aliases=?::text[],
-           normalized_titles=?,themes=?::text::jsonb,status=?,version=3,attempts=attempts+1,checked_at=?,last_error=NULL
+           normalized_titles=?,themes=?::text::jsonb,status=?,version=4,attempts=attempts+1,checked_at=?,last_error=NULL
            WHERE anime_id=?`,
         )
         .bind(
