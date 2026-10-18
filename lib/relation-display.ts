@@ -8,6 +8,15 @@ const year = (card: RelationCard) => {
   return Number.isFinite(value) && value > 0 ? value : Number.MAX_SAFE_INTEGER;
 };
 
+export function televisionSeasons(relations: AnimeRelationsResult) {
+  const seen = new Set<number>();
+  return relations.mainline.flatMap(({ item }) => {
+    if (item.kind !== 'tv' || seen.has(item.id)) return [];
+    seen.add(item.id);
+    return [item];
+  });
+}
+
 export function chronologicalRelationCards(relations: AnimeRelationsResult) {
   const unique = new Map<number, RelationCard>();
   for (const card of [

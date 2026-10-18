@@ -109,3 +109,17 @@ test('full franchise view removes duplicates and sorts unknown dates last', () =
   assert.equal(result.find((entry) => entry.item.id === 2).label, 'Сезон 2');
   assert.equal(result.find((entry) => entry.item.id === 2).active, true);
 });
+
+
+test('player seasons keep the main TV sequence without movies, extras or alternate branches', () => {
+  const card = (id, kind) => ({ item: { id, kind }, label: 'Part' });
+  const seasons = display.televisionSeasons({
+    mainline: [card(1, 'tv'), card(10, 'movie'), card(11, 'ova'), card(2, 'tv'),
+      card(12, 'special'), card(13, 'tv_special'), card(14, 'ona'), card(2, 'tv'),
+      card(3, 'tv'), card(4, 'tv')],
+    branches: [card(99, 'tv')],
+    related: [card(100, 'tv')],
+  });
+  assert.deepEqual(seasons.map((season) => season.id), [1, 2, 3, 4]);
+  assert.deepEqual(display.televisionSeasons({ mainline: [], branches: [], related: [] }), []);
+});

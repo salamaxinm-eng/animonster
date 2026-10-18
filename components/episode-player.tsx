@@ -1,10 +1,11 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { NativeSelect } from '@/components/ui/native-select';
+import { PlayerSelect } from '@/components/player-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import {
   initialVoiceover,
   voiceoverEpisodeIndices,
+  type Anime,
   type Episode,
   type SkipSegment,
   type Voiceover,
@@ -31,6 +32,7 @@ export function EpisodePlayer({
   voiceovers,
   voiceoversMessage,
   animeTitle,
+  seasons = [],
   initialEpisode = 1,
   animeId,
   releaseId,
@@ -44,6 +46,7 @@ export function EpisodePlayer({
   voiceovers: Voiceover[];
   voiceoversMessage?: string;
   animeTitle: string;
+  seasons?: Anime[];
   initialEpisode?: number;
   animeId?: number;
   releaseId?: number;
@@ -861,50 +864,60 @@ export function EpisodePlayer({
         </div>
       )}
       <div className="episode-toolbar">
+        {seasons.length > 1 && seasons.some((season) => season.id === animeId) && (
+          <PlayerSelect
+            className="season-select"
+            label="Выбор сезона"
+            value={String(animeId)}
+            options={seasons.map((season) => ({
+              value: String(season.id),
+              label: `${season.russian || season.name}${season.aired_on ? ` · ${season.aired_on.slice(0, 4)}` : ''}`,
+            }))}
+            onValueChange={(value) => {
+              if (value !== String(animeId) && seasons.some((season) => String(season.id) === value)) {
+                window.location.assign(`/anime/${value}?episode=1#watch`);
+              }
+            }}
+          />
+        )}
         {selectableVoiceovers.length > 1 && (
-          <NativeSelect
+          <PlayerSelect
             className="voiceover-select"
-            aria-label="Выбор озвучки"
+            label="Выбор озвучки"
             value={voiceover?.id || 'kodik'}
-            onChange={(e) => {
+            onValueChange={(value) => {
               voiceoverUserSelected.current = true;
               setIframeSourceEpisode(episode?.ordinal || 1);
-              setVoiceoverId(e.target.value);
+              setVoiceoverId(value);
             }}
-          >
-            {selectableVoiceovers.map((item) => (
-              <option value={item.id} key={item.id}>
-                {item.title} · {item.episode_ordinals?.length ?? item.episodes}{' '}
-                серий
-              </option>
-            ))}
-          </NativeSelect>
+            options={selectableVoiceovers.map((item) => ({
+              value: item.id,
+              label: `${item.title} · ${item.episode_ordinals?.length ?? item.episodes} серий`,
+            }))}
+          />
         )}
-        <NativeSelect
+        <PlayerSelect
           className="episode-select"
-          aria-label="Выбор серии"
-          value={index}
-          onChange={(e) => {
-            const selected = episodes[Number(e.target.value)];
+          label="Выбор серии"
+          value={String(index)}
+          onValueChange={(value) => {
+            const selected = episodes[Number(value)];
             if (selected) selectEpisode(selected.ordinal);
           }}
-        >
-          {availableIndices.map((i) => {
+          options={availableIndices.map((i) => {
             const e = episodes[i];
-            return (
-              <option value={i} key={e.id}>
-                Серия {e.ordinal} · {e.name}
-                {e.plus_locked
-                  ? ` · Plus до ${new Date(e.free_at || 0).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
-                  : ''}
-              </option>
-            );
+            return {
+              value: String(i),
+              label: `Серия ${e.ordinal} · ${e.name}${e.plus_locked
+                ? ` · Plus до ${new Date(e.free_at || 0).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                : ''}`,
+            };
           })}
-        </NativeSelect>
+        />
         {!isKodik && (
-          <NativeSelect
+          <PlayerSelect
             className="quality-select"
-            aria-label="Качество видео"
+            label="Качество видео"
             value={
               episode?.[('hls_' + quality) as keyof Episode]
                 ? quality
@@ -914,16 +927,11 @@ export function EpisodePlayer({
                     ? '480'
                     : '1080'
             }
-            onChange={(e) => setQuality(e.target.value)}
-          >
-            {['480', '720', '1080']
+            onValueChange={setQuality}
+            options={['480', '720', '1080']
               .filter((q) => episode?.[('hls_' + q) as keyof Episode])
-              .map((q) => (
-                <option key={q} value={q}>
-                  {q}p
-                </option>
-              ))}
-          </NativeSelect>
+              .map((q) => ({ value: q, label: `${q}p` }))}
+          />
         )}
         {animeId && episode && (
           <OfflineDownloadButton

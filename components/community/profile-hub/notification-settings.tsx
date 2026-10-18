@@ -57,7 +57,7 @@ export function NotificationSettings() {
   }
   return (
     <>
-      <section className="hub-settings">
+      <section id="telegram" className="hub-settings">
         <h2>Telegram-уведомления</h2>
         <ResourceState {...telegram} />
         {telegram.data && (

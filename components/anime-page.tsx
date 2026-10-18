@@ -26,6 +26,7 @@ import {
 export function AnimePage({ anime }: { anime: Anime }) {
   const [episodes, setEpisodes] = useState<Episode[]>([]),
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
+    [seasons, setSeasons] = useState<Anime[]>([]),
     [voiceoversMessage, setVoiceoversMessage] = useState(''),
     [episode, setEpisode] = useState(1),
     [start, setStart] = useState({ episode: 1, position: 0, voiceover: '' }),
@@ -205,8 +206,8 @@ export function AnimePage({ anime }: { anime: Anime }) {
             <EpisodeNotifications animeId={anime.id} title={anime.russian} />
           </div>
         </section>
-        <SeasonNavigation animeId={anime.id} />
-        <section className="title-playback">
+        <SeasonNavigation animeId={anime.id} onSeasonsChangeAction={setSeasons} />
+        <section id="watch" className="title-playback">
           <div className="title-playback-heading">
             <h2>Смотреть · серия {episode}</h2>
             <Button
@@ -241,6 +242,7 @@ export function AnimePage({ anime }: { anime: Anime }) {
           ) : (
             <EpisodePlayer
               animeId={anime.id}
+              seasons={seasons}
               releaseId={anime.release_id}
               episodes={episodes}
               voiceovers={voiceovers}

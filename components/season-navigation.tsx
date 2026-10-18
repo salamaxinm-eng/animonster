@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { GitBranch } from 'lucide-react';
 import Link from 'next/link';
 import { posterUrl, type Anime } from '@/lib/anime';
+import { televisionSeasons } from '@/lib/relation-display';
 import {
   Carousel,
   CarouselContent,
@@ -26,13 +27,17 @@ type RelationResponse = {
 };
 const EMPTY: RelationResponse = { mainline: [], branches: [], related: [] };
 
-export function SeasonNavigation({ animeId }: { animeId: number }) {
+export function SeasonNavigation({ animeId, onSeasonsChangeAction }: {
+  animeId: number;
+  onSeasonsChangeAction?: (seasons: Anime[]) => void;
+}) {
   const [relations, setRelations] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
+    onSeasonsChangeAction?.([]);
     fetch(`/api/anime-relations?anime_id=${animeId}`, {
       signal: controller.signal,
     })
@@ -40,13 +45,22 @@ export function SeasonNavigation({ animeId }: { animeId: number }) {
         if (!response.ok) throw new Error();
         return (await response.json()) as RelationResponse;
       })
-      .then(setRelations)
-      .catch(() => setRelations(EMPTY))
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        setRelations(data);
+        onSeasonsChangeAction?.(televisionSeasons(data));
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setRelations(EMPTY);
+          onSeasonsChangeAction?.([]);
+        }
+      })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [animeId]);
+  }, [animeId, onSeasonsChangeAction]);
 
   if (loading)
     return (
