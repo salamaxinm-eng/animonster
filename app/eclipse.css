@@ -145,3 +145,37 @@ html:not([data-site-theme^='v2-']) :is(.header, .community-header) {
   }
   .site-header > nav { white-space: nowrap; }
 }
+
+/* Local contrast for anime details; the scenery stays visible around them. */
+html:not([data-site-theme^='v2-']) .title-intro > div {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+}
+html:not([data-site-theme^='v2-']) .title-intro > div::before {
+  content: '';
+  position: absolute;
+  inset: -28px -36px;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 36px;
+  mask-image:
+    linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent),
+    linear-gradient(to bottom, transparent, #000 22px, #000 calc(100% - 22px), transparent);
+  mask-composite: intersect;
+  background: radial-gradient(
+    ellipse at 45% 45%,
+    color-mix(in srgb, var(--background) 96%, transparent) 0%,
+    color-mix(in srgb, var(--background) 88%, transparent) 65%,
+    transparent 100%
+  );
+}
+@media (max-width: 767px) {
+  html:not([data-site-theme^='v2-']) .title-intro > div::before {
+    inset: -16px -14px;
+    border-radius: 24px;
+    mask-image:
+      linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent),
+      linear-gradient(to bottom, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  }
+}

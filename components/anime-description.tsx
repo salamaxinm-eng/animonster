@@ -24,7 +24,7 @@ export function AnimeDescription({ text }: { text?: string }) {
   return <div className="anime-description">
     <p ref={paragraph} id={id} className={`title-description${expanded ? ' is-expanded' : ''}`}>{description}</p>
     {(overflow || expanded) && <button type="button" className="anime-description-toggle" aria-expanded={expanded} aria-controls={id} onClick={() => setExpanded(value => !value)}>
-      {expanded ? 'Свернуть' : 'Показать ещё'}<ChevronDown size={16} aria-hidden="true" />
+      {expanded ? 'Свернуть' : 'Читать полностью'}<ChevronDown size={16} aria-hidden="true" />
     </button>}
   </div>;
 }

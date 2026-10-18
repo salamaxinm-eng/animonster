@@ -3158,40 +3158,40 @@ button:disabled {
   font-size: 15px;
   margin: 23px 0;
 }
+.anime-description {
+  margin: 23px 0;
+  min-width: 0;
+}
+.anime-description .title-description {
+  margin: 0;
+}
+.anime-description .title-description:not(.is-expanded) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
 .anime-description-toggle {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--am-accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.anime-description-toggle[aria-expanded='true'] svg {
+  transform: rotate(180deg);
 }
 @media (max-width: 760px) {
   .anime-description {
     margin: 18px 0;
-    min-width: 0;
     grid-column: 1 / -1;
-  }
-  .anime-description .title-description {
-    margin: 0;
-  }
-  .anime-description .title-description:not(.is-expanded) {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-    overflow: hidden;
-  }
-  .anime-description-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 9px;
-    min-height: 36px;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--am-accent);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .anime-description-toggle[aria-expanded='true'] svg {
-    transform: rotate(180deg);
   }
 }
 .genre-links {
@@ -5552,3 +5552,35 @@ a.franchise-card:hover {
   height: 16px;
   flex-shrink: 0;
 }
+
+/* Keep primary genres compact; thematic tags live in the details disclosure. */
+.title-intro .genre-links {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-width: 100%;
+  padding-bottom: 3px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.title-intro .genre-links a {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.anime-details { margin: 12px 0 18px; }
+.anime-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 40px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  cursor: pointer;
+  list-style: none;
+}
+.anime-details > summary::-webkit-details-marker { display: none; }
+.anime-details > summary:hover,
+.anime-details > summary:focus-visible { color: var(--am-accent-light); }
+.anime-details > summary svg { transition: transform 160ms; }
+.anime-details[open] > summary svg { transform: rotate(180deg); }
+.anime-details .anime-themes { margin-top: 8px; }

@@ -193,15 +193,9 @@ export function AnimePage({ anime }: { anime: Anime }) {
               <span>{anime.episodes} серий</span>
               {anime.age_rating && <span>{anime.age_rating}</span>}
             </div>
-            <div className="genre-links">
-              {anime.genres?.map((g) => (
-                <a key={g} href={'/genres/' + encodeURIComponent(g)}>
-                  {g}
-                </a>
-              ))}
-            </div>
-            <AnimeThemes animeId={anime.id} />
-            <AnimeDescription key={anime.id} text={anime.description} />
+            <AnimeThemes key={anime.id} animeId={anime.id} genres={anime.genres}>
+              <AnimeDescription text={anime.description} />
+            </AnimeThemes>
             <CollectionControl anime={anime} />
             <EpisodeNotifications animeId={anime.id} title={anime.russian} />
           </div>
