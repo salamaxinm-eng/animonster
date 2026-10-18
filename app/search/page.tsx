@@ -242,7 +242,7 @@ export default function SearchPage() {
             ref={input}
             value={query}
             onChange={(event) => changeQuery(event.target.value)}
-            placeholder="Название аниме"
+            placeholder="Название или ID аниме"
             aria-label="Поиск аниме"
           />
           {query && (

@@ -37,6 +37,9 @@ export async function searchAnime({
   limit = 24,
 }: SearchOptions = {}): Promise<SearchResponse> {
   const normalized = normalizeMatchTitle(query).slice(0, 120);
+  const numericQuery = /^\d{1,9}$/.test(query.trim())
+    ? Number(query.trim())
+    : 0;
   const safePage = Math.max(1, Math.min(10000, Math.floor(page)));
   const safeLimit = Math.max(1, Math.min(48, Math.floor(limit)));
   const offset = (safePage - 1) * safeLimit;
@@ -63,6 +66,10 @@ export async function searchAnime({
       values.push(normalized, `${normalized}%`);
     }
   }
+  if (numericQuery) {
+    where[0] = `(a.id=? OR ${where[0]})`;
+    values.unshift(numericQuery);
+  }
   if (genres.length) {
     where.push('a.genres_index @> ?::text::jsonb');
     values.push(JSON.stringify(genres));
@@ -81,7 +88,7 @@ export async function searchAnime({
     where.push('a.status_index=?');
     values.push(status);
   }
-  const score = normalized
+  const titleScore = normalized
     ? `COALESCE((SELECT max(CASE
         WHEN alias=? THEN 1000
         WHEN replace(alias,' ','')=? THEN 980
@@ -91,7 +98,10 @@ export async function searchAnime({
         ELSE similarity(alias,?)*300 END)
       FROM unnest(m.normalized_aliases) alias),0)`
     : '0';
-  const scoreValues = normalized
+  const score = numericQuery
+    ? `CASE WHEN a.id=? THEN 2000 ELSE ${titleScore} END`
+    : titleScore;
+  const scoreValues: (string | number)[] = normalized
     ? [
         normalized,
         normalized.replaceAll(' ', ''),
@@ -101,13 +111,14 @@ export async function searchAnime({
         normalized,
       ]
     : [];
+  if (numericQuery) scoreValues.unshift(numericQuery);
   const filter = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const [rows, count] = await Promise.all([
     db()
       .prepare(
         `SELECT a.data,${score} AS relevance
          FROM anime_cache a
-         JOIN anime_search_metadata m ON m.anime_id=a.id
+         LEFT JOIN anime_search_metadata m ON m.anime_id=a.id
          LEFT JOIN anime_themes_cache t ON t.anime_id=a.id
          ${filter}
          ORDER BY relevance DESC,a.score_index DESC,a.year_index DESC,a.id
@@ -118,7 +129,7 @@ export async function searchAnime({
     db()
       .prepare(
         `SELECT count(*) AS total FROM anime_cache a
-         JOIN anime_search_metadata m ON m.anime_id=a.id
+         LEFT JOIN anime_search_metadata m ON m.anime_id=a.id
          LEFT JOIN anime_themes_cache t ON t.anime_id=a.id ${filter}`,
       )
       .bind(...values)
@@ -136,9 +147,10 @@ export async function searchAnime({
     ),
   );
   const total = Number(count?.total || 0);
-  const grouped = normalized
-    ? await groupSearchAnime(items)
-    : { groups: [], standalone: items };
+  const grouped =
+    normalized && !numericQuery
+      ? await groupSearchAnime(items)
+      : { groups: [], standalone: items };
   return {
     results: [
       ...grouped.groups,

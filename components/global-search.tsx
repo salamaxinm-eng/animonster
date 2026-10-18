@@ -80,7 +80,7 @@ export function GlobalSearch() {
           setQuery(event.target.value);
           setOpen(true);
         }}
-        placeholder="Найти аниме"
+        placeholder="Название или ID аниме"
         aria-label="Поиск аниме"
         role="combobox"
         aria-autocomplete="list"
