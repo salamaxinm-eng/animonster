@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import type { Profile } from '@/lib/community';
 import { api, useCommunity } from '../context';
 import { AccountData } from '../account-data';
+import { SocialAccounts } from '../social-accounts';
 import { NotificationSettings } from './notification-settings';
 import { Empty, ResourceState, useResource } from './shared';
 
@@ -253,6 +254,7 @@ export function SettingsSection({
           <AccountData />
         </section>
       )}
+      {tab === 'account' && <SocialAccounts />}
       {tab === 'privacy' && (
         <section className="hub-settings">
           <h2>Заблокированные пользователи</h2>

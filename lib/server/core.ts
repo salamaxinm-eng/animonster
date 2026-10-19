@@ -5,6 +5,10 @@ export type Runtime = {
   DATABASE_URL?: string;
   VK_CLIENT_ID?: string;
   VK_CLIENT_SECRET?: string;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+  TELEGRAM_LOGIN_CLIENT_ID?: string;
+  TELEGRAM_LOGIN_CLIENT_SECRET?: string;
   ADMIN_VK_USER_ID?: string;
   SITE_URL?: string;
   OWNER_PREVIEW?: string;

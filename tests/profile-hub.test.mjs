@@ -60,6 +60,7 @@ const uploadRoute = await import(await load('app/api/plus-assets/route.ts', [['@
 const publicRoute = await import(
   await load('app/api/community/route.ts', [
     ['@/lib/server/payment-gateway', url('export const paymentsReady=()=>false;')],
+    ['@/lib/server/social-auth', url('export const socialReady=()=>false;')],
     ['@/lib/server/core', core],
     ['@/lib/community', community],
     ['@/lib/server/cosmetics', cosmetics],

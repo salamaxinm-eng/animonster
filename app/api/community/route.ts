@@ -1,4 +1,5 @@
 import { paymentsReady } from '@/lib/server/payment-gateway';
+import { socialReady } from '@/lib/server/social-auth';
 import { getAnime } from '@/lib/server/library';
 import {
   db,
@@ -45,6 +46,8 @@ export async function GET(r: Request) {
         preview: !!u?.identity.startsWith('preview:'),
         moderator: isModerator(u),
         vk_ready: !!runtime().VK_CLIENT_ID,
+        google_ready: socialReady('google'),
+        telegram_login_ready: socialReady('telegram'),
         invite_required: inviteRequired(),
         email_verification_required: emailVerificationEnabled(),
         payments_ready:

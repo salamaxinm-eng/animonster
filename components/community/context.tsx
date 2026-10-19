@@ -17,6 +17,8 @@ import {
 import { BuySubscription } from './buy-subscription';
 import { GlobalSearch } from '@/components/global-search';
 import { EmailForm } from './email-form';
+import { SocialLogin } from './social-login';
+import { socialAuthMessages } from '@/lib/social-auth';
 import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
@@ -62,6 +64,8 @@ const Context = createContext<{
   preview: boolean;
   moderator: boolean;
   vkReady: boolean;
+  googleReady: boolean;
+  telegramReady: boolean;
   inviteRequired: boolean;
   emailVerificationRequired: boolean;
   paymentsReady: boolean;
@@ -74,6 +78,8 @@ const Context = createContext<{
   preview: false,
   moderator: false,
   vkReady: false,
+  googleReady: false,
+  telegramReady: false,
   inviteRequired: false,
   emailVerificationRequired: false,
   paymentsReady: false,
@@ -89,6 +95,8 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       preview: false,
       moderator: false,
       vk_ready: false,
+      google_ready: false,
+      telegram_login_ready: false,
       invite_required: false,
       email_verification_required: false,
       payments_ready: false,
@@ -96,6 +104,15 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     }),
     [loaded, setLoaded] = useState(false),
     [showLogin, setShowLogin] = useState(false);
+  const [authNotice, setAuthNotice] = useState('');
+  const [authFailed, setAuthFailed] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search), code = params.get('auth') || '';
+    if (!socialAuthMessages[code]) return;
+    setAuthNotice(socialAuthMessages[code]);
+    setAuthFailed(code !== 'social_linked');
+    if (code !== 'social_linked' && params.get('section') !== 'settings') setShowLogin(true);
+  }, []);
   const refresh = useCallback(async () => {
     try {
       setMe(await api('me'));
@@ -156,6 +173,8 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         preview: me.preview,
         moderator: me.moderator,
         vkReady: me.vk_ready,
+        googleReady: !!me.google_ready,
+        telegramReady: !!me.telegram_login_ready,
         inviteRequired: me.invite_required,
         emailVerificationRequired: me.email_verification_required,
         paymentsReady: me.payments_ready,
@@ -166,13 +185,16 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       }}
     >
       <PassCosmeticsProvider>{children}</PassCosmeticsProvider>
+      {authNotice && !showLogin && <div className="social-auth-notice" role={authFailed ? 'alert' : 'status'}><p>{authNotice}</p><button type="button" onClick={() => setAuthNotice('')}>Закрыть</button></div>}
       <Dialog open={showLogin} onOpenChange={setShowLogin}>
-        <DialogContent className="sign-dialog">
+        <DialogContent className="sign-dialog social-sign-dialog" overlayClassName="social-login-overlay">
           <Ghost size={40} color="var(--am-accent)" />
           <DialogTitle>Твой мир на AniMonster</DialogTitle>
           <DialogDescription>
             Сохраняй историю, собирай коллекцию и обсуждай серии.
           </DialogDescription>
+          {authNotice && <p className={authFailed ? 'error-msg' : 'success-msg'} role={authFailed ? 'alert' : 'status'}>{authNotice}</p>}
+          <SocialLogin googleReady={!!me.google_ready} telegramReady={!!me.telegram_login_ready} inviteRequired={me.invite_required} />
           {me.vk_ready ? (
             <form
               className="vk-login-form vk-login-primary"
@@ -180,7 +202,6 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
               method="get"
               target="_top"
             >
-              <strong>Основной способ входа</strong>
               {me.invite_required && (
                 <Input
                   name="invite"
@@ -200,13 +221,15 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
               подключено.
             </p>
           )}
-          <details className="email-alternative" open={!me.vk_ready}>
+          <details className="email-alternative" open={authFailed || (!me.vk_ready && !me.google_ready && !me.telegram_login_ready)}>
             <summary>Войти по email и паролю</summary>
             <EmailForm
               inviteRequired={me.invite_required}
               onSuccess={async () => {
                 await refresh();
                 setShowLogin(false);
+                setAuthNotice('');
+                setAuthFailed(false);
               }}
             />
           </details>

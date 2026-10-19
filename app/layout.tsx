@@ -8,6 +8,7 @@ import './rewards.css';
 import './fundraising.css';
 import './eclipse.css';
 import './photo-search.css';
+import './social-auth.css';
 import { Suspense } from 'react';
 import YandexMetrika from '@/components/yandex-metrika';
 import { PwaRegistration } from '@/components/pwa-registration';

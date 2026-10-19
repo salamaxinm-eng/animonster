@@ -1,0 +1,121 @@
+.social-login {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+.social-login > label {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  font-size: 13px;
+}
+.social-login-buttons {
+  display: grid;
+  gap: 10px;
+}
+.social-login-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.social-login-button svg {
+  flex-shrink: 0;
+}
+.social-google {
+  color: #e3e3e3;
+  background: #131314;
+  border-color: #8e918f;
+}
+.social-telegram {
+  color: #fff;
+  background: #17688f;
+  border-color: #2380ab;
+}
+.social-login-button:hover:enabled {
+  filter: brightness(1.12);
+}
+.social-login-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.social-auth-muted,
+.social-login small,
+.social-account-settings > small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.social-account-settings {
+  margin-top: 20px;
+}
+.social-account-settings > p {
+  font-size: 13px;
+  color: var(--muted-foreground);
+}
+.social-account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.social-account-row > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.social-account-row > strong {
+  color: var(--am-accent-light);
+  font-size: 13px;
+}
+.social-auth-notice {
+  position: fixed;
+  z-index: 160;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(600px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  font:
+    14px/1.5 Arial,
+    Helvetica,
+    sans-serif;
+  box-shadow: 0 8px 30px #0006;
+}
+.social-auth-notice p {
+  flex: 1;
+}
+.social-auth-notice button {
+  padding: 8px;
+  flex-shrink: 0;
+  text-decoration: underline;
+}
+.social-sign-dialog {
+  z-index: 201;
+  font-family: Arial, Helvetica, sans-serif;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+.social-login-overlay[data-slot='dialog-overlay'] {
+  z-index: 200;
+  background: #000b;
+}
