@@ -44,6 +44,10 @@ export function PopularHero({
       .catch(() => {});
   }, [community.user?.id]);
   useEffect(() => {
+    // Server-rendered initial items make the LCP image discoverable before
+    // hydration. Keep them stable instead of replacing them immediately with
+    // a second client request.
+    if (initial.length) return;
     const m = matchMedia('(prefers-reduced-motion: reduce)');
     setPaused(m.matches);
     const controller = new AbortController();
@@ -73,7 +77,7 @@ export function PopularHero({
       }
     })();
     return () => controller.abort();
-  }, []);
+  }, [initial.length]);
   useEffect(() => {
     if (!api) return;
     const select = () => setIndex(api.selectedScrollSnap());
@@ -106,11 +110,20 @@ export function PopularHero({
         {items.map((a, i) => (
           <CarouselItem key={a.id}>
             <section className="hero anime-hero" aria-hidden={i !== index}>
-              <img className="hero-backdrop" src={posterUrl(a)} alt="" />
+              <img
+                className="hero-backdrop"
+                src={posterUrl(a, 960)}
+                alt=""
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
+                decoding="async"
+              />
               <img
                 className="hero-feature-poster"
                 src={posterUrl(a)}
                 alt={a.russian}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                decoding="async"
               />
               <div className="hero-shade" />
               <div className="hero-copy">
