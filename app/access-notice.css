@@ -75,26 +75,36 @@
 
 @media (max-width: 700px) {
   .access-notice {
+    position: fixed;
+    z-index: 120;
+    inset: auto 12px calc(var(--mobile-nav-height, 68px) + env(safe-area-inset-bottom) + 12px);
+    max-height: min(50dvh, 420px);
+    overflow-y: auto;
     align-items: flex-start;
     flex-wrap: wrap;
-    gap: 8px 10px;
-    padding: 10px 14px;
-    font-size: 12px;
+    gap: 12px 10px;
+    padding: 18px 16px;
+    border: 1px solid color-mix(in srgb, #f87171 34%, var(--border));
+    border-radius: 16px;
+    background: color-mix(in srgb, #301a25 97%, var(--background));
+    box-shadow: 0 18px 56px #000b;
+    font-size: 14px;
   }
 
   .access-notice-icon {
-    width: 18px;
-    height: 18px;
-    margin-top: 1px;
+    width: 21px;
+    height: 21px;
+    margin-top: 0;
   }
 
   .access-notice p {
-    flex: 1 1 calc(100% - 30px);
+    flex: 1 1 calc(100% - 34px);
+    line-height: 1.6;
   }
 
   .access-notice-actions {
     width: 100%;
-    padding-left: 28px;
+    padding-left: 31px;
     justify-content: flex-start;
     flex-wrap: wrap;
   }
@@ -102,7 +112,7 @@
   .access-notice-actions a,
   .access-notice-actions button {
     min-height: 32px;
-    padding: 5px 9px;
-    font-size: 12px;
+    padding: 7px 10px;
+    font-size: 13px;
   }
 }
