@@ -74,6 +74,17 @@ body {
   }
 }
 
+select option,
+select optgroup {
+  background-color: var(--card);
+  color: var(--foreground);
+}
+
+select option:checked {
+  background-color: var(--am-button);
+  color: var(--am-on-accent);
+}
+
 /* Shared site palette. Cosmetics and semantic status colours stay independent. */
 :root,
 .dark {
