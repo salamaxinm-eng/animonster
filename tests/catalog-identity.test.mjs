@@ -152,14 +152,26 @@ await test('season dates repair by exact ID with distinct posters, persist, and 
   assert.equal(requests.length, 2);
 });
 
-await test('opening a cached anime page repairs its own year without needing other seasons', async (t) => {
+await test('cached anime returns before a slow identity refresh and repairs metadata in the background', async (t) => {
   const item = anime(250);
   await library.saveAnime(item, [{ ordinal: 1, duration: 1440 }]);
-  t.mock.method(globalThis, 'fetch', async () =>
-    Response.json({ data: { animes: [canonical(250)] } }),
-  );
+  let startFetch;
+  const fetchStarted = new Promise((resolve) => (startFetch = resolve));
+  let finishFetch;
+  const pendingResponse = new Promise((resolve) => (finishFetch = resolve));
+  t.mock.method(globalThis, 'fetch', async () => {
+    startFetch();
+    return pendingResponse;
+  });
   const result = await library.getAnime(250);
-  assert.equal(result.anime.aired_on, '2026-04-08');
+  assert.equal(result.anime.aired_on, '2016');
+  await fetchStarted;
+  finishFetch(Response.json({ data: { animes: [canonical(250)] } }));
+  for (let attempt = 0; attempt < 50; attempt++) {
+    if ((await readAnime(250)).aired_on === '2026-04-08') break;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+  assert.equal((await readAnime(250)).aired_on, '2026-04-08');
 });
 
 await test('large franchises repair every batch and metadata outages keep cached entries usable', async (t) => {

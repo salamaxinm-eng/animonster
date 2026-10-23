@@ -32,6 +32,22 @@ export type SitemapAnimeEntry = {
   updated_at: number;
 };
 
+const identityRefreshRetryAt = new Map<number, number>();
+const IDENTITY_REFRESH_RETRY_MS = 60 * 60 * 1000;
+
+function refreshAnimeIdentityInBackground(anime: Anime) {
+  const identityCheckedAt = Number(anime.identity_checked_at || 0);
+  if (identityCheckedAt > now() - 7 * 24 * 60 * 60 * 1000) return;
+
+  const retryAt = identityRefreshRetryAt.get(anime.id) || 0;
+  if (retryAt > now()) return;
+
+  identityRefreshRetryAt.set(anime.id, now() + IDENTITY_REFRESH_RETRY_MS);
+  void canonicalizeAnimeIdentities([anime]).catch(() => {
+    // Identity metadata is optional; cached anime must remain available.
+  });
+}
+
 export async function sitemapAnime(
   limit = 50000,
 ): Promise<SitemapAnimeEntry[]> {
@@ -203,20 +219,20 @@ export async function getAnime(id: number) {
       if (
         anime.providers?.includes('kodik') &&
         process.env.KODIK_CATALOG_ENABLED === 'true'
-      )
+      ) {
+        refreshAnimeIdentityInBackground(anime);
         return {
           ...cached,
-          anime: (await canonicalizeAnimeIdentities([anime]))[0],
+          anime,
         };
+      }
     } catch {}
   }
-  if (cached && cached.episodes !== '[]' && cached.updated_at > now() - 3600000)
-    return {
-      ...cached,
-      anime: (
-        await canonicalizeAnimeIdentities([JSON.parse(cached.data) as Anime])
-      )[0],
-    };
+  if (cached && cached.episodes !== '[]' && cached.updated_at > now() - 3600000) {
+    const anime = JSON.parse(cached.data) as Anime;
+    refreshAnimeIdentityInBackground(anime);
+    return { ...cached, anime };
+  }
   const known: Anime | undefined = cached ? JSON.parse(cached.data) : undefined;
   const found: Release | undefined = known?.release_id
     ? await liberty('/anime/releases/' + known.release_id)
@@ -226,8 +242,9 @@ export async function getAnime(id: number) {
   if (!available(release)) return null;
   const anime = normalize(release);
   await cacheAnime(anime, release.episodes);
+  refreshAnimeIdentityInBackground(anime);
   return {
-    anime: (await canonicalizeAnimeIdentities([anime]))[0],
+    anime,
     episodes: JSON.stringify(
       release.episodes?.map((e) => ({
         ordinal: e.ordinal,
