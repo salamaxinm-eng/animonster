@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './access-notice.css';
 import { CommunityProvider } from '@/components/community/context';
 import { MobileNavigation } from '@/components/mobile-navigation';
+import { AccessNotice } from '@/components/access-notice';
 import './community.css';
 import './mobile.css';
 import './rewards.css';
@@ -83,6 +85,7 @@ export default function RootLayout({
       <body>
         <PwaRegistration />
         <CommunityProvider>
+          <AccessNotice />
           {children}
 
           <footer className="site-footer">

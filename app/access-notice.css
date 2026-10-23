@@ -1,0 +1,108 @@
+.access-notice {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px clamp(16px, 3vw, 40px);
+  border-bottom: 1px solid color-mix(in srgb, #f87171 24%, var(--border));
+  background: color-mix(in srgb, #301a25 88%, var(--background));
+  color: var(--foreground);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.access-notice-icon {
+  flex: 0 0 auto;
+  color: #fca5a5;
+}
+
+.access-notice p {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.access-notice-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.access-notice-actions a,
+.access-notice-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 11px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.access-notice-actions a {
+  border-color: #f87171;
+  background: #b9384a;
+  color: #fff;
+  font-weight: 650;
+}
+
+.access-notice-actions a:hover {
+  background: #cf4356;
+}
+
+.access-notice-actions button {
+  border-color: color-mix(in srgb, var(--foreground) 20%, transparent);
+  background: transparent;
+  color: #d2cbd2;
+}
+
+.access-notice-actions button:hover {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.access-notice-actions a:focus-visible,
+.access-notice-actions button:focus-visible {
+  outline: 2px solid #fecaca;
+  outline-offset: 2px;
+}
+
+@media (max-width: 700px) {
+  .access-notice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+  }
+
+  .access-notice-icon {
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+  }
+
+  .access-notice p {
+    flex: 1 1 calc(100% - 30px);
+  }
+
+  .access-notice-actions {
+    width: 100%;
+    padding-left: 28px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .access-notice-actions a,
+  .access-notice-actions button {
+    min-height: 32px;
+    padding: 5px 9px;
+    font-size: 12px;
+  }
+}
