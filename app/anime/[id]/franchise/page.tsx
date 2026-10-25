@@ -1,9 +1,11 @@
 import { notFound } from 'next/navigation';
+import { after } from 'next/server';
 import { CommunityHeader } from '@/components/community/context';
 import { posterUrl } from '@/lib/anime';
 import { chronologicalRelationCards } from '@/lib/relation-display';
 import {
   animeRelations,
+  refreshFranchiseRelations,
   type AnimeRelationsResult,
 } from '@/lib/server/anime-relations';
 
@@ -20,6 +22,7 @@ export default async function FranchisePage({
   let relations: AnimeRelationsResult;
   try {
     relations = await animeRelations(animeId);
+    if (relations.refreshing) after(() => refreshFranchiseRelations(animeId));
   } catch {
     return (
       <div className="site-shell franchise-page">

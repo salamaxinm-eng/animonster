@@ -1,4 +1,9 @@
-import { animeRelations } from '@/lib/server/anime-relations';
+import {
+  animeRelations,
+  refreshFranchiseRelations,
+} from '@/lib/server/anime-relations';
+import { after } from 'next/server';
+export const maxDuration = 120;
 
 export async function GET(request: Request) {
   if (process.env.ANIMONSTER_RELATION_UI_TEST === 'true') {
@@ -32,9 +37,13 @@ export async function GET(request: Request) {
   if (!Number.isInteger(animeId) || animeId < 1 || animeId > 999999999)
     return Response.json({ error: 'Некорректный тайтл' }, { status: 400 });
   try {
-    return Response.json(await animeRelations(animeId), {
+    const result = await animeRelations(animeId);
+    if (result.refreshing) after(() => refreshFranchiseRelations(animeId));
+    return Response.json(result, {
       headers: {
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
+        'Cache-Control': result.refreshing
+          ? 'no-store'
+          : 'public, max-age=300, stale-while-revalidate=86400',
       },
     });
   } catch (error) {

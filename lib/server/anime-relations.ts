@@ -12,6 +12,18 @@ import { canonicalizeAnimeIdentities } from './search-metadata';
 const SHIKIMORI = 'https://shikimori.one/api/animes/';
 const RELATION_TTL = 30 * 24 * 60 * 60 * 1000;
 const MAINLINE = new Set(['Prequel', 'Sequel']);
+const refreshingTitles = new Map<number, Promise<boolean>>();
+const refreshingFranchises = new Map<number, Promise<void>>();
+type RelationState = { status: string; checked_at: number };
+function needsRefresh(state?: RelationState) {
+  return (
+    !state ||
+    state.status === 'pending' ||
+    (state.status === 'error' &&
+      Number(state.checked_at) < now() - 15 * 60 * 1000) ||
+    Number(state.checked_at) < now() - RELATION_TTL
+  );
+}
 
 type ShikimoriRelated = {
   relation: string;
@@ -41,6 +53,7 @@ export type AnimeRelationsResult = {
   mainline: RelationCard[];
   branches: RelationCard[];
   related: RelationCard[];
+  refreshing?: boolean;
 };
 
 export async function ensureRelationState(animeId: number) {
@@ -62,44 +75,64 @@ async function fetchRelations(animeId: number) {
     cache: 'no-store',
   });
   if (!response.ok) throw new Error(`Shikimori HTTP ${response.status}`);
-  return (await response.json()) as ShikimoriRelated[];
+  const value = await response.json();
+  if (
+    !Array.isArray(value) ||
+    value.some((entry) => !entry || typeof entry.relation !== 'string')
+  )
+    throw new Error('Invalid relation response');
+  return value as ShikimoriRelated[];
 }
 
 async function refreshOne(animeId: number) {
+  const active = refreshingTitles.get(animeId);
+  if (active) return active;
+  const task = refreshOneUnshared(animeId);
+  refreshingTitles.set(animeId, task);
+  try {
+    return await task;
+  } finally {
+    refreshingTitles.delete(animeId);
+  }
+}
+
+async function refreshOneUnshared(animeId: number) {
   try {
     const relations = await fetchRelations(animeId);
-    await db()
-      .prepare('DELETE FROM anime_relations WHERE anime_id=?')
-      .bind(animeId)
-      .run();
-    for (const entry of relations) {
-      const related = entry.anime;
-      if (!related?.id || !entry.relation) continue;
-      await db()
-        .prepare(
-          `INSERT INTO anime_relations(anime_id,related_anime_id,relation,relation_russian,related_title,related_kind,related_year,checked_at)
+    await db().transaction(async (tx) => {
+      await tx
+        .prepare('DELETE FROM anime_relations WHERE anime_id=?')
+        .bind(animeId)
+        .run();
+      for (const entry of relations) {
+        const related = entry.anime;
+        if (!related?.id || !entry.relation) continue;
+        await tx
+          .prepare(
+            `INSERT INTO anime_relations(anime_id,related_anime_id,relation,relation_russian,related_title,related_kind,related_year,checked_at)
            VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(anime_id,related_anime_id,relation) DO UPDATE SET
            relation_russian=excluded.relation_russian,related_title=excluded.related_title,
            related_kind=excluded.related_kind,related_year=excluded.related_year,checked_at=excluded.checked_at`,
+          )
+          .bind(
+            animeId,
+            Number(related.id),
+            entry.relation,
+            entry.relation_russian || '',
+            related.russian || related.name || '',
+            related.kind || '',
+            Number(String(related.aired_on || '').slice(0, 4)) || 0,
+            now(),
+          )
+          .run();
+      }
+      await tx
+        .prepare(
+          `UPDATE anime_relation_state SET status=?,attempts=attempts+1,checked_at=?,last_error=NULL WHERE anime_id=?`,
         )
-        .bind(
-          animeId,
-          Number(related.id),
-          entry.relation,
-          entry.relation_russian || '',
-          related.russian || related.name || '',
-          related.kind || '',
-          Number(String(related.aired_on || '').slice(0, 4)) || 0,
-          now(),
-        )
+        .bind(relations.length ? 'ok' : 'not_found', now(), animeId)
         .run();
-    }
-    await db()
-      .prepare(
-        `UPDATE anime_relation_state SET status=?,attempts=attempts+1,checked_at=?,last_error=NULL WHERE anime_id=?`,
-      )
-      .bind(relations.length ? 'ok' : 'not_found', now(), animeId)
-      .run();
+    });
     return true;
   } catch (error) {
     await db()
@@ -124,34 +157,49 @@ export async function ensureAnimeRelationsFresh(animeId: number) {
     )
     .bind(animeId)
     .first<{ status: string; checked_at: number }>();
-  if (
-    !state ||
-    state.status === 'pending' ||
-    (state.status === 'error' && state.checked_at < now() - 15 * 60 * 1000) ||
-    state.checked_at < now() - RELATION_TTL
-  )
+  if (needsRefresh(state || undefined)) {
     await refreshOne(animeId);
+    return true;
+  }
+  return false;
 }
 
 async function ensureFranchiseRelationsFresh(animeId: number) {
   const queue = [animeId];
   const visited = new Set<number>();
-  while (queue.length && visited.size < 12) {
+  let refreshed = 0;
+  while (queue.length && visited.size < 64 && refreshed < 12) {
     const current = queue.shift()!;
     if (visited.has(current)) continue;
     visited.add(current);
-    await ensureAnimeRelationsFresh(current);
+    if (await ensureAnimeRelationsFresh(current)) refreshed++;
     const rows = await db()
       .prepare(
-        `SELECT DISTINCT r.related_anime_id FROM anime_relations r
+        `SELECT DISTINCT CASE WHEN r.anime_id=? THEN r.related_anime_id ELSE r.anime_id END AS related_anime_id FROM anime_relations r
          JOIN anime_cache a ON a.id=r.related_anime_id
-         WHERE r.anime_id=? AND r.relation IN ('Prequel','Sequel')`,
+         WHERE (r.anime_id=? OR r.related_anime_id=?) AND r.relation IN ('Prequel','Sequel')`,
       )
-      .bind(current)
+      .bind(current, current, current)
       .all<{ related_anime_id: number }>();
     for (const row of rows.results)
       if (!visited.has(Number(row.related_anime_id)))
         queue.push(Number(row.related_anime_id));
+  }
+}
+
+export async function refreshFranchiseRelations(animeId: number) {
+  const active = refreshingFranchises.get(animeId);
+  if (active) return active;
+  const task = (async () => {
+    await ensureFranchiseRelationsFresh(animeId);
+    const { anime } = await availableGraph(animeId);
+    await canonicalizeAnimeIdentities([...anime.values()]);
+  })();
+  refreshingFranchises.set(animeId, task);
+  try {
+    await task;
+  } finally {
+    refreshingFranchises.delete(animeId);
   }
 }
 
@@ -212,7 +260,41 @@ export async function animeRelationStats() {
   };
 }
 
-async function availableGraph() {
+async function availableGraph(animeId?: number) {
+  if (animeId !== undefined) {
+    const rows = await db()
+      .prepare(
+        `SELECT r.anime_id,r.related_anime_id,r.relation,r.relation_russian FROM anime_relations r JOIN anime_cache a ON a.id=r.related_anime_id WHERE r.relation IN ('Prequel','Sequel') OR r.anime_id=?`,
+      )
+      .bind(animeId)
+      .all<RelationRow>();
+    const family = connectedRelationIds(
+      animeId,
+      normalizeRelationEdges(rows.results),
+    );
+    const ids = new Set(family);
+    for (const row of rows.results)
+      if (row.anime_id === animeId) ids.add(row.related_anime_id);
+    const values = [...ids];
+    const data = await db()
+      .prepare(
+        `SELECT id,data FROM anime_cache WHERE id IN (${values.map(() => '?').join(',')})`,
+      )
+      .bind(...values)
+      .all<AnimeRow>();
+    const anime = new Map<number, Anime>();
+    for (const row of data.results) {
+      try {
+        anime.set(Number(row.id), JSON.parse(row.data) as Anime);
+      } catch {}
+    }
+    return {
+      relations: rows.results.filter(
+        (edge) => anime.has(edge.anime_id) && anime.has(edge.related_anime_id),
+      ),
+      anime,
+    };
+  }
   const [relations, animeRows] = await Promise.all([
     db()
       .prepare(
@@ -238,15 +320,23 @@ async function availableGraph() {
 export async function animeRelations(
   animeId: number,
 ): Promise<AnimeRelationsResult> {
-  await ensureFranchiseRelationsFresh(animeId);
-  const { relations, anime } = await availableGraph();
+  const { relations, anime } = await availableGraph(animeId);
   if (!anime.has(animeId)) return { mainline: [], branches: [], related: [] };
   const edges = normalizeRelationEdges(relations);
   const ids = connectedRelationIds(animeId, edges);
-  const repaired = await canonicalizeAnimeIdentities(
-    [...ids].flatMap((id) => (anime.has(id) ? [anime.get(id)!] : [])),
+  const tracked = [...ids];
+  const states = await db()
+    .prepare(
+      `SELECT anime_id,status,checked_at FROM anime_relation_state WHERE anime_id IN (${tracked.map(() => '?').join(',')})`,
+    )
+    .bind(...tracked)
+    .all<RelationState & { anime_id: number }>();
+  const stateById = new Map(
+    states.results.map((state) => [Number(state.anime_id), state]),
   );
-  for (const item of repaired) anime.set(item.id, item);
+  const refreshing =
+    refreshingFranchises.has(animeId) ||
+    tracked.some((id) => needsRefresh(stateById.get(id)));
   const years = new Map(
     [...anime].map(([id, item]) => [
       id,
@@ -292,7 +382,7 @@ export async function animeRelations(
       (card, index, all) =>
         all.findIndex((other) => other.item.id === card.item.id) === index,
     );
-  return { mainline, branches, related };
+  return { mainline, branches, related, refreshing };
 }
 
 export async function groupSearchAnime(items: Anime[]) {

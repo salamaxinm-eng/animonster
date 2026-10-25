@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { GitBranch } from 'lucide-react';
 import Link from 'next/link';
 import { posterUrl, type Anime } from '@/lib/anime';
 import { televisionSeasons } from '@/lib/relation-display';
+import { requestAnimeRelations } from '@/lib/relation-request';
 import {
   Carousel,
   CarouselContent,
@@ -24,57 +25,108 @@ type RelationResponse = {
   mainline: RelationCard[];
   branches: RelationCard[];
   related: RelationCard[];
+  refreshing?: boolean;
 };
 const EMPTY: RelationResponse = { mainline: [], branches: [], related: [] };
 
-export function SeasonNavigation({ animeId, onSeasonsChangeAction }: {
+export function SeasonNavigation({
+  animeId,
+  onSeasonsChangeAction,
+}: {
   animeId: number;
   onSeasonsChangeAction?: (seasons: Anime[]) => void;
 }) {
   const [relations, setRelations] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
-
+  const [failed, setFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
+  const [updating, setUpdating] = useState(false);
+  const callback = useRef(onSeasonsChangeAction);
+  const saved = useRef<{ animeId: number; data: RelationResponse } | null>(
+    null,
+  );
+  callback.current = onSeasonsChangeAction;
   useEffect(() => {
-    const controller = new AbortController();
-    setLoading(true);
-    onSeasonsChangeAction?.([]);
-    fetch(`/api/anime-relations?anime_id=${animeId}`, {
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) throw new Error();
-        return (await response.json()) as RelationResponse;
-      })
-      .then((data) => {
-        if (controller.signal.aborted) return;
+    let cancelled = false,
+      attempt = 0;
+    let active: AbortController | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const previous =
+      saved.current?.animeId === animeId ? saved.current.data : EMPTY;
+    setLoading(
+      previous.mainline.length < 2 &&
+        !previous.branches.length &&
+        !previous.related.length,
+    );
+    setFailed(false);
+    setUpdating(false);
+    setRelations(previous);
+    callback.current?.(televisionSeasons(previous));
+    const load = async () => {
+      const controller = new AbortController();
+      active = controller;
+      try {
+        const data = await requestAnimeRelations(
+          animeId,
+          controller.signal,
+          attempt > 0,
+        );
+        if (cancelled) return;
+        saved.current = { animeId, data };
         setRelations(data);
-        onSeasonsChangeAction?.(televisionSeasons(data));
-      })
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setRelations(EMPTY);
-          onSeasonsChangeAction?.([]);
+        callback.current?.(televisionSeasons(data));
+        setFailed(false);
+        const again = !!data.refreshing && attempt++ < 8;
+        setUpdating(again);
+        if (again) timer = setTimeout(() => void load(), 5000);
+      } catch {
+        if (!cancelled) {
+          setFailed(true);
+          setUpdating(false);
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
-    return () => controller.abort();
-  }, [animeId, onSeasonsChangeAction]);
-
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+      active?.abort();
+      clearTimeout(timer);
+    };
+  }, [animeId, retry]);
   if (loading)
     return (
       <section className="season-navigation loading" aria-label="Сезоны">
-        <p role="status">Ищем сезоны и продолжения…</p>
+        <p role="status">Загружаем сохранённые сезоны…</p>
       </section>
     );
-  if (
-    relations.mainline.length < 2 &&
-    !relations.branches.length &&
-    !relations.related.length
-  )
-    return null;
-
+  const hasCards =
+    relations.mainline.length > 1 ||
+    relations.branches.length > 0 ||
+    relations.related.length > 0;
+  if (!hasCards) {
+    if (!failed && !updating && !relations.refreshing) return null;
+    return (
+      <section className="season-navigation" aria-label="Сезоны">
+        <p role="status">
+          {failed
+            ? 'Не удалось загрузить сезоны.'
+            : updating
+              ? 'Уточняем сезоны в фоновом режиме. Можно продолжать просмотр.'
+              : 'Данные о сезонах ещё обновляются.'}
+        </p>
+        {!updating && (
+          <button
+            className="season-retry"
+            onClick={() => setRetry((value) => value + 1)}
+          >
+            Повторить поиск
+          </button>
+        )}
+      </section>
+    );
+  }
   const total = new Set(
     [...relations.mainline, ...relations.branches, ...relations.related].map(
       (card) => card.item.id,
@@ -94,11 +146,21 @@ export function SeasonNavigation({ animeId, onSeasonsChangeAction }: {
           </Link>
         )}
       </div>
+      {updating && (
+        <p className="season-update-note" role="status">
+          Обновляем связи в фоне — сохранённые сезоны уже доступны.
+        </p>
+      )}
+      {(failed || (!updating && relations.refreshing)) && (
+        <button
+          className="season-retry"
+          onClick={() => setRetry((value) => value + 1)}
+        >
+          Обновить список сезонов
+        </button>
+      )}
       {relations.mainline.length > 1 && (
-        <RelationRow
-          title="Сезоны и продолжения"
-          items={relations.mainline}
-        />
+        <RelationRow title="Сезоны и продолжения" items={relations.mainline} />
       )}
       {relations.branches.length > 0 && (
         <RelationRow
@@ -108,10 +170,7 @@ export function SeasonNavigation({ animeId, onSeasonsChangeAction }: {
         />
       )}
       {relations.related.length > 0 && (
-        <RelationRow
-          title="Связанное"
-          items={relations.related}
-        />
+        <RelationRow title="Связанное" items={relations.related} />
       )}
     </section>
   );
@@ -230,10 +289,7 @@ function RelationCarouselViewport({
         'season-relation-scroller' + (canScrollNext ? ' has-more' : '')
       }
     >
-      <CarouselContent
-        className="season-relation-track"
-        aria-label={label}
-      >
+      <CarouselContent className="season-relation-track" aria-label={label}>
         {children}
       </CarouselContent>
     </div>
