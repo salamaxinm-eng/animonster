@@ -5621,3 +5621,44 @@ a.franchise-card:hover {
 
 .season-retry { margin-top: 8px; padding: 9px 14px; border: 1px solid var(--border); border-radius: 8px; color: var(--foreground); background: var(--card); cursor: pointer; font-size: 12px; }
 .season-update-note { color: var(--muted-foreground); font-size: 12px; margin: 0 0 12px; }
+
+/* Admin: switch tasks without scrolling through unrelated statistics. */
+.admin-page { max-width: 1280px; min-width: 0; }
+.admin-workspace, .admin-workspace > div, .admin-workspace details { min-width: 0; }
+.admin-workspace [hidden] { display: none !important; }
+.admin-primary-nav { position: sticky; top: 8px; z-index: 20; padding: 10px; border: 1px solid var(--border); border-radius: 14px; background: var(--card, #171c24); }
+.admin-desktop-tabs, .admin-shortcuts, .admin-pagination { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.admin-desktop-tabs button, .admin-shortcuts a { min-height: 44px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); }
+.admin-desktop-tabs button { cursor: pointer; }
+.admin-desktop-tabs button[aria-pressed='true'] { background: var(--am-accent); color: var(--am-on-accent); }
+.admin-mobile-select { display: none; }
+.admin-shortcuts { margin: 14px 0; font-size: 14px; }
+.admin-workspace > div > details.social-panel, .admin-tools > details.social-panel { margin: 12px 0; padding: 18px; }
+.admin-workspace summary { cursor: pointer; min-height: 44px; align-content: center; font-weight: 600; }
+.admin-workspace details[open] > summary { margin-bottom: 12px; }
+.admin-page .dashboard-cards { gap: 10px; margin: 16px 0; }
+.admin-page .dashboard-cards .social-panel { padding: 16px; }
+.admin-page .dashboard-cards strong { margin-top: 8px; font-size: 32px; }
+.admin-user-search { display: grid; gap: 8px; margin: 16px 0; }
+.admin-pagination { justify-content: space-between; margin: 12px 0; }
+@media (max-width: 767px) {
+  .admin-page { padding-inline: 12px; }
+  .admin-primary-nav { top: calc(var(--mobile-topbar-height, 64px) + env(safe-area-inset-top) + 4px); }
+  .admin-desktop-tabs { display: none; }
+  .admin-mobile-select { display: grid; gap: 6px; font-size: 12px; }
+  .admin-mobile-select select { width: 100%; min-height: 44px; font-size: 16px; padding: 8px; color: inherit; background: var(--card, #171c24); border: 1px solid var(--border); border-radius: 8px; }
+  .admin-shortcuts { display: grid; grid-template-columns: 1fr 1fr; }
+  .admin-shortcuts a { padding: 10px; }
+  .admin-page .dashboard-cards { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .admin-page .dashboard-cards strong { font-size: 28px; }
+  .admin-surface .admin-table, .admin-surface .admin-table tbody, .admin-surface .admin-table tr, .admin-surface .admin-table td { display: block; width: 100%; min-width: 0; box-sizing: border-box; }
+  .admin-surface .admin-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+  .admin-surface .admin-table tr { margin-bottom: 14px; padding: 10px; border: 1px solid var(--border); border-radius: 10px; }
+  .admin-surface .admin-table td { padding: 8px 0; overflow-wrap: anywhere; }
+  .admin-surface .admin-table td::before { content: attr(data-label); display: block; font-size: 12px; color: var(--muted-foreground, #a2afbe); margin-bottom: 4px; }
+  .admin-surface .admin-table td small { max-width: none; white-space: normal; }
+  .admin-surface .admin-table td.admin-actions { display: grid; gap: 8px; }
+  .admin-workspace input:not([type='checkbox']), .admin-workspace select, .admin-workspace textarea { max-width: 100%; min-width: 0; font-size: 16px; }
+  .admin-workspace .admin-skip-form { grid-template-columns: minmax(0,1fr); }
+  .admin-workspace .admin-skip-form button { grid-column: auto; }
+}

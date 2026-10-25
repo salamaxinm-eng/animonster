@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { CommunityHeader, useCommunity } from '@/components/community/context';
 import { useDemoProgress, useDemoRoom } from '@/hooks/use-demo-session';
+import { useDemoAnalytics } from '@/hooks/use-demo-analytics';
 import { useDemoFeedback } from '@/hooks/use-demo-feedback';
 import { DemoFeedbackDialog } from '@/components/demo-feedback-dialog';
 import { demoPosition, demoResumePoint } from '@/lib/demo-session';
@@ -164,6 +165,15 @@ export function PlayerDemo({
   const voice =
     availableVoices.find((item) => item.id === preferences.voice) ||
     availableVoices[0];
+  useDemoAnalytics(
+    video,
+    catalog,
+    community.loaded,
+    community.user?.id,
+    continuous,
+    episode.number,
+    voice?.id || '',
+  );
   const downloadVoice =
     episode.voices.find((item) => item.id === voice.id) || episode.voices[0];
   const downloadingSeason = bundleDownload && !!catalog.season;

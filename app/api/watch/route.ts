@@ -1,3 +1,5 @@
+import { recordDailyWatch } from '@/lib/server/daily-watch';
+import { demoCatalog } from '@/lib/server/player-demo';
 import {
   db,
   body,
@@ -53,26 +55,39 @@ export async function POST(r: Request) {
 
     const b = await body(r),
       a = await actor(r),
-      n = now(),
-      day = new Date(n).toISOString().slice(0, 10);
+      n = now();
 
     if (b.action === 'start') {
       const id = Number(b.anime_id),
         ep = Number(b.episode),
-        provider = b.provider === 'kodik' ? 'kodik' : 'aniliberty',
+        provider =
+          b.provider === 'demo'
+            ? 'demo'
+            : b.provider === 'kodik'
+              ? 'kodik'
+              : 'aniliberty',
         voiceover = String(b.voiceover || provider).slice(0, 120);
 
       if (!Number.isInteger(id) || id < 1 || !Number.isInteger(ep) || ep < 1) {
         throw new ApiError('Некорректная серия');
       }
 
-      const meta = await getAnime(id);
-
-      if (!meta) {
+      const demo = provider === 'demo' ? await demoCatalog() : null;
+      const demoEpisode =
+        demo?.malId === id
+          ? demo.episodes.find((item) => item.number === ep)
+          : null;
+      const meta = provider === 'demo' ? null : await getAnime(id);
+      if (
+        provider === 'demo'
+          ? !demoEpisode ||
+            !demoEpisode.voices.some((item) => item.id === voiceover)
+          : !meta
+      )
         throw new ApiError('Серия недоступна', 404);
-      }
-      const cachedDuration = cachedEpisodeDuration(meta.episodes, ep);
-      let duration = cachedDuration;
+      let duration = demoEpisode
+        ? Math.floor(demoEpisode.duration)
+        : cachedEpisodeDuration(meta!.episodes, ep);
       if (provider === 'kodik') {
         const translationId = kodikTranslationId(voiceover);
         if (!translationId) throw new ApiError('Некорректная озвучка');
@@ -190,17 +205,15 @@ export async function POST(r: Request) {
         .first();
       if (!claimed) return false;
 
-      await transaction
-        .prepare('INSERT OR IGNORE INTO daily_activity(day,actor) VALUES (?,?)')
-        .bind(day, a.key)
-        .run();
-      if (s.watched + delta >= 30)
-        await transaction
-          .prepare(
-            'INSERT OR IGNORE INTO daily_views(day,actor,anime_id,episode) VALUES (?,?,?,?)',
-          )
-          .bind(day, a.key, s.anime_id, s.episode)
-          .run();
+      await recordDailyWatch(
+        transaction,
+        a.key,
+        s.anime_id,
+        s.episode,
+        s.duration,
+        delta,
+        n,
+      );
 
       if (a.user) {
         await transaction

@@ -29,6 +29,8 @@ export async function dashboard() {
     topUsers,
     providers,
     paymentStats,
+    preciseDaily,
+    trackingStart,
   ] = await Promise.all([
     db()
       .prepare('SELECT count(*) AS n FROM daily_activity WHERE day=?')
@@ -147,7 +149,20 @@ export async function dashboard() {
       count(*) AS total FROM orders WHERE created_at>=?`)
       .bind(timestamp - 3600000, timestamp - 30 * 86400000)
       .first<{ paid: number; pending: number; total: number }>(),
+    db()
+      .prepare(`SELECT day, count(*) FILTER (WHERE seconds>=720) AS completed,
+      COALESCE(sum(seconds),0) AS seconds FROM daily_episode_watch WHERE day>=? GROUP BY day`)
+      .bind(month)
+      .all(),
+    db()
+      .prepare(
+        "SELECT applied_at FROM schema_migrations WHERE name='0062_daily_episode_watch.sql'",
+      )
+      .first<{ applied_at: number }>(),
   ]);
+  const preciseByDay = new Map(
+    preciseDaily.results.map((item: any) => [String(item.day), item]),
+  );
   const activityByDay = new Map(
     dailyActivity.results.map((item: any) => [
       String(item.day),
@@ -164,6 +179,9 @@ export async function dashboard() {
     return {
       day: date,
       views: viewByDay.get(date) || 0,
+      completed: Number(preciseByDay.get(date)?.completed || 0),
+      hours:
+        Math.round(Number(preciseByDay.get(date)?.seconds || 0) / 360) / 10,
       active: activityByDay.get(date) || 0,
     };
   });
@@ -173,6 +191,10 @@ export async function dashboard() {
     views: views?.n || 0,
     users: users?.n || 0,
     daily: activity,
+    viewsToday: activity[0].views,
+    completedToday: activity[0].completed,
+    watchHoursToday: activity[0].hours,
+    dailyTrackingSince: Number(trackingStart?.applied_at || timestamp),
     signups7d: signups7d?.n || 0,
     signups30d: signups30d?.n || 0,
     views7d: views7d?.n || 0,

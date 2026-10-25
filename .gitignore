@@ -42,3 +42,7 @@ next-env.d.ts
 /artifacts/
 /.dev.vars
 *.tsbuildinfo
+
+# Python import/build caches
+__pycache__/
+*.py[cod]

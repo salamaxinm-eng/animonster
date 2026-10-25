@@ -26,17 +26,26 @@ function commentLocation(scope: string, commentId: string) {
   return { href: '#', label: 'Обсуждение' };
 }
 
-export function AdminTools() {
-  const [section, setSection] = useState('health');
-  const [data, setData] = useState<any>({
-    can_manage_roles: false,
-    invite_required: false,
-    users: [],
-    invites: [],
-    reports: [],
-    actions: [],
-    comments: [],
-  });
+export function AdminTools({
+  initialData,
+  section = 'health',
+}: {
+  initialData?: any;
+  section?: string;
+}) {
+  const [userQuery, setUserQuery] = useState('');
+  const [userPage, setUserPage] = useState(0);
+  const [data, setData] = useState<any>(
+    initialData || {
+      can_manage_roles: false,
+      invite_required: false,
+      users: [],
+      invites: [],
+      reports: [],
+      actions: [],
+      comments: [],
+    },
+  );
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -45,9 +54,8 @@ export function AdminTools() {
     if (response.ok) setData(await response.json());
   };
   useEffect(() => {
-    if (window.location.hash === '#title-restrictions') setSection('restrictions');
-    void load();
-  }, []);
+    if (!initialData) void load();
+  }, [initialData]);
   async function createInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
@@ -143,30 +151,19 @@ export function AdminTools() {
       anime_id: form.get('anime_id'),
     });
   }
+  const users = data.users.filter((user: any) =>
+    `${user.nick} ${user.email || ''} ${user.id}`
+      .toLowerCase()
+      .includes(userQuery.toLowerCase()),
+  );
   return (
     <div className="admin-tools">
-      <nav className="admin-tool-tabs" aria-label="Управление сайтом">
-        {[
-          ['health', 'Работа сайта'],
-          ['users', 'Пользователи и Plus'],
-          ['moderation', 'Модерация'],
-          ['catalog', 'Каталог'],
-          ...(data.can_manage_roles ? [['restrictions', 'Блокировки тайтлов']] : []),
-        ].map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            aria-pressed={section === id}
-            onClick={() => setSection(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-      {section === 'restrictions' && data.can_manage_roles && <TitleRestrictionsAdmin />}
+      {section === 'restrictions' && data.can_manage_roles && (
+        <TitleRestrictionsAdmin />
+      )}
       {data.invite_required && (
-        <section className="social-panel" hidden={section !== 'users'}>
-          <h2>Приглашения в бету</h2>
+        <details className="social-panel" hidden={section !== 'users'}>
+          <summary>Приглашения в бету</summary>
           <form className="admin-inline-form" onSubmit={createInvite}>
             <Input name="label" placeholder="Для кого" maxLength={80} />
             <Input
@@ -188,10 +185,10 @@ export function AdminTools() {
           <p className="muted">
             Коды хранятся только в виде хеша и работают один раз.
           </p>
-        </section>
+        </details>
       )}
-      <section className="social-panel" hidden={section !== 'catalog'}>
-        <h2>Таймкоды заставок</h2>
+      <details className="social-panel" hidden={section !== 'catalog'}>
+        <summary>Таймкоды заставок</summary>
         <p className="muted">
           Ручная корректировка имеет приоритет над AniLiberty и AniSkip.
           Оставьте озвучку <strong>*</strong>, чтобы применить ко всем
@@ -301,12 +298,12 @@ export function AdminTools() {
             </table>
           </div>
         )}
-      </section>
-      <section
+      </details>
+      <details
         className="social-panel"
         hidden={section !== 'health' && section !== 'moderation'}
       >
-        <h2>Совместный просмотр</h2>
+        <summary>Совместный просмотр</summary>
         <div className="dashboard-cards compact">
           <div>
             <strong>{Number(data.watch_parties?.active_rooms || 0)}</strong>
@@ -397,9 +394,9 @@ export function AdminTools() {
             </table>
           </div>
         )}
-      </section>
-      <section className="social-panel" hidden={section !== 'health'}>
-        <h2>Plus: серии и Telegram</h2>
+      </details>
+      <details className="social-panel" hidden={section !== 'health'}>
+        <summary>Plus: серии и Telegram</summary>
         <p>
           Первичная синхронизация:{' '}
           <strong>
@@ -430,9 +427,9 @@ export function AdminTools() {
             )}
           </p>
         )}
-      </section>
-      <section className="social-panel" hidden={section !== 'catalog'}>
-        <h2>Каталог Kodik</h2>
+      </details>
+      <details className="social-panel" hidden={section !== 'catalog'}>
+        <summary>Каталог Kodik</summary>
         <p>
           Синхронизация:{' '}
           <strong>{data.kodik_sync_enabled ? 'включена' : 'выключена'}</strong>
@@ -547,9 +544,9 @@ export function AdminTools() {
             </table>
           </div>
         )}
-      </section>
-      <section className="social-panel" hidden={section !== 'catalog'}>
-        <h2>Авторские Plus-подборки</h2>
+      </details>
+      <details className="social-panel" hidden={section !== 'catalog'}>
+        <summary>Авторские Plus-подборки</summary>
         <form className="admin-skip-form" onSubmit={saveEditorial}>
           <Input name="title" placeholder="Название" maxLength={120} required />
           <Input name="cover" type="url" placeholder="HTTPS-обложка" />
@@ -641,9 +638,9 @@ export function AdminTools() {
             </table>
           </div>
         )}
-      </section>
-      <section className="social-panel" hidden={section !== 'catalog'}>
-        <h2>Справочник персонажей</h2>
+      </details>
+      <details className="social-panel" hidden={section !== 'catalog'}>
+        <summary>Справочник персонажей</summary>
         <form className="admin-skip-form" onSubmit={saveCharacter}>
           <Input
             name="name"
@@ -729,9 +726,9 @@ export function AdminTools() {
             </table>
           </div>
         )}
-      </section>
-      <section className="social-panel" hidden={section !== 'users'}>
-        <h2>Платежи Plus</h2>
+      </details>
+      <details className="social-panel" hidden={section !== 'users'}>
+        <summary>Платежи Plus</summary>
         {data.payments?.length ? (
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -768,9 +765,9 @@ export function AdminTools() {
         ) : (
           <p className="muted">Платежей пока нет.</p>
         )}
-      </section>
-      <section className="social-panel" hidden={section !== 'moderation'}>
-        <h2>Последние комментарии</h2>
+      </details>
+      <details className="social-panel" hidden={section !== 'moderation'}>
+        <summary>Последние комментарии</summary>
         {data.comments.length ? (
           <div className="admin-table-wrap">
             <table className="admin-table">
@@ -815,24 +812,100 @@ export function AdminTools() {
         ) : (
           <p className="muted">Комментариев пока нет.</p>
         )}
-      </section>
-      <section className="social-panel" hidden={section !== 'users'}>
-        <h2>FOUNDING 10</h2>
-        <div className="admin-table-wrap"><table className="admin-table"><thead><tr><th>Место</th><th>Пользователь</th><th>Дата</th><th>Сумма</th><th>Заказ</th><th>Награды</th><th>Действие</th></tr></thead><tbody>
-          {(data.founders || []).map((founder: any) => <tr key={founder.founder_number}>
-            <td>#{String(founder.founder_number).padStart(3, '0')}</td>
-            <td>{founder.nick}<br /><small>{founder.user_id}</small></td>
-            <td>{new Date(Number(founder.first_qualifying_payment_at)).toLocaleString('ru-RU')}</td>
-            <td>{founder.qualifying_amount} ₽</td>
-            <td>{founder.payment_id}</td>
-            <td>{Number(founder.cosmetic_count)}/4 · Plus {founder.plus_granted ? '✓' : '—'}</td>
-            <td aria-label="Действие">{data.can_manage_roles && <Button variant="outline" onClick={() => void mutate({ action: 'founder_resync', user_id: founder.user_id })}>Re-sync rewards</Button>}</td>
-          </tr>)}
-        </tbody></table></div>
-        {!data.founders?.length && <p className="muted">Места пока свободны.</p>}
-      </section>
-      <section className="social-panel" hidden={section !== 'users'}>
-        <h2>Пользователи</h2>
+      </details>
+      <details className="social-panel" hidden={section !== 'users'}>
+        <summary>FOUNDING 10</summary>
+        <div className="admin-table-wrap">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Место</th>
+                <th>Пользователь</th>
+                <th>Дата</th>
+                <th>Сумма</th>
+                <th>Заказ</th>
+                <th>Награды</th>
+                <th>Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data.founders || []).map((founder: any) => (
+                <tr key={founder.founder_number}>
+                  <td>#{String(founder.founder_number).padStart(3, '0')}</td>
+                  <td>
+                    {founder.nick}
+                    <br />
+                    <small>{founder.user_id}</small>
+                  </td>
+                  <td>
+                    {new Date(
+                      Number(founder.first_qualifying_payment_at),
+                    ).toLocaleString('ru-RU')}
+                  </td>
+                  <td>{founder.qualifying_amount} ₽</td>
+                  <td>{founder.payment_id}</td>
+                  <td>
+                    {Number(founder.cosmetic_count)}/4 · Plus{' '}
+                    {founder.plus_granted ? '✓' : '—'}
+                  </td>
+                  <td aria-label="Действие">
+                    {data.can_manage_roles && (
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          void mutate({
+                            action: 'founder_resync',
+                            user_id: founder.user_id,
+                          })
+                        }
+                      >
+                        Re-sync rewards
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {!data.founders?.length && (
+          <p className="muted">Места пока свободны.</p>
+        )}
+      </details>
+      <details className="social-panel" hidden={section !== 'users'} open>
+        <summary>Пользователи</summary>
+        <label className="admin-user-search">
+          Поиск среди последних 100 аккаунтов
+          <Input
+            type="search"
+            value={userQuery}
+            placeholder="Ник, email или ID"
+            onChange={(event) => {
+              setUserQuery(event.target.value);
+              setUserPage(0);
+            }}
+          />
+        </label>
+        <div className="admin-pagination">
+          <Button
+            variant="outline"
+            disabled={userPage === 0}
+            onClick={() => setUserPage((page) => page - 1)}
+          >
+            Назад
+          </Button>
+          <span role="status">
+            {users.length ? userPage * 10 + 1 : 0}–
+            {Math.min((userPage + 1) * 10, users.length)} из {users.length}
+          </span>
+          <Button
+            variant="outline"
+            disabled={(userPage + 1) * 10 >= users.length}
+            onClick={() => setUserPage((page) => page + 1)}
+          >
+            Далее
+          </Button>
+        </div>
         {message && (
           <p role="status" className="success-msg">
             {message}
@@ -854,80 +927,82 @@ export function AdminTools() {
               </tr>
             </thead>
             <tbody>
-              {data.users.map((user: any) => (
-                <tr key={user.id}>
-                  <td>
-                    <a href={`/members/${user.id}`}>{user.nick}</a>
-                    <small>{user.id}</small>
-                  </td>
-                  <td>
-                    {data.can_manage_roles ? (
-                      <NativeSelect
-                        aria-label={`Роль ${user.nick}`}
-                        value={user.role}
-                        onChange={(event) =>
+              {users
+                .slice(userPage * 10, (userPage + 1) * 10)
+                .map((user: any) => (
+                  <tr key={user.id}>
+                    <td>
+                      <a href={`/members/${user.id}`}>{user.nick}</a>
+                      <small>{user.id}</small>
+                    </td>
+                    <td>
+                      {data.can_manage_roles ? (
+                        <NativeSelect
+                          aria-label={`Роль ${user.nick}`}
+                          value={user.role}
+                          onChange={(event) =>
+                            mutate({
+                              action: 'role',
+                              user_id: user.id,
+                              role: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="user">Пользователь</option>
+                          <option value="moderator">Модератор</option>
+                          <option value="admin">Администратор</option>
+                        </NativeSelect>
+                      ) : (
+                        user.role
+                      )}
+                    </td>
+                    <td>
+                      {user.email || 'VK'} {user.email_verified ? '✓' : ''}
+                      <small>
+                        {Number(user.premium_until) > Date.now()
+                          ? `Plus до ${new Date(Number(user.premium_until)).toLocaleDateString('ru-RU')}`
+                          : 'Бесплатный'}
+                      </small>
+                    </td>
+                    <td className="admin-actions">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
                           mutate({
-                            action: 'role',
+                            action: 'grant_plus',
                             user_id: user.id,
-                            role: event.target.value,
+                            days: 30,
+                            reason: 'Выдано администратором',
                           })
                         }
                       >
-                        <option value="user">Пользователь</option>
-                        <option value="moderator">Модератор</option>
-                        <option value="admin">Администратор</option>
-                      </NativeSelect>
-                    ) : (
-                      user.role
-                    )}
-                  </td>
-                  <td>
-                    {user.email || 'VK'} {user.email_verified ? '✓' : ''}
-                    <small>
-                      {Number(user.premium_until) > Date.now()
-                        ? `Plus до ${new Date(Number(user.premium_until)).toLocaleDateString('ru-RU')}`
-                        : 'Бесплатный'}
-                    </small>
-                  </td>
-                  <td className="admin-actions">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        mutate({
-                          action: 'grant_plus',
-                          user_id: user.id,
-                          days: 30,
-                          reason: 'Выдано администратором',
-                        })
-                      }
-                    >
-                      Выдать Plus на 30 дней
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        mutate({
-                          action: 'suspend',
-                          user_id: user.id,
-                          hours: user.suspended_until ? 0 : 24,
-                          reason: 'Решение модератора',
-                        })
-                      }
-                    >
-                      {user.suspended_until
-                        ? 'Разблокировать'
-                        : 'Блок на сутки'}
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+                        Выдать Plus на 30 дней
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          mutate({
+                            action: 'suspend',
+                            user_id: user.id,
+                            hours: user.suspended_until ? 0 : 24,
+                            reason: 'Решение модератора',
+                          })
+                        }
+                      >
+                        {user.suspended_until
+                          ? 'Разблокировать'
+                          : 'Блок на сутки'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
-      </section>
+      </details>
     </div>
   );
 }
