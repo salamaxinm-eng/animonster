@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 import { ProfileJourney } from './profile-journey';
 import { BuySubscription } from './buy-subscription';
 import { AccountData } from './account-data';
@@ -20,7 +21,6 @@ import {
   Check,
   Shield,
   Bell,
-  ImagePlus,
 } from 'lucide-react';
 import {
   api,
@@ -82,7 +82,7 @@ export function ProfilePage({
     [notifications, setNotifications] = useState<
       Array<{
         id: string;
-        nick: string;
+        nick: string; legend_origin_at?: number | null;
         scope: string;
         seen: number;
         comment_id: string;
@@ -314,7 +314,7 @@ export function ProfilePage({
             />
             <div className="profile-name">
               <div className="profile-name-line">
-                <h1>{tab === 'settings' ? draft?.nick : data.user.nick}</h1>
+                <h1><UserNickname user={{...data.user,nick:tab === 'settings' ? draft?.nick || data.user.nick : data.user.nick}}/></h1>
                 <Pin id={tab === 'settings' ? draft?.pin || null : data.user.pin} />
               </div>
               <p>

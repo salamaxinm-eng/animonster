@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 
 import { useEffect, useId, useRef, useState } from 'react';
 import {
@@ -48,7 +49,7 @@ const rewardLabels = {
 function SupportHall() {
   const [open, setOpen] = useState(false);
   const [leaders, setLeaders] = useState<
-    { id: string; nick: string; amount: number }[]
+    { id: string; nick: string; legend_origin_at?: number | null; amount: number }[]
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -92,7 +93,7 @@ function SupportHall() {
               <li key={leader.id}>
                 <span>
                   {index + 1}.{' '}
-                  <a href={`/members/${leader.id}`}>{leader.nick}</a>
+                  <a href={`/members/${leader.id}`}><UserNickname user={leader}/></a>
                 </span>
                 <strong>{leader.amount.toLocaleString('ru-RU')} ₽</strong>
               </li>

@@ -174,7 +174,7 @@ export async function GET(r: Request) {
       const [rows, reactionRows] = await Promise.all([
         db()
           .prepare(
-            `SELECT c.*,u.nick,u.avatar,u.theme,
+            `SELECT c.*,u.nick,u.legend_origin_at,u.avatar,u.theme,
              EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND (g.expires>? OR g.lifetime)) AS plus,
              CASE WHEN EXISTS(SELECT 1 FROM cosmetics x WHERE x.slug=u.pin AND x.kind='pin' AND x.active=1 AND
                (x.access_type='free' OR (x.access_type='plus' AND EXISTS(SELECT 1 FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL AND (g.expires>? OR g.lifetime))) OR

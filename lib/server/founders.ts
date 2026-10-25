@@ -103,11 +103,12 @@ export async function publicFounders(myUserId?: string) {
   const rows = await db().prepare(
     `SELECT f.founder_number,f.first_qualifying_payment_at,
             CASE WHEN u.deleted_at IS NULL THEN u.nick ELSE 'Участник AniMonster' END AS nick,
+            CASE WHEN u.deleted_at IS NULL THEN u.legend_origin_at ELSE NULL END AS legend_origin_at,
             CASE WHEN u.deleted_at IS NULL THEN u.avatar ELSE 'moon' END AS avatar,u.id
      FROM founding_members f JOIN users u ON u.id=f.user_id
      ORDER BY f.founder_number`,
   ).all<{ founder_number: number; first_qualifying_payment_at: number;
-    nick: string; avatar: string; id: string }>();
+    nick: string; legend_origin_at?: number | null; avatar: string; id: string }>();
   return {
     founders: rows.results.map(({ id: _id, ...row }) => ({
       ...row, pin: `founder-${String(row.founder_number).padStart(3, '0')}`,

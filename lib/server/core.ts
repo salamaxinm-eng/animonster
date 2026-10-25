@@ -297,6 +297,8 @@ export const cookie = (r: Request, name: string) =>
     ?.slice(name.length + 1) || '';
 
 export type User = {
+  legend_origin_at?: number | null;
+  legend_origin_seen_at?: number | null;
   vk_url?: string | null;
   telegram_url?: string | null;
   show_vk?: number;
@@ -414,6 +416,7 @@ export async function publicUser(u: User, own = false) {
   return {
     id: u.id,
     nick: u.nick,
+    legend_origin_at: Number(u.legend_origin_at) || null,
     bio: u.bio,
     ...publicProfileSocial(u, own),
     theme: resolveSiteTheme(u.theme),
@@ -424,7 +427,7 @@ export async function publicUser(u: User, own = false) {
     collection_public: u.collection_public,
     created_at: u.created_at,
     premium_until: until,
-    plus_lifetime: founder?.founder_number === 1,
+    plus_lifetime: !!(await db().prepare('SELECT 1 FROM grants WHERE user_id=? AND revoked_at IS NULL AND lifetime AND starts_at<=? LIMIT 1').bind(u.id, now()).first()),
     founder_number: founder?.founder_number ?? null,
     founder_since: founder?.first_qualifying_payment_at ?? null,
     level,

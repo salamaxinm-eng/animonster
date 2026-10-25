@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from 'react';
 import Link from 'next/link';
+import { UserNickname } from '@/components/user-nickname';
 import {
   ArrowLeft,
   ArrowRight,
@@ -828,12 +829,7 @@ export function PlayerDemo({
               {room.snapshot ? (
                 <>
                   <p>
-                    {room.snapshot.members
-                      .map(
-                        (member) =>
-                          member.nick + (member.online ? '' : ' · не в сети'),
-                      )
-                      .join(', ')}
+                    {room.snapshot.members.map((member,index)=><span key={member.user_id}>{index>0?', ':''}<UserNickname user={member}/>{member.online?'':' · не в сети'}</span>)}
                   </p>
                   <button
                     onClick={() =>

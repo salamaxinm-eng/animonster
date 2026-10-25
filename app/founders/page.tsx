@@ -1,3 +1,4 @@
+import { UserNickname } from '@/components/user-nickname';
 import { CommunityHeader, Avatar, Pin } from '@/components/community/context';
 import { headers } from 'next/headers';
 import './founders.css';
@@ -11,7 +12,7 @@ export default async function FoundersPage() {
   const response = await fetch(`${origin}/api/founders`, { cache: 'no-store' });
   if (!response.ok) throw new Error('Не удалось загрузить Founder-места');
   const { founders, remaining, backfillPending } = await response.json() as {
-    founders: Array<{ founder_number: number; first_qualifying_payment_at: number; nick: string; avatar: string; pin: string }>;
+    founders: Array<{ founder_number: number; first_qualifying_payment_at: number; nick: string; legend_origin_at?: number | null; avatar: string; pin: string }>;
     remaining: number | null;
     backfillPending: boolean;
   };
@@ -32,7 +33,7 @@ export default async function FoundersPage() {
           <span className="founder-seat-number">Founder {founderLabel(index + 1)}</span>
           {founder ? <>
             <Avatar avatar={founder.avatar} />
-            <div><strong>{founder.nick}</strong><small>Дата вступления: {new Date(Number(founder.first_qualifying_payment_at)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</small></div>
+            <div><strong><UserNickname user={founder}/></strong><small>Дата вступления: {new Date(Number(founder.first_qualifying_payment_at)).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}</small></div>
             <Pin id={founder.pin} />
           </> : <span className="founder-free">{backfillPending ? 'Проверяется' : 'Свободно'}</span>}
         </article>)}

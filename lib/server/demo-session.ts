@@ -78,10 +78,10 @@ export async function demoRoomSnapshot(code: string, userId: string) {
   const room = await requireMember(code, userId);
   const members = await db()
     .prepare(
-      `SELECT m.user_id,u.nick,m.seen_at FROM demo_watch_members m JOIN users u ON u.id=m.user_id WHERE room_code=? ORDER BY m.seen_at DESC`,
+      `SELECT m.user_id,u.nick,u.legend_origin_at,m.seen_at FROM demo_watch_members m JOIN users u ON u.id=m.user_id WHERE room_code=? ORDER BY m.seen_at DESC`,
     )
     .bind(code)
-    .all<{ user_id: string; nick: string; seen_at: number }>();
+    .all<{ user_id: string; nick: string; legend_origin_at: number | null; seen_at: number }>();
   return {
     room,
     host: room.host_id === userId,
@@ -89,6 +89,7 @@ export async function demoRoomSnapshot(code: string, userId: string) {
     members: members.results.map((m) => ({
       user_id: m.user_id,
       nick: m.nick,
+      legend_origin_at: Number(m.legend_origin_at) || null,
       online: Number(m.seen_at) > now() - 45000,
     })),
   };

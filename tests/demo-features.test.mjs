@@ -213,7 +213,7 @@ void test('two independent viewers share host state, cannot control each other, 
   const engine = new PGlite();
   try {
     await engine.exec(
-      "CREATE TABLE users(id text PRIMARY KEY,nick text); INSERT INTO users VALUES ('host','Host'),('guest','Guest'),('outsider','Outsider')",
+      "CREATE TABLE users(id text PRIMARY KEY,nick text); INSERT INTO users VALUES ('host','Host'),('guest','Guest'),('outsider','Outsider'); ALTER TABLE users ADD COLUMN legend_origin_at bigint; UPDATE users SET legend_origin_at=1800000000000 WHERE id='host'",
     );
     await engine.exec(
       await readFile(
@@ -257,6 +257,7 @@ void test('two independent viewers share host state, cannot control each other, 
     });
     assert.equal(joined.host, false);
     assert.equal(joined.members.length, 2);
+    assert.equal(joined.members.find(member => member.user_id === 'host').legend_origin_at, 1800000000000);
     await assert.rejects(
       api.changeDemoRoom('guest', {
         action: 'state',

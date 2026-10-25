@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Copy, Download, Globe2, LockKeyhole, Search, Stamp, Trophy } from 'lucide-react';
@@ -67,7 +68,7 @@ export function PassportPage({ id }: { id?: string }) {
           <span className="passport-visibility">{p.public ? <Globe2 size={16} /> : <LockKeyhole size={16} />}{p.public ? 'Публичный' : 'Скрытый'}</span></div>
         <section className="passport-cover-card">
           <div className="passport-card-top"><strong>Ani<span>Monster</span></strong><small>АНИМЕ-ПАСПОРТ</small></div>
-          <div className="passport-person"><Avatar avatar={p.user.avatar} large /><div><h2>{p.user.nick}</h2><UserTag id={p.user.tag} /><p>На AniMonster с {new Date(Number(p.user.created_at)).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</p></div></div>
+          <div className="passport-person"><Avatar avatar={p.user.avatar} large /><div><h2><UserNickname user={p.user}/></h2><UserTag id={p.user.tag} /><p>На AniMonster с {new Date(Number(p.user.created_at)).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}</p></div></div>
           <div className="passport-identity-line"><span>№ {p.user.number}</span><span>АРХЕТИП · {p.archetype.name}</span></div>
         </section>
         <section className="passport-stats">

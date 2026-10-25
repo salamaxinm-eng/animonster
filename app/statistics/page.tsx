@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 
 import { useEffect, useState } from 'react';
 import { ArrowUpRight, CalendarDays, Heart, Play, Trophy } from 'lucide-react';
@@ -8,8 +9,8 @@ import { GoalRewardPreview } from '@/components/community/fundraising-choice';
 import type { FundraisingGoal } from '@/lib/fundraising';
 import './statistics.css';
 
-type Leader = { id: string; nick: string; views: number };
-type Supporter = { id: string; nick: string; amount: number; payments: number };
+type Leader = { id: string; nick: string; legend_origin_at?: number | null; views: number };
+type Supporter = { id: string; nick: string; legend_origin_at?: number | null; amount: number; payments: number };
 type Statistics = {
   goals: FundraisingGoal[];
   supporters: Supporter[];
@@ -76,7 +77,7 @@ function Leaderboard({
                     <span className="stats-user-avatar" aria-hidden="true">
                       {row.nick.slice(0, 1).toUpperCase()}
                     </span>
-                    <span>{row.nick}</span>
+                    <UserNickname user={row}/>
                     <ArrowUpRight size={14} aria-hidden="true" />
                   </a>
                 </td>

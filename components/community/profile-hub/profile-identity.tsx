@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 import Link from 'next/link';
 import { Crown, Pencil } from 'lucide-react';
 import type { Profile } from '@/lib/community';
@@ -44,14 +45,14 @@ export function ProfileIdentity({
         )}
         <div>
           <div className="hub-name">
-            <Heading>{user.nick}</Heading>
+            <Heading><UserNickname user={user}/></Heading>
             <div className="hub-profile-badges">
               <UserTag id={user.tag} />
               <Pin id={user.pin} />
               <StreakDisplay streak={user.streak} compact />
               {!!user.premium_until && (
                 <span className="hub-plus">
-                  <Crown size={13} aria-hidden="true" /> Plus
+                  <Crown size={13} aria-hidden="true" /> {user.plus_lifetime ? 'Plus навсегда' : 'Plus'}
                 </span>
               )}
             </div>

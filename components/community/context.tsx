@@ -1,4 +1,6 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
+import { LegendOriginCelebration } from './legend-origin-celebration';
 import { passImageUrl } from '@/lib/pass-images';
 import {
   createContext,
@@ -187,6 +189,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
     >
       {me.recovery_mode && <p className="recovery-notice" role="status">Сайт восстановлен из резервной копии от 9 октября 2026 года. Более поздние изменения могут отсутствовать. Платежи временно отключены.</p>}
       <PassCosmeticsProvider>{children}</PassCosmeticsProvider>
+      {me.user?.legend_origin_at && <LegendOriginCelebration key={me.user.id} user={me.user} />}
       {authNotice && !showLogin && <div className="social-auth-notice" role={authFailed ? 'alert' : 'status'}><p>{authNotice}</p><button type="button" onClick={() => setAuthNotice('')}>Закрыть</button></div>}
       <Dialog open={showLogin} onOpenChange={setShowLogin}>
         <DialogContent className="sign-dialog social-sign-dialog" overlayClassName="social-login-overlay">
@@ -319,6 +322,7 @@ export function UserTag({ id }: { id?: string | null }) {
     return <span className={`user-tag user-tag-pass ${artwork ? 'user-tag-pass-art' : ''} pass-rarity-${pass.rarity}`} title={pass.name}>{artwork ? <img src={passImageUrl(pass.image, 512)} alt={pass.name} style={{ maxWidth: 150, maxHeight: 42, objectFit: 'contain' }} /> : pass.name}</span>;
   }
   if (!id) return null;
+  if (id === 'legend-origin') return <span className="user-tag user-tag-legend-origin" title="Исток легенды · навсегда в истории AniMonster"><img src="/rewards/legend-origin/tag-v1.png" alt="Исток легенды" width={2171} height={724}/></span>;
   if (id === 'support-oni-vip' || id === 'support-oni-player') return (
     <span className="user-tag user-tag-support-oni-vip" title="Oni VIP · За поддержку AniMonster">
       <img src={id === 'support-oni-player' ? '/rewards/support/player-tag-v2.png' : '/rewards/support/development-tag-v2.png'} alt="Oni VIP" />
@@ -384,7 +388,7 @@ export function AccountMenu({
           <span>Аккаунт</span>
         ) : (
           <>
-            <span className="account-menu-nick">{c.user.nick}</span>
+            <span className="account-menu-nick"><UserNickname user={c.user} /></span>
             <ChevronDown className="account-menu-chevron" size={15} />
           </>
         )}

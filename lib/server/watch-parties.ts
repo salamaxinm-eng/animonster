@@ -49,7 +49,7 @@ type MemberRow = {
   joined_at: number;
   last_seen_at: number;
   chat_muted: number;
-  nick: string;
+  nick: string; legend_origin_at?: number | null;
   avatar: string;
   theme: string;
   premium_until?: number;
@@ -242,7 +242,7 @@ export async function maintainParty(codeValue: string) {
 async function member(partyId: string, userId: string) {
   return db()
     .prepare(
-      `SELECT m.*,u.nick,u.avatar,u.theme FROM watch_party_members m
+      `SELECT m.*,u.nick,u.legend_origin_at,u.avatar,u.theme FROM watch_party_members m
        JOIN users u ON u.id=m.user_id
        WHERE m.party_id=? AND m.user_id=? AND m.left_at IS NULL AND m.kicked_at IS NULL`,
     )
@@ -513,7 +513,7 @@ export async function partySnapshot(codeValue: string, user: User) {
   const members = (
     await db()
       .prepare(
-        `SELECT m.user_id,m.role,m.joined_at,m.last_seen_at,m.chat_muted,u.nick,u.avatar,u.theme
+        `SELECT m.user_id,m.role,m.joined_at,m.last_seen_at,m.chat_muted,u.nick,u.legend_origin_at,u.avatar,u.theme
          FROM watch_party_members m JOIN users u ON u.id=m.user_id
          WHERE m.party_id=? AND m.left_at IS NULL AND m.kicked_at IS NULL
          ORDER BY CASE WHEN m.role='host' THEN 0 ELSE 1 END,m.joined_at`,
@@ -529,7 +529,7 @@ export async function partySnapshot(codeValue: string, user: User) {
       ? (
           await db()
             .prepare(
-              `SELECT m.id,m.author_id,m.body,m.created_at,m.deleted_at,u.nick
+              `SELECT m.id,m.author_id,m.body,m.created_at,m.deleted_at,u.nick,u.legend_origin_at
              FROM watch_party_messages m JOIN users u ON u.id=m.author_id
              WHERE m.party_id=? ORDER BY m.created_at DESC LIMIT 100`,
             )

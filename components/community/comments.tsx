@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 import { useEffect, useState } from 'react';
 import {
   ThumbsDown,
@@ -28,7 +29,7 @@ type Comment = {
   deleted: number;
   created_at: number;
   edited_at: number;
-  nick: string;
+  nick: string; legend_origin_at?: number | null;
   avatar: string;
   theme: string;
   pin: string | null;
@@ -233,7 +234,7 @@ export function Comments({
             </a>
             <div className="comment-content">
               <div className="comment-meta">
-                <a href={'/members/' + c.author_id}>{c.nick}</a>
+                <a href={'/members/' + c.author_id}><UserNickname user={c}/></a>
                 <UserTag id={c.tag || (c.plus ? 'plus' : null)} />
                 <Pin id={c.pin} />
                 <time>

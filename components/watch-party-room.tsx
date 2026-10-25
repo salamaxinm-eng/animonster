@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -43,7 +44,7 @@ type PartySnapshot = {
   members: Array<{
     user_id: string;
     role: 'host' | 'member';
-    nick: string;
+    nick: string; legend_origin_at?: number | null;
     avatar: string;
     theme: string;
     online: boolean;
@@ -52,7 +53,7 @@ type PartySnapshot = {
   messages: Array<{
     id: string;
     author_id: string;
-    nick: string;
+    nick: string; legend_origin_at?: number | null;
     body: string;
     created_at: number;
     deleted_at: number | null;
@@ -1030,7 +1031,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
                     {member.nick.slice(0, 1).toUpperCase()}
                   </span>
                   <span>
-                    <strong>{member.nick}</strong>
+                    <strong><UserNickname user={member}/></strong>
                     <small>
                       {member.role === 'host'
                         ? 'Ведущий'
@@ -1075,7 +1076,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
               {snapshot.messages.map((message) => (
                 <article key={message.id}>
                   <div>
-                    <strong>{message.nick}</strong>
+                    <strong><UserNickname user={message}/></strong>
                     <time>
                       {new Date(message.created_at).toLocaleTimeString(
                         'ru-RU',
