@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Crown, Flame, Sparkles } from 'lucide-react';
 import {
   Dialog,
@@ -11,6 +11,7 @@ import { UserNickname } from '@/components/user-nickname';
 import type { Profile } from '@/lib/community';
 
 export function LegendOriginCelebration({ user }: { user: Profile }) {
+  const title = useRef<HTMLHeadingElement>(null);
   const [open, setOpen] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
@@ -72,6 +73,7 @@ export function LegendOriginCelebration({ user }: { user: Profile }) {
       }}
     >
       <DialogContent
+        initialFocus={title}
         className="legend-origin-dialog"
         overlayClassName="legend-origin-overlay"
         showCloseButton={false}
@@ -92,7 +94,7 @@ export function LegendOriginCelebration({ user }: { user: Profile }) {
           <span className="legend-origin-kicker">
             <Flame size={14} /> ИМЯ В ИСТОРИИ ANIMONSTER
           </span>
-          <DialogTitle>
+          <DialogTitle ref={title} tabIndex={-1}>
             <UserNickname user={user} />, это пламя — твоё
           </DialogTitle>
           <img
