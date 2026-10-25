@@ -5,6 +5,17 @@ export type OfflineStatus =
   | 'completed'
   | 'failed';
 
+export type OfflineSeason = {
+  id: string;
+  chapters: { episode: number; start: number; stop: number }[];
+};
+export type OfflineDemoSource = {
+  mediaUrl: string;
+  mediaSize: number;
+  manifestUrl: string;
+  subtitles: { url: string; title: string; language: string }[];
+};
+
 export type OfflineSegment = {
   id: string;
   fileName: string;
@@ -35,6 +46,8 @@ export type OfflineEpisode = {
   voiceoverId: string;
   voiceoverName: string;
   provider: 'aniliberty' | 'demo';
+  season?: OfflineSeason;
+  demoSource?: OfflineDemoSource;
   offlineSubtitles?: { fileName: string; title: string; language: string }[];
   position?: number;
   ownerId?: string;
@@ -65,6 +78,7 @@ export type OfflinePrepareResponse = {
   voiceoverId: string;
   voiceoverName: string;
   provider: 'aniliberty' | 'demo';
+  season?: OfflineSeason;
   mediaUrl?: string;
   mediaSize?: number;
   subtitles?: { url: string; title: string; language: string }[];

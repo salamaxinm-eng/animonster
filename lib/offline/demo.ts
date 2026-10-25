@@ -1,4 +1,8 @@
-import type { OfflineManifest, OfflinePrepareResponse } from './types';
+import type {
+  OfflineEpisode,
+  OfflineManifest,
+  OfflinePrepareResponse,
+} from './types';
 export const DEMO_CHUNK_SIZE = 8 * 1024 * 1024;
 export function demoDownloadManifest(
   prepared: OfflinePrepareResponse,
@@ -47,4 +51,41 @@ export function validRangeResponse(
   size: number,
 ) {
   return header === `bytes ${start}-${end}/${size}`;
+}
+
+export function savedDemoPreparation(
+  episode: OfflineEpisode,
+): OfflinePrepareResponse | undefined {
+  const source = episode.demoSource;
+  if (episode.provider !== 'demo' || !source) return;
+  const prepared: OfflinePrepareResponse = {
+    ok: true,
+    provider: 'demo',
+    downloadId: episode.downloadId,
+    animeId: episode.animeId,
+    animeTitle: episode.animeTitle,
+    animePoster: episode.animePoster,
+    episode: episode.episode,
+    duration: episode.duration,
+    quality: episode.quality,
+    voiceoverId: episode.voiceoverId,
+    voiceoverName: episode.voiceoverName,
+    ...source,
+    season: episode.season,
+    expiresAt: episode.offlineAccessUntil,
+    offlineAccessUntil: episode.offlineAccessUntil,
+  };
+  demoDownloadManifest(prepared);
+  return prepared;
+}
+
+export function offlineEpisodeLabel(
+  episode: Pick<OfflineEpisode, 'episode' | 'season'>,
+) {
+  const numbers = episode.season?.chapters.map((chapter) => chapter.episode);
+  if (!numbers?.length) return `Серия ${episode.episode}`;
+  const sequence = numbers.every(
+    (number, index) => !index || number === numbers[index - 1] + 1,
+  );
+  return `Серии ${sequence ? `${numbers[0]}–${numbers[numbers.length - 1]}` : numbers.join(', ')}`;
 }

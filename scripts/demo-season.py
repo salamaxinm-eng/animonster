@@ -114,7 +114,7 @@ def publish(root,prefix):
         if qualities:
             name=vid+'-master.m3u8';(folder/name).write_text('\n'.join(adaptive)+'\n');(folder/name).chmod(0o640)
             voices.append({'id':vid,'title':selected[0]['title'],'master':base+'/'+name,'qualities':qualities})
-    season={'duration':offset,'chapters':chapters,'voices':voices}
+    season={'id':folder.name,'duration':offset,'chapters':chapters,'voices':voices}
     for kind in ('subtitles','preview'):
         contents=['WEBVTT',''];available=True
         for e,chapter in zip(episodes,chapters):

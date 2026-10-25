@@ -28,6 +28,7 @@ export type DemoCatalog = {
 };
 export type DemoChapter = { episode: number; start: number; stop: number };
 export type DemoSeason = Omit<DemoEpisode, 'number' | 'title'> & {
+  id?: string;
   chapters: DemoChapter[];
 };
 
@@ -153,6 +154,8 @@ export function parseDemoCatalog(value: unknown): DemoCatalog {
 }
 
 function parseSeason(value: DemoSeason, episodes: DemoEpisode[]): DemoSeason {
+  if (value.id !== undefined && !/^season-[a-f0-9]{16}$/.test(value.id))
+    throw new Error('Invalid season identity');
   if (
     !value ||
     !Array.isArray(value.chapters) ||
@@ -193,6 +196,7 @@ function parseSeason(value: DemoSeason, episodes: DemoEpisode[]): DemoSeason {
   )
     throw new Error('Invalid season voice');
   return {
+    ...(value.id ? { id: value.id } : {}),
     duration: parsed.duration,
     voices: parsed.voices,
     subtitles: parsed.subtitles,

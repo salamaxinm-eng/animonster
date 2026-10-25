@@ -10,11 +10,14 @@ import { refreshOfflineLicense } from '@/lib/offline/downloader';
 import type { OfflineEpisode } from '@/lib/offline/types';
 import { readOfflineFile } from '@/lib/offline/storage';
 import { demoProgressKey, type DemoProgress } from '@/lib/demo-session';
+import { seasonPoint } from '@/lib/demo-season';
+import { offlineEpisodeLabel } from '@/lib/offline/demo';
 
 export function OfflinePlayer({ id }: { id: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const [episode, setEpisode] = useState<OfflineEpisode | null>(null);
   const [error, setError] = useState('');
+  const [playbackTime, setPlaybackTime] = useState(0);
   const [subtitles, setSubtitles] = useState<
     { url: string; title: string; language: string }[]
   >([]);
@@ -113,6 +116,37 @@ export function OfflinePlayer({ id }: { id: string }) {
       engine?.destroy();
     };
   }, [episode?.id, episode?.status, episode?.offlineAccessUntil]);
+  function rememberPosition(force = false) {
+    if (!video.current || !episode || video.current.readyState === 0) return;
+    setPlaybackTime(video.current.currentTime);
+    if (!force && Date.now() - savedAt.current < 5000) return;
+    savedAt.current = Date.now();
+    episode.position = video.current.currentTime;
+    episode.updatedAt = Date.now();
+    void putOfflineEpisode(episode);
+    if (episode.provider === 'demo') {
+      const point = episode.season
+        ? seasonPoint(
+            {
+              duration: episode.duration || video.current.duration,
+              chapters: episode.season.chapters,
+            },
+            episode.position,
+          )
+        : { episode: episode.episode, position: episode.position };
+      const item: DemoProgress = {
+        ...point,
+        voice: episode.voiceoverId,
+        updatedAt: Date.now(),
+      };
+      try {
+        const key = demoProgressKey(episode.ownerId),
+          data = JSON.parse(localStorage.getItem(key) || '{}');
+        data[item.episode] = item;
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch {}
+    }
+  }
   if (!episode) return <p>Загрузка не найдена на этом устройстве.</p>;
   if (episode.offlineAccessUntil < Date.now())
     return (
@@ -135,7 +169,7 @@ export function OfflinePlayer({ id }: { id: string }) {
     <div className="offline-watch">
       <h1>{episode.animeTitle}</h1>
       <p>
-        Серия {episode.episode} · {episode.quality}p · доступно офлайн
+        {offlineEpisodeLabel(episode)} · {episode.quality}p · доступно офлайн
       </p>
       <div className="player">
         <video
@@ -149,27 +183,11 @@ export function OfflinePlayer({ id }: { id: string }) {
                 episode.position || 0,
                 Math.max(0, video.current.duration - 1),
               );
+            setPlaybackTime(video.current?.currentTime || 0);
           }}
-          onTimeUpdate={() => {
-            if (!video.current || Date.now() - savedAt.current < 5000) return;
-            savedAt.current = Date.now();
-            episode.position = video.current.currentTime;
-            void putOfflineEpisode(episode);
-            if (episode.provider === 'demo') {
-              const item: DemoProgress = {
-                episode: episode.episode,
-                position: episode.position,
-                voice: episode.voiceoverId,
-                updatedAt: Date.now(),
-              };
-              try {
-                const key = demoProgressKey(episode.ownerId);
-                const data = JSON.parse(localStorage.getItem(key) || '{}');
-                data[item.episode] = item;
-                localStorage.setItem(key, JSON.stringify(data));
-              } catch {}
-            }
-          }}
+          onTimeUpdate={() => rememberPosition()}
+          onPause={() => rememberPosition(true)}
+          onSeeked={() => rememberPosition(true)}
           onCanPlay={() => setError('')}
           onError={() => {
             const code = video.current?.error?.code;
@@ -178,6 +196,7 @@ export function OfflinePlayer({ id }: { id: string }) {
             );
           }}
           onEnded={() => {
+            rememberPosition(true);
             episode.watchedAt = Date.now();
             episode.updatedAt = Date.now();
             void putOfflineEpisode(episode);
@@ -194,6 +213,31 @@ export function OfflinePlayer({ id }: { id: string }) {
           ))}
         </video>
       </div>
+      {episode.season && (
+        <nav
+          className="demo-offline-chapters"
+          aria-label="Серии в скачанном видео"
+        >
+          {episode.season.chapters.map((chapter) => (
+            <button
+              key={chapter.episode}
+              aria-current={
+                playbackTime >= chapter.start && playbackTime < chapter.stop
+                  ? 'true'
+                  : undefined
+              }
+              onClick={() => {
+                if (video.current) {
+                  video.current.currentTime = chapter.start;
+                  void video.current.play().catch(() => {});
+                }
+              }}
+            >
+              Серия {chapter.episode}
+            </button>
+          ))}
+        </nav>
+      )}
       {error && (
         <p className="playback-error" role="alert">
           {error}

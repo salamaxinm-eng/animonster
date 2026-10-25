@@ -11,7 +11,11 @@ import {
 } from './storage';
 import { masterVariant, parseMediaPlaylist } from './hls';
 import { deleteOfflineData } from './delete';
-import { demoDownloadManifest, validRangeResponse } from './demo';
+import {
+  demoDownloadManifest,
+  validRangeResponse,
+  savedDemoPreparation,
+} from './demo';
 import type {
   OfflineEpisode,
   OfflineManifest,
@@ -305,7 +309,7 @@ async function pumpDownloads() {
 async function savePrepared(prepared: OfflinePrepareResponse) {
   const id =
     prepared.provider === 'demo'
-      ? `demo-${prepared.episode}-${prepared.voiceoverId}-${prepared.quality}`
+      ? prepared.downloadId
       : `${prepared.animeId}-${prepared.episode}-${prepared.quality}`;
   const existing = await getOfflineEpisode(id);
   const timestamp = Date.now();
@@ -330,6 +334,15 @@ async function savePrepared(prepared: OfflinePrepareResponse) {
     offlineAccessUntil: prepared.offlineAccessUntil,
   };
   episode.status = 'queued';
+  if (prepared.provider === 'demo') {
+    episode.season = prepared.season;
+    episode.demoSource = {
+      mediaUrl: prepared.mediaUrl!,
+      mediaSize: prepared.mediaSize!,
+      manifestUrl: prepared.manifestUrl,
+      subtitles: prepared.subtitles || [],
+    };
+  }
   episode.error = undefined;
   episode.downloadId = prepared.downloadId;
   episode.offlineAccessUntil = prepared.offlineAccessUntil;
@@ -379,6 +392,11 @@ export async function resumeOfflineDownload(id: string) {
   const episode = await getOfflineEpisode(id);
   if (!episode) throw new Error('Загрузка не найдена.');
   if (episode.provider === 'demo') {
+    const saved = savedDemoPreparation(episode);
+    if (saved) {
+      queuePrepared(episode, saved);
+      return episode;
+    }
     const response = await fetch(
       `/api/player-demo/download?episode=${episode.episode}&voice=${encodeURIComponent(episode.voiceoverId)}&quality=${episode.quality}`,
       { cache: 'no-store' },
@@ -451,6 +469,7 @@ export async function startDemoDownload(
   voice: string,
   quality: number,
   ownerId?: string,
+  seasonId?: string,
 ) {
   await ensureOfflineStorage();
   if (!navigator.serviceWorker?.controller)
@@ -458,7 +477,7 @@ export async function startDemoDownload(
       'Офлайн-режим ещё устанавливается. Обновите страницу через несколько секунд.',
     );
   const response = await fetch(
-    `/api/player-demo/download?episode=${episode}&voice=${encodeURIComponent(voice)}&quality=${quality}`,
+    `/api/player-demo/download?${seasonId ? `season=${encodeURIComponent(seasonId)}` : `episode=${episode}`}&voice=${encodeURIComponent(voice)}&quality=${quality}`,
     { cache: 'no-store' },
   );
   const prepared = await response.json();
@@ -491,4 +510,13 @@ export async function startDemoDownload(
   item.ownerId = ownerId;
   await putOfflineEpisode(item);
   return item;
+}
+
+export function startDemoSeasonDownload(
+  seasonId: string,
+  voice: string,
+  quality: number,
+  ownerId?: string,
+) {
+  return startDemoDownload(0, voice, quality, ownerId, seasonId);
 }

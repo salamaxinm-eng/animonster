@@ -12,6 +12,52 @@ const offline = await load('lib/offline/demo.ts');
 const preview = await load('lib/demo-preview.ts');
 const skips = await load('lib/server/demo-skips.ts');
 
+void test('combined downloads pin their original season and support ranges beyond four gigabytes', () => {
+  const season = {
+    id: 'season-0123456789abcdef',
+    chapters: [
+      { episode: 1, start: 0, stop: 100 },
+      { episode: 2, start: 100, stop: 200 },
+      { episode: 3, start: 200, stop: 300 },
+      { episode: 4, start: 300, stop: 400 },
+    ],
+  };
+  const original = {
+    provider: 'demo',
+    downloadId: 'demo-season-0123456789abcdef-anistar-1080',
+    animeId: 61316,
+    animeTitle: 'Demo',
+    animePoster: '/icon-512.png',
+    episode: 0,
+    duration: 400,
+    quality: 1080,
+    voiceoverId: 'anistar',
+    voiceoverName: 'AniStar',
+    season,
+    offlineAccessUntil: Date.UTC(2100, 0, 1),
+    demoSource: {
+      mediaUrl:
+        '/demo-media/enhanced/season-0123456789abcdef/anistar-1080-season-offline.mp4',
+      mediaSize: 5 * 1024 ** 3 + 123,
+      manifestUrl:
+        '/demo-media/enhanced/season-0123456789abcdef/anistar-1080.m3u8',
+      subtitles: [],
+    },
+  };
+  const restored = offline.savedDemoPreparation(original);
+  assert.equal(restored.downloadId, original.downloadId);
+  assert.equal(restored.season.id, season.id);
+  assert.equal(restored.mediaUrl, original.demoSource.mediaUrl);
+  const manifest = offline.demoDownloadManifest(restored),
+    last = manifest.segments.at(-1);
+  assert.ok(last.rangeEnd > 2 ** 32);
+  assert.equal(last.rangeEnd, original.demoSource.mediaSize - 1);
+  assert.equal(offline.offlineEpisodeLabel(original), 'Серии 1–4');
+  assert.equal(offline.offlineEpisodeLabel({ episode: 3 }), 'Серия 3');
+  original.demoSource.mediaUrl = 'https://external.example/file.mp4';
+  assert.throws(() => offline.savedDemoPreparation(original));
+});
+
 void test('skip database matches only the same release length and never accepts malformed intervals', () => {
   const result = skips.matchedDemoSkips(
     {

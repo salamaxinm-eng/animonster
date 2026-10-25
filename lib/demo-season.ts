@@ -1,6 +1,9 @@
 import type { DemoSeason } from './player-demo';
 
-export function seasonPoint(season: DemoSeason, time: number) {
+export function seasonPoint(
+  season: Pick<DemoSeason, 'duration' | 'chapters'>,
+  time: number,
+) {
   const position = Number.isFinite(time)
     ? Math.max(0, Math.min(time, season.duration))
     : 0;
@@ -18,7 +21,7 @@ export function seasonPoint(season: DemoSeason, time: number) {
 }
 
 export function seasonPosition(
-  season: DemoSeason,
+  season: Pick<DemoSeason, 'duration' | 'chapters'>,
   episode: number,
   position: number,
 ) {

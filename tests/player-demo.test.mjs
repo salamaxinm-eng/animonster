@@ -79,6 +79,7 @@ void test('continuous seasons validate their chapter boundaries and use local ep
     duration: 150,
   });
   raw.season = {
+    id: 'season-0123456789abcdef',
     duration: 270,
     chapters: [
       { episode: 1, start: 0, stop: 120 },
@@ -88,6 +89,7 @@ void test('continuous seasons validate their chapter boundaries and use local ep
   };
   const parsed = parseDemoCatalog(raw);
   const season = parsed.season;
+  assert.equal(season.id, 'season-0123456789abcdef');
   assert.deepEqual(seasonPoint(season, 119), { episode: 1, position: 119 });
   assert.deepEqual(seasonPoint(season, 120), { episode: 2, position: 0 });
   assert.deepEqual(seasonPoint(season, 137), { episode: 2, position: 17 });

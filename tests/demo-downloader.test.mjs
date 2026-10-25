@@ -94,6 +94,66 @@ void test('offline download recovers after interruption using only missing byte 
     assert.equal(calls.filter((start) => start === 0).length, 1);
     assert.equal(calls.filter((start) => start > 0).length, 2);
     assert.equal(new Blob([...files.values()]).size, size);
+    // A paused four-episode snapshot resumes from its immutable MP4 even
+    // after the public catalogue points to a newer season version.
+    const pinnedId = 'demo-season-0123456789abcdef-anistar-720';
+    const mediaUrl = '/demo-media/enhanced/season-0123456789abcdef/movie.mp4';
+    const pinned = {
+      ...episode,
+      id: pinnedId,
+      downloadId: pinnedId,
+      episode: 0,
+      duration: 400,
+      quality: 720,
+      voiceoverId: 'anistar',
+      voiceoverName: 'AniStar',
+      animeId: 61316,
+      animeTitle: 'Demo',
+      status: 'paused',
+      manifestData: undefined,
+      season: {
+        id: 'season-0123456789abcdef',
+        chapters: [1, 2, 3, 4].map((episode, index) => ({
+          episode,
+          start: index * 100,
+          stop: (index + 1) * 100,
+        })),
+      },
+      demoSource: {
+        mediaUrl,
+        mediaSize: size,
+        manifestUrl: '/demo-media/enhanced/season-0123456789abcdef/voice.m3u8',
+        subtitles: [],
+      },
+    };
+    entries.set(pinnedId, structuredClone(pinned));
+    const fetchRanges = globalThis.fetch;
+    globalThis.fetch = async (url, options) => {
+      assert.equal(url, mediaUrl);
+      return fetchRanges(url, options);
+    };
+    const completed = new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        window.removeEventListener(downloader.OFFLINE_CHANGE_EVENT, changed);
+        reject(new Error('Pinned download did not complete'));
+      }, 3000);
+      function changed(event) {
+        if (
+          event.detail.id === pinnedId &&
+          ['completed', 'failed'].includes(event.detail.status)
+        ) {
+          clearTimeout(timer);
+          window.removeEventListener(downloader.OFFLINE_CHANGE_EVENT, changed);
+          if (event.detail.status === 'completed') resolve();
+          else reject(new Error(event.detail.error));
+        }
+      }
+      window.addEventListener(downloader.OFFLINE_CHANGE_EVENT, changed);
+    });
+    await downloader.resumeOfflineDownload(pinnedId);
+    await completed;
+    assert.equal(entries.get(pinnedId).status, 'completed');
+    assert.equal(entries.get(pinnedId).season.chapters.length, 4);
   } finally {
     globalThis.fetch = original;
     delete globalThis.demoDownloadEntries;

@@ -12,6 +12,7 @@ import {
   resumeOfflineDownload,
 } from '@/lib/offline/downloader';
 import type { OfflineEpisode } from '@/lib/offline/types';
+import { offlineEpisodeLabel } from '@/lib/offline/demo';
 
 const bytes = (value: number) =>
   value >= 1024 ** 3
@@ -91,7 +92,7 @@ export default function DownloadsPage() {
                   <div className="offline-card-body">
                     <h2>{item.animeTitle}</h2>
                     <p>
-                      Серия {item.episode} · {item.quality}p ·{' '}
+                      {offlineEpisodeLabel(item)} · {item.quality}p ·{' '}
                       {item.voiceoverName}
                     </p>
                     {item.provider === 'demo' && <p>Бесплатное демо</p>}

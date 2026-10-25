@@ -36,6 +36,7 @@ import { BuySubscription } from '@/components/community/buy-subscription';
 import { DemoTimeline } from './demo-timeline';
 import {
   startDemoDownload,
+  startDemoSeasonDownload,
   OFFLINE_CHANGE_EVENT,
 } from '@/lib/offline/downloader';
 import type { OfflineEpisode } from '@/lib/offline/types';
@@ -118,6 +119,7 @@ export function PlayerDemo({
   const [settings, setSettings] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState('');
   const [downloadBusy, setDownloadBusy] = useState(false);
+  const [bundleDownload, setBundleDownload] = useState(true);
   const [subtitles, setSubtitles] = useState('off');
   const hydrated = useRef('');
   const selected = useRef({ episode: 1, voice: '' });
@@ -164,6 +166,10 @@ export function PlayerDemo({
     availableVoices[0];
   const downloadVoice =
     episode.voices.find((item) => item.id === voice.id) || episode.voices[0];
+  const downloadingSeason = bundleDownload && !!catalog.season;
+  const downloadSelection = downloadingSeason
+    ? catalog.season!.voices.find((item) => item.id === voice.id)
+    : downloadVoice;
   const tracks = continuous ? catalog.season!.subtitles : episode.subtitles;
   const next = catalog.episodes[catalog.episodes.indexOf(episode) + 1];
   const localSegment = activeDemoSegment(
@@ -1590,53 +1596,108 @@ export function PlayerDemo({
             </nav>
             <section
               className="demo-download-panel"
-              aria-label="Скачать серию для офлайн-просмотра"
+              aria-label="Скачивание видео"
             >
               <div>
                 <Download size={19} />
                 <strong>
-                  Скачать серию {episode.number} · смотреть без интернета
+                  {downloadingSeason
+                    ? 'Все серии одним видео'
+                    : `Скачать серию ${episode.number}`}
                 </strong>
               </div>
               <p>
-                Скачайте выбранную озвучку и субтитры. Затем откройте «Загрузки»
-                на этом устройстве.
+                {downloadingSeason
+                  ? 'Один файл с главами серий, выбранной озвучкой и русскими субтитрами.'
+                  : 'Выбранная озвучка и субтитры для этой серии.'}{' '}
+                Сохраните для просмотра на сайте без интернета или скачайте MP4
+                на устройство.
               </p>
-              <div className="demo-download-actions">
-                {downloadVoice.qualities
+              <div
+                className="demo-download-scope"
+                role="group"
+                aria-label="Что скачать"
+              >
+                <button
+                  aria-pressed={downloadingSeason}
+                  disabled={!catalog.season}
+                  onClick={() => setBundleDownload(true)}
+                >
+                  Все серии (
+                  {catalog.season?.chapters.length || catalog.episodes.length})
+                </button>
+                <button
+                  aria-pressed={!downloadingSeason}
+                  onClick={() => setBundleDownload(false)}
+                >
+                  Только серия {episode.number}
+                </button>
+              </div>
+              <div className="demo-download-actions demo-download-quality-grid">
+                {downloadSelection?.qualities
                   .filter((item) => item.download)
                   .map((item) => (
-                    <button
-                      key={item.height}
-                      disabled={downloadBusy}
-                      onClick={() => {
-                        setDownloadBusy(true);
-                        setDownloadStatus('Подготавливаем загрузку…');
-                        void startDemoDownload(
-                          episode.number,
-                          voice.id,
-                          item.height,
-                          community.user?.id,
-                        )
-                          .then(() =>
+                    <div className="demo-download-quality" key={item.height}>
+                      <div>
+                        <strong>{item.height}p</strong>
+                        <span>
+                          {item.download!.size >= 1024 ** 3
+                            ? `${(item.download!.size / 1024 ** 3).toFixed(2)} ГБ`
+                            : `${Math.round(item.download!.size / 1024 ** 2)} МБ`}
+                        </span>
+                      </div>
+                      <button
+                        disabled={downloadBusy}
+                        onClick={() => {
+                          if (downloadingSeason && !catalog.season?.id) {
                             setDownloadStatus(
-                              'Скачивание началось. Не закрывайте вкладку до завершения.',
-                            ),
-                          )
-                          .catch((cause) => {
-                            setDownloadBusy(false);
-                            setDownloadStatus((cause as Error).message);
-                          });
-                      }}
-                    >
-                      <Download size={15} />
-                      {item.height}p ·{' '}
-                      {Math.round(item.download!.size / 1024 / 1024)} МБ
-                    </button>
+                              'Объединённый файл ещё готовится.',
+                            );
+                            return;
+                          }
+                          setDownloadBusy(true);
+                          setDownloadStatus('Подготавливаем загрузку…');
+                          const task = downloadingSeason
+                            ? startDemoSeasonDownload(
+                                catalog.season!.id!,
+                                voice.id,
+                                item.height,
+                                community.user?.id,
+                              )
+                            : startDemoDownload(
+                                episode.number,
+                                voice.id,
+                                item.height,
+                                community.user?.id,
+                              );
+                          void task
+                            .then(() =>
+                              setDownloadStatus(
+                                'Скачивание началось. Не закрывайте вкладку до завершения.',
+                              ),
+                            )
+                            .catch((cause) => {
+                              setDownloadBusy(false);
+                              setDownloadStatus((cause as Error).message);
+                            });
+                        }}
+                      >
+                        <Download size={15} />
+                        Смотреть офлайн на сайте
+                      </button>
+                      <a
+                        href={item.download!.url}
+                        download={`ReZero-TV4-${downloadingSeason ? `episodes-${catalog.season!.chapters.map((chapter) => chapter.episode).join('-')}` : `episode-${episode.number}`}-${voice.id}-${item.height}p.mp4`}
+                      >
+                        Скачать MP4 на устройство ↓
+                      </a>
+                    </div>
                   ))}
-                <Link href="/downloads">Открыть загрузки →</Link>
               </div>
-              {!downloadVoice.qualities.some((item) => item.download) && (
+              <Link href="/downloads" className="demo-download-library">
+                Открыть загрузки →
+              </Link>
+              {!downloadSelection?.qualities.some((item) => item.download) && (
                 <p>Файлы для скачивания ещё готовятся.</p>
               )}
               {downloadStatus && <p role="status">{downloadStatus}</p>}
