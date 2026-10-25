@@ -1,5 +1,6 @@
 import postgres from 'postgres';
 import { resolveSiteTheme } from '../community';
+import { publicProfileSocial } from '../profile-social';
 
 export type Runtime = {
   DATABASE_URL?: string;
@@ -296,6 +297,10 @@ export const cookie = (r: Request, name: string) =>
     ?.slice(name.length + 1) || '';
 
 export type User = {
+  vk_url?: string | null;
+  telegram_url?: string | null;
+  show_vk?: number;
+  show_telegram?: number;
   role: string;
   id: string;
   identity: string;
@@ -388,7 +393,7 @@ export async function premium(id: string) {
     .first<{ expires: number | null }>();
   return row?.expires && row.expires > now() ? row.expires : 0;
 }
-export async function publicUser(u: User) {
+export async function publicUser(u: User, own = false) {
   const { publicStreak } = await import('./streak');
   const until = await premium(u.id);
   const founder = await db().prepare('SELECT founder_number,first_qualifying_payment_at FROM founding_members WHERE user_id=?')
@@ -410,6 +415,7 @@ export async function publicUser(u: User) {
     id: u.id,
     nick: u.nick,
     bio: u.bio,
+    ...publicProfileSocial(u, own),
     theme: resolveSiteTheme(u.theme),
     avatar: u.avatar,
     pin: cosmetics.pin,

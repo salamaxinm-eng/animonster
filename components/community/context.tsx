@@ -92,6 +92,7 @@ export const useCommunity = () => useContext(Context);
 export function CommunityProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState({
       user: null as Profile | null,
+      recovery_mode: false,
       preview: false,
       moderator: false,
       vk_ready: false,
@@ -184,6 +185,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
         login: () => setShowLogin(true),
       }}
     >
+      {me.recovery_mode && <p className="recovery-notice" role="status">Сайт восстановлен из резервной копии от 9 октября 2026 года. Более поздние изменения могут отсутствовать. Платежи временно отключены.</p>}
       <PassCosmeticsProvider>{children}</PassCosmeticsProvider>
       {authNotice && !showLogin && <div className="social-auth-notice" role={authFailed ? 'alert' : 'status'}><p>{authNotice}</p><button type="button" onClick={() => setAuthNotice('')}>Закрыть</button></div>}
       <Dialog open={showLogin} onOpenChange={setShowLogin}>

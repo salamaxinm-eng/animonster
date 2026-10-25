@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { titleBlocked } from '@/lib/server/title-restrictions';
+import { titleBlocked, permanentlyRestrictedTitle } from '@/lib/server/title-restrictions';
 import { titleBlockedPage } from '@/lib/server/title-blocked-page';
 
 export async function proxy(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
   );
   if (!match) return NextResponse.next();
   const response = (await titleBlocked(request.headers, Number(match[1])))
-    ? titleBlockedPage()
+    ? titleBlockedPage(permanentlyRestrictedTitle(Number(match[1])))
     : NextResponse.next();
   // Neither the permitted page nor the denial may be shared between countries.
   response.headers.set('Cache-Control', 'private, no-store');

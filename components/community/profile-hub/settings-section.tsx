@@ -6,6 +6,7 @@ import type { Profile } from '@/lib/community';
 import { api, useCommunity } from '../context';
 import { AccountData } from '../account-data';
 import { SocialAccounts } from '../social-accounts';
+import { ProfileSocialFields } from '../profile-social';
 import { NotificationSettings } from './notification-settings';
 import { Empty, ResourceState, useResource } from './shared';
 
@@ -171,6 +172,7 @@ export function SettingsSection({
           {tab === 'privacy' && (
             <>
               <h2>Приватность профиля</h2>
+              <ProfileSocialFields draft={draft} onChange={setDraft} />
               <label className="hub-check">
                 <input
                   type="checkbox"

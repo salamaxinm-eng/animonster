@@ -1,5 +1,6 @@
 import { paymentsReady } from '@/lib/server/payment-gateway';
 import { socialReady } from '@/lib/server/social-auth';
+import { profileSocialUrl } from '@/lib/profile-social';
 import { getAnime } from '@/lib/server/library';
 import {
   db,
@@ -42,7 +43,8 @@ export async function GET(r: Request) {
       action = p.get('action') || 'me';
     if (action === 'me')
       return json({
-        user: u ? await publicUser(u) : null,
+        user: u ? await publicUser(u, true) : null,
+        recovery_mode: process.env.RECOVERY_MODE === 'true',
         preview: !!u?.identity.startsWith('preview:'),
         moderator: isModerator(u),
         vk_ready: !!runtime().VK_CLIENT_ID,
@@ -97,7 +99,7 @@ export async function GET(r: Request) {
                 .all<{ list_id: string; anime_id: number }>()
             ).results
           : [];
-      const publicProfile = await publicUser(profile);
+      const publicProfile = await publicUser(profile, own);
       const [animeShowcase, characterShowcase, characters] = await Promise.all([
         db()
           .prepare(
@@ -364,9 +366,21 @@ export async function POST(r: Request) {
           : b.auto_skip_segments
             ? 1
             : 0;
+      let vkUrl: string | null;
+      let telegramUrl: string | null;
+      try {
+        vkUrl = profileSocialUrl(b.vk_url === undefined ? u.vk_url : b.vk_url, 'vk');
+        telegramUrl = profileSocialUrl(b.telegram_url === undefined ? u.telegram_url : b.telegram_url, 'telegram');
+      } catch (error) {
+        throw new ApiError((error as Error).message);
+      }
+      for (const key of ['show_vk', 'show_telegram']) {
+        if (b[key] !== undefined && ![0, 1, false, true].includes(b[key]))
+          throw new ApiError('Некорректная настройка видимости');
+      }
       await db()
         .prepare(
-          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,profile_frame=?,tag=?,wall_open=?,collection_public=?,auto_skip_segments=? WHERE id=?',
+          'UPDATE users SET nick=?,bio=?,theme=?,avatar=?,pin=?,profile_frame=?,tag=?,wall_open=?,collection_public=?,auto_skip_segments=?,vk_url=?,telegram_url=?,show_vk=?,show_telegram=? WHERE id=?',
         )
         .bind(
           nick,
@@ -379,6 +393,10 @@ export async function POST(r: Request) {
           b.wall_open ? 1 : 0,
           b.collection_public ? 1 : 0,
           autoSkipSegments,
+          vkUrl,
+          telegramUrl,
+          b.show_vk === undefined ? (u.show_vk ?? 0) : b.show_vk ? 1 : 0,
+          b.show_telegram === undefined ? (u.show_telegram ?? 0) : b.show_telegram ? 1 : 0,
           u.id,
         )
         .run();

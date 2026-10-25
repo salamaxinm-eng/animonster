@@ -5,6 +5,7 @@ import { AccountData } from './account-data';
 import { TelegramSettings } from './telegram-settings';
 import { RewardsPanel } from './rewards-panel';
 import { StreakDisplay } from './streak-display';
+import { ProfileSocialFields, ProfileSocialLinks } from './profile-social';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -338,6 +339,7 @@ export function ProfilePage({
               )}
             </div>
             <StreakDisplay streak={data.user.streak} />
+            <ProfileSocialLinks user={data.user} />
             {data.own ? (
               <button
                 className="outline-button"
@@ -1085,6 +1087,7 @@ export function ProfilePage({
                       Автоматически пропускать опенинги и эндинги
                     </label>
                     <h3>Приватность</h3>
+                    <ProfileSocialFields draft={draft} onChange={setDraft} />
                     <label>
                       <Checkbox
                         checked={!!draft.wall_open}

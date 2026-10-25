@@ -100,6 +100,23 @@ const proxySource = stripTypeScriptTypes(
   );
 const { proxy } = await import(moduleUrl(proxySource));
 
+void test('complaint titles are unavailable worldwide on pages, RSC and player responses without VPN links', async () => {
+  for (const id of [55825, 46569, 60460]) {
+    for (const ip of ['8.8.8.8', '77.88.8.8', null]) {
+      assert.equal(await rules.titleBlocked(headers(ip), id), true);
+      assert.equal(await rules.titleBlocked(headers(ip), { id: 100000001, shikimori_id: id }), true);
+      const api = await rules.titleRestrictionResponse(headers(ip), id);
+      assert.equal(api.status, 451);
+      assert.equal((await api.json()).code, 'title_unavailable');
+      const response = await proxy(new NextRequest(`https://animonster.su/anime/${id}?episode=2`, { headers: headers(ip, { rsc: '1' }) }));
+      assert.equal(response.status, 451);
+      const html = await response.text();
+      assert.match(html, /по требованию правообладателя/);
+      assert.doesNotMatch(html, /\/vpn|<iframe|kodik/);
+    }
+  }
+});
+
 void test('page and RSC requests receive 451 HTML; allowed pages are never cached across regions', async () => {
   for (const path of [
     '/anime/60058',

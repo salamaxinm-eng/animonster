@@ -5,6 +5,7 @@ import type { Profile } from '@/lib/community';
 import { Avatar, Pin, UserTag } from '../context';
 import { Art, backgroundUrl, sectionHref } from './shared';
 import { StreakDisplay } from '../streak-display';
+import { ProfileSocialLinks } from '../profile-social';
 
 export function ProfileIdentity({
   user,
@@ -56,6 +57,7 @@ export function ProfileIdentity({
             </div>
           </div>
           <p className="hub-bio">{user.bio || 'Описание пока не добавлено.'}</p>
+          <ProfileSocialLinks user={user} />
           {user.founder_number && (
             <small className="hub-founder">
               Founder #{String(user.founder_number).padStart(3, '0')}

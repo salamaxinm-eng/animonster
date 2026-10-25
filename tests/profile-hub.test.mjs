@@ -7,7 +7,9 @@ import { pg_trgm } from '@electric-sql/pglite/contrib/pg_trgm';
 
 const url = (source) =>
   'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
+const profileSocial = url(stripTypeScriptTypes(await readFile('lib/profile-social.ts', 'utf8')));
 const core = url(`
+import { publicProfileSocial } from '${profileSocial}';
 export class ApiError extends Error {constructor(message,status=400){super(message);this.status=status}}
 export const db=()=>globalThis.hubTestDb;
 export const now=()=>Date.now();
@@ -20,7 +22,7 @@ export const requireUser=async request=>{const id=request.headers.get('x-test-us
 export const viewer=async request=>request.headers.get('x-test-user')?requireUser(request):null;
 export const isModerator=()=>false;
 export const runtime=()=>({});
-export const publicUser=user=>({id:user.id,collection_public:user.collection_public});
+export const publicUser=(user,own=false)=>({id:user.id,collection_public:user.collection_public,...publicProfileSocial(user,own)});
 export const body=request=>request.json();
 export const inviteRequired=()=>false;
 export const emailVerificationEnabled=()=>false;
@@ -61,6 +63,7 @@ const publicRoute = await import(
   await load('app/api/community/route.ts', [
     ['@/lib/server/payment-gateway', url('export const paymentsReady=()=>false;')],
     ['@/lib/server/social-auth', url('export const socialReady=()=>false;')],
+    ['@/lib/profile-social', profileSocial],
     ['@/lib/server/core', core],
     ['@/lib/community', community],
     ['@/lib/server/cosmetics', cosmetics],
@@ -212,6 +215,26 @@ test('profile hub isolates owners, paginates and filters real data, and saves ap
     );
     assert.equal(publicCompact.status, 200);
     assert.deepEqual((await publicCompact.json()).entries, []);
+    const saveSocial = async (extra, origin = 'http://localhost') => publicRoute.POST(
+      new Request('http://localhost/api/community?action=profile', {
+        method: 'POST', headers: { 'content-type': 'application/json', 'x-test-user': 'owner', origin },
+        body: JSON.stringify({ action: 'profile', nick: 'Owner', bio: 'Keep me', avatar: 'moon', theme: 'eclipse', pin: null, profile_frame: 'none', tag: null, wall_open: 1, collection_public: 1, ...extra }),
+      }),
+    );
+    const socialProfile = async (viewerId) => (await publicRoute.GET(new Request('http://localhost/api/community?action=profile&view=hub&id=owner', { headers: viewerId ? { 'x-test-user': viewerId } : {} }))).json();
+    assert.equal((await saveSocial({ vk_url: 'vk.com/id12345', telegram_url: 't.me/test_user', show_vk: 0, show_telegram: 1 })).status, 200);
+    assert.equal((await socialProfile()).user.vk_url, null);
+    assert.equal((await socialProfile('other')).user.vk_url, null);
+    assert.equal((await socialProfile()).user.telegram_url, 'https://t.me/test_user');
+    assert.equal((await socialProfile('owner')).user.vk_url, 'https://vk.com/id12345');
+    assert.equal((await saveSocial({ show_vk: 1, show_telegram: 0 })).status, 200);
+    assert.equal((await socialProfile()).user.vk_url, 'https://vk.com/id12345');
+    assert.equal((await socialProfile()).user.telegram_url, null);
+    assert.equal((await saveSocial({ vk_url: 'javascript:alert(1)' })).status, 400);
+    assert.equal((await saveSocial({ show_vk: 'false' })).status, 400);
+    assert.equal((await saveSocial({ show_vk: 0 }, 'https://evil.com')).status, 403);
+    assert.equal((await saveSocial({ vk_url: '', telegram_url: '', show_vk: 0, show_telegram: 0 })).status, 200);
+    assert.equal((await socialProfile('owner')).user.vk_url, null);
     const initial = {
       avatar: 'moon',
       theme: 'v2-neon',

@@ -9,6 +9,13 @@ type TitleIdentity =
   | { id: number; shikimori_id?: number; mal_id?: number };
 type RequestHeaders = Pick<Headers, 'get'>;
 
+// Copyright complaint: disabled globally, independent of GeoIP or admin edits.
+const unavailableTitles = new Set([55825, 46569, 60460]);
+export function permanentlyRestrictedTitle(title: TitleIdentity) {
+  const ids = typeof title === 'number' ? [title] : [title.id, title.shikimori_id, title.mal_id];
+  return ids.some((id) => typeof id === 'number' && unavailableTitles.has(id));
+}
+
 export async function restrictedTitle(title: TitleIdentity) {
   const ids =
     typeof title === 'number'
@@ -47,6 +54,7 @@ export async function titleBlocked(
   headers: RequestHeaders,
   title: TitleIdentity,
 ) {
+  if (permanentlyRestrictedTitle(title)) return true;
   const country = visitorCountry(headers);
   // An unrecognised address must not accidentally expose the disputed title.
   return (
@@ -59,6 +67,12 @@ export async function titleRestrictionResponse(
   title: TitleIdentity,
 ) {
   if (!(await titleBlocked(headers, title))) return null;
+  if (permanentlyRestrictedTitle(title)) {
+    return Response.json(
+      { error: 'Доступ к материалу закрыт по требованию правообладателя', code: 'title_unavailable' },
+      { status: 451, headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  }
   return Response.json(
     {
       error: TITLE_BLOCKED_MESSAGE,

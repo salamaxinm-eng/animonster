@@ -211,6 +211,10 @@ export const pins = [
 import type { Streak } from './streak';
 
 export type Profile = {
+  vk_url?: string | null;
+  telegram_url?: string | null;
+  show_vk?: number;
+  show_telegram?: number;
   founder_number?: number | null;
   founder_since?: number | null;
   plus_lifetime?: boolean;

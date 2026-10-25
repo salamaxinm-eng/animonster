@@ -25,10 +25,15 @@ section{width:min(100%,600px);padding:clamp(24px,5vw,52px);text-align:center;bor
 <a class="back" href="/catalog">Вернуться в каталог</a>
 </section></main></body></html>`;
 
-export function titleBlockedPage() {
+export function titleBlockedPage(permanent = false) {
   // Return the document directly: rendering a static rewrite can overwrite 451
   // and private cache headers with the cached destination page's 200 response.
-  return new Response(html, {
+  const document = permanent ? html
+    .replace('<meta http-equiv="refresh" content="7;url=/vpn">', '')
+    .replace('Доступ к этому тайтлу на территории России ограничен по требованию правообладателя.', 'Доступ к материалу закрыт по требованию правообладателя.')
+    .replace(/<a class="cta"[^]*?<\/a>/, '')
+    .replace(/<p class="timer"[^]*?<\/p>/, '') : html;
+  return new Response(document, {
     status: 451,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
