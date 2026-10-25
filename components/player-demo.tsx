@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { CommunityHeader, useCommunity } from '@/components/community/context';
 import { useDemoProgress, useDemoRoom } from '@/hooks/use-demo-session';
+import { useDemoFeedback } from '@/hooks/use-demo-feedback';
+import { DemoFeedbackDialog } from '@/components/demo-feedback-dialog';
 import { demoPosition, demoResumePoint } from '@/lib/demo-session';
 import { seasonPoint, seasonPosition } from '@/lib/demo-season';
 import { BuySubscription } from '@/components/community/buy-subscription';
@@ -148,6 +150,14 @@ export function PlayerDemo({
   const episode =
     catalog.episodes.find((item) => item.number === point.episode) ||
     catalog.episodes[0];
+  const feedback = useDemoFeedback(
+    catalog,
+    community.user?.id,
+    community.loaded,
+    continuous,
+    episode.number,
+  );
+  const resumeAfterFeedback = useRef(false);
   const availableVoices = continuous ? catalog.season!.voices : episode.voices;
   const voice =
     availableVoices.find((item) => item.id === preferences.voice) ||
@@ -967,6 +977,7 @@ export function PlayerDemo({
                   setNotice(`${change > 0 ? '+' : '−'}10 секунд`);
                 }}
                 onLoadedMetadata={(event) => {
+                  feedback.reset();
                   const element = event.currentTarget;
                   mediaLoaded.current = true;
                   setDuration(element.duration);
@@ -987,18 +998,21 @@ export function PlayerDemo({
                   }
                 }}
                 onPlay={() => {
+                  if (video.current) feedback.sample(video.current);
                   setPlaying(true);
                   showControls();
                   if (mediaLoaded.current && Date.now() > applyingRoom.current)
                     broadcast({ playing: true });
                 }}
                 onPause={() => {
+                  feedback.reset();
                   setPlaying(false);
                   persist(video.current?.currentTime || 0, true);
                   if (mediaLoaded.current && Date.now() > applyingRoom.current)
                     broadcast({ playing: false });
                 }}
                 onWaiting={() => {
+                  feedback.reset();
                   setWaiting(true);
                   if (mediaLoaded.current) broadcast({ playing: false });
                 }}
@@ -1009,10 +1023,12 @@ export function PlayerDemo({
                     broadcast({ playing: true });
                 }}
                 onSeeked={() => {
+                  feedback.reset();
                   if (mediaLoaded.current && Date.now() > applyingRoom.current)
                     broadcast({ position: video.current?.currentTime || 0 });
                 }}
                 onRateChange={(event) => {
+                  feedback.reset();
                   const rate = event.currentTarget.playbackRate;
                   if (guest) {
                     const expected = room.snapshot!.room.rate;
@@ -1030,6 +1046,7 @@ export function PlayerDemo({
                 onCanPlay={() => setWaiting(false)}
                 onTimeUpdate={(event) => {
                   const element = event.currentTarget;
+                  feedback.sample(element);
                   if (continuous) {
                     const currentPoint = seasonPoint(
                       catalog.season!,
@@ -1062,14 +1079,17 @@ export function PlayerDemo({
                   }
                 }}
                 onEnded={() => {
+                  feedback.reset();
                   setPlaying(false);
                   if (!continuous && preferences.autoNext && next && !guest)
                     setCountdown(10);
                 }}
                 onError={() => {
+                  feedback.reset();
                   setError('Видео недоступно. Попробуйте загрузить его снова.');
                   setWaiting(false);
                 }}
+                onSeeking={() => feedback.reset()}
               >
                 {tracks?.map((track) => (
                   <track
@@ -1081,6 +1101,20 @@ export function PlayerDemo({
                   />
                 ))}
               </video>
+              <DemoFeedbackDialog
+                key={community.user?.id || 'guest'}
+                feedback={feedback}
+                onOpen={() => {
+                  resumeAfterFeedback.current =
+                    !room.snapshot && !!video.current && !video.current.paused;
+                  if (resumeAfterFeedback.current) video.current?.pause();
+                }}
+                onClosed={() => {
+                  if (resumeAfterFeedback.current && !room.snapshot)
+                    void video.current?.play().catch(() => {});
+                  resumeAfterFeedback.current = false;
+                }}
+              />
               <div className="demo-screen-label">
                 AM<span>PLAYER</span>
                 <small>
