@@ -14,6 +14,8 @@ export type OfflineSegment = {
   downloaded: boolean;
   size: number;
   mimeType?: string;
+  rangeStart?: number;
+  rangeEnd?: number;
 };
 
 export type OfflineManifest = {
@@ -29,10 +31,13 @@ export type OfflineEpisode = {
   animePoster: string;
   episode: number;
   duration?: number;
-  quality: 480 | 720 | 1080;
+  quality: 360 | 480 | 720 | 1080;
   voiceoverId: string;
   voiceoverName: string;
-  provider: 'aniliberty';
+  provider: 'aniliberty' | 'demo';
+  offlineSubtitles?: { fileName: string; title: string; language: string }[];
+  position?: number;
+  ownerId?: string;
   size: number;
   downloadedBytes: number;
   totalBytes?: number;
@@ -56,10 +61,13 @@ export type OfflinePrepareResponse = {
   animePoster: string;
   episode: number;
   duration?: number;
-  quality: 480 | 720 | 1080;
+  quality: 360 | 480 | 720 | 1080;
   voiceoverId: string;
   voiceoverName: string;
-  provider: 'aniliberty';
+  provider: 'aniliberty' | 'demo';
+  mediaUrl?: string;
+  mediaSize?: number;
+  subtitles?: { url: string; title: string; language: string }[];
   manifestUrl: string;
   expiresAt: number;
   offlineAccessUntil: number;

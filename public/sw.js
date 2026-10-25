@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'animonster-shell-v6-shared-palette';
+const SHELL_CACHE = 'animonster-shell-v7-player-offline';
 const DATA_CACHE = 'animonster-public-data-v1';
 const SHELL_PAGES = [
   '/',
@@ -43,14 +43,14 @@ async function cachePage(cache, path, response) {
   } catch {}
 }
 
-async function precacheShell() {
+async function precacheShell(pages = SHELL_PAGES, strict = false) {
   const cache = await caches.open(SHELL_CACHE);
   const assets = new Set([
     '/manifest.webmanifest',
     '/icon.png',
     '/icon-512.png',
   ]);
-  for (const path of SHELL_PAGES) {
+  for (const path of pages) {
     try {
       const response = await fetch(path, { cache: 'reload', credentials: 'omit' });
       if (!isPublicResponse(response, 'text/html')) continue;
@@ -66,7 +66,10 @@ async function precacheShell() {
         const response = await fetch(path, { credentials: 'omit' });
         if (response.ok && response.type !== 'opaque')
           await cache.put(path, response);
-      } catch {}
+        else throw new Error('Offline asset unavailable');
+      } catch (error) {
+        if (strict && !(await cache.match(path))) throw error;
+      }
     }),
   );
 }
@@ -105,6 +108,21 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'AM_PREPARE_OFFLINE' || !event.ports?.[0]) return;
+  const reply = event.ports[0];
+  event.waitUntil((async () => {
+    try {
+      await precacheShell([...OFFLINE_PAGES], true);
+      const cache = await caches.open(SHELL_CACHE);
+      const pages = await Promise.all([...OFFLINE_PAGES].map((path) => cache.match(path)));
+      reply.postMessage({ ok: pages.every(Boolean) });
+    } catch {
+      reply.postMessage({ ok: false });
+    }
+  })());
+});
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET' || request.cache === 'no-store') return;
@@ -112,7 +130,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   if (request.mode === 'navigate') {
-    if (url.search || (!FAST_PAGES.has(url.pathname) && !OFFLINE_PAGES.has(url.pathname)))
+    if ((url.search && !OFFLINE_PAGES.has(url.pathname)) || (!FAST_PAGES.has(url.pathname) && !OFFLINE_PAGES.has(url.pathname)))
       return;
     event.respondWith((async () => {
       const cache = await caches.open(SHELL_CACHE);
@@ -129,7 +147,10 @@ self.addEventListener('fetch', (event) => {
       try {
         return await refresh();
       } catch {
-        return cached || Response.error();
+        if (cached) return cached;
+        if (FAST_PAGES.has(url.pathname) && await cache.match('/downloads'))
+          return Response.redirect(new URL('/downloads', self.location.origin).href, 302);
+        return Response.error();
       }
     })().catch(() => fetch(request)));
     return;

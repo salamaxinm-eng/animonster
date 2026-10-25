@@ -11,6 +11,7 @@ import {
 } from './storage';
 import { masterVariant, parseMediaPlaylist } from './hls';
 import { deleteOfflineData } from './delete';
+import { demoDownloadManifest, validRangeResponse } from './demo';
 import type {
   OfflineEpisode,
   OfflineManifest,
@@ -90,6 +91,7 @@ async function verifiedManifest(
   current: OfflineManifest | undefined,
   fresh: OfflineManifest,
   episodeId: string,
+  strict = false,
 ) {
   if (!current) return fresh;
   const old = new Map(current.segments.map((item) => [item.id, item]));
@@ -97,6 +99,7 @@ async function verifiedManifest(
     const saved = old.get(segment.id);
     if (
       saved?.downloaded &&
+      (!strict || saved.remoteUrl === segment.remoteUrl) &&
       (await offlineFileExists(episodeId, saved.fileName))
     ) {
       segment.downloaded = true;
@@ -114,6 +117,7 @@ async function downloadPrepared(
   const controller = new AbortController();
   controllers.get(episode.id)?.abort();
   controllers.set(episode.id, controller);
+  let workerFailure: unknown;
   try {
     episode.status = 'downloading';
     episode.error = undefined;
@@ -121,15 +125,36 @@ async function downloadPrepared(
     episode.downloadId = prepared.downloadId;
     episode.manifestData = await verifiedManifest(
       episode.manifestData,
-      await fetchManifest(prepared, episode.id),
+      prepared.provider === 'demo'
+        ? demoDownloadManifest(prepared)
+        : await fetchManifest(prepared, episode.id),
       episode.id,
+      prepared.provider === 'demo',
     );
+    if (prepared.provider === 'demo') {
+      episode.mimeType = 'video/mp4';
+      episode.totalBytes = prepared.mediaSize;
+      episode.offlineSubtitles = (prepared.subtitles || []).map(
+        (track, index) => ({
+          fileName: `subtitle-${index}.vtt`,
+          title: track.title,
+          language: track.language,
+        }),
+      );
+    }
     episode.downloadedBytes = episode.manifestData.segments.reduce(
       (sum, item) => sum + (item.downloaded ? item.size : 0),
       0,
     );
     const estimate = await storageEstimate();
-    if (estimate.quota && estimate.quota - estimate.usage < MIN_FREE_BYTES)
+    if (
+      estimate.quota &&
+      estimate.quota - estimate.usage <
+        MIN_FREE_BYTES +
+          (prepared.provider === 'demo'
+            ? Math.max(0, (prepared.mediaSize || 0) - episode.downloadedBytes)
+            : 0)
+    )
       throw new Error('Недостаточно свободного места');
     if (navigator.storage?.persist && !(await navigator.storage.persisted?.()))
       await navigator.storage.persist().catch(() => false);
@@ -142,48 +167,85 @@ async function downloadPrepared(
     let bytesWindow = 0;
     let windowStarted = performance.now();
     const worker = async () => {
-      while (cursor < queue.length) {
-        const item = queue[cursor++];
-        const response = await fetch(item.remoteUrl, {
-          credentials: 'include',
-          signal: controller.signal,
-        });
-        if (!response.ok)
-          throw new Error('Источник прервал загрузку сегмента.');
-        item.mimeType =
-          response.headers.get('content-type') || 'application/octet-stream';
-        item.size = await writeResponseFile(
-          episode.id,
-          item.fileName,
-          response,
-          controller.signal,
-          (bytes) => {
-            episode.downloadedBytes += bytes;
-            bytesWindow += bytes;
-            const elapsed = performance.now() - windowStarted;
-            if (elapsed >= 750) {
-              episode.speedBytesPerSecond = Math.round(
-                (bytesWindow * 1000) / elapsed,
-              );
-              bytesWindow = 0;
-              windowStarted = performance.now();
-              notify({ ...episode });
-            }
-          },
-        );
-        item.downloaded = true;
-        episode.size = episode.manifestData!.segments.reduce(
-          (sum, value) => sum + (value.downloaded ? value.size : 0),
-          0,
-        );
-        episode.updatedAt = Date.now();
-        await putOfflineEpisode(episode);
-        notify({ ...episode });
+      try {
+        while (cursor < queue.length) {
+          const item = queue[cursor++];
+          const response = await fetch(item.remoteUrl, {
+            credentials: 'include',
+            signal: controller.signal,
+            ...(item.rangeStart !== undefined
+              ? {
+                  headers: {
+                    Range: `bytes=${item.rangeStart}-${item.rangeEnd}`,
+                  },
+                }
+              : {}),
+          });
+          if (!response.ok)
+            throw new Error('Источник прервал загрузку сегмента.');
+          if (
+            item.rangeStart !== undefined &&
+            (response.status !== 206 ||
+              !validRangeResponse(
+                response.headers.get('content-range'),
+                item.rangeStart,
+                item.rangeEnd!,
+                prepared.mediaSize!,
+              ))
+          )
+            throw new Error('Сервер не подтвердил диапазон загрузки.');
+          item.mimeType =
+            response.headers.get('content-type') || 'application/octet-stream';
+          item.size = await writeResponseFile(
+            episode.id,
+            item.fileName,
+            response,
+            controller.signal,
+            (bytes) => {
+              episode.downloadedBytes += bytes;
+              bytesWindow += bytes;
+              const elapsed = performance.now() - windowStarted;
+              if (elapsed >= 750) {
+                episode.speedBytesPerSecond = Math.round(
+                  (bytesWindow * 1000) / elapsed,
+                );
+                bytesWindow = 0;
+                windowStarted = performance.now();
+                notify({ ...episode });
+              }
+            },
+          );
+          if (
+            item.rangeStart !== undefined &&
+            item.size !== item.rangeEnd! - item.rangeStart + 1
+          )
+            throw new Error(
+              'Фрагмент скачан не полностью. Повторите загрузку.',
+            );
+          item.downloaded = true;
+          episode.size = episode.manifestData!.segments.reduce(
+            (sum, value) => sum + (value.downloaded ? value.size : 0),
+            0,
+          );
+          episode.updatedAt = Date.now();
+          await putOfflineEpisode(episode);
+          notify({ ...episode });
+        }
+      } catch (cause) {
+        if (!controller.signal.aborted) {
+          workerFailure = cause;
+          controller.abort();
+        }
+        throw cause;
       }
     };
-    await Promise.all(
+    const results = await Promise.allSettled(
       Array.from({ length: Math.min(4, queue.length || 1) }, worker),
     );
+    const rejected = results.find(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+    if (rejected) throw workerFailure || rejected.reason;
     episode.status = 'completed';
     episode.completedAt = Date.now();
     episode.updatedAt = Date.now();
@@ -191,20 +253,23 @@ async function downloadPrepared(
     await putOfflineEpisode(episode);
     await cachePoster(episode.animePoster);
     notify({ ...episode });
-    void requestJson('/api/offline/status', {
-      downloadId: episode.downloadId,
-      status: 'completed',
-    }).catch(() => {});
+    if (episode.provider !== 'demo')
+      void requestJson('/api/offline/status', {
+        downloadId: episode.downloadId,
+        status: 'completed',
+      }).catch(() => {});
   } catch (error) {
-    episode.status = controller.signal.aborted ? 'paused' : 'failed';
-    episode.error = controller.signal.aborted
-      ? undefined
-      : (error as Error).message || 'Не удалось продолжить загрузку';
+    episode.status =
+      controller.signal.aborted && !workerFailure ? 'paused' : 'failed';
+    episode.error =
+      controller.signal.aborted && !workerFailure
+        ? undefined
+        : (error as Error).message || 'Не удалось продолжить загрузку';
     episode.updatedAt = Date.now();
     episode.speedBytesPerSecond = 0;
     await putOfflineEpisode(episode);
     notify({ ...episode });
-    if (!controller.signal.aborted) throw error;
+    if (workerFailure || !controller.signal.aborted) throw error;
   } finally {
     if (controllers.get(episode.id) === controller)
       controllers.delete(episode.id);
@@ -238,7 +303,10 @@ async function pumpDownloads() {
 }
 
 async function savePrepared(prepared: OfflinePrepareResponse) {
-  const id = `${prepared.animeId}-${prepared.episode}-${prepared.quality}`;
+  const id =
+    prepared.provider === 'demo'
+      ? `demo-${prepared.episode}-${prepared.voiceoverId}-${prepared.quality}`
+      : `${prepared.animeId}-${prepared.episode}-${prepared.quality}`;
   const existing = await getOfflineEpisode(id);
   const timestamp = Date.now();
   const episode: OfflineEpisode = existing || {
@@ -310,6 +378,17 @@ export async function startOfflineRangeDownload(input: {
 export async function resumeOfflineDownload(id: string) {
   const episode = await getOfflineEpisode(id);
   if (!episode) throw new Error('Загрузка не найдена.');
+  if (episode.provider === 'demo') {
+    const response = await fetch(
+      `/api/player-demo/download?episode=${episode.episode}&voice=${encodeURIComponent(episode.voiceoverId)}&quality=${episode.quality}`,
+      { cache: 'no-store' },
+    );
+    const prepared = await response.json();
+    if (!response.ok)
+      throw new Error(prepared.error || 'Скачивание недоступно');
+    queuePrepared(episode, prepared);
+    return episode;
+  }
   const prepared = await requestJson<OfflinePrepareResponse>(
     '/api/offline/prepare',
     {
@@ -346,14 +425,16 @@ export async function deleteOfflineEpisode(id: string) {
   await deleteOfflineData(id, deleteOfflineFiles, removeOfflineEpisodeMetadata);
   if (episode) {
     notify({ ...episode, status: 'failed', error: 'deleted' });
-    void requestJson('/api/offline/status', {
-      downloadId: episode.downloadId,
-      status: 'deleted',
-    }).catch(() => {});
+    if (episode.provider !== 'demo')
+      void requestJson('/api/offline/status', {
+        downloadId: episode.downloadId,
+        status: 'deleted',
+      }).catch(() => {});
   }
 }
 
 export async function refreshOfflineLicense(episode: OfflineEpisode) {
+  if (episode.provider === 'demo') return episode;
   const result = await requestJson<{ offlineAccessUntil: number }>(
     '/api/offline/license',
     { animeId: episode.animeId, episode: episode.episode },
@@ -363,4 +444,51 @@ export async function refreshOfflineLicense(episode: OfflineEpisode) {
   await putOfflineEpisode(episode);
   notify(episode);
   return episode;
+}
+
+export async function startDemoDownload(
+  episode: number,
+  voice: string,
+  quality: number,
+  ownerId?: string,
+) {
+  await ensureOfflineStorage();
+  if (!navigator.serviceWorker?.controller)
+    throw new Error(
+      'Офлайн-режим ещё устанавливается. Обновите страницу через несколько секунд.',
+    );
+  const response = await fetch(
+    `/api/player-demo/download?episode=${episode}&voice=${encodeURIComponent(voice)}&quality=${quality}`,
+    { cache: 'no-store' },
+  );
+  const prepared = await response.json();
+  if (!response.ok) throw new Error(prepared.error || 'Скачивание недоступно');
+  // Warm the exact offline entry point and the player code before disconnecting.
+  await import('@/components/offline-player');
+  await new Promise<void>((resolve, reject) => {
+    const channel = new MessageChannel();
+    const timer = setTimeout(() => {
+      channel.port1.close();
+      reject(new Error('Обновите страницу, чтобы установить офлайн-режим.'));
+    }, 10000);
+    channel.port1.onmessage = (event) => {
+      clearTimeout(timer);
+      channel.port1.close();
+      if (event.data?.ok) resolve();
+      else
+        reject(
+          new Error(
+            'Не удалось сохранить офлайн-раздел. Проверьте соединение и повторите загрузку.',
+          ),
+        );
+    };
+    navigator.serviceWorker.controller!.postMessage(
+      { type: 'AM_PREPARE_OFFLINE' },
+      [channel.port2],
+    );
+  });
+  const item = await savePrepared(prepared);
+  item.ownerId = ownerId;
+  await putOfflineEpisode(item);
+  return item;
 }

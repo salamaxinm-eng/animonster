@@ -1,0 +1,8 @@
+services:
+  app:
+    image: ${PLAYER_DEMO_IMAGE:?Set PLAYER_DEMO_IMAGE to the tested player demo image}
+    environment:
+      PLAYER_DEMO_ENABLED: ${PLAYER_DEMO_ENABLED:-false}
+      PLAYER_DEMO_CATALOG: ${PLAYER_DEMO_CATALOG:-/var/lib/animonster-media/catalog.json}
+    volumes:
+      - /var/lib/animonster-media:/var/lib/animonster-media:ro

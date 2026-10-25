@@ -1,0 +1,20 @@
+[Unit]
+Description=AniMonster video import %i
+After=network.target
+
+[Service]
+Type=oneshot
+User=animonster-media
+Group=www-data
+UMask=0027
+ExecStart=/usr/bin/python3 /opt/animonster-media/demo-media.py --import-spec /var/lib/animonster-media/specs/%i.json
+CPUQuota=100%
+MemoryMax=1G
+Nice=15
+IOSchedulingClass=idle
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/animonster-media
+TimeoutStartSec=infinity

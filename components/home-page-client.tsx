@@ -14,6 +14,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PopularHero } from '@/components/popular-hero';
 import { HomeDiscovery } from '@/components/home-discovery';
+import { PlayerDemoPromo } from '@/components/player-demo-promo';
 import { posterUrl, type Anime } from '@/lib/anime';
 import { fetchJsonWithRetry } from '@/lib/client/fetch-json';
 import { CommunityHeader, api, useCommunity } from '@/components/community/context';
@@ -149,6 +150,7 @@ export function HomePageClient({ initialPopular }: { initialPopular: Anime[] }) 
       />
       <main>
         <PopularHero initial={initialPopular} onOpen={open} />
+        <PlayerDemoPromo />
         <HomeDiscovery />
         <section id="catalog" className="catalog">
           <div className="section-head">

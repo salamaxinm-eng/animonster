@@ -1,0 +1,19 @@
+[Unit]
+Description=AniMonster demo torrent download
+After=network-online.target
+
+[Service]
+User=animonster-media
+Group=www-data
+UMask=0027
+ExecStart=/usr/bin/transmission-daemon --foreground --config-dir /var/lib/animonster-media/transmission --download-dir /var/lib/animonster-media/downloads --rpc-bind-address 127.0.0.1 --port 9092 --peerport 51415 --no-auth
+Restart=on-failure
+MemoryMax=256M
+CPUQuota=50%
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/animonster-media
+
+[Install]
+WantedBy=multi-user.target

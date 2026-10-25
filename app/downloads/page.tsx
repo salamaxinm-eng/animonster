@@ -55,7 +55,7 @@ export default function DownloadsPage() {
       <main>
         <div className="offline-heading">
           <div>
-            <span className="eyebrow">ANIMONSTER PLUS</span>
+            <span className="eyebrow">ОФЛАЙН-ПРОСМОТР</span>
             <h1>Загрузки</h1>
             <p>Серии хранятся только на этом устройстве.</p>
           </div>
@@ -94,6 +94,7 @@ export default function DownloadsPage() {
                       Серия {item.episode} · {item.quality}p ·{' '}
                       {item.voiceoverName}
                     </p>
+                    {item.provider === 'demo' && <p>Бесплатное демо</p>}
                     {item.status !== 'completed' && (
                       <>
                         <progress max="100" value={percent} />

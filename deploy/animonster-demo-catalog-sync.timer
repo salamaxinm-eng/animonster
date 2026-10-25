@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh AniMonster published video metadata
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=30s
+Unit=animonster-demo-catalog-sync.service
+
+[Install]
+WantedBy=timers.target
