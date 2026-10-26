@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -21,7 +22,7 @@ def seconds(stamp):
 
 
 def media_file(root,prefix,url):
-    if not url.startswith(prefix+'/') or not re.fullmatch(r'[a-zA-Z0-9/_-]+\.(m3u8|vtt|jpg|mp4)',url[len(prefix)+1:]):
+    if not url.startswith(prefix+'/') or not re.fullmatch(r'[a-zA-Z0-9/_-]+\.(m3u8|vtt|jpg|mp4|ts)',url[len(prefix)+1:]):
         raise ValueError('Unexpected media path')
     file=(root/'published'/url[len(prefix)+1:]).resolve(strict=True)
     if not file.is_relative_to((root/'published').resolve()):raise ValueError('Media outside publication')
@@ -45,33 +46,63 @@ def media_duration(file):
     return float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','default=nw=1:nk=1',str(file)],text=True))
 
 
-def remux(folder,name,files,lengths,kind,work):
+def require_space(root, size, minimum_free_percent=20):
+    disk=shutil.disk_usage(root)
+    if disk.free-size*1.1 < disk.total*minimum_free_percent/100:
+        raise RuntimeError(f'Season remux must leave {minimum_free_percent}% disk free')
+
+
+def rendition_size(root,prefix,url):
+    return sum(media_file(root,prefix,segment).stat().st_size for _,segment in playlist(root,prefix,url))
+
+
+def quality_source(root,prefix,voice,height,streaming=False):
+    quality=next(q for q in voice['qualities'] if q['height']==height)
+    url=quality['url'] if streaming else quality.get('download',{}).get('url',quality['url'])
+    return media_file(root,prefix,url)
+
+
+def remux(folder,name,files,lengths,kind,work,stream_index=None):
     playlist_file=folder/(name+'.m3u8')
     if playlist_file.exists() and '#EXT-X-ENDLIST' in playlist_file.read_text():return
     target=folder/name;target.mkdir(exist_ok=True,mode=0o750)
     with tempfile.TemporaryDirectory(prefix='season-concat-',dir=work) as temp:
         concat=Path(temp)/'inputs.ffconcat'
         concat.write_text('ffconcat version 1.0\n'+''.join("file '"+str(file).replace("'","'\\''")+f"'\nduration {length:.6f}\n" for file,length in zip(files,lengths)))
-        subprocess.run(['ffmpeg','-hide_banner','-loglevel','warning','-nostdin','-y','-f','concat','-safe','0','-i',str(concat),'-map','0:v:0' if kind=='video' else '0:a:0','-an' if kind=='video' else '-vn','-c','copy','-avoid_negative_ts','make_zero','-f','hls','-hls_time','6','-hls_playlist_type','vod','-hls_flags','independent_segments','-hls_base_url',name+'/','-hls_segment_filename',str(target/'%05d.ts'),str(playlist_file)],check=True)
+        subprocess.run(['ffmpeg','-hide_banner','-loglevel','warning','-nostdin','-y','-protocol_whitelist','file,crypto,data','-f','concat','-safe','0','-i',str(concat),'-map',f'0:{stream_index}' if stream_index is not None else ('0:v:0' if kind=='video' else '0:a:0'),'-an' if kind=='video' else '-vn','-c','copy','-avoid_negative_ts','make_zero','-f','hls','-hls_time','6','-hls_playlist_type','vod','-hls_flags','independent_segments','-hls_base_url',name+'/','-hls_segment_filename',str(target/'%05d.ts'),str(playlist_file)],check=True)
     playlist_file.chmod(0o640)
     for segment in target.glob('*.ts'):segment.chmod(0o640)
 
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--root',type=Path,default=Path('/var/lib/animonster-media/enhanced'));p.add_argument('--public-prefix',default='/demo-media/enhanced');a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--root',type=Path,default=Path('/var/lib/animonster-media/enhanced'));p.add_argument('--public-prefix',default='/demo-media/enhanced');p.add_argument('--source-spec',type=Path);p.add_argument('--minimum-free-percent',type=int,choices=range(10,51),default=20);a=p.parse_args()
     root=a.root.resolve();prefix=a.public_prefix.rstrip('/')
     with (root/'import.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX)
-        publish(root,prefix)
+        publish(root,prefix,a.source_spec,a.minimum_free_percent)
 
 
-def publish(root,prefix):
+def publish(root,prefix,source_spec=None,minimum_free_percent=20):
     catalog_file=root/'catalog.json';catalog=json.loads(catalog_file.read_text());episodes=catalog['episodes']
     if len(episodes)<2:return
+    streaming=any(not q.get('download') for e in episodes for v in e['voices'] for q in v['qualities'] if q['height']==1080)
+    if streaming and source_spec is None:
+        candidate=root/'specs/rezero.json'
+        if not candidate.exists():raise ValueError('Native source specification is required without offline MP4 inputs')
+        source_spec=candidate
+    native={}
+    if source_spec:
+        private=json.loads(Path(source_spec).read_text())
+        for entry in private['episodes']:
+            if len(entry['sources'])!=1:raise ValueError('Native concat requires one source per episode')
+            source=entry['sources'][0];file=Path(source['file']).resolve(strict=True)
+            if not file.is_relative_to((root/'downloads').resolve()) or file.suffix.lower()!='.mkv':raise ValueError('Native source outside downloads')
+            native[entry['number']]={'file':file,'voices':{v['id']:v['audio_stream'] for v in source['voices']}}
+        if any(e['number'] not in native for e in episodes):raise ValueError('Native source missing')
     # A season only exposes voices and qualities present in every ready episode.
     voice_ids=set(v['id'] for v in episodes[0]['voices'])
     for e in episodes[1:]:voice_ids &= {v['id'] for v in e['voices']}
-    identity=hashlib.sha256(('continuous-timestamps-v2'+json.dumps(episodes,sort_keys=True)).encode()).hexdigest()[:16]
+    identity=hashlib.sha256((('continuous-timestamps-v4-native' if native else 'continuous-timestamps-v2')+json.dumps(episodes,sort_keys=True)).encode()).hexdigest()[:16]
     folder=root/'published'/('season-'+identity);folder.mkdir(exist_ok=True,mode=0o750);base=prefix+'/'+folder.name
     if any(v.get('master','').startswith(base+'/') for v in catalog.get('season',{}).get('voices',[])):
         return
@@ -79,8 +110,7 @@ def publish(root,prefix):
     for e in episodes:
         release=e['voices'][0]['master'].rsplit('/',1)[0]
         ref=playlist(root,prefix,release+'/s0-v1080/index.m3u8')
-        source=next(q['download']['url'] for q in e['voices'][0]['qualities'] if q['height']==1080)
-        length=media_duration(media_file(root,prefix,source))
+        length=media_duration(native[e['number']]['file'] if native else quality_source(root,prefix,e['voices'][0],1080,streaming))
         if abs(length-e['duration'])>1:raise ValueError('Episode length mismatch')
         references.append(ref);chapters.append({'episode':e['number'],'start':offset,'stop':offset+length});offset+=length
     voices=[]
@@ -89,9 +119,18 @@ def publish(root,prefix):
         heights=set(q['height'] for q in selected[0]['qualities'])
         for v in selected[1:]:heights &= {q['height'] for q in v['qualities']}
         lengths=[chapter['stop']-chapter['start'] for chapter in chapters]
-        audio_files=[media_file(root,prefix,next(q['download']['url'] for q in v['qualities'] if q['height']==1080)) for v in selected]
+        audio_files=[media_file(root,prefix,v['master'].rsplit('/',1)[0]+f'/a-{vid}/index.m3u8') if streaming else quality_source(root,prefix,v,1080) for v in selected]
+        stream_index=None
+        if native:
+            audio_files=[native[e['number']]['file'] for e in episodes]
+            indexes={native[e['number']]['voices'][vid] for e in episodes}
+            if len(indexes)!=1:raise ValueError('Native audio stream order differs')
+            stream_index=indexes.pop()
         if any(abs(media_duration(file)-length)>.5 for file,length in zip(audio_files,lengths)):raise ValueError('Audio length mismatch')
-        remux(folder,vid+'-audio',audio_files,lengths,'audio',root/'work')
+        if not (folder/(vid+'-audio.m3u8')).exists():
+            require_space(root,sum(rendition_size(root,prefix,v['master'].rsplit('/',1)[0]+f'/a-{vid}/index.m3u8') for v in selected),minimum_free_percent)
+        if native:remux(folder,vid+'-audio',audio_files,lengths,'audio',root/'work',stream_index=stream_index)
+        else:remux(folder,vid+'-audio',audio_files,lengths,'audio',root/'work')
         common=['#EXTM3U','#EXT-X-VERSION:3',f'#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="{vid}",DEFAULT=YES,AUTOSELECT=YES,URI="{vid}-audio.m3u8"']
         adaptive=common.copy();qualities=[]
         for height in sorted(heights):
@@ -105,7 +144,12 @@ def publish(root,prefix):
                     if abs(drift)>=.05:raise ValueError('Video boundaries do not match')
                 if abs(rows[-1][0]-ref[-1][0])>=.25:raise ValueError('Video tail mismatch')
                 groups.append([[expected[0],actual[1]] for actual,expected in zip(rows,ref)])
-            video_files=[media_file(root,prefix,next(q['download']['url'] for q in v['qualities'] if q['height']==height)) for v in selected]
+            video_files=[quality_source(root,prefix,v,height,streaming) for v in selected]
+            if native:
+                if height!=1080:raise ValueError('Native video copy is only 1080p')
+                video_files=[native[e['number']]['file'] for e in episodes]
+            if not (folder/video_name).exists():
+                require_space(root,sum(rendition_size(root,prefix,v['master'].rsplit('/',1)[0]+f'/s0-v{height}/index.m3u8') for v in selected),minimum_free_percent)
             remux(folder,video_name.removesuffix('.m3u8'),video_files,lengths,'video',root/'work')
             bandwidth={360:1200000,480:1800000,720:3500000,1080:8000000}[height]
             variant=[f'#EXT-X-STREAM-INF:BANDWIDTH={bandwidth},RESOLUTION={round(height*16/9/2)*2}x{height},AUDIO="audio"',video_name]

@@ -57,6 +57,7 @@ def main():
     parser.add_argument('--spec', type=Path, default=Path('/var/lib/animonster-media/specs/rezero.json'))
     parser.add_argument('--public-prefix', default='/demo-media')
     parser.add_argument('--qualities',default='360,480,720,1080')
+    parser.add_argument('--streaming-only',action='store_true',help='Publish streams and previews without duplicating video into new per-voice MP4 files')
     args = parser.parse_args()
     requested_levels=sorted(set(int(value) for value in args.qualities.split(',')))
     if not requested_levels or any(value not in (360,480,720,1080) for value in requested_levels):
@@ -173,7 +174,7 @@ def main():
                         path.write_text('\n'.join(common+variant)+'\n')
                         path.chmod(0o640)
                     mp4 = folder/f'{voice["id"]}-{height}-offline.mp4'
-                    if not mp4.exists():
+                    if not mp4.exists() and not args.streaming_only:
                         require = int(episode['duration']*bitrate/8*1.3)
                         disk = shutil.disk_usage(root)
                         if disk.free-require < disk.total*.20:
@@ -182,7 +183,10 @@ def main():
                         run(['-protocol_whitelist','file,http,https,tcp,tls,crypto,data','-i', str(path), '-map', '0:v:0', '-map', '0:a:0', '-c', 'copy', '-movflags', '+faststart', str(temp)])
                         temp.chmod(0o640)
                         temp.rename(mp4)
-                    qualities.append({'height': height, 'url': f'{prefix}/{release}/{name}', 'download': {'url': f'{prefix}/{release}/{mp4.name}', 'size': mp4.stat().st_size}})
+                    item = {'height': height, 'url': f'{prefix}/{release}/{name}'}
+                    if mp4.exists():
+                        item['download'] = {'url': f'{prefix}/{release}/{mp4.name}', 'size': mp4.stat().st_size}
+                    qualities.append(item)
                 name = f'{voice["id"]}-adaptive-{"-".join(map(str,levels))}-v2.m3u8'
                 if not (folder/name).exists():
                     (folder/name).write_text('\n'.join(adaptive)+'\n')
@@ -190,7 +194,8 @@ def main():
                 voice['master'] = f'{prefix}/{release}/{name}'
                 voice['qualities'] = qualities
             atomic_json(root/'catalog.json', catalog)
-            print(f'Enhanced episode {number}: {len(levels)} qualities, previews and {len(episode["voices"])} offline voice selections', flush=True)
+            mode="streams and previews" if args.streaming_only else "previews and offline MP4"
+            print(f'Enhanced episode {number}: {len(levels)} qualities, {len(episode["voices"])} voices, {mode}', flush=True)
 
 
 if __name__ == '__main__':
