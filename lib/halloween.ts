@@ -6,6 +6,33 @@ export const halloweenActive = (time = Date.now()) =>
   time >= HALLOWEEN_START && time < HALLOWEEN_END;
 // Runs before first paint; cached HTML must not keep the event alive after expiration.
 export const halloweenBootstrap = `(()=>{const r=document.documentElement,t=Date.now();if(t>=${HALLOWEEN_START}&&t<${HALLOWEEN_END})r.dataset.halloween='2026';else delete r.dataset.halloween;try{if(localStorage.getItem('${HALLOWEEN_CALM_KEY}')==='1')r.dataset.hwCalm='1';}catch{}})();`;
+export const pumpkinPhrases = [
+  'Ты точно пришёл смотреть аниме?',
+  'Ещё один клик — и я выбираю аниме за тебя.',
+  'Я тыква, а не кнопка «Следующая серия».',
+  'Рюк просил яблоко. Мне достаточно внимания.',
+  'Опенинг уже закончился. А ты всё ещё здесь.',
+  'Спойлер: у этой тыквы счастливый финал.',
+  'Субару бы уже начал новый круг. Ты всё кликаешь.',
+  'Проверь плеер. Там тоже кто-то прячется.',
+  'Обещаю не рассказывать, сколько раз ты нажал.',
+  'Серия сама себя не посмотрит.',
+  'Ведьминский совет: чай, плед и ещё одна серия.',
+  'Банкай! Ладно, я просто светящаяся тыква.',
+  'Не буди летучих мышей. Они тоже в онгоинге.',
+  'Кажется, у нас начинается тыквенная арка.',
+  'Твой клик принят. Контракт с тыквой заключён.',
+  'Мой план на вечер: светиться и не спойлерить.',
+  'За яблоком — к Рюку. За аниме — в плеер.',
+  'Если это филлер, то очень уютный.',
+  'Секретный босс сайта найден. Урон наносится кликами.',
+  'Последняя серия? Мы оба знаем, чем это закончится.',
+] as const;
+export const pumpkinPhrase = (clicks: number) =>
+  clicks < 5
+    ? null
+    : pumpkinPhrases[(Math.floor(clicks) - 5) % pumpkinPhrases.length];
+
 export const pumpkinFace = (clicks: number) =>
   Math.max(0, Math.floor(clicks)) % 5;
 

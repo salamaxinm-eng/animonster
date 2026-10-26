@@ -16,6 +16,7 @@ import {
   HALLOWEEN_END,
   HALLOWEEN_CALM_KEY,
   pumpkinFace,
+  pumpkinPhrase,
 } from '@/lib/halloween';
 
 type Season = {
@@ -25,6 +26,7 @@ type Season = {
   blocked: boolean;
   fullscreen: boolean;
   surprise: (action: () => void) => void;
+  toggleCalm: () => void;
 };
 const SeasonContext = createContext<Season>({
   active: false,
@@ -33,6 +35,7 @@ const SeasonContext = createContext<Season>({
   blocked: false,
   fullscreen: false,
   surprise: (action) => action(),
+  toggleCalm: () => {},
 });
 export const useHalloween = () => useContext(SeasonContext);
 
@@ -168,12 +171,20 @@ export function HalloweenProvider({ children }: { children: ReactNode }) {
   }
   return (
     <SeasonContext.Provider
-      value={{ active, calm, motion, blocked, fullscreen, surprise }}
+      value={{
+        active,
+        calm,
+        motion,
+        blocked,
+        fullscreen,
+        surprise,
+        toggleCalm,
+      }}
     >
       {children}
       {active && (
         <>
-          <HalloweenDecor toggleCalm={toggleCalm} />
+          <HalloweenDecor />
           {veil && (
             <div className="hw-shadow-veil" aria-hidden="true">
               {[0, 1, 2, 3, 4, 5].map((i) => (
@@ -275,6 +286,7 @@ export function SeasonalBrand({ mobile = false }: { mobile?: boolean }) {
       >
         {word}
       </a>
+      <HalloweenBrandApple />
     </div>
   );
 }
@@ -361,122 +373,111 @@ function Pumpkin({ face }: { face: number }) {
     </svg>
   );
 }
-function HalloweenDecor({ toggleCalm }: { toggleCalm: () => void }) {
-  const { calm, motion, blocked } = useHalloween();
-  const [apple, setApple] = useState(true),
-    [ryuk, setRyuk] = useState(false),
-    [clicks, setClicks] = useState(0),
-    [hint, setHint] = useState(false);
+function HalloweenBrandApple() {
+  const { active, blocked } = useHalloween();
+  const [ryuk, setRyuk] = useState(false);
   useEffect(() => {
     if (!ryuk) return;
-    const timer = setTimeout(() => {
-      setRyuk(false);
-      setApple(true);
-    }, 1250);
+    const timer = setTimeout(() => setRyuk(false), 1250);
     return () => clearTimeout(timer);
   }, [ryuk]);
+  if (!active) return null;
+  return (
+    <span className="hw-brand-apple">
+      <button
+        type="button"
+        className={`hw-apple${ryuk ? ' hw-apple-eaten' : ''}`}
+        aria-label="Взять яблоко Рюка"
+        disabled={ryuk || blocked}
+        onClick={() => setRyuk(true)}
+      >
+        <svg viewBox="0 0 50 55" aria-hidden="true">
+          <path
+            d="M26 13q-1-9 7-11"
+            stroke="#6d8b45"
+            strokeWidth="4"
+            fill="none"
+          />
+          <path
+            d="M25 17C0-1 0 39 17 49q8 5 10-1c17 10 31-39 11-35-5 0-10 5-13 4"
+            fill="#ed4939"
+          />
+          <path
+            d="M13 20q-5 5-3 12"
+            stroke="#ffb49a"
+            strokeWidth="3"
+            fill="none"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+      {ryuk && !blocked && (
+        <span className="hw-ryuk" aria-hidden="true">
+          <Ryuk />
+        </span>
+      )}
+      <span className="hw-sr-only" role="status">
+        {ryuk ? 'Яблоко исчезло. Из тени появился Рюк.' : ''}
+      </span>
+    </span>
+  );
+}
+export function HalloweenPumpkin() {
+  const { active, calm, toggleCalm } = useHalloween();
+  const [clicks, setClicks] = useState(0),
+    [hint, setHint] = useState(false);
+  const phrase = pumpkinPhrase(clicks);
   useEffect(() => {
-    if (clicks < 5) return;
+    if (!phrase) return;
     setHint(true);
     const timer = setTimeout(() => setHint(false), 4500);
     return () => clearTimeout(timer);
-  }, [clicks]);
+  }, [clicks, phrase]);
+  if (!active) return null;
   return (
-    <>
-      {motion && !blocked && (
-        <div className="hw-ambient" aria-hidden="true">
-          <i className="hw-bat hw-bat-one">
-            <Bat />
-          </i>
-          <i className="hw-bat hw-bat-two">
-            <Bat />
-          </i>
-        </div>
+    <div className="hw-promo-pumpkin">
+      <button
+        type="button"
+        className="hw-pumpkin"
+        aria-label="Поговорить с тыквой"
+        onClick={() => setClicks((value) => value + 1)}
+      >
+        <Pumpkin face={pumpkinFace(clicks)} />
+      </button>
+      <button
+        type="button"
+        className="hw-calm-toggle"
+        aria-pressed={calm}
+        aria-label={
+          calm
+            ? 'Включить хэллоуинскую анимацию'
+            : 'Отключить фоновую хэллоуинскую анимацию'
+        }
+        title={calm ? 'Включить анимацию' : 'Тихий режим'}
+        onClick={toggleCalm}
+      >
+        {calm ? 'Оживить' : 'Тише'}
+      </button>
+      {hint && phrase && (
+        <span role="status" className="hw-pumpkin-hint">
+          {phrase}
+        </span>
       )}
-      {!blocked && (
-        <aside className="hw-apple-branch" aria-label="Хэллоуинская пасхалка">
-          <svg viewBox="0 0 100 65" className="hw-branch" aria-hidden="true">
-            <path
-              d="M0 60L52 43l37-7M26 51l9-25 18-14M57 43l9-18"
-              stroke="#653a40"
-              strokeWidth="6"
-              fill="none"
-              strokeLinecap="round"
-            />
-          </svg>
-          {apple && (
-            <button
-              type="button"
-              className="hw-apple"
-              aria-label="Взять яблоко Рюка"
-              onClick={() => {
-                setApple(false);
-                setRyuk(true);
-              }}
-            >
-              <svg viewBox="0 0 50 55" aria-hidden="true">
-                <path
-                  d="M26 13q-1-9 7-11"
-                  stroke="#6d8b45"
-                  strokeWidth="4"
-                  fill="none"
-                />
-                <path
-                  d="M25 17C0-1 0 39 17 49q8 5 10-1c17 10 31-39 11-35-5 0-10 5-13 4"
-                  fill="#ed4939"
-                />
-                <path
-                  d="M13 20q-5 5-3 12"
-                  stroke="#ffb49a"
-                  strokeWidth="3"
-                  fill="none"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          )}
-          {ryuk && (
-            <div className="hw-ryuk" aria-hidden="true">
-              <Ryuk />
-            </div>
-          )}
-          <span className="hw-sr-only" role="status">
-            {ryuk ? 'Яблоко исчезло. Из тени появился Рюк.' : ''}
-          </span>
-        </aside>
-      )}
-      {!blocked && (
-        <div className="hw-trinkets">
-          <button
-            type="button"
-            className="hw-pumpkin"
-            aria-label="Тыква: поменять выражение лица"
-            onClick={() => setClicks((value) => value + 1)}
-          >
-            <Pumpkin face={pumpkinFace(clicks)} />
-          </button>
-          <button
-            type="button"
-            className="hw-calm-toggle"
-            aria-pressed={calm}
-            aria-label={
-              calm
-                ? 'Включить хэллоуинскую анимацию'
-                : 'Отключить фоновую хэллоуинскую анимацию'
-            }
-            title={calm ? 'Включить анимацию' : 'Тихий режим'}
-            onClick={toggleCalm}
-          >
-            {calm ? 'Оживить' : 'Тише'}
-          </button>
-          {hint && (
-            <span role="status" className="hw-pumpkin-hint">
-              Ты точно пришёл смотреть аниме?
-            </span>
-          )}
-        </div>
-      )}
-    </>
+    </div>
+  );
+}
+function HalloweenDecor() {
+  const { motion, blocked } = useHalloween();
+  if (!motion || blocked) return null;
+  return (
+    <div className="hw-ambient" aria-hidden="true">
+      <i className="hw-bat hw-bat-one">
+        <Bat />
+      </i>
+      <i className="hw-bat hw-bat-two">
+        <Bat />
+      </i>
+    </div>
   );
 }
 function ShadowHand({ index }: { index: number }) {

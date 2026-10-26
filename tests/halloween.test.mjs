@@ -152,5 +152,8 @@ void test('desktop and mobile brands keep navigation separate from the accessibl
     assert.match(html, /aria-label="Спрятать призрака/);
     assert.match(html, /<\/button><a/);
     assert.doesNotMatch(html, /<a[^>]*><button/);
+    assert.match(html, /<\/a><span class="hw-brand-apple"/);
+    assert.match(html, /aria-label="Взять яблоко Рюка"/);
+    assert.equal((html.match(/<button/g) || []).length, 2);
   }
 });

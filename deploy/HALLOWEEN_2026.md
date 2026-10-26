@@ -38,3 +38,9 @@ Validation run: all **226 tests passed**, TypeScript passed, lint of all changed
 Production image `animonster-app:halloween-20261027`, ID `6ff932ebc973`, deployed on 2026-10-27 local time. Private canary passed HEAD checks on home/player/profile, SHA-256 and MIME of all three scene/bat assets, 19 episodes, both honorary gold entitlements and payment auth/origin guards. Public production health, home HEAD, desktop/mobile art and bat SVG returned 200, with the 19-episode catalog retained. No database writes, migrations or provider charges. Canary container and temporary environment file removed.
 
 Previous env/image reference saved root-only as `.player-demo.env.before-halloween-20261027`. Existing source release folder is `/root/animonster-release-player-features-20261025`; production secret environment and all video media were preserved. Rollback release image is retained. Automatic event expiry needs no scheduled agent, database edit or redeployment.
+
+## Placement refinement
+
+Pumpkin and quiet switch now live in the own-player promo, beside the player CTA; floating pumpkin and side branch are removed. Promo copy and CTA remain links, while pumpkin buttons are sibling elements, so interacting with the pumpkin cannot open the player. Mobile actions share one row with reserved pumpkin space; the speech bubble is bounded to the viewport and does not intercept clicks.
+
+Apple now follows the AniMonster wordmark in both desktop/mobile headers, outside its home link, with reserved width during the eaten state. Ryuk still briefly appears below it. Narrow headers adjust at <=380px. Pumpkin keeps its five expressions and unlocks a rotating set of 20 phrases after five clicks; each further click advances the message, preserving the original first joke. Calendar expiry, quiet/reduced motion and video/fullscreen behavior stay intact.
