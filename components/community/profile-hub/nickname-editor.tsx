@@ -147,27 +147,39 @@ export function NicknameEditor({
             type="button"
             className={`nickname-color ${selected.color === 'default' ? 'selected' : ''}`}
             aria-pressed={selected.color === 'default'}
+            aria-label={`${user.nick} — обычный ник`}
+            title="Обычный ник"
             onClick={() =>
               onChange({ color: 'default', effect: 'solid', motion: false })
             }
           >
-            <i className="nickname-swatch-default" />
-            Обычный
+            <UserNickname
+              user={{
+                nick: user.nick,
+                nickname_style: {
+                  color: 'default',
+                  effect: 'solid',
+                  motion: false,
+                },
+              }}
+            />
           </button>
-          {nicknameColors.map(([id, name, color, light]) => (
+          {nicknameColors.map(([id, name]) => (
             <button
               type="button"
               key={id}
               className={`nickname-color ${selected.color === id ? 'selected' : ''}`}
               aria-pressed={selected.color === id}
+              aria-label={`${user.nick} — ${name}`}
+              title={name}
               onClick={() => choose({ color: id })}
             >
-              <i
-                style={{
-                  background: `linear-gradient(135deg,${color},${light})`,
+              <UserNickname
+                user={{
+                  nick: user.nick,
+                  nickname_style: { ...selected, color: id },
                 }}
               />
-              {name}
             </button>
           ))}
           {!!user.legend_origin_at && (
@@ -175,12 +187,24 @@ export function NicknameEditor({
               type="button"
               className={`nickname-color ${selected.color === 'legend' ? 'selected' : ''}`}
               aria-pressed={selected.color === 'legend'}
+              aria-label={`${user.nick} — Исток легенды`}
+              title="Исток легенды"
               onClick={() =>
                 onChange({ color: 'legend', effect: 'shimmer', motion: true })
               }
             >
-              <i className="nickname-swatch-legend" />
-              Исток легенды
+              <UserNickname
+                user={{
+                  nick: user.nick,
+                  legend_origin_at: user.legend_origin_at,
+                  nickname_style: {
+                    color: 'legend',
+                    effect: 'shimmer',
+                    motion:
+                      selected.color === 'legend' ? selected.motion : true,
+                  },
+                }}
+              />
             </button>
           )}
         </div>
@@ -198,6 +222,8 @@ export function NicknameEditor({
               key={id}
               className={`nickname-effect ${selected.effect === id ? 'selected' : ''}`}
               aria-pressed={selected.effect === id}
+              aria-label={`${user.nick} — ${label}`}
+              title={label}
               onClick={() => choose({ effect: id })}
             >
               <UserNickname
@@ -206,7 +232,6 @@ export function NicknameEditor({
                   nickname_style: { ...selected, effect: id },
                 }}
               />
-              <span>{label}</span>
             </button>
           ))}
         </div>

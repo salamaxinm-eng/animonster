@@ -160,35 +160,29 @@
 }
 .nickname-color-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
   gap: 8px;
 }
 .nickname-color {
-  min-height: 48px;
+  min-width: 0;
+  min-height: 72px;
   display: flex;
   align-items: center;
-  gap: 9px;
-  text-align: left;
-  padding: 10px;
+  justify-content: center;
+  text-align: center;
+  padding: 14px 10px;
   border: 1px solid #ffffff1f;
   border-radius: 12px;
   background: #ffffff04;
-  font-size: 12px;
   color: inherit;
   cursor: pointer;
 }
-.nickname-color i {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: 1px solid #ffffff30;
-}
-.nickname-swatch-default {
-  background: linear-gradient(135deg, #9b9bad, #ececf5);
-}
-.nickname-swatch-legend {
-  background: linear-gradient(135deg, #bf7f29, #fff4d2, #e4ab47);
+.nickname-color > span,
+.nickname-effect > span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(14px, 2.8vw, 18px);
+  line-height: 1.5;
 }
 .nickname-color.selected,
 .nickname-effect.selected {
@@ -204,23 +198,17 @@
 .nickname-effect {
   display: grid;
   gap: 12px;
-  text-align: left;
+  text-align: center;
+  align-items: center;
+  justify-items: center;
   min-width: 0;
-  min-height: 94px;
+  min-height: 80px;
   padding: 16px 12px;
   border: 1px solid #ffffff1f;
   border-radius: 14px;
   background: #ffffff04;
   color: inherit;
   cursor: pointer;
-}
-.nickname-effect > span:first-child {
-  overflow-wrap: anywhere;
-  font-size: 18px;
-}
-.nickname-effect > span:last-child {
-  font-size: 12px;
-  opacity: 0.75;
 }
 .nickname-studio button:focus-visible {
   outline: 3px solid #dfc9ff;
@@ -259,16 +247,11 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .nickname-color-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .nickname-color {
-    padding: 9px 6px;
-    gap: 6px;
-    font-size: 11px;
-  }
-  .nickname-color i {
-    width: 16px;
-    height: 16px;
+    padding: 12px 8px;
+    min-height: 64px;
   }
   .nickname-purchase {
     padding: 16px;
