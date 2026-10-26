@@ -75,6 +75,8 @@ void test('shared renderer preserves exclusive gold, escapes nicknames, applies 
       });
       assert.match(html, new RegExp('nickname-' + effect + ' nickname-still'));
       assert.ok(html.includes('--nick-color:' + hex));
+      const palette = colors.find((item) => item[0] === color);
+      assert.ok(html.includes('--nick-accent:' + palette[4]));
       assert.ok(html.includes('&lt;script&gt;'));
     }
 });

@@ -1,62 +1,135 @@
 .nickname-custom {
+  position: relative;
+  isolation: isolate;
+  display: inline-block;
+  max-width: 100%;
   color: var(--nick-color);
-  font-weight: 750;
+  font-weight: 800;
+  text-shadow: 0 1px 1px #05081580;
 }
 @supports (background-clip: text) {
   .nickname-gradient,
   .nickname-shimmer,
-  .nickname-metal {
-    background: linear-gradient(
-      110deg,
-      var(--nick-color),
-      var(--nick-light),
-      var(--nick-color)
+  .nickname-metal,
+  .nickname-stars {
+    background-image: linear-gradient(
+      115deg,
+      var(--nick-color) 5%,
+      var(--nick-light) 42%,
+      var(--nick-accent) 85%
     );
-    background-size: 220% 100%;
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
+    text-shadow: none;
+  }
+  .nickname-gradient {
+    background-image: linear-gradient(
+      115deg,
+      var(--nick-color) 8%,
+      var(--nick-light) 38%,
+      var(--nick-accent) 70%,
+      var(--nick-color) 100%
+    );
+    background-size: 140% 100%;
+    animation: nickname-prism 9s ease-in-out infinite;
   }
   .nickname-shimmer {
-    animation: nickname-flow 6s ease-in-out infinite;
+    background-image: linear-gradient(
+      105deg,
+      var(--nick-color) 0%,
+      var(--nick-accent) 20%,
+      var(--nick-color) 35%,
+      var(--nick-light) 48%,
+      #fff 50%,
+      var(--nick-light) 52%,
+      var(--nick-accent) 68%,
+      var(--nick-color) 85%,
+      var(--nick-accent) 100%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 50%;
+    filter: drop-shadow(
+      0 0 0.22em color-mix(in srgb, var(--nick-color) 24%, transparent)
+    );
+    animation: nickname-aurora 7s ease-in-out infinite;
   }
   .nickname-metal {
     background-image: linear-gradient(
-      175deg,
-      var(--nick-light) 0%,
-      var(--nick-color) 35%,
-      var(--nick-light) 47%,
-      var(--nick-color) 55%,
-      var(--nick-light) 65%,
+      166deg,
+      var(--nick-accent) 0%,
+      var(--nick-light) 18%,
+      var(--nick-color) 31%,
+      var(--nick-light) 43%,
+      #fff 47%,
+      var(--nick-color) 49%,
+      color-mix(in srgb, var(--nick-color) 78%, #111c35) 54%,
+      var(--nick-accent) 64%,
+      var(--nick-light) 80%,
       var(--nick-color) 100%
     );
-    background-size: 100% 250%;
-    animation: nickname-metal 7s ease-in-out infinite;
+    background-size: 180% 220%;
+    background-position: 30% 30%;
+    filter: drop-shadow(
+      0 1px 0 color-mix(in srgb, var(--nick-accent) 30%, transparent)
+    );
+    animation: nickname-chrome 8s ease-in-out infinite;
+  }
+  .nickname-stars {
+    background-size: 160% 100%;
+    animation: nickname-prism 10s ease-in-out infinite;
   }
 }
 .nickname-neon {
-  text-shadow: 0 0 7px color-mix(in srgb, var(--nick-color) 55%, transparent);
-  animation: nickname-glow 5s ease-in-out infinite;
+  color: color-mix(in srgb, var(--nick-color) 65%, var(--nick-light));
+  -webkit-text-stroke: 0.25px var(--nick-color);
+  text-shadow:
+    0 0 2px var(--nick-light),
+    0 0 5px var(--nick-color),
+    0 0 13px color-mix(in srgb, var(--nick-accent) 55%, transparent);
+  animation: nickname-neon-breathe 5.5s ease-in-out infinite;
 }
-.nickname-stars {
-  background-image:
-    radial-gradient(
-      circle at 15% 35%,
-      var(--nick-light) 0 1px,
-      transparent 2px
-    ),
-    radial-gradient(circle at 78% 60%, var(--nick-light) 0 1px, transparent 2px);
-  background-size:
-    30px 20px,
-    43px 26px;
-  text-shadow: 0 0 6px color-mix(in srgb, var(--nick-color) 35%, transparent);
-  animation: nickname-stars 8s linear infinite;
+.nickname-stars::before,
+.nickname-stars::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  width: 0.38em;
+  height: 0.38em;
+  background: var(--nick-light);
+  clip-path: polygon(
+    50% 0,
+    62% 37%,
+    100% 50%,
+    62% 62%,
+    50% 100%,
+    37% 62%,
+    0 50%,
+    37% 37%
+  );
+  filter: drop-shadow(0 0 2px var(--nick-color));
+  opacity: 0.65;
+  animation: nickname-stardust 5s ease-in-out infinite;
 }
-.nickname-still {
+.nickname-stars::before {
+  left: 16%;
+  top: -0.07em;
+}
+.nickname-stars::after {
+  right: 10%;
+  bottom: 0.02em;
+  width: 0.28em;
+  height: 0.28em;
+  animation-delay: -2.5s;
+}
+.nickname-still,
+.nickname-still::before,
+.nickname-still::after {
   animation: none !important;
 }
-@keyframes nickname-flow {
+@keyframes nickname-prism {
   0%,
   100% {
     background-position: 0% 50%;
@@ -65,29 +138,53 @@
     background-position: 100% 50%;
   }
 }
-@keyframes nickname-metal {
+@keyframes nickname-aurora {
   0%,
   100% {
-    background-position: 50% 0%;
+    background-position: 100% 50%;
   }
-  50% {
-    background-position: 50% 100%;
+  50%,
+  65% {
+    background-position: 0% 50%;
   }
 }
-@keyframes nickname-glow {
+@keyframes nickname-chrome {
   0%,
   100% {
-    text-shadow: 0 0 3px color-mix(in srgb, var(--nick-color) 35%, transparent);
+    background-position: 10% 10%;
   }
   50% {
-    text-shadow: 0 0 10px color-mix(in srgb, var(--nick-color) 65%, transparent);
+    background-position: 85% 90%;
   }
 }
-@keyframes nickname-stars {
-  to {
-    background-position:
-      60px 0,
-      -43px 26px;
+@keyframes nickname-neon-breathe {
+  0%,
+  100% {
+    text-shadow:
+      0 0 2px var(--nick-light),
+      0 0 5px var(--nick-color),
+      0 0 11px color-mix(in srgb, var(--nick-accent) 45%, transparent);
+  }
+  50% {
+    text-shadow:
+      0 0 2px var(--nick-light),
+      0 0 7px var(--nick-color),
+      0 0 17px color-mix(in srgb, var(--nick-accent) 65%, transparent);
+  }
+}
+@keyframes nickname-stardust {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(0.55) rotate(-15deg);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.1) rotate(10deg);
+  }
+  65% {
+    opacity: 0.45;
+    transform: scale(0.7) rotate(25deg);
   }
 }
 .nickname-studio {
@@ -165,15 +262,27 @@
 }
 .nickname-color {
   min-width: 0;
-  min-height: 72px;
+  position: relative;
+  min-height: 84px;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   padding: 14px 10px;
-  border: 1px solid #ffffff1f;
+  border: 1px solid
+    color-mix(in srgb, var(--choice-color, #a68aff) 23%, #27283b);
   border-radius: 12px;
-  background: #ffffff04;
+  background:
+    radial-gradient(
+      ellipse at 50% 100%,
+      color-mix(in srgb, var(--choice-color, #a68aff) 10%, transparent),
+      transparent 75%
+    ),
+    linear-gradient(150deg, #15172a, #0c0f1d);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   color: inherit;
   cursor: pointer;
 }
@@ -181,14 +290,17 @@
 .nickname-effect > span {
   max-width: 100%;
   overflow-wrap: anywhere;
-  font-size: clamp(14px, 2.8vw, 18px);
+  font-size: clamp(15px, 2.8vw, 20px);
+  letter-spacing: 0.015em;
   line-height: 1.5;
 }
 .nickname-color.selected,
 .nickname-effect.selected {
-  border-color: #ba9cff;
-  box-shadow: inset 0 0 0 1px #ba9cff;
-  background: #a385f314;
+  border-color: color-mix(in srgb, var(--choice-color, #ba9cff) 75%, white);
+  box-shadow:
+    inset 0 0 0 1px
+      color-mix(in srgb, var(--choice-color, #ba9cff) 45%, transparent),
+    0 0 22px color-mix(in srgb, var(--choice-color, #ba9cff) 12%, transparent);
 }
 .nickname-effect-grid {
   display: grid;
@@ -196,6 +308,7 @@
   gap: 10px;
 }
 .nickname-effect {
+  position: relative;
   display: grid;
   gap: 12px;
   text-align: center;
@@ -204,11 +317,42 @@
   min-width: 0;
   min-height: 80px;
   padding: 16px 12px;
-  border: 1px solid #ffffff1f;
+  border: 1px solid
+    color-mix(in srgb, var(--choice-color, #a68aff) 23%, #27283b);
   border-radius: 14px;
-  background: #ffffff04;
+  background:
+    radial-gradient(
+      ellipse at 50% 100%,
+      color-mix(in srgb, var(--choice-color, #a68aff) 10%, transparent),
+      transparent 75%
+    ),
+    linear-gradient(150deg, #15172a, #0c0f1d);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   color: inherit;
   cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .nickname-color:hover,
+  .nickname-effect:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--choice-color, #ba9cff) 70%, white);
+    box-shadow: 0 8px 24px #04061050;
+  }
+}
+.nickname-color.selected::after,
+.nickname-effect.selected::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--choice-color, #d7c8ff);
+  box-shadow: 0 0 8px var(--choice-color, #ba9cff);
 }
 .nickname-studio button:focus-visible {
   outline: 3px solid #dfc9ff;
@@ -261,8 +405,15 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .nickname-custom {
+  .nickname-custom,
+  .nickname-custom::before,
+  .nickname-custom::after {
     animation: none !important;
+  }
+  .nickname-color,
+  .nickname-effect {
+    transition: none !important;
+    transform: none !important;
   }
 }
 @media (forced-colors: active) {
@@ -271,6 +422,12 @@
     color: CanvasText;
     -webkit-text-fill-color: CanvasText;
     text-shadow: none;
+    filter: none;
+    -webkit-text-stroke: 0;
+  }
+  .nickname-stars::before,
+  .nickname-stars::after {
+    display: none;
   }
   .nickname-color.selected,
   .nickname-effect.selected {

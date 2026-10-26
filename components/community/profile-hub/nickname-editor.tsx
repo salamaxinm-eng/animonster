@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -80,8 +80,29 @@ export function NicknameEditor({
       setError('Оплата не завершена. Можно проверить её статус.');
     }
   }, [params]);
+  const specialColor = ['default', 'legend'].includes(selected.color);
+  const previewColor =
+    nicknameColors.find((color) => color[0] === selected.color) ||
+    nicknameColors[16];
+  const previewEffect = specialColor ? 'shimmer' : selected.effect;
+  const previewMotion = specialColor ? true : selected.motion;
+  const cardColors = (color: (typeof nicknameColors)[number]): CSSProperties =>
+    ({
+      '--choice-color': color[2],
+      '--choice-accent': color[4],
+    }) as CSSProperties;
   const choose = (patch: Partial<NicknameStyle>) =>
-    onChange({ ...selected, ...patch });
+    onChange({
+      ...(specialColor &&
+      (patch.color !== undefined || patch.effect !== undefined)
+        ? {
+            color: previewColor[0],
+            effect: previewEffect,
+            motion: previewMotion,
+          }
+        : selected),
+      ...patch,
+    });
   return (
     <div className="nickname-studio">
       <div className="nickname-studio-intro">
@@ -164,24 +185,32 @@ export function NicknameEditor({
               }}
             />
           </button>
-          {nicknameColors.map(([id, name]) => (
-            <button
-              type="button"
-              key={id}
-              className={`nickname-color ${selected.color === id ? 'selected' : ''}`}
-              aria-pressed={selected.color === id}
-              aria-label={`${user.nick} — ${name}`}
-              title={name}
-              onClick={() => choose({ color: id })}
-            >
-              <UserNickname
-                user={{
-                  nick: user.nick,
-                  nickname_style: { ...selected, color: id },
-                }}
-              />
-            </button>
-          ))}
+          {nicknameColors.map((color) => {
+            const [id, name] = color;
+            return (
+              <button
+                type="button"
+                key={id}
+                className={`nickname-color ${selected.color === id ? 'selected' : ''}`}
+                style={cardColors(color)}
+                aria-pressed={selected.color === id}
+                aria-label={`${user.nick} — ${name}`}
+                title={name}
+                onClick={() => choose({ color: id })}
+              >
+                <UserNickname
+                  user={{
+                    nick: user.nick,
+                    nickname_style: {
+                      color: id,
+                      effect: previewEffect,
+                      motion: previewMotion,
+                    },
+                  }}
+                />
+              </button>
+            );
+          })}
           {!!user.legend_origin_at && (
             <button
               type="button"
@@ -209,19 +238,16 @@ export function NicknameEditor({
           )}
         </div>
       </fieldset>
-      <fieldset
-        disabled={
-          busy || paying || ['default', 'legend'].includes(selected.color)
-        }
-      >
+      <fieldset disabled={busy || paying}>
         <legend>Эффект</legend>
         <div className="nickname-effect-grid">
           {nicknameEffects.map(([id, label]) => (
             <button
               type="button"
               key={id}
-              className={`nickname-effect ${selected.effect === id ? 'selected' : ''}`}
-              aria-pressed={selected.effect === id}
+              className={`nickname-effect ${!specialColor && selected.effect === id ? 'selected' : ''}`}
+              style={cardColors(previewColor)}
+              aria-pressed={!specialColor && selected.effect === id}
               aria-label={`${user.nick} — ${label}`}
               title={label}
               onClick={() => choose({ effect: id })}
@@ -229,7 +255,11 @@ export function NicknameEditor({
               <UserNickname
                 user={{
                   nick: user.nick,
-                  nickname_style: { ...selected, effect: id },
+                  nickname_style: {
+                    color: previewColor[0],
+                    effect: id,
+                    motion: previewMotion,
+                  },
                 }}
               />
             </button>

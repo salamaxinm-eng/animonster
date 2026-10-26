@@ -33,3 +33,11 @@ Global repository oxlint currently reports existing errors in unrelated files/te
 Deployed 2026-10-26 to the existing production compose project with image `animonster-app:nickname-studio-20261026-r2` (`7662fcde87a0`). The same HTTP canary also passed against the active production container on port 3000; public health and demo API returned 200 with all 19 episodes. Both containers healthy. Temporary test accounts/sessions and canary container removed. Failed first-build tag and unused Docker intermediates removed, retaining tagged rollback releases and media; approximately 24 GiB available afterward.
 
 Previous image reference is saved in `.player-demo.env.before-nickname-20261026` on the deployment host. Production `.env.production` and media catalog were preserved.
+
+## Vivid visual refresh (2026-10-26)
+
+All 20 saved color IDs retain compatibility; their colors now use a vivid base, highlight and contrasting accent. Shared renderer supplies all three CSS colors. Effects are Prism, Aurora, Neon Pulse, Liquid Chrome and Stardust (two decorative four-point sparks with offset cycles), plus solid color. Gradients and chrome move smoothly; motion-off and reduced-motion also stop sparkle pseudo-elements. Forced-colors removes decorative effects. Legend Origin CSS/art and access rules are untouched.
+
+Color/effect cards render the actual nickname on softly tinted dark surfaces. Special default/gold selections can directly preview and choose paid effects using an amethyst sample, without borrowing the exclusive gold. Motion toggle on honorary gold preserves the honorary selection. Existing explicit motion-off choices stay off.
+
+Checks: TypeScript and changed-source lint pass; five targeted tests pass (payment rights, profile save, all 120 rendered combinations and accent CSS tokens). All 60 palette stops have at least 5.35:1 contrast against #15172a; decorative chrome shadow bands are not covered by that flat-color measurement. No database migration or payment changes.
