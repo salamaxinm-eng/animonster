@@ -122,7 +122,7 @@ cd /root/animonster-release-player-features-20261025
 docker compose --env-file .env.production --env-file .player-demo.env -p animonster -f compose.yaml -f compose.override.yaml -f deploy/compose.player-demo.yaml up -d --no-deps app
 ```
 
-`.player-demo.env` содержит `PLAYER_DEMO_ENABLED=true`, `PLAYER_DEMO_IMAGE=animonster-app:legend-origin-focus-20261026` и путь `PLAYER_DEMO_CATALOG`; производственные секреты берутся из сохранённого окружения сайта. Nginx на старом сервере использует символическую ссылку с именем `animonster-maintenance`, которая фактически указывает на `sites-available/animonster-app`: перед изменениями всегда проверять цель ссылки.
+`.player-demo.env` содержит `PLAYER_DEMO_ENABLED=true`, `PLAYER_DEMO_IMAGE=animonster-app:sitemap-fix-20261026` и путь `PLAYER_DEMO_CATALOG`; производственные секреты берутся из сохранённого окружения сайта. Nginx на старом сервере использует символическую ссылку с именем `animonster-maintenance`, которая фактически указывает на `sites-available/animonster-app`: перед изменениями всегда проверять цель ссылки.
 
 Откат: `PLAYER_DEMO_ENABLED=false` и пересоздание только app; при необходимости вернуть предыдущий образ и Compose-каталог. Файлы БД, старые миграции, платёжные флаги и действующую схему прокси при откате не менять. Серверный торрент остановить командой `systemctl stop animonster-demo-torrent`; импорт — `systemctl stop animonster-media-import@rezero`.
 

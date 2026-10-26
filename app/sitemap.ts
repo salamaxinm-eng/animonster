@@ -5,6 +5,16 @@ export const dynamic = 'force-dynamic';
 
 const SITE_URL = 'https://animonster.su';
 
+// PostgreSQL bigint timestamps arrive as strings in production. Validate them
+// before Next serializes dates, which happens after this function returns.
+function lastModified(value: unknown): Date | undefined {
+  if (typeof value !== 'number' && typeof value !== 'string') return undefined;
+  const milliseconds = Number(value);
+  if (!Number.isFinite(milliseconds) || milliseconds <= 0 || milliseconds > 8.64e15)
+    return undefined;
+  return new Date(milliseconds);
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -30,12 +40,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const anime = await sitemapAnime();
+    const anime = await sitemapAnime(50000 - staticPages.length);
     return [
       ...staticPages,
       ...anime.map((item) => ({
         url: `${SITE_URL}/anime/${item.id}`,
-        lastModified: new Date(item.updated_at),
+        lastModified: lastModified(item.updated_at),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       })),

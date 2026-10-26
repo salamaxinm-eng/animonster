@@ -29,7 +29,7 @@ export type CachedCatalogPage = {
 
 export type SitemapAnimeEntry = {
   id: number;
-  updated_at: number;
+  updated_at: number | string;
 };
 
 const identityRefreshRetryAt = new Map<number, number>();
