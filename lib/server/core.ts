@@ -421,6 +421,7 @@ export async function publicUser(u: User, own = false) {
     nick: u.nick,
     legend_origin_at: Number(u.legend_origin_at) || null,
     nickname_style: u.nickname_style || null,
+    halloween_spirit_hunter: !!(await db().prepare("SELECT 1 FROM user_cosmetics WHERE user_id=? AND cosmetic_id='pin:halloween-spirit-hunter-2026'").bind(u.id).first()),
     ...(own ? { nickname_unlocked: Number(u.nickname_unlocked_at) > 0 || Number(u.nickname_gift_at) > 0 } : {}),
     bio: u.bio,
     ...publicProfileSocial(u, own),

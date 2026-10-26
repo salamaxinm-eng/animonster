@@ -14,6 +14,13 @@ import './social-auth.css';
 import './legend-origin.css';
 import './nickname.css';
 import './halloween.css';
+import './halloween-extras.css';
+import {
+  HalloweenCursor,
+  HalloweenFooterCandle,
+  HalloweenPageEnd,
+} from '@/components/halloween-extras';
+import { HalloweenHuntProvider } from '@/components/halloween-hunt';
 import { HalloweenProvider } from '@/components/halloween';
 import { halloweenBootstrap } from '@/lib/halloween';
 import './player-demo/player-demo.css';
@@ -98,24 +105,31 @@ export default function RootLayout({
         <PwaRegistration />
         <CommunityProvider>
           <HalloweenProvider>
-            <AccessNotice />
-            {children}
+            <HalloweenHuntProvider>
+              <HalloweenCursor />
+              <AccessNotice />
+              {children}
 
-            <footer className="site-footer">
-              <span>© AniMonster</span>
+              <footer className="site-footer">
+                <div className="hw-footer-signature">
+                  <span>© AniMonster</span>
+                  <HalloweenFooterCandle />
+                </div>
 
-              <nav>
-                <a href="/legal/privacy">Конфиденциальность</a>
-                <a href="/legal/terms">Пользовательское соглашение</a>
-                <a href="/legal/prices">Цены и тарифы</a>
-                <a href="/legal/support">Поддержка</a>
-                <a href="/legal/rules">Правила</a>
-                <a href="/legal/offer">Оферта</a>
-                <a href="/legal/requisites">Реквизиты</a>
-              </nav>
-            </footer>
+                <nav>
+                  <a href="/legal/privacy">Конфиденциальность</a>
+                  <a href="/legal/terms">Пользовательское соглашение</a>
+                  <a href="/legal/prices">Цены и тарифы</a>
+                  <a href="/legal/support">Поддержка</a>
+                  <a href="/legal/rules">Правила</a>
+                  <a href="/legal/offer">Оферта</a>
+                  <a href="/legal/requisites">Реквизиты</a>
+                </nav>
+                <HalloweenPageEnd />
+              </footer>
 
-            <MobileNavigation />
+              <MobileNavigation />
+            </HalloweenHuntProvider>
           </HalloweenProvider>
         </CommunityProvider>
 

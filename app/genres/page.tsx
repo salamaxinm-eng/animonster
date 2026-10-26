@@ -1,3 +1,4 @@
+import { HiddenHalloweenSpirit } from '@/components/halloween-hunt';
 import type { LucideIcon } from 'lucide-react';
 import {
   Bot,
@@ -162,6 +163,7 @@ export default async function GenresPage() {
           <p>Выбери настроение — покажем все подходящие тайтлы.</p>
         </div>
 
+        <HiddenHalloweenSpirit id="genres"/>
         <nav className="genre-grid" aria-label="Жанры аниме">
           {genres.map((genre) => {
             const Icon = icons[genre.name] || Sparkles;

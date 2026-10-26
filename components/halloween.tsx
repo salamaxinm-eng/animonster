@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type CSSProperties,
 } from 'react';
+import { HalloweenHorrorPrize } from '@/components/halloween-random';
 import { Ghost } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import {
@@ -426,7 +427,7 @@ export function HalloweenPumpkin() {
   const { active, calm, toggleCalm } = useHalloween();
   const [clicks, setClicks] = useState(0),
     [hint, setHint] = useState(false);
-  const phrase = pumpkinPhrase(clicks);
+  const phrase = pumpkinPhrase(clicks + 4);
   useEffect(() => {
     if (!phrase) return;
     setHint(true);
@@ -458,11 +459,12 @@ export function HalloweenPumpkin() {
       >
         {calm ? 'Оживить' : 'Тише'}
       </button>
-      {hint && phrase && (
+      {hint && phrase && clicks < 20 && (
         <span role="status" className="hw-pumpkin-hint">
           {phrase}
         </span>
       )}
+      {clicks >= 20 && <HalloweenHorrorPrize/>}
     </div>
   );
 }

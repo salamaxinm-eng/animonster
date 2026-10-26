@@ -142,7 +142,7 @@ export function PopularHero({
                 </p>
                 <button
                   tabIndex={i === index ? 0 : -1}
-                  className="primary"
+                  className="primary" data-hw-watch
                   onClick={() => onOpen(a)}
                 >
                   <Play size={18} fill="currentColor" /> Смотреть аниме

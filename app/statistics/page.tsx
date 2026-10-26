@@ -1,4 +1,5 @@
 'use client';
+import { HiddenHalloweenSpirit } from '@/components/halloween-hunt';
 import { UserNickname } from '@/components/user-nickname';
 
 import { useEffect, useState } from 'react';
@@ -238,7 +239,8 @@ export default function StatisticsPage() {
             </p>
           </>
         )}
-      </main>
+      <HiddenHalloweenSpirit id="statistics"/>
+        </main>
     </div>
   );
 }

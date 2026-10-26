@@ -1,4 +1,5 @@
 'use client';
+import { HiddenHalloweenSpirit } from '@/components/halloween-hunt';
 import { useEffect, useState } from 'react';
 import { CommunityHeader, useCommunity } from '@/components/community/context';
 import { AnimeGrid } from '@/components/anime-grid';
@@ -41,6 +42,7 @@ export default function Page() {
       <main className="title-page">
         <span className="eyebrow">ТВОЯ СЛЕДУЮЩАЯ ИСТОРИЯ</span>
         <h1>Рекомендации</h1>
+        <HiddenHalloweenSpirit id="recommendations"/>
         {loading ? (
           <p role="status">Подбираем аниме…</p>
         ) : error ? (

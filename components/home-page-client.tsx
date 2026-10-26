@@ -1,4 +1,5 @@
 'use client';
+import { HiddenHalloweenSpirit } from '@/components/halloween-hunt';
 import { useHalloween } from '@/components/halloween';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -154,6 +155,7 @@ export function HomePageClient({ initialPopular }: { initialPopular: Anime[] }) 
         <PopularHero initial={initialPopular} onOpen={open} />
         <PlayerDemoPromo />
         <HomeDiscovery />
+        <HiddenHalloweenSpirit id="home"/>
         <section id="catalog" className="catalog">
           <div className="section-head">
             <div>

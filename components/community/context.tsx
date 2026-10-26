@@ -252,6 +252,7 @@ export function Pin({ id }: { id: string | null }) {
     <img src={`/rewards/founder/${founder[0]}.svg`} alt="" />
   </span>;
   const referralPins = [
+    {id:'halloween-spirit-hunter-2026', name:'Ловец духов · Хэллоуин 2026',label:'Найдены все пять скрытых духов',image:'/rewards/halloween-2026/spirit-hunter.svg'},
     {
       id: 'player-supporter', name: 'Oni · Свой плеер',
       label: 'За поддержку своего плеера', image: '/rewards/support/player-pin-v2.png',

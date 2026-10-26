@@ -129,6 +129,9 @@ async function component(active) {
     'lucide-react': file('lucide-react'),
     'next/navigation': url('export const usePathname=()=>"/";'),
     '@/lib/halloween': eventUrl,
+    '@/components/halloween-random': url(
+      'export const HalloweenHorrorPrize=()=>null;',
+    ),
   }))
     source = source
       .replaceAll("'" + name + "'", JSON.stringify(target))

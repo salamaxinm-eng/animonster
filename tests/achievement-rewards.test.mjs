@@ -212,8 +212,9 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
     assert.equal(
       catalog.filter((c) => c.kind === 'pin' && c.access_type === 'achievement')
         .length,
-      11,
+      12,
     );
+    assert.equal(catalog.find(c => c.slug === 'halloween-spirit-hunter-2026').unlocked, false, 'watch achievements do not grant the spirit-hunt badge');
     const { referralMilestones } = await import(
       moduleUrl(
         stripTypeScriptTypes(await readFile('lib/referral-rewards.ts', 'utf8')),

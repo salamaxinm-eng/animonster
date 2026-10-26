@@ -1,5 +1,8 @@
 'use client';
 
+import { useHalloween } from '@/components/halloween';
+import { HalloweenSearchTreat } from '@/components/halloween-extras';
+import { halloweenQuery } from '@/lib/halloween';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronDown, Filter, Search, X } from 'lucide-react';
 import { AnimeGrid } from '@/components/anime-grid';
@@ -65,6 +68,7 @@ function filtersFromUrl(params: URLSearchParams): Filters {
 }
 
 export default function SearchPage() {
+  const halloween=useHalloween();
   const input = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -78,6 +82,7 @@ export default function SearchPage() {
   const [total, setTotal] = useState(0);
   const [recent, setRecent] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const treat=halloween.active && halloweenQuery(query);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -121,6 +126,7 @@ export default function SearchPage() {
   }, []);
 
   useEffect(() => {
+    if(treat){setLoading(false);return;}
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setLoading(true);
@@ -155,7 +161,7 @@ export default function SearchPage() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, filters, page]);
+  }, [query, filters, page, treat]);
 
   function writeUrl(nextQuery: string, nextFilters: Filters, nextPage = 1) {
     const params = buildParams(nextQuery, nextFilters, nextPage);
@@ -416,6 +422,7 @@ export default function SearchPage() {
             </nav>
           </section>
         )}
+        {treat ? <HalloweenSearchTreat/> : <>
         <div className="search-results-heading">
           <h2>
             {query
@@ -477,6 +484,7 @@ export default function SearchPage() {
             <p>Измени запрос или убери часть фильтров.</p>
           </div>
         )}
+        </>}
       </main>
     </div>
   );

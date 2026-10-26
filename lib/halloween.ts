@@ -74,3 +74,30 @@ export function createHalloweenSurprise(
     },
   };
 }
+
+export const HALLOWEEN_SPIRITS = [
+  'home',
+  'genres',
+  'recommendations',
+  'player',
+  'statistics',
+] as const;
+export const HALLOWEEN_BADGE = 'pin:halloween-spirit-hunter-2026';
+export const halloweenLocalDay = (time = Date.now()) =>
+  new Date(time + 5 * 3600000).toISOString().slice(0, 10);
+export const halloweenQuery = (query: string) =>
+  ['хэллоуин', 'хеллоуин', 'тыква'].includes(
+    query.trim().toLocaleLowerCase('ru-RU'),
+  );
+export function horrorCandidates<T extends { id: number; genres?: string[] }>(
+  items: T[],
+): T[] {
+  return items.filter(
+    (item) =>
+      Number.isSafeInteger(item.id) &&
+      item.id > 0 &&
+      item.genres?.some((name) =>
+        ['ужасы', 'horror'].includes(name.toLocaleLowerCase('ru-RU')),
+      ),
+  );
+}

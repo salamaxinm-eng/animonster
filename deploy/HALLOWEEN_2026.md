@@ -46,3 +46,22 @@ Pumpkin and quiet switch now live in the own-player promo, beside the player CTA
 Apple now follows the AniMonster wordmark in both desktop/mobile headers, outside its home link, with reserved width during the eaten state. Ryuk still briefly appears below it. Narrow headers adjust at <=380px. Pumpkin keeps its five expressions and unlocks a rotating set of 20 phrases after five clicks; each further click advances the message, preserving the original first joke. Calendar expiry, quiet/reduced motion and video/fullscreen behavior stay intact.
 
 Placement refinement released as `animonster-app:halloween-layout-20261027` (`81efed14a497`). TypeScript, changed-source lint, four seasonal tests (including apple order/separate navigation controls) and production build passed. Public health/home HEAD and the unchanged 19-episode catalog passed after rollout. Previous reference is `.player-demo.env.before-halloween-layout-20261027` on the host. No database/media changes.
+
+## Selected extras and spirit hunt (revised user scope)
+
+The preceding unreleased experiment was discarded. No Konami/VHS effect, extra avatar/broom, 404 sound/page, horror-only day filter, new share/BOO buttons, logo steam/sound, bat scrubber or midnight pause event is included.
+
+Included:
+- Fine-pointer watch buttons use a transparent jack-o-lantern follower with CSS glow. Native cursor restored on movement away, scrolling, click, blur, unmount, quiet/reduced-motion.
+- Player echo shows a translucent mask spirit and “Не забудь вернуться” for 1.2 seconds on returning from a hidden tab/window or leaving native/faux fullscreen. A minimized OS window cannot display page content; the echo appears when the page becomes visible again. It does not change playback, volume or progress.
+- Exact Russian search keywords Хэллоуин/Хеллоуин/Тыква show a pumpkin treat card and a random-anime action in header and full-page search; other queries use ordinary search.
+- Candle beside footer copyright requests a server claim before a 3-second rgba(0,0,0,.95) body portal overlay. Very quiet generated door-creak audio is prepared only on the click; quiet mode suppresses audio. Visual restoration is independent of audio success. Fixed lower-right notice uses the exact requested text and a Close button. Atomic daily claims protect both account and HttpOnly guest-browser identity, including concurrent tabs. Day uses UTC+05. Mobile footer is temporarily visible during the event.
+- Pumpkin phrases now begin on click 1; reaching click 20 yields a closable horror title card. Both requested genre filtering and returned genres are checked, so unrelated popular titles cannot silently replace horror. Network failure offers retry, not forced navigation.
+- Five small spirits appear across different public sections. Guest progress is device-local; login during the event imports known IDs into account-scoped server records. Five distinct finds grant one permanent `pin:halloween-spirit-hunter-2026`. The public profile commemorative badge remains after the event and existing equipped pins are not replaced. Badge also appears in cosmetic collection.
+- Final footer character holds the requested end-of-page sign and scrolls to top on click, respecting motion settings.
+
+Migration 0065 creates find and daily-candle tables and the one epic achievement cosmetic. No orders, Plus grants, user theme changes or fake viewing history. JSON metadata uses PostgreSQL jsonb_build_object; date parameters bind through text casts. `/api/halloween` requires same origin on POST and binds the expected account ID; unknown spirit IDs are rejected. New claims stop at event expiry, earned cosmetic persists.
+
+Assets are code-native SVG: `public/rewards/halloween-2026/spirit-hunter.svg`, `public/themes/halloween-2026/pumpkin-cursor.svg`. Door creak is low-gain Web Audio; no external sound file or background autoplay.
+
+Validation: 229 tests passed; TypeScript and changed-source lint passed. Database tests cover account isolation, five distinct finds, concurrent/duplicate claims, permanent ownership, pin preservation, calendar cutoff, guest-cookie handling, daily candle collision rollback across browser/account identities, exact search and strict horror candidates.

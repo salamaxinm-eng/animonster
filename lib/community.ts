@@ -211,6 +211,7 @@ export const pins = [
 import type { Streak } from './streak';
 
 export type Profile = {
+  halloween_spirit_hunter?: boolean;
   nickname_style?: import('./nickname-styles').NicknameStyle | null;
   nickname_unlocked?: boolean;
   legend_origin_at?: number | null;

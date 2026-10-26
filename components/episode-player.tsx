@@ -1,4 +1,5 @@
 'use client';
+import { HalloweenPlayerEcho } from '@/components/halloween-extras';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PlayerSelect } from '@/components/player-select';
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
@@ -743,6 +744,7 @@ export function EpisodePlayer({
         </p>
       )}
       <div className="player" data-keep-awake={playbackActive || undefined}>
+        <HalloweenPlayerEcho mediaRef={video}/>
         {episode?.plus_locked ? (
           <div className="plus-episode-lock">
             <strong>Ранний доступ AniMonster Plus</strong>

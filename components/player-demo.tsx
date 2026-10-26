@@ -9,6 +9,8 @@ import {
   type CSSProperties,
 } from 'react';
 import Link from 'next/link';
+import { HalloweenPlayerEcho } from '@/components/halloween-extras';
+import { HiddenHalloweenSpirit } from '@/components/halloween-hunt';
 import { PlayerHalloweenVisitor } from '@/components/halloween';
 import { UserNickname } from '@/components/user-nickname';
 import {
@@ -810,6 +812,7 @@ export function PlayerDemo({
             открыты бесплатно.
           </p>
         </header>
+        <HiddenHalloweenSpirit id="player"/>
         <div className="demo-layout">
           <section className="demo-watch" aria-label="Демонстрация плеера">
             <section className="demo-room-panel" aria-label="Смотреть вместе">
@@ -1115,6 +1118,7 @@ export function PlayerDemo({
                   />
                 ))}
               </video>
+              <HalloweenPlayerEcho mediaRef={video} expanded={fauxFullscreen}/>
               <DemoFeedbackDialog
                 key={community.user?.id || 'guest'}
                 feedback={feedback}
@@ -1142,7 +1146,7 @@ export function PlayerDemo({
               )}
               {!playing && !waiting && !error && countdown === null && (
                 <button
-                  className="demo-big-play"
+                  className="demo-big-play" data-hw-watch
                   onClick={() => {
                     surface.current?.focus({ preventScroll: true });
                     toggle();

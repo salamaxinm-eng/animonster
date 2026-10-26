@@ -1,11 +1,15 @@
 'use client';
 
+import { useHalloween } from '@/components/halloween';
+import { HalloweenSearchTreat } from '@/components/halloween-extras';
+import { halloweenQuery } from '@/lib/halloween';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { posterUrl, type Anime } from '@/lib/anime';
 import { PhotoSearchButton } from '@/components/photo-search-button';
 
 export function GlobalSearch() {
+  const halloween=useHalloween();
   const root = useRef<HTMLFormElement>(null);
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<Anime[]>([]);
@@ -22,8 +26,9 @@ export function GlobalSearch() {
     return () => removeEventListener('popstate', sync);
   }, []);
 
+  const treat=halloween.active && halloweenQuery(query);
   useEffect(() => {
-    if (!open) return;
+    if (!open || treat) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setLoading(true);
@@ -53,7 +58,7 @@ export function GlobalSearch() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, open]);
+  }, [query, open, treat]);
 
   useEffect(() => {
     const close = (event: PointerEvent) => {
@@ -83,9 +88,9 @@ export function GlobalSearch() {
         }}
         placeholder="Название или ID аниме"
         aria-label="Поиск аниме"
-        role="combobox"
-        aria-autocomplete="list"
-        aria-expanded={open}
+        role={treat ? 'searchbox' : 'combobox'}
+        aria-autocomplete={treat ? 'none' : 'list'}
+        aria-expanded={treat ? undefined : open}
         aria-controls="global-search-results"
         autoComplete="off"
       />
@@ -106,8 +111,9 @@ export function GlobalSearch() {
         <div
           className="global-search-results"
           id="global-search-results"
-          role="listbox"
+          role={treat ? 'region' : 'listbox'}
         >
+          {treat ? <HalloweenSearchTreat/> : <>
           <div className="global-search-caption">
             {query.trim() ? 'Подходящие аниме' : 'Популярное'}
           </div>
@@ -144,6 +150,7 @@ export function GlobalSearch() {
           >
             Все результаты
           </a>
+          </>}
         </div>
       )}
     </form>

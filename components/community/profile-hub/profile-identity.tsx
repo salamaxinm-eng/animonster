@@ -48,6 +48,7 @@ export function ProfileIdentity({
             <Heading><UserNickname user={user}/></Heading>
             <div className="hub-profile-badges">
               <UserTag id={user.tag} />
+              {user.halloween_spirit_hunter && user.pin !== 'halloween-spirit-hunter-2026' && <span className="hw-hunter-badge" title="Ловец духов · Хэллоуин 2026"><img src="/rewards/halloween-2026/spirit-hunter.svg" alt="Ловец духов · Хэллоуин 2026"/></span>}
               <Pin id={user.pin} />
               <StreakDisplay streak={user.streak} compact />
               {!!user.premium_until && (
