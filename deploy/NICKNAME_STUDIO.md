@@ -27,3 +27,9 @@ Global repository oxlint currently reports existing errors in unrelated files/te
 - Database backup: `/root/db-before-nickname-studio-20261026-125921.dump` (root-only, 119743130 bytes). Migration 0064 applied transactionally; owner gift true, Artyom gift/paid false; both gold/default choices preserved.
 - Corrected production build image: `animonster-app:nickname-studio-20261026-r2`, ID `7662fcde87a0`. Actual HTTP canary passed authenticated save/public read, permanent gift without Plus, locked account, invalid presets, exclusive gold, duplicate purchase rejection, same-origin/auth guards, both real honorary profiles and unchanged 19-episode catalog. Temporary accounts/sessions removed.
 - Reusable server check: `python3 scripts/verify-nickname-canary.py` against private port 3104. Does not create provider charges or edit real user choices.
+
+## Released
+
+Deployed 2026-10-26 to the existing production compose project with image `animonster-app:nickname-studio-20261026-r2` (`7662fcde87a0`). The same HTTP canary also passed against the active production container on port 3000; public health and demo API returned 200 with all 19 episodes. Both containers healthy. Temporary test accounts/sessions and canary container removed. Failed first-build tag and unused Docker intermediates removed, retaining tagged rollback releases and media; approximately 24 GiB available afterward.
+
+Previous image reference is saved in `.player-demo.env.before-nickname-20261026` on the deployment host. Production `.env.production` and media catalog were preserved.
