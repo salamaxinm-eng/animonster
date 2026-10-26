@@ -1,4 +1,5 @@
 'use client';
+import { useHalloween } from '@/components/halloween';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { NicknameEditor } from './nickname-editor';
@@ -27,6 +28,7 @@ export function AppearanceSection({
   onChanged: () => Promise<void>;
 }) {
   const user = profile.user;
+  const halloween = useHalloween();
   const resource = useResource<{ cosmetics: Cosmetic[] }>(
     '/api/profile-hub?kind=inventory',
   );
@@ -121,6 +123,7 @@ export function AppearanceSection({
       <p className="hub-lead">
         Выбор меняет предпросмотр. Примените оформление кнопкой «Сохранить».
       </p>
+      {halloween.active && <p className="hub-notice">До конца 3 ноября на сайте действует хэллоуинское оформление. Выбранная тема появится после праздника.</p>}
       <ProfileIdentity
         user={draft}
         preview

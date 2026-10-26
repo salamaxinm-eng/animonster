@@ -13,6 +13,9 @@ import './photo-search.css';
 import './social-auth.css';
 import './legend-origin.css';
 import './nickname.css';
+import './halloween.css';
+import { HalloweenProvider } from '@/components/halloween';
+import { halloweenBootstrap } from '@/lib/halloween';
 import './player-demo/player-demo.css';
 import { Suspense } from 'react';
 import YandexMetrika from '@/components/yandex-metrika';
@@ -84,28 +87,36 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru" className="dark">
+    <html lang="ru" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          id="animonster-halloween"
+          dangerouslySetInnerHTML={{ __html: halloweenBootstrap }}
+        />
+      </head>
       <body>
         <PwaRegistration />
         <CommunityProvider>
-          <AccessNotice />
-          {children}
+          <HalloweenProvider>
+            <AccessNotice />
+            {children}
 
-          <footer className="site-footer">
-            <span>© AniMonster</span>
+            <footer className="site-footer">
+              <span>© AniMonster</span>
 
-            <nav>
-              <a href="/legal/privacy">Конфиденциальность</a>
-              <a href="/legal/terms">Пользовательское соглашение</a>
-              <a href="/legal/prices">Цены и тарифы</a>
-              <a href="/legal/support">Поддержка</a>
-              <a href="/legal/rules">Правила</a>
-              <a href="/legal/offer">Оферта</a>
-              <a href="/legal/requisites">Реквизиты</a>
-            </nav>
-          </footer>
+              <nav>
+                <a href="/legal/privacy">Конфиденциальность</a>
+                <a href="/legal/terms">Пользовательское соглашение</a>
+                <a href="/legal/prices">Цены и тарифы</a>
+                <a href="/legal/support">Поддержка</a>
+                <a href="/legal/rules">Правила</a>
+                <a href="/legal/offer">Оферта</a>
+                <a href="/legal/requisites">Реквизиты</a>
+              </nav>
+            </footer>
 
-          <MobileNavigation />
+            <MobileNavigation />
+          </HalloweenProvider>
         </CommunityProvider>
 
         <Suspense fallback={null}>

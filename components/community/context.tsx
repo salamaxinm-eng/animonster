@@ -1,4 +1,5 @@
 'use client';
+import { SeasonalBrand } from '@/components/halloween';
 import { UserNickname } from '@/components/user-nickname';
 import { LegendOriginCelebration } from './legend-origin-celebration';
 import { passImageUrl } from '@/lib/pass-images';
@@ -554,10 +555,7 @@ export function CommunityHeader({
 
   return (
     <header className="header site-header">
-      <a className="brand" href="/" aria-label="AniMonster — главная">
-        <Ghost size={30} fill="currentColor" strokeWidth={1.7} />
-        <span>Ani<span>Monster</span></span>
-      </a>
+      <SeasonalBrand />
       <nav aria-label="Основные разделы">
         <a href="/#catalog">Каталог</a>
         <a href="/genres">Жанры</a>

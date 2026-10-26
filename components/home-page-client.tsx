@@ -1,4 +1,5 @@
 'use client';
+import { useHalloween } from '@/components/halloween';
 import { useEffect, useRef, useState } from 'react';
 import {
   Play,
@@ -20,6 +21,7 @@ import { fetchJsonWithRetry } from '@/lib/client/fetch-json';
 import { CommunityHeader, api, useCommunity } from '@/components/community/context';
 export function HomePageClient({ initialPopular }: { initialPopular: Anime[] }) {
   const community = useCommunity();
+  const halloween = useHalloween();
   const firstCatalogLoad = useRef(true);
   const [items, setItems] = useState<Anime[]>([]),
     [tab, setTab] = useState('all'),
@@ -398,7 +400,7 @@ export function HomePageClient({ initialPopular }: { initialPopular: Anime[] }) 
           <button
             onClick={() =>
               items.length &&
-              open(items[Math.floor(Math.random() * items.length)])
+              halloween.surprise(() => open(items[Math.floor(Math.random() * items.length)]))
             }
           >
             Удиви меня <ArrowUpRight size={20} />

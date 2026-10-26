@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from 'react';
 import Link from 'next/link';
+import { PlayerHalloweenVisitor } from '@/components/halloween';
 import { UserNickname } from '@/components/user-nickname';
 import {
   ArrowLeft,
@@ -887,6 +888,7 @@ export function PlayerDemo({
               )}
               {room.error && <p role="alert">{room.error}</p>}
             </section>
+            <PlayerHalloweenVisitor disabled={fauxFullscreen} />
             {/* The player is a keyboard application; focus enables Space/arrow shortcuts without stealing page keys. */}
             <div
               ref={surface}

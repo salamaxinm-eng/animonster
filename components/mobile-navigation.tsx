@@ -1,11 +1,11 @@
 'use client';
 
+import { SeasonalBrand } from '@/components/halloween';
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { PhotoSearchButton } from '@/components/photo-search-button';
 import {
   Bookmark,
-  Ghost,
   Home,
   LayoutGrid,
   Search,
@@ -122,16 +122,7 @@ function MobileNavigationContent() {
         {sectionTitle ? (
           <strong className="mobile-page-heading">{sectionTitle}</strong>
         ) : (
-          <a
-            className="mobile-brand"
-            href="/"
-            aria-label="AniMonster — главная"
-          >
-            <Ghost aria-hidden="true" fill="currentColor" />
-            <span>
-              Ani<strong>Monster</strong>
-            </span>
-          </a>
+          <SeasonalBrand mobile />
         )}
         <div className="mobile-topbar-actions">
           <BuySubscription compact className="mobile-plus-button" />
