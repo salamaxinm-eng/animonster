@@ -213,7 +213,7 @@ void test('two independent viewers share host state, cannot control each other, 
   const engine = new PGlite();
   try {
     await engine.exec(
-      "CREATE TABLE users(id text PRIMARY KEY,nick text); INSERT INTO users VALUES ('host','Host'),('guest','Guest'),('outsider','Outsider'); ALTER TABLE users ADD COLUMN legend_origin_at bigint; UPDATE users SET legend_origin_at=1800000000000 WHERE id='host'",
+      "CREATE TABLE users(id text PRIMARY KEY,nick text); INSERT INTO users VALUES ('host','Host'),('guest','Guest'),('outsider','Outsider'); ALTER TABLE users ADD COLUMN legend_origin_at bigint; ALTER TABLE users ADD COLUMN nickname_style jsonb; UPDATE users SET legend_origin_at=1800000000000 WHERE id='host'",
     );
     await engine.exec(
       await readFile(

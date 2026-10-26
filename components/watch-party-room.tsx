@@ -44,7 +44,7 @@ type PartySnapshot = {
   members: Array<{
     user_id: string;
     role: 'host' | 'member';
-    nick: string; legend_origin_at?: number | null;
+    nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
     avatar: string;
     theme: string;
     online: boolean;
@@ -53,7 +53,7 @@ type PartySnapshot = {
   messages: Array<{
     id: string;
     author_id: string;
-    nick: string; legend_origin_at?: number | null;
+    nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
     body: string;
     created_at: number;
     deleted_at: number | null;

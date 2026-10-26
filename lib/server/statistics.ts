@@ -4,14 +4,14 @@ import { fundraisingGoals } from './fundraising';
 
 export type ViewLeader = {
   id: string;
-  nick: string; legend_origin_at?: number | null;
+  nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
   views: number;
 };
 
 async function viewLeaderboard(since?: number): Promise<ViewLeader[]> {
   const rows = await db()
     .prepare(
-      `SELECT u.id,u.nick,u.legend_origin_at,COUNT(*)::integer AS views
+      `SELECT u.id,u.nick,u.legend_origin_at,u.nickname_style,COUNT(*)::integer AS views
        FROM qualified_episode_views v
        JOIN users u ON u.id=v.user_id
        WHERE u.deleted_at IS NULL ${since === undefined ? '' : 'AND v.qualified_at>=?'}

@@ -1,6 +1,7 @@
 import { avatars, themes } from '../community';
 import { ApiError, db, type User } from './core';
 import { cosmeticEquipValue, validateEquippedCosmetic } from './cosmetics';
+import { validateNicknameChoice } from './nickname';
 import { plusEntitlements } from './plus';
 
 // Existing custom images may stay equipped; new uploads and custom backgrounds are blocked.
@@ -37,7 +38,10 @@ export async function saveProfileAppearance(user: User, form: FormData) {
     background = await cosmeticEquipValue('background', slug);
   }
   await db().transaction(async tx => {
-    await tx.prepare('UPDATE users SET avatar=?,theme=?,profile_frame=?,pin=?,tag=?,profile_background=? WHERE id=?')
-      .bind(avatar, theme.id, frame, pin, tag, background, user.id).run();
+    const locked = await tx.prepare('SELECT * FROM users WHERE id=? FOR UPDATE').bind(user.id).first<User>();
+    if (!locked) throw new ApiError('Аккаунт не найден', 404);
+    const style = 'nickname_style' in input ? validateNicknameChoice(locked, input.nickname_style) : locked.nickname_style || null;
+    await tx.prepare('UPDATE users SET avatar=?,theme=?,profile_frame=?,pin=?,tag=?,profile_background=?,nickname_style=?::text::jsonb WHERE id=?')
+      .bind(avatar, theme.id, frame, pin, tag, background, style ? JSON.stringify(style) : null, user.id).run();
   });
 }

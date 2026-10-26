@@ -11,7 +11,7 @@ export async function GET(r: Request) {
       db().prepare('SELECT * FROM pass_seasons ORDER BY created_at DESC').all(),
       db().prepare("SELECT id,kind,slug,name,image FROM cosmetics WHERE access_type='battlepass' ORDER BY kind,name").all(),
       eligiblePassGenres(),
-      db().prepare('SELECT m.*,u.nick FROM pass_members m JOIN users u ON u.id=m.user_id WHERE m.season_id=? ORDER BY m.xp DESC LIMIT 100').bind(id).all(),
+      db().prepare('SELECT m.*,u.nick,u.legend_origin_at,u.nickname_style FROM pass_members m JOIN users u ON u.id=m.user_id WHERE m.season_id=? ORDER BY m.xp DESC LIMIT 100').bind(id).all(),
       db().prepare('SELECT * FROM pass_audit WHERE season_id=? OR season_id IS NULL ORDER BY created_at DESC LIMIT 100').bind(id).all(),
       db().prepare('SELECT p.*,o.provider_id,o.status,o.amount FROM pass_purchases p JOIN orders o ON o.id=p.order_id WHERE p.season_id=? ORDER BY p.created_at DESC LIMIT 100').bind(id).all(),
     ]);

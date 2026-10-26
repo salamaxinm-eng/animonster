@@ -1,0 +1,296 @@
+.nickname-custom {
+  color: var(--nick-color);
+  font-weight: 750;
+}
+@supports (background-clip: text) {
+  .nickname-gradient,
+  .nickname-shimmer,
+  .nickname-metal {
+    background: linear-gradient(
+      110deg,
+      var(--nick-color),
+      var(--nick-light),
+      var(--nick-color)
+    );
+    background-size: 220% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  .nickname-shimmer {
+    animation: nickname-flow 6s ease-in-out infinite;
+  }
+  .nickname-metal {
+    background-image: linear-gradient(
+      175deg,
+      var(--nick-light) 0%,
+      var(--nick-color) 35%,
+      var(--nick-light) 47%,
+      var(--nick-color) 55%,
+      var(--nick-light) 65%,
+      var(--nick-color) 100%
+    );
+    background-size: 100% 250%;
+    animation: nickname-metal 7s ease-in-out infinite;
+  }
+}
+.nickname-neon {
+  text-shadow: 0 0 7px color-mix(in srgb, var(--nick-color) 55%, transparent);
+  animation: nickname-glow 5s ease-in-out infinite;
+}
+.nickname-stars {
+  background-image:
+    radial-gradient(
+      circle at 15% 35%,
+      var(--nick-light) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(circle at 78% 60%, var(--nick-light) 0 1px, transparent 2px);
+  background-size:
+    30px 20px,
+    43px 26px;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--nick-color) 35%, transparent);
+  animation: nickname-stars 8s linear infinite;
+}
+.nickname-still {
+  animation: none !important;
+}
+@keyframes nickname-flow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@keyframes nickname-metal {
+  0%,
+  100% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 50% 100%;
+  }
+}
+@keyframes nickname-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 3px color-mix(in srgb, var(--nick-color) 35%, transparent);
+  }
+  50% {
+    text-shadow: 0 0 10px color-mix(in srgb, var(--nick-color) 65%, transparent);
+  }
+}
+@keyframes nickname-stars {
+  to {
+    background-position:
+      60px 0,
+      -43px 26px;
+  }
+}
+.nickname-studio {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.nickname-studio p {
+  line-height: 1.6;
+  margin: 8px 0;
+}
+.nickname-studio-intro {
+  display: flex;
+  gap: 20px;
+  align-items: start;
+  justify-content: space-between;
+}
+.nickname-studio h3 {
+  font-size: clamp(22px, 4vw, 32px);
+  margin: 8px 0;
+}
+.nickname-kicker {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: #c6b6f9;
+}
+.nickname-permanent {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid #b5a0f344;
+  border-radius: 30px;
+  font-size: 12px;
+  color: #d4c5ff;
+  background: #9874e815;
+}
+.nickname-purchase {
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  padding: 22px;
+  border: 1px solid #bca3ff44;
+  border-radius: 18px;
+  background: radial-gradient(ellipse at 0 0, #9874e821, transparent 70%);
+}
+.nickname-purchase strong {
+  font-size: 28px;
+}
+.nickname-purchase small {
+  line-height: 1.6;
+  opacity: 0.8;
+}
+.nickname-purchase a {
+  text-decoration: underline;
+}
+.nickname-purchase-actions {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.nickname-studio fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.nickname-studio legend {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.nickname-color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  gap: 8px;
+}
+.nickname-color {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid #ffffff1f;
+  border-radius: 12px;
+  background: #ffffff04;
+  font-size: 12px;
+  color: inherit;
+  cursor: pointer;
+}
+.nickname-color i {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid #ffffff30;
+}
+.nickname-swatch-default {
+  background: linear-gradient(135deg, #9b9bad, #ececf5);
+}
+.nickname-swatch-legend {
+  background: linear-gradient(135deg, #bf7f29, #fff4d2, #e4ab47);
+}
+.nickname-color.selected,
+.nickname-effect.selected {
+  border-color: #ba9cff;
+  box-shadow: inset 0 0 0 1px #ba9cff;
+  background: #a385f314;
+}
+.nickname-effect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.nickname-effect {
+  display: grid;
+  gap: 12px;
+  text-align: left;
+  min-width: 0;
+  min-height: 94px;
+  padding: 16px 12px;
+  border: 1px solid #ffffff1f;
+  border-radius: 14px;
+  background: #ffffff04;
+  color: inherit;
+  cursor: pointer;
+}
+.nickname-effect > span:first-child {
+  overflow-wrap: anywhere;
+  font-size: 18px;
+}
+.nickname-effect > span:last-child {
+  font-size: 12px;
+  opacity: 0.75;
+}
+.nickname-studio button:focus-visible {
+  outline: 3px solid #dfc9ff;
+  outline-offset: 3px;
+}
+.nickname-studio button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.nickname-motion {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 44px;
+}
+.nickname-motion input {
+  width: 20px;
+  height: 20px;
+  accent-color: #ad91ec;
+}
+.nickname-motion small {
+  width: 100%;
+  opacity: 0.65;
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .nickname-studio-intro,
+  .nickname-purchase {
+    flex-direction: column;
+  }
+  .nickname-purchase-actions {
+    width: 100%;
+  }
+  .nickname-effect-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .nickname-color-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .nickname-color {
+    padding: 9px 6px;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .nickname-color i {
+    width: 16px;
+    height: 16px;
+  }
+  .nickname-purchase {
+    padding: 16px;
+  }
+  .nickname-permanent {
+    align-self: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nickname-custom {
+    animation: none !important;
+  }
+}
+@media (forced-colors: active) {
+  .nickname-custom {
+    background: none;
+    color: CanvasText;
+    -webkit-text-fill-color: CanvasText;
+    text-shadow: none;
+  }
+  .nickname-color.selected,
+  .nickname-effect.selected {
+    outline: 2px solid Highlight;
+  }
+}

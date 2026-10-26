@@ -82,13 +82,13 @@ export function ProfilePage({
     [notifications, setNotifications] = useState<
       Array<{
         id: string;
-        nick: string; legend_origin_at?: number | null;
+        nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
         scope: string;
         seen: number;
         comment_id: string;
       }>
     >([]),
-    [blocks, setBlocks] = useState<Array<{ id: string; nick: string }>>([]),
+    [blocks, setBlocks] = useState<Array<{ id: string; nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null }>>([]),
     [reports, setReports] = useState<
       Array<{ id: string; body: string; reason: string }>
     >([]);
@@ -1121,7 +1121,7 @@ export function ProfilePage({
                   {blocks.length ? (
                     blocks.map((b) => (
                       <div className="blocked-row" key={b.id}>
-                        {b.nick}
+                        <UserNickname user={b}/>
                         <button
                           type="button"
                           onClick={async () => {
@@ -1175,7 +1175,7 @@ export function ProfilePage({
                       >
                         <Bell size={18} />
                         <span>
-                          <strong>{n.nick}</strong> оставил сообщение в твоём
+                          <strong><UserNickname user={n}/></strong> оставил сообщение в твоём
                           обсуждении
                         </span>
                       </a>

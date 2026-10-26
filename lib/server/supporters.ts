@@ -2,7 +2,7 @@ import { db, now } from './core';
 
 export type SupporterLeader = {
   id: string;
-  nick: string; legend_origin_at?: number | null;
+  nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
   amount: string | number;
   payments: number;
 };
@@ -16,7 +16,7 @@ const leaderId = `(SELECT o.user_id FROM orders o JOIN users u ON u.id=o.user_id
 export async function supporterLeaderboard(limit = 3) {
   const rows = await db()
     .prepare(
-      `SELECT u.id,u.nick,u.legend_origin_at,COALESCE(SUM(o.amount),0) AS amount,COUNT(o.id)::integer AS payments
+      `SELECT u.id,u.nick,u.legend_origin_at,u.nickname_style,COALESCE(SUM(o.amount),0) AS amount,COUNT(o.id)::integer AS payments
        FROM orders o JOIN users u ON u.id=o.user_id
        WHERE ${paidOrders}
        GROUP BY u.id,u.nick

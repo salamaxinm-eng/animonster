@@ -49,7 +49,7 @@ const rewardLabels = {
 function SupportHall() {
   const [open, setOpen] = useState(false);
   const [leaders, setLeaders] = useState<
-    { id: string; nick: string; legend_origin_at?: number | null; amount: number }[]
+    { id: string; nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null; amount: number }[]
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

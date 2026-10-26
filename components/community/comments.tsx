@@ -29,7 +29,7 @@ type Comment = {
   deleted: number;
   created_at: number;
   edited_at: number;
-  nick: string; legend_origin_at?: number | null;
+  nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
   avatar: string;
   theme: string;
   pin: string | null;
@@ -164,7 +164,7 @@ export function Comments({
         >
           {reply && (
             <div className="reply-to">
-              Ответ {reply.nick}
+              Ответ <UserNickname user={reply}/>
               <button type="button" onClick={() => setReply(null)}>
                 Отменить
               </button>

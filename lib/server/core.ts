@@ -297,6 +297,9 @@ export const cookie = (r: Request, name: string) =>
     ?.slice(name.length + 1) || '';
 
 export type User = {
+  nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
+  nickname_unlocked_at?: number | null;
+  nickname_gift_at?: number | null;
   legend_origin_at?: number | null;
   legend_origin_seen_at?: number | null;
   vk_url?: string | null;
@@ -417,6 +420,8 @@ export async function publicUser(u: User, own = false) {
     id: u.id,
     nick: u.nick,
     legend_origin_at: Number(u.legend_origin_at) || null,
+    nickname_style: u.nickname_style || null,
+    ...(own ? { nickname_unlocked: Number(u.nickname_unlocked_at) > 0 || Number(u.nickname_gift_at) > 0 } : {}),
     bio: u.bio,
     ...publicProfileSocial(u, own),
     theme: resolveSiteTheme(u.theme),

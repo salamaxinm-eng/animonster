@@ -1,3 +1,4 @@
+import { UserNickname } from '@/components/user-nickname';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { CommunityHeader } from '@/components/community/context';
@@ -179,7 +180,7 @@ export default async function Page() {
                         <tr key={item.id}>
                           <td>{index + 1}</td>
                           <td>
-                            <a href={`/members/${item.id}`}>{item.nick}</a>
+                            <a href={`/members/${item.id}`}><UserNickname user={item}/></a>
                           </td>
                           <td>{item.watchedEpisodes}</td>
                           <td>{item.trackedEpisodes}</td>

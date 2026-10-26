@@ -2,6 +2,7 @@ import { db, runtime, ApiError, now } from './core';
 import { casheraFetch, casheraMatches, createCasheraCheckout, paymentProvider, paymentsReady, type PaymentProvider } from './payment-gateway';
 import { refreshSupporterChampion } from './supporters';
 import { assignFounder, syncFounderRewards } from './founders';
+import { settleNicknamePayment } from './nickname';
 import { confirmPassPayment, revokePassPayment } from './battlepass-payment';
 import { confirmBundlePayment, confirmVpnPayment, revokeBundlePayment, revokeVpnPayment } from './vpn';
 
@@ -124,7 +125,7 @@ export async function verifyPayment(providerId: string, provider: string = 'plat
       user_id: string;
       provider: string;
       provider_id: string | null;
-      plan: 'monthly' | 'annual' | 'support' | 'donation' | 'vpn' | 'vpn_plus' | 'battlepass';
+      plan: 'monthly' | 'annual' | 'support' | 'donation' | 'vpn' | 'vpn_plus' | 'battlepass' | 'nickname';
       amount: string | number;
       duration_days: number;
     }>();
@@ -138,6 +139,13 @@ export async function verifyPayment(providerId: string, provider: string = 'plat
     throw new ApiError('Платёж не подтверждён', 400);
   if (order.provider_id && order.provider_id !== paymentId)
     throw new ApiError('Платёж не совпадает', 400);
+  if (order.plan === 'nickname') {
+    if (['CONFIRMED','CANCELED','CHARGEBACKED'].includes(p.status || '')) {
+      await settleNicknamePayment(order.id, paymentId, p.status === 'CONFIRMED' ? 'succeeded' : p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled', p.isTest === true || p.test === true);
+      await refreshSupporterChampion();
+    }
+    return (await db().prepare('SELECT status FROM orders WHERE id=?').bind(order.id).first<{status: string}>())?.status || 'pending';
+  }
   if (order.plan === 'battlepass') {
     if (p.status === 'CONFIRMED') await confirmPassPayment(order.id, paymentId, p.isTest === true || p.test === true);
     else if (p.status === 'CANCELED' || p.status === 'CHARGEBACKED') await revokePassPayment(order.id, p.status === 'CHARGEBACKED' ? 'chargebacked' : 'canceled');

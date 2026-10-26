@@ -1,5 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { NicknameEditor } from './nickname-editor';
 import { Check } from 'lucide-react';
 import { avatars, themes, type Profile } from '@/lib/community';
 import { Avatar } from '../context';
@@ -29,7 +31,8 @@ export function AppearanceSection({
     '/api/profile-hub?kind=inventory',
   );
   const [draft, setDraft] = useState<Profile>(user);
-  const [tab, setTab] = useState('frame');
+  const params = useSearchParams();
+  const [tab, setTab] = useState(params.get('appearance') === 'nickname' ? 'nickname' : 'frame');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -66,6 +69,7 @@ export function AppearanceSection({
       'profile_frame',
       'pin',
       'tag',
+      'nickname_style',
     ].some((key) => draft[key as keyof Profile] !== user[key as keyof Profile]);
   const noneSelected =
     tab === 'frame'
@@ -95,6 +99,7 @@ export function AppearanceSection({
           pin: draft.pin,
           tag: draft.tag,
           background: background?.slug || draft.profile_background,
+          nickname_style: draft.nickname_style || null,
         }),
       );
       const response = await fetch('/api/profile-hub', {
@@ -141,6 +146,7 @@ export function AppearanceSection({
               ['pin', 'Пин'],
               ['tag', 'Тег'],
               ['theme', 'Тема'],
+              ['nickname', 'Ник'],
             ]}
             value={tab}
             onChange={setTab}
@@ -156,10 +162,13 @@ export function AppearanceSection({
                   pin: 'Мои пины',
                   tag: 'Мои теги',
                   theme: 'Тема сайта',
+                  nickname: 'Оформление ника',
                 }[tab]
               }
             </h2>
-            {tab === 'avatar' ? (
+            {tab === 'nickname' ? (
+              <NicknameEditor user={user} value={draft.nickname_style || null} onChange={nickname_style => setDraft(old => ({...old,nickname_style}))} onChanged={onChanged} busy={busy}/>
+            ) : tab === 'avatar' ? (
               <>
                 <p className="hub-lead">Выберите аватар из каталога. Загрузка своих изображений отключена.</p>
                 <div className="hub-item-grid">
@@ -304,7 +313,7 @@ export function AppearanceSection({
             </button>
             <button
               className="hub-primary"
-              disabled={busy || !dirty}
+              disabled={busy || !dirty || (!!draft.nickname_style && !['default','legend'].includes(draft.nickname_style.color) && !user.nickname_unlocked)}
               onClick={() => void save()}
             >
               {busy ? 'Сохраняем…' : 'Сохранить'}

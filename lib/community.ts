@@ -211,6 +211,8 @@ export const pins = [
 import type { Streak } from './streak';
 
 export type Profile = {
+  nickname_style?: import('./nickname-styles').NicknameStyle | null;
+  nickname_unlocked?: boolean;
   legend_origin_at?: number | null;
   vk_url?: string | null;
   telegram_url?: string | null;

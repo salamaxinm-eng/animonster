@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 import { FormEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -152,7 +153,7 @@ export function AdminTools({
     });
   }
   const users = data.users.filter((user: any) =>
-    `${user.nick} ${user.email || ''} ${user.id}`
+    `$<UserNickname user={user}/> ${user.email || ''} ${user.id}`
       .toLowerCase()
       .includes(userQuery.toLowerCase()),
   );
@@ -744,7 +745,7 @@ export function AdminTools({
                 {data.payments.map((item: any) => (
                   <tr key={item.id}>
                     <td>
-                      <a href={`/members/${item.user_id}`}>{item.nick}</a>
+                      <a href={`/members/${item.user_id}`}><UserNickname user={item}/></a>
                     </td>
                     <td>{item.status}</td>
                     <td>
@@ -789,7 +790,7 @@ export function AdminTools({
                     <tr key={comment.id}>
                       <td>
                         <a href={`/members/${comment.user_id}`}>
-                          {comment.nick}
+                          <UserNickname user={comment}/>
                         </a>
                       </td>
                       <td>
@@ -833,7 +834,7 @@ export function AdminTools({
                 <tr key={founder.founder_number}>
                   <td>#{String(founder.founder_number).padStart(3, '0')}</td>
                   <td>
-                    {founder.nick}
+                    <UserNickname user={founder}/>
                     <br />
                     <small>{founder.user_id}</small>
                   </td>
@@ -932,13 +933,13 @@ export function AdminTools({
                 .map((user: any) => (
                   <tr key={user.id}>
                     <td>
-                      <a href={`/members/${user.id}`}>{user.nick}</a>
+                      <a href={`/members/${user.id}`}><UserNickname user={user}/></a>
                       <small>{user.id}</small>
                     </td>
                     <td>
                       {data.can_manage_roles ? (
                         <NativeSelect
-                          aria-label={`Роль ${user.nick}`}
+                          aria-label={`Роль $<UserNickname user={user}/>`}
                           value={user.role}
                           onChange={(event) =>
                             mutate({

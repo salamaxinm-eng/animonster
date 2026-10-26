@@ -41,7 +41,7 @@ export async function POST(r: Request) {
           `SELECT provider,provider_id,id FROM orders WHERE provider IN ('platega','cashera') AND user_id=?
            AND (provider_id IS NOT NULL OR provider='cashera') AND
            ((?='vpn' AND plan='vpn') OR (?='vpn_plus' AND plan='vpn_plus') OR
-            (?='plus' AND plan NOT IN ('vpn','vpn_plus','battlepass')))
+            (?='plus' AND plan NOT IN ('vpn','vpn_plus','battlepass','nickname')))
            ORDER BY created_at DESC LIMIT 1`,
         )
         .bind(u.id, checkPlan, checkPlan, checkPlan)

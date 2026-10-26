@@ -12,7 +12,7 @@ export default async function FoundersPage() {
   const response = await fetch(`${origin}/api/founders`, { cache: 'no-store' });
   if (!response.ok) throw new Error('Не удалось загрузить Founder-места');
   const { founders, remaining, backfillPending } = await response.json() as {
-    founders: Array<{ founder_number: number; first_qualifying_payment_at: number; nick: string; legend_origin_at?: number | null; avatar: string; pin: string }>;
+    founders: Array<{ founder_number: number; first_qualifying_payment_at: number; nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null; avatar: string; pin: string }>;
     remaining: number | null;
     backfillPending: boolean;
   };

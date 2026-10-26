@@ -95,6 +95,7 @@ test('fundraising migration, checkout, provider verification and permanent inven
   )
     .replace("'./core'", JSON.stringify(coreUrl))
     .replace("'./payment-gateway'", JSON.stringify(gatewayUrl))
+  .replace(/import \{ settleNicknamePayment[^\n]+\n/, 'const settleNicknamePayment=async()=>{};')
     .replace("'./supporters'", JSON.stringify(supportersUrl))
     .replace("'./founders'", JSON.stringify(foundersUrl));
   const billingUrl = url(billingSource.replace(/import \{ confirmPassPayment[^\n]+\n/, 'const confirmPassPayment=async()=>{}; const revokePassPayment=async()=>{};').replace(/import \{ confirmBundlePayment[^\n]+\n/, 'const confirmBundlePayment=async()=>{}; const confirmVpnPayment=async()=>{}; const revokeBundlePayment=async()=>{}; const revokeVpnPayment=async()=>{};'));

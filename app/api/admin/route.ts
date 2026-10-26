@@ -69,7 +69,7 @@ export async function GET(r: Request) {
         )
         .all(),
       db()
-        .prepare(`SELECT u.id,u.nick,u.email,u.role,u.email_verified,u.suspended_until,u.created_at,
+        .prepare(`SELECT u.id,u.nick,u.legend_origin_at,u.nickname_style,u.email,u.role,u.email_verified,u.suspended_until,u.created_at,
         (SELECT CASE WHEN BOOL_OR(g.lifetime) THEN 253402300799000 ELSE MAX(g.expires) END FROM grants g WHERE g.user_id=u.id AND g.revoked_at IS NULL) AS premium_until
         FROM users u WHERE u.deleted_at IS NULL ORDER BY u.created_at DESC LIMIT 100`)
         .all(),
@@ -90,7 +90,7 @@ export async function GET(r: Request) {
         .all(),
       db()
         .prepare(
-          `SELECT c.id,c.scope,c.body,c.created_at,u.id AS user_id,u.nick
+          `SELECT c.id,c.scope,c.body,c.created_at,u.id AS user_id,u.nick,u.legend_origin_at,u.nickname_style
              FROM comments c JOIN users u ON u.id=c.author_id
              WHERE c.deleted=0 ORDER BY c.created_at DESC LIMIT 100`,
         )
@@ -145,7 +145,7 @@ export async function GET(r: Request) {
         .first(),
       db()
         .prepare(
-          `SELECT g.order_id AS id,COALESCE(o.status,'manual') AS status,g.starts_at AS created_at,g.user_id,u.nick,g.expires,g.created_by,g.reason
+          `SELECT g.order_id AS id,COALESCE(o.status,'manual') AS status,g.starts_at AS created_at,g.user_id,u.nick,u.legend_origin_at,u.nickname_style,g.expires,g.created_by,g.reason
              FROM grants g JOIN users u ON u.id=g.user_id LEFT JOIN orders o ON o.id=g.order_id
              WHERE g.revoked_at IS NULL ORDER BY g.starts_at DESC LIMIT 100`,
         )
@@ -169,7 +169,7 @@ export async function GET(r: Request) {
         .all(),
     ]);
     const founders = await db().prepare(
-      `SELECT f.founder_number,f.user_id,u.nick,f.first_qualifying_payment_at,
+      `SELECT f.founder_number,f.user_id,u.nick,u.legend_origin_at,u.nickname_style,f.first_qualifying_payment_at,
               f.qualifying_amount,f.payment_id,
               (SELECT count(*) FROM user_cosmetics c WHERE c.user_id=f.user_id AND c.source='founder') AS cosmetic_count,
               EXISTS(SELECT 1 FROM grants g WHERE g.order_id='founder:' || f.founder_number::text AND g.user_id=f.user_id AND g.revoked_at IS NULL) AS plus_granted

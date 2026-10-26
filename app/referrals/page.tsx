@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -161,7 +162,7 @@ export default function ReferralsPage() {
                 <img src="/pins/referral-legend.svg" alt="Легендарный пин" />
               </span>
             </div>
-            <strong>{community.user?.nick || 'Твой ник'}</strong>
+            <strong>{community.user ? <UserNickname user={community.user}/> : 'Твой ник'}</strong>
             <UserTag id="animonster-legend" />
             <small>Оформление за 25 друзей</small>
             <div className="referral-mini-loot">

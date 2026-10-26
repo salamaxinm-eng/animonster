@@ -19,6 +19,7 @@ const planNames: Record<string, string> = {
   annual: 'Plus · 365 дней',
   support: 'Plus · поддержка проекта',
   donation: 'Поддержка проекта',
+  nickname: 'Оформление ника · навсегда',
 };
 const statusNames: Record<string, string> = {
   succeeded: 'Оплачено',

@@ -19,7 +19,7 @@ export type DemoRoomSnapshot = {
   room: DemoRoom;
   host: boolean;
   serverTime: number;
-  members: { nick: string; legend_origin_at?: number | null; user_id: string; online: boolean }[];
+  members: { nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null; user_id: string; online: boolean }[];
 };
 
 export function demoPosition(

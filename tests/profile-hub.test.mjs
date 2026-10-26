@@ -39,10 +39,13 @@ const images = await load('lib/server/images.ts', [['./core', core]]);
 const access = url(
   'export const plusEntitlements=async()=>globalThis.hubTestAccess;',
 );
+const nicknameShared = await load('lib/nickname-styles.ts', []);
+const nicknameService = await load('lib/server/nickname.ts', [['./core', core], ['../nickname-styles', nicknameShared]]);
 const appearance = await load('lib/server/profile-appearance.ts', [
   ['../community', community],
   ['./core', core],
   ['./cosmetics', cosmetics],
+  ['./nickname', nicknameService],
   ['./plus', access],
   ['./images', images],
 ]);
@@ -304,6 +307,16 @@ test('profile hub isolates owners, paginates and filters real data, and saves ap
     assert.equal(after.theme, 'v2-sakura');
     assert.equal(after.nick, before.nick);
     assert.equal(after.bio, before.bio);
+    const nicknameStyle = {color:'violet',effect:'neon',motion:false};
+    assert.equal((await post({...initial,nickname_style:nicknameStyle})).status,403,'Plus alone does not unlock nickname studio');
+    await engine.exec("UPDATE users SET nickname_gift_at=1 WHERE id='owner'");
+    globalThis.hubTestAccess = {active:false,premiumUntil:0,canChangeAvatar:true};
+    assert.equal((await post({...initial,nickname_style:nicknameStyle})).status,200,'one-time gift works without Plus');
+    assert.deepEqual((await engine.query("SELECT nickname_style FROM users WHERE id='owner'")).rows[0].nickname_style,nicknameStyle);
+    assert.equal((await post({...initial,nickname_style:{...nicknameStyle,color:'legend'}})).status,403,'purchased studio cannot select honorary gold');
+    assert.equal((await post({...initial,nickname_style:{...nicknameStyle,color:'#evil'}})).status,400);
+    assert.equal((await post(initial)).status,200,'older appearance clients preserve the chosen style');
+    assert.deepEqual((await engine.query("SELECT nickname_style FROM users WHERE id='owner'")).rows[0].nickname_style,nicknameStyle);
     // Uploads are denied even with Plus; existing images survive unrelated saves.
     assert.equal((await post(initial, {avatar:new File([bytes], 'test.png', {type:'image/png'})})).status,403);
     assert.equal((await post(initial, {background:new File([bytes], 'test.png', {type:'image/png'})})).status,403);

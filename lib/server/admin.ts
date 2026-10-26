@@ -127,7 +127,7 @@ export async function dashboard() {
       .bind(month)
       .all(),
     db()
-      .prepare(`SELECT u.id,u.nick,
+      .prepare(`SELECT u.id,u.nick,u.legend_origin_at,u.nickname_style,
         COUNT(*) FILTER (WHERE h.completed=1) AS watched_episodes,
         COUNT(h.episode) AS tracked_episodes,
         COALESCE(SUM(h.watched_seconds),0) AS watched_seconds
@@ -224,6 +224,8 @@ export async function dashboard() {
     topUsers: topUsers.results.map((item: any) => ({
       id: String(item.id),
       nick: String(item.nick || 'Без имени'),
+      legend_origin_at: Number(item.legend_origin_at) || null,
+      nickname_style: item.nickname_style || null,
       watchedEpisodes: Number(item.watched_episodes || 0),
       trackedEpisodes: Number(item.tracked_episodes || 0),
       watchedHours: Math.round(Number(item.watched_seconds || 0) / 360) / 10,

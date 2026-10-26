@@ -11,7 +11,7 @@ type EpisodeRow = { anime_id: number; episode: number; qualified_at: number | nu
 type TimeRow = { seconds: number | string | null };
 type Award = { id: string; name: string; image: string | null; kind: 'achievement' | 'pin' };
 export type Passport = {
-  user: { id: string; nick: string; legend_origin_at?: number | null; avatar: string; tag: string | null; pin: string | null; created_at: number; number: string; streak: number; longest_streak: number };
+  user: { id: string; nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null; avatar: string; tag: string | null; pin: string | null; created_at: number; number: string; streak: number; longest_streak: number };
   own: boolean;
   public: boolean;
   episodes: number;
@@ -135,7 +135,7 @@ async function calculate(user: User, config: Settings): Promise<Omit<Passport, '
   const prev = monthly.get(previousMonth) || 0;
   return {
     user: {
-      id, nick: user.nick, legend_origin_at: Number(user.legend_origin_at) || null, avatar: user.avatar, tag: user.tag || null, pin: user.pin || null,
+      id, nick: user.nick, legend_origin_at: Number(user.legend_origin_at) || null, nickname_style: user.nickname_style || null, avatar: user.avatar, tag: user.tag || null, pin: user.pin || null,
       created_at: user.created_at, number: createHash('sha256').update('anime-passport:' + id).digest('hex').slice(0, 12).toUpperCase(),
       streak: publicStreak(user).current, longest_streak: Number(user.longest_streak || 0),
     },
@@ -158,7 +158,7 @@ async function calculate(user: User, config: Settings): Promise<Omit<Passport, '
   };
 }
 export async function getPassport(user: User, config: Settings, own: boolean): Promise<Passport> {
-  const key = user.id + ':' + JSON.stringify([config,user.legend_origin_at,user.nick,user.avatar,user.tag,user.pin,user.current_streak,user.longest_streak,user.last_streak_date]);
+  const key = user.id + ':' + JSON.stringify([config,user.legend_origin_at,user.nickname_style,user.nick,user.avatar,user.tag,user.pin,user.current_streak,user.longest_streak,user.last_streak_date]);
   let entry = cache.get(key);
   if (!entry || entry.expires < now()) {
     const data = await calculate(user, config);

@@ -9,8 +9,8 @@ import { GoalRewardPreview } from '@/components/community/fundraising-choice';
 import type { FundraisingGoal } from '@/lib/fundraising';
 import './statistics.css';
 
-type Leader = { id: string; nick: string; legend_origin_at?: number | null; views: number };
-type Supporter = { id: string; nick: string; legend_origin_at?: number | null; amount: number; payments: number };
+type Leader = { id: string; nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null; views: number };
+type Supporter = { id: string; nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null; amount: number; payments: number };
 type Statistics = {
   goals: FundraisingGoal[];
   supporters: Supporter[];

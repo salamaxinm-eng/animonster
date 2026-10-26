@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -265,7 +266,7 @@ export function SettingsSection({
             (blocks.data.length ? (
               blocks.data.map((item) => (
                 <div className="hub-blocked-row" key={item.id}>
-                  <Link href={`/members/${item.id}`}>{item.nick}</Link>
+                  <Link href={`/members/${item.id}`}><UserNickname user={item}/></Link>
                   <button
                     className="hub-button"
                     disabled={busy}

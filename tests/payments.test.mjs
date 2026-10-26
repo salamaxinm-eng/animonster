@@ -9,6 +9,7 @@ const source = (
   await readFile(new URL('../lib/server/billing.ts', import.meta.url), 'utf8')
 )
   .replace("'./payment-gateway'", JSON.stringify(gatewayUrl))
+  .replace(/import \{ settleNicknamePayment[^\n]+\n/, 'const settleNicknamePayment=async()=>{};')
   .replace(/import \{ confirmPassPayment[^\n]+\n/, 'const confirmPassPayment=async()=>{}; const revokePassPayment=async()=>{};')
   .replace(/import \{ confirmBundlePayment[^\n]+\n/, 'const confirmBundlePayment=async()=>{}; const confirmVpnPayment=async()=>{}; const revokeBundlePayment=async()=>{}; const revokeVpnPayment=async()=>{};')
   .replace(

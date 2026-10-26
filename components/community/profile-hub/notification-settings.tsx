@@ -1,4 +1,5 @@
 'use client';
+import { UserNickname } from '@/components/user-nickname';
 import { useState } from 'react';
 import Link from 'next/link';
 import { api } from '../context';
@@ -6,7 +7,7 @@ import { Empty, ResourceState, useResource } from './shared';
 
 type Notification = {
   id: string;
-  nick: string;
+  nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null;
   scope: string;
   seen: number;
   comment_id: string;
@@ -135,7 +136,7 @@ export function NotificationSettings() {
                       : `/anime/${item.scope.split(':')[1]}${item.scope.split(':')[2] === 'episode' ? `?episode=${item.scope.split(':')[3]}` : ''}#comment-${item.comment_id}`
                   }
                 >
-                  <strong>{item.nick}</strong> оставил сообщение в обсуждении
+                  <strong><UserNickname user={item}/></strong> оставил сообщение в обсуждении
                   {!item.seen && <small>Новое</small>}
                 </Link>
               ))}

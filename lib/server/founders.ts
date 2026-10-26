@@ -30,7 +30,7 @@ export async function assignFounder(orderId: string) {
     const order = await tx.prepare(
       `SELECT o.id,o.user_id,o.amount,o.status,COALESCE(o.confirmed_at,o.created_at) AS qualifying_at
        FROM orders o JOIN users u ON u.id=o.user_id
-       WHERE o.id=? AND o.provider IN ('platega','cashera') AND u.deleted_at IS NULL
+       WHERE o.id=? AND o.plan<>'nickname' AND o.provider IN ('platega','cashera') AND u.deleted_at IS NULL
          AND NOT o.is_test AND u.identity NOT LIKE 'preview:%' AND u.identity NOT LIKE 'test:%'`,
     ).bind(orderId).first<{
       id: string; user_id: string; amount: string | number;
@@ -40,7 +40,7 @@ export async function assignFounder(orderId: string) {
       return null;
     const firstPayment = await tx.prepare(
       `SELECT id,amount,COALESCE(confirmed_at,created_at) AS qualifying_at
-       FROM orders WHERE user_id=? AND status='succeeded' AND amount>=1000 AND NOT is_test
+       FROM orders WHERE user_id=? AND plan<>'nickname' AND status='succeeded' AND amount>=1000 AND NOT is_test
        ORDER BY COALESCE(confirmed_at,created_at),id LIMIT 1`,
     ).bind(order.user_id).first<{ id: string; amount: string | number; qualifying_at: number }>();
     if (!firstPayment) return null;
@@ -104,11 +104,12 @@ export async function publicFounders(myUserId?: string) {
     `SELECT f.founder_number,f.first_qualifying_payment_at,
             CASE WHEN u.deleted_at IS NULL THEN u.nick ELSE 'Участник AniMonster' END AS nick,
             CASE WHEN u.deleted_at IS NULL THEN u.legend_origin_at ELSE NULL END AS legend_origin_at,
+            CASE WHEN u.deleted_at IS NULL THEN u.nickname_style ELSE NULL END AS nickname_style,
             CASE WHEN u.deleted_at IS NULL THEN u.avatar ELSE 'moon' END AS avatar,u.id
      FROM founding_members f JOIN users u ON u.id=f.user_id
      ORDER BY f.founder_number`,
   ).all<{ founder_number: number; first_qualifying_payment_at: number;
-    nick: string; legend_origin_at?: number | null; avatar: string; id: string }>();
+    nick: string; legend_origin_at?: number | null; nickname_style?: import('@/lib/nickname-styles').NicknameStyle | null; avatar: string; id: string }>();
   return {
     founders: rows.results.map(({ id: _id, ...row }) => ({
       ...row, pin: `founder-${String(row.founder_number).padStart(3, '0')}`,
