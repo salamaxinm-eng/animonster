@@ -41,3 +41,5 @@ All 20 saved color IDs retain compatibility; their colors now use a vivid base, 
 Color/effect cards render the actual nickname on softly tinted dark surfaces. Special default/gold selections can directly preview and choose paid effects using an amethyst sample, without borrowing the exclusive gold. Motion toggle on honorary gold preserves the honorary selection. Existing explicit motion-off choices stay off.
 
 Checks: TypeScript and changed-source lint pass; five targeted tests pass (payment rights, profile save, all 120 rendered combinations and accent CSS tokens). All 60 palette stops have at least 5.35:1 contrast against #15172a; decorative chrome shadow bands are not covered by that flat-color measurement. No database migration or payment changes.
+
+Vivid refresh released as `animonster-app:nickname-vivid-20261026` (`1298b55df472`). First rollout reverted on a transient public catalog timeout; diagnostics passed and a second rollout passed local/public health, the unchanged 19-episode catalog, and both honorary gold entitlements. Existing rollback images are retained.
