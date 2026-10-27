@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Library } from 'lucide-react';
 import { SupportDonation } from '@/components/community/support-donation';
 import type { PlayerCatalogFunding } from '@/lib/player-catalog-funding';
 
@@ -47,82 +46,55 @@ export function PlayerCatalogFundingBar() {
       window.removeEventListener('focus', visible);
     };
   }, [retry]);
+  const unavailable = !funding || !funding.acceptingDonations;
+  const amount = funding
+    ? `${rubles(funding.currentCents)} из ${rubles(funding.targetCents)}`
+    : error
+      ? 'Не удалось загрузить'
+      : 'Загружаем…';
+  const heading = funding?.completedRounds
+    ? `Собрано на ${funding.fundedTitles.toLocaleString('ru-RU')} тайтлов. Продолжим?`
+    : 'Ещё 200 тайтлов';
   return (
-    <div
-      className="player-catalog-funding"
-      aria-label="Сбор на пополнение каталога плеера"
-    >
-      <div className="player-funding-heading">
-        <span>До следующих 200 тайтлов</span>
-        <strong>
-          {funding
-            ? `${rubles(funding.currentCents)} из ${rubles(funding.targetCents)}`
-            : error
-              ? 'Сумма недоступна'
-              : 'Загружаем прогресс…'}
-        </strong>
-      </div>
-      {funding && (
-        <div
-          className="player-funding-track"
-          role="progressbar"
-          aria-label="Подтверждённые донаты на следующий круг"
-          aria-valuemin={0}
-          aria-valuemax={funding.targetCents / 100}
-          aria-valuenow={funding.currentCents / 100}
-          aria-valuetext={`${rubles(funding.currentCents)} из ${rubles(funding.targetCents)}`}
-        >
-          <span style={{ width: `${funding.percent}%` }} />
-        </div>
-      )}
-      <div className="player-funding-bottom">
-        <div className="player-funding-copy">
-          <Library size={27} aria-hidden="true" />
-          <div>
-            <b>Каждые 1 500 ₽ — ещё 200 тайтлов</b>
-            <p>
-              {funding?.completedRounds
-                ? `Собрано на ${funding.fundedTitles.toLocaleString('ru-RU')} тайтлов. Продолжим?`
-                : 'Помогите пополнить каталог нашего плеера.'}
-            </p>
-          </div>
-        </div>
-        <SupportDonation
-          initialGoalSlug="player"
-          disabled={!funding || !funding.acceptingDonations}
-        />
-      </div>
-      <p className="player-funding-note">
-        Новый сбор: учитываются подтверждённые прямые донаты на «Свой плеер».
-        Остаток переходит в следующий круг.
-      </p>
-      <div className="player-funding-reward">
-        <img
-          src="/rewards/player-catalog/patron-v1.png"
-          alt="Тег Меценат"
-          width={2159}
-          height={728}
-          loading="lazy"
-        />
-        <p>
-          Тег навсегда за подтверждённый донат в этот сбор от 150 ₽. Можно
-          выбрать в оформлении профиля.
-        </p>
-      </div>
-      {funding && !funding.acceptingDonations && (
-        <p role="status" className="player-funding-status">
-          Донаты сейчас недоступны.
-        </p>
-      )}
+    <div className="player-catalog-funding player-catalog-funding-compact">
+      <SupportDonation
+        initialGoalSlug="player"
+        className="player-funding-button"
+        disabled={unavailable}
+        ariaLabel={`${heading}. ${amount}. ${funding && !funding.acceptingDonations ? 'Донаты сейчас недоступны' : 'Нажмите, чтобы выбрать сумму и поддержать плеер'}`}
+        triggerContent={
+          <>
+            <span className="player-funding-heading">
+              <span>{heading}</span>
+              <strong>{amount}</strong>
+            </span>
+            <span
+              className="player-funding-track"
+              role="progressbar"
+              aria-label="Сбор на следующие 200 тайтлов"
+              aria-valuemin={0}
+              aria-valuemax={1500}
+              aria-valuenow={funding ? funding.currentCents / 100 : undefined}
+              aria-valuetext={amount}
+            >
+              <span style={{ width: `${funding?.percent ?? 0}%` }} />
+            </span>
+            {funding && !funding.acceptingDonations && (
+              <span className="player-funding-availability">
+                Донаты сейчас недоступны
+              </span>
+            )}
+          </>
+        }
+      />
       {error && (
-        <p role="status" className="player-funding-status">
-          {funding
-            ? 'Не удалось обновить сумму. Показаны последние полученные данные.'
-            : 'Не удалось загрузить сумму сбора.'}{' '}
-          <button type="button" onClick={() => setRetry((n) => n + 1)}>
-            Обновить
-          </button>
-        </p>
+        <button
+          type="button"
+          className="player-funding-retry"
+          onClick={() => setRetry((n) => n + 1)}
+        >
+          Обновить прогресс
+        </button>
       )}
     </div>
   );

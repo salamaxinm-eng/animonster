@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Heart } from 'lucide-react';
 import {
   Dialog,
@@ -15,9 +15,15 @@ import { FundraisingChoice, useFundraisingGoals } from './fundraising-choice';
 export function SupportDonation({
   initialGoalSlug,
   disabled = false,
+  triggerContent,
+  className = 'stats-support-button',
+  ariaLabel,
 }: {
   initialGoalSlug: string;
   disabled?: boolean;
+  triggerContent?: ReactNode;
+  className?: string;
+  ariaLabel?: string;
 }) {
   const community = useCommunity();
   const [open, setOpen] = useState(false);
@@ -68,7 +74,8 @@ export function SupportDonation({
     <>
       <button
         type="button"
-        className="stats-support-button"
+        className={className}
+        aria-label={ariaLabel}
         disabled={disabled}
         onClick={() => {
           setGoalSlug(initialGoalSlug);
@@ -76,7 +83,7 @@ export function SupportDonation({
           setOpen(true);
         }}
       >
-        <Heart size={16} /> Поддержать проект
+        {triggerContent ?? <><Heart size={16} /> Поддержать проект</>}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sign-dialog donation-dialog">
