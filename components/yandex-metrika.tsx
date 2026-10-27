@@ -22,7 +22,7 @@ export default function YandexMetrika() {
   const previousUrl = useRef("");
 
   const sendHit = useCallback(() => {
-    if (!window.ym) return;
+    if (!window.ym || window.location.pathname === "/auth/qr") return;
 
     const url =
       window.location.pathname +
@@ -46,6 +46,8 @@ export default function YandexMetrika() {
 
     sendHit();
   }, [ready, pathname, searchParams, sendHit]);
+
+  if (pathname === "/auth/qr") return null;
 
   return (
     <>

@@ -21,6 +21,7 @@ import { BuySubscription } from './buy-subscription';
 import { GlobalSearch } from '@/components/global-search';
 import { EmailForm } from './email-form';
 import { SocialLogin } from './social-login';
+import { QrLogin } from './qr-login';
 import { socialAuthMessages } from '@/lib/social-auth';
 import { Input } from '@/components/ui/input';
 import {
@@ -200,6 +201,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
             Сохраняй историю, собирай коллекцию и обсуждай серии.
           </DialogDescription>
           {authNotice && <p className={authFailed ? 'error-msg' : 'success-msg'} role={authFailed ? 'alert' : 'status'}>{authNotice}</p>}
+          <QrLogin onSuccess={async () => { await refresh(); setShowLogin(false); setAuthNotice(''); setAuthFailed(false); }} />
           <SocialLogin googleReady={!!me.google_ready} telegramReady={!!me.telegram_login_ready} inviteRequired={me.invite_required} />
           {me.vk_ready ? (
             <form

@@ -11,6 +11,7 @@ import './fundraising.css';
 import './eclipse.css';
 import './photo-search.css';
 import './social-auth.css';
+import './qr-login.css';
 import './legend-origin.css';
 import './nickname.css';
 import './halloween.css';

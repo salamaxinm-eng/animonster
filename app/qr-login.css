@@ -1,0 +1,111 @@
+.qr-login {
+  margin: 14px 0;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: center;
+}
+.qr-login-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 42px;
+}
+.qr-login h3 {
+  margin: 0 0 8px;
+}
+.qr-login p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.qr-login small {
+  display: block;
+  color: var(--muted-foreground);
+}
+.qr-login-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 12px auto;
+  border-radius: 12px;
+  background: white;
+}
+.qr-match-code {
+  display: inline-block;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: monospace;
+  font-size: 22px;
+  letter-spacing: 3px;
+  color: var(--foreground);
+}
+.qr-login-back {
+  display: block;
+  margin: 12px auto 0;
+  color: var(--muted-foreground);
+  min-height: 40px;
+}
+.qr-confirm-page {
+  padding-bottom: 110px;
+}
+.qr-confirm-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  max-width: 480px;
+  margin: auto;
+}
+.qr-confirm-card > svg {
+  color: var(--am-accent);
+}
+.qr-confirm-card h1,
+.qr-confirm-card p {
+  margin: 0;
+}
+.qr-confirm-card p {
+  line-height: 1.6;
+}
+.qr-confirm-card button {
+  min-height: 46px;
+  border-radius: 10px;
+  padding: 10px 16px;
+}
+.qr-confirm-card button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.qr-confirm-card small {
+  color: var(--muted-foreground);
+}
+.qr-device {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--am-soft);
+  border-radius: 12px;
+}
+.qr-security-note {
+  border-left: 3px solid var(--am-accent);
+  padding: 8px 12px;
+  background: var(--am-soft);
+  font-size: 13px;
+}
+.qr-match-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  line-height: 1.5;
+}
+.qr-match-check input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  accent-color: var(--am-accent);
+}
