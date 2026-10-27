@@ -326,6 +326,7 @@ export function UserTag({ id }: { id?: string | null }) {
     return <span className={`user-tag user-tag-pass ${artwork ? 'user-tag-pass-art' : ''} pass-rarity-${pass.rarity}`} title={pass.name}>{artwork ? <img src={passImageUrl(pass.image, 512)} alt={pass.name} style={{ maxWidth: 150, maxHeight: 42, objectFit: 'contain' }} /> : pass.name}</span>;
   }
   if (!id) return null;
+  if (id === 'player-catalog-patron') return <span className="user-tag user-tag-player-catalog-patron" title="Меценат · За поддержку каталога плеера"><img src="/rewards/player-catalog/patron-v1.png" alt="Меценат" width={2159} height={728}/></span>;
   if (id === 'legend-origin') return <span className="user-tag user-tag-legend-origin" title="Исток легенды · навсегда в истории AniMonster"><img src="/rewards/legend-origin/tag-v1.png" alt="Исток легенды" width={2171} height={724}/></span>;
   if (id === 'support-oni-vip' || id === 'support-oni-player') return (
     <span className="user-tag user-tag-support-oni-vip" title="Oni VIP · За поддержку AniMonster">
