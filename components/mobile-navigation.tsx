@@ -1,5 +1,6 @@
 'use client';
 
+import { HalloweenNavIcon, type HalloweenNavKind } from '@/components/halloween-nav-icon';
 import { SeasonalBrand } from '@/components/halloween';
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -21,6 +22,7 @@ type MobileNavItem = {
   href: string;
   label: string;
   icon: typeof Home;
+  halloweenIcon: HalloweenNavKind;
   active: (pathname: string, hash: string) => boolean;
   account?: boolean;
 };
@@ -30,12 +32,14 @@ const items: MobileNavItem[] = [
     href: '/',
     label: 'Главная',
     icon: Home,
+    halloweenIcon: 'home',
     active: (path, hash) => path === '/' && hash !== '#catalog',
   },
   {
     href: '/catalog',
     label: 'Каталог',
     icon: LayoutGrid,
+    halloweenIcon: 'catalog',
     active: (path, hash) =>
       path === '/genres' ||
       path === '/themes' ||
@@ -50,18 +54,21 @@ const items: MobileNavItem[] = [
     href: '/battlepass',
     label: 'Пропуск',
     icon: Swords,
+    halloweenIcon: 'pass',
     active: (path) => path === '/battlepass',
   },
   {
     href: '/profile?section=list',
     label: 'Мой список',
     icon: Bookmark,
+    halloweenIcon: 'list',
     active: (path) => path === '/profile?section=list',
   },
   {
     href: '/profile',
     label: 'Профиль',
     icon: UserRound,
+    halloweenIcon: 'profile',
     active: (path) =>
       path === '/profile' || path.startsWith('/members/') || path === '/pins',
     account: true,
@@ -160,7 +167,7 @@ function MobileNavigationContent() {
                 onClick={community.login}
                 aria-label={item.label}
               >
-                <Icon aria-hidden="true" />
+                <HalloweenNavIcon kind={item.halloweenIcon}><Icon aria-hidden="true" /></HalloweenNavIcon>
                 <span>{item.label}</span>
               </button>
             );
@@ -174,7 +181,7 @@ function MobileNavigationContent() {
               className={active ? 'active' : ''}
               aria-current={active ? 'page' : undefined}
             >
-              <Icon aria-hidden="true" />
+              <HalloweenNavIcon kind={item.halloweenIcon}><Icon aria-hidden="true" /></HalloweenNavIcon>
               <span>{item.label}</span>
             </a>
           );

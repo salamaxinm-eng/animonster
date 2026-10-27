@@ -73,3 +73,9 @@ Private canary against real PostgreSQL passed guest/auth candle once-per-day cla
 ## Header background refinement
 
 Removed the separate dark gradient behind the seasonal desktop/mobile wordmark and disabled both standard and WebKit backdrop filters on the seasonal mobile topbar. Header tint remains shared across the entire bar. Source `fe0047e`; released image `animonster-app:halloween-header-20261027` (`8cf20d3c252f`). CSS parser, production build/TypeScript, packaged CSS verification, public home HEAD and health/event APIs passed. All 19 episodes retained. Previous reference saved root-only as `.player-demo.env.before-halloween-header-20261027`. No database changes; live UI visual inspection was not performed.
+
+## Seasonal mobile bottom navigation
+
+Five code-native SVG glyphs replace the normal mobile navigation icons during the existing event calendar: moon/castle, four jack-o-lanterns, winged crossed swords, coffin/cross and skull. Guest profile and signed-in profile dropdown use the same seasonal glyph; their actions, routes and pass visibility remain unchanged. Dark unified panel, lavender inactive icons, orange active item and decorative corner webs follow the supplied reference. Mobile height is 84px plus safe area; content spacing uses the same seasonal variable. Decoration ignores pointer input. Standard icons remain in markup and return immediately when the root event attribute expires; no timer or persistent profile preference is added. No animation or blur is introduced.
+
+Validation: TypeScript, changed-source lint, CSS parsing and four calendar/seasonal regression tests passed. All five isolated SVG assets were rendered to a local PNG and visually inspected; live website UI was not opened. Production build and deployment status are recorded below.

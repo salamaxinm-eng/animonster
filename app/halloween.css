@@ -1,4 +1,81 @@
 /* Seasonal only: stored profile themes and honorary cosmetics are not rewritten. */
+.hw-nav-seasonal {
+  display: none;
+}
+.hw-nav-glyph,
+.hw-nav-default {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+@media (max-width: 767px) {
+  html[data-halloween='2026'] {
+    --mobile-nav-height: 84px;
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav {
+    background: #110d1bf5;
+    border-top-color: #8972ac40;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: 0 -5px 24px #09060e55;
+    padding-top: 5px;
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav::before,
+  html[data-halloween='2026'] .mobile-bottom-nav::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 62px;
+    height: 48px;
+    background: url('/themes/halloween-2026/nav-web.svg') left top / contain no-repeat;
+    pointer-events: none;
+    opacity: .65;
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav::before {
+    left: 0;
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav::after {
+    right: 0;
+    transform: scaleX(-1);
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav > :is(a, button) {
+    position: relative;
+    min-height: 73px;
+    gap: 1px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    color: #bcb3e3;
+    font-size: clamp(10px, 2.7vw, 12px);
+    font-weight: 700;
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav .hw-nav-default {
+    display: none;
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav .hw-nav-seasonal {
+    display: block;
+    width: 50px;
+    height: 43px;
+    filter: drop-shadow(0 0 5px #b9a1ff36);
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav > .active {
+    color: #ffad42;
+    background: radial-gradient(ellipse at 50% 65%, #e5791929, transparent 72%);
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav > .active .hw-nav-seasonal {
+    filter: drop-shadow(0 0 8px #ff9c3c77);
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav .hw-nav-home {
+    width: 57px;
+  }
+  html[data-halloween='2026'] .mobile-bottom-nav > :is(a, button):focus-visible {
+    outline: 2px solid #ffad42;
+    outline-offset: -3px;
+    border-radius: 10px;
+  }
+}
 html[data-halloween='2026'] {
   --am-accent: #f59435;
   --am-accent-light: #ffc17c;

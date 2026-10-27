@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { HalloweenNavIcon } from '@/components/halloween-nav-icon';
 import { UserRound } from 'lucide-react';
 import {
   DropdownMenu,
@@ -42,7 +43,7 @@ export function MobileProfileMenu({ active }: { active: boolean }) {
         className={active ? 'active' : ''}
         aria-label="Профиль"
       >
-        <UserRound aria-hidden="true" />
+        <HalloweenNavIcon kind="profile"><UserRound aria-hidden="true" /></HalloweenNavIcon>
         <span>Профиль</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent
