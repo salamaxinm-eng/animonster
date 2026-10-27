@@ -86,7 +86,7 @@ html[data-halloween='2026'] :is(.site-footer, .site > footer) {
   position: relative;
   z-index: 2;
   white-space: nowrap;
-  background: linear-gradient(90deg, #15101e 80%, transparent);
+  background: transparent;
   padding: 4px 2px;
 }
 .hw-brand-ghost {
@@ -458,6 +458,10 @@ html[data-hw-media='1'] :is(.hw-ambient, .hw-brand-apple, .hw-promo-pumpkin) {
     background-position:
       center,
       left center;
+  }
+  html[data-halloween='2026'] .mobile-topbar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
   .hw-brand-ghost,
   .hw-witch-ghost {
