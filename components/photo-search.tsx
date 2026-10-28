@@ -8,21 +8,22 @@ import {
   LoaderCircle,
   Trash2,
 } from 'lucide-react';
-import { exportPhoto, preparePhoto } from '@/lib/photo-search-image';
+import {
+  photoSearchVariants,
+  preparePhoto,
+  suggestPhotoCrop,
+} from '@/lib/photo-search-image';
+import { runPhotoSearch } from '@/lib/photo-search-runner';
 import {
   fitCrop,
-  parseSceneMatches,
-  record,
   sceneTime,
-  traceError,
-  TRACE_SEARCH_URL,
   UNCERTAIN_SIMILARITY,
   type Crop,
   type SceneMatch,
   type CatalogSceneMatch,
 } from '@/lib/photo-search';
 
-type Result = SceneMatch & { catalog?: CatalogSceneMatch };
+type Result = SceneMatch & { variant?: string; catalog?: CatalogSceneMatch };
 const FULL: Crop = { x: 0, y: 0, width: 1, height: 1 };
 
 export default function PhotoSearch() {
@@ -37,7 +38,7 @@ export default function PhotoSearch() {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [filename, setFilename] = useState('');
   const [crop, setCrop] = useState<Crop>(FULL);
-  const [aspect, setAspect] = useState('full');
+  const [aspect, setAspect] = useState('auto');
   const [scale, setScale] = useState(90);
   const [phase, setPhase] = useState('');
   const [error, setError] = useState('');
@@ -72,8 +73,8 @@ export default function PhotoSearch() {
       if (version.current !== current) return;
       setImage(prepared);
       setFilename(file.name || 'Из буфера обмена');
-      setCrop(FULL);
-      setAspect('full');
+      setCrop(suggestPhotoCrop(prepared));
+      setAspect('auto');
       setScale(90);
     } catch (reason) {
       if (!next.signal.aborted && version.current === current)
@@ -143,16 +144,18 @@ export default function PhotoSearch() {
   ) {
     if (!image) return;
     setCrop(
-      nextAspect === 'full'
-        ? FULL
-        : fitCrop(
-            image.naturalWidth,
-            image.naturalHeight,
-            nextAspect === '16:9' ? 16 / 9 : 4 / 3,
-            nextScale / 100,
-            x,
-            y,
-          ),
+      nextAspect === 'auto'
+        ? suggestPhotoCrop(image)
+        : nextAspect === 'full'
+          ? FULL
+          : fitCrop(
+              image.naturalWidth,
+              image.naturalHeight,
+              nextAspect === '16:9' ? 16 / 9 : 4 / 3,
+              nextScale / 100,
+              x,
+              y,
+            ),
     );
     setResults(null);
     setMirrored(false);
@@ -160,7 +163,7 @@ export default function PhotoSearch() {
   }
 
   function beginDrag(event: PointerEvent<HTMLDivElement>) {
-    if (aspect === 'full' || phase || !image) return;
+    if (aspect === 'full' || aspect === 'auto' || phase || !image) return;
     event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { x: event.clientX, y: event.clientY, crop };
   }
@@ -200,46 +203,29 @@ export default function PhotoSearch() {
     const timer = setTimeout(() => {
       timedOut = true;
       request.abort();
-    }, 45000);
+    }, 65000);
     setError('');
     setNotice('');
     setResults(null);
     setMirrored(mirror);
     setPhase(mirror ? 'Ищем зеркальный кадр…' : 'Ищем аниме по кадру…');
     try {
-      const blob = await exportPhoto(image, crop, mirror);
+      const found = await runPhotoSearch(
+        photoSearchVariants(image, crop, aspect === 'auto', mirror),
+        request.signal,
+        (label, index, total) => {
+          if (version.current === current)
+            setPhase(`${label} · ${index}/${total}…`);
+        },
+      );
+      const matches = found.matches;
       if (request.signal.aborted || version.current !== current) return;
-      const form = new FormData();
-      form.append('image', blob, 'frame.jpg');
-      const response = await fetch(TRACE_SEARCH_URL, {
-        method: 'POST',
-        body: form,
-        signal: request.signal,
-        credentials: 'omit',
-        referrerPolicy: 'no-referrer',
-        cache: 'no-store',
-      });
-      const raw = await response.text();
-      if (raw.length > 2_000_000)
-        throw new Error(
-          'Сервис вернул слишком большой ответ. Попробуйте позже.',
-        );
-      let payload: unknown;
-      try {
-        payload = JSON.parse(raw);
-      } catch {
-        throw new Error(traceError(response.status, null));
-      }
-      if (!response.ok || record(payload).error)
-        throw new Error(
-          traceError(
-            response.status,
-            payload,
-            response.headers.get('Retry-After'),
-          ),
-        );
-      const matches = parseSceneMatches(payload);
-      if (request.signal.aborted || version.current !== current) return;
+      setNotice(
+        found.warning ||
+          (aspect === 'auto'
+            ? `Проверено вариантов: ${found.attempts}. Выбраны лучшие совпадения.`
+            : ''),
+      );
       setResults(matches);
       if (matches.length) {
         setPhase('Проверяем каталог AniMonster…');
@@ -268,7 +254,12 @@ export default function PhotoSearch() {
         } catch {
           if (!request.signal.aborted && version.current === current)
             setNotice(
-              'Кадры распознаны, но проверить каталог сейчас не удалось. Повторите проверку позже.',
+              [
+                found.warning,
+                'Кадры распознаны, но проверить каталог сейчас не удалось. Повторите проверку позже.',
+              ]
+                .filter(Boolean)
+                .join(' '),
             );
         }
       }
@@ -313,7 +304,9 @@ export default function PhotoSearch() {
         <a href="https://trace.moe" target="_blank" rel="noreferrer">
           trace.moe
         </a>{' '}
-        для распознавания. AniMonster не хранит загруженные изображения.
+        для распознавания. Умный поиск проверяет до четырёх вариантов кадра и
+        останавливается при высоком сходстве. AniMonster не хранит загруженные
+        изображения.
       </p>
       <input
         ref={input}
@@ -390,7 +383,7 @@ export default function PhotoSearch() {
         <>
           <div className="photo-crop-preview">
             <div
-              className={`photo-crop-stage${aspect !== 'full' ? ' is-cropping' : ''}`}
+              className={`photo-crop-stage${aspect !== 'full' && aspect !== 'auto' ? ' is-cropping' : ''}`}
               onPointerDown={beginDrag}
               onPointerMove={moveCrop}
               onPointerUp={() => {
@@ -422,7 +415,7 @@ export default function PhotoSearch() {
             {filename} · {image.naturalWidth} × {image.naturalHeight}
           </small>
           <fieldset className="photo-crop-controls" disabled={!!phase}>
-            <legend>Убери интерфейс видео и лишние надписи</legend>
+            <legend>Подготовка кадра</legend>
             <label>
               Область кадра
               <select
@@ -433,12 +426,20 @@ export default function PhotoSearch() {
                   updateCrop(event.target.value);
                 }}
               >
+                <option value="auto">Умный поиск · TikTok и субтитры</option>
                 <option value="full">Весь скриншот</option>
                 <option value="16:9">Обрезать 16:9</option>
                 <option value="4:3">Обрезать 4:3</option>
               </select>
             </label>
-            {aspect !== 'full' && (
+            {aspect === 'auto' && (
+              <p>
+                Попробуем убрать поля, уменьшить влияние субтитров и проверить
+                зеркальный кадр. Если рамка выбрана неверно, выдели область
+                вручную.
+              </p>
+            )}
+            {aspect !== 'full' && aspect !== 'auto' && (
               <>
                 <p>Перемести рамку пальцем, мышью или ползунками.</p>
                 <label>
@@ -538,9 +539,16 @@ export default function PhotoSearch() {
           className="photo-search-results"
           aria-label="Результаты распознавания"
         >
-          <h3>{results.length ? 'Похожие кадры' : 'Совпадений не найдено'}</h3>
+          <h3>
+            {results.length
+              ? 'Похожие кадры'
+              : 'Надёжных совпадений не найдено'}
+          </h3>
           {!results.length && (
-            <p>Попробуй другой кадр или убери надписи и чёрные поля.</p>
+            <p>
+              Попробуй выделить сам кадр через «Обрезать 16:9» или загрузить
+              другой момент видео.
+            </p>
           )}
           {!!results.length && (
             <p className="photo-search-hint">
@@ -567,6 +575,9 @@ export default function PhotoSearch() {
                     item.catalog?.title ||
                     item.title}
                 </h4>
+                {item.variant && (
+                  <p className="photo-search-hint">{item.variant}</p>
+                )}
                 <p>Сходство кадров: {(item.similarity * 100).toFixed(1)}%</p>
                 {item.similarity < UNCERTAIN_SIMILARITY && (
                   <p className="photo-uncertain">Совпадение неуверенное</p>
@@ -599,7 +610,7 @@ export default function PhotoSearch() {
               </div>
             </article>
           ))}
-          {uncertain && !mirrored && (
+          {uncertain && !mirrored && aspect !== 'auto' && (
             <button
               type="button"
               className="photo-secondary"
