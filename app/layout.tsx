@@ -60,9 +60,6 @@ export const metadata: Metadata = {
     'аниме фильмы',
     'AniMonster',
   ],
-  alternates: {
-    canonical: '/',
-  },
   openGraph: {
     type: 'website',
     locale: 'ru_RU',

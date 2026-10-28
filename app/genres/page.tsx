@@ -37,7 +37,8 @@ import { LIBERTY } from '@/lib/server/anime';
 import { genreList, type Genre } from '@/lib/server/library';
 
 export const metadata = {
-  title: 'Жанры аниме — AniMonster',
+  title: 'Жанры аниме',
+  alternates: { canonical: '/genres' },
   description: 'Выберите жанр и найдите аниме под настроение.',
 };
 
