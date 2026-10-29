@@ -243,7 +243,7 @@ export async function recordVerifiedWatch(
           ) {
             state.returnGap = gap;
             // Checking a return condition is an actual accepted playback event,
-            // never a page visit. Other rules still wait for 90% completion.
+            // never a page visit. Other rules still wait for 70% completion.
             if (gap >= 86400000) shouldEvaluate = true;
           }
           state.lastActivity = end;

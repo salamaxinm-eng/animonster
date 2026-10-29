@@ -78,16 +78,16 @@ test('catalog has 44 explicit definitions, complete saga subarcs, exclusions, cr
   );
 });
 test('coverage, speed, rolling uniqueness, timezone and immutable king rank', () => {
-  let coverage = domain.addVerifiedCoverage([], 0, 89, 100);
+  let coverage = domain.addVerifiedCoverage([], 0, 69, 100);
   assert.equal(coverage.complete, false);
-  coverage = domain.addVerifiedCoverage(coverage.ranges, 80, 90, 100);
+  coverage = domain.addVerifiedCoverage(coverage.ranges, 60, 70, 100);
   assert.equal(coverage.complete, true);
   assert.equal(
     domain
       .addVerifiedCoverage(coverage.ranges, 0, 10, 100)
       .ranges.flat()
       .join(','),
-    '0,90',
+    '0,70',
   );
   assert.equal(domain.verifiedMovement({ t: 0, p: 0 }, { t: 1000, p: 99 }), 0);
   assert.equal(
@@ -209,10 +209,12 @@ test('real PostgreSQL migrations and verified playback/rewards integration', asy
       },
     );
     await t.test(
-      'first episode awards XP once; replay and different source remain one unique episode',
+      '70 percent of the first episode awards XP once; replay and different source remain one unique episode',
       async () => {
         const id = await user('first'),
-          a = await playback(id, 1);
+          a = await playback(id, 1, {
+          samples: Array.from({ length: 8 }, (_, i) => ({ t: i * 1000, p: i })),
+        });
         assert.ok(a.result.unlocked.includes(number(1)));
         assert.equal(await earned(id, 1), 1);
         assert.equal(

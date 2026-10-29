@@ -230,7 +230,7 @@ export function addVerifiedCoverage(
   if (merged.length > 4096) return { ranges, complete: false };
   return {
     ranges: merged,
-    complete: coverageSeconds(merged) + 0.001 >= duration * 0.9,
+    complete: coverageSeconds(merged) + 0.001 >= duration * 0.7,
   };
 }
 
