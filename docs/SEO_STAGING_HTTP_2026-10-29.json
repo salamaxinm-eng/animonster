@@ -1,0 +1,215 @@
+{
+  "date": "2026-10-29",
+  "host": "31.77.14.179",
+  "codeCommit": "f596fd57ccfb15562304c0d5be78739fe37bdc2f",
+  "binding": "127.0.0.1:3108",
+  "database": "separate PostgreSQL database; public catalogue only; no users or payments",
+  "productionTrafficChanged": false,
+  "browser": {
+    "sortButtonNavigation": "/catalog?page=2 -> /catalog?sort=fresh",
+    "buttonLabelAfter": "Сначала новые",
+    "jsErrors": [],
+    "notFoundHeading": "Страница не найдена"
+  },
+  "http": [
+    {
+      "path": "/",
+      "status": 200,
+      "title": "AniMonster — смотреть аниме онлайн",
+      "h1": [
+        "Провожающая в последний путь Фрирен"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su\"/>",
+      "robots": [
+        "<meta name=\"robots\" content=\"index, follow\"/>"
+      ],
+      "animeLinks": 5,
+      "schemaTypes": [],
+      "urls": 0
+    },
+    {
+      "path": "/catalog",
+      "status": 200,
+      "title": "Каталог аниме — сериалы и фильмы | AniMonster",
+      "h1": [
+        "Каталог аниме"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su/catalog\"/>",
+      "robots": [],
+      "animeLinks": 48,
+      "schemaTypes": [
+        "CollectionPage"
+      ],
+      "urls": 0
+    },
+    {
+      "path": "/catalog?page=2",
+      "status": 200,
+      "title": "Каталог аниме — сериалы и фильмы — страница 2 | AniMonster",
+      "h1": [
+        "Каталог аниме<!-- --> — страница 2"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su/catalog?page=2\"/>",
+      "robots": [],
+      "animeLinks": 48,
+      "schemaTypes": [
+        "CollectionPage"
+      ],
+      "urls": 0
+    },
+    {
+      "path": "/genres",
+      "status": 200,
+      "title": "Жанры аниме | AniMonster",
+      "h1": [
+        "Жанры аниме"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su/genres\"/>",
+      "robots": [
+        "<meta name=\"robots\" content=\"index, follow\"/>"
+      ],
+      "animeLinks": 0,
+      "schemaTypes": [],
+      "urls": 0
+    },
+    {
+      "path": "/genres/%D0%9A%D0%BE%D0%BC%D0%B5%D0%B4%D0%B8%D1%8F",
+      "status": 200,
+      "title": "Аниме жанра «Комедия» | AniMonster",
+      "h1": [
+        "Аниме жанра «Комедия»"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su/genres/%D0%9A%D0%BE%D0%BC%D0%B5%D0%B4%D0%B8%D1%8F\"/>",
+      "robots": [
+        "<meta name=\"robots\" content=\"index, follow\"/>"
+      ],
+      "animeLinks": 48,
+      "schemaTypes": [
+        "CollectionPage"
+      ],
+      "urls": 0
+    },
+    {
+      "path": "/genres/unknown-seo-genre",
+      "status": 404,
+      "title": "Страница не найдена | AniMonster",
+      "h1": [],
+      "robots": [
+        "<meta name=\"robots\" content=\"noindex\"/>",
+        "<meta name=\"robots\" content=\"noindex, follow\"/>"
+      ],
+      "animeLinks": 0,
+      "schemaTypes": [],
+      "urls": 0
+    },
+    {
+      "path": "/anime/21",
+      "status": 200,
+      "title": "Ван-Пис (1999) — смотреть аниме онлайн | AniMonster",
+      "h1": [
+        "Ван-Пис"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su/anime/21\"/>",
+      "robots": [
+        "<meta name=\"robots\" content=\"index, follow\"/>"
+      ],
+      "animeLinks": 0,
+      "schemaTypes": [
+        "TVSeries",
+        "BreadcrumbList"
+      ],
+      "urls": 0
+    },
+    {
+      "path": "/anime/1",
+      "status": 200,
+      "title": "Ковбой Бибоп (1998) — смотреть аниме онлайн | AniMonster",
+      "h1": [
+        "Ковбой Бибоп"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su/anime/1\"/>",
+      "robots": [
+        "<meta name=\"robots\" content=\"index, follow\"/>"
+      ],
+      "animeLinks": 0,
+      "schemaTypes": [
+        "TVSeries",
+        "BreadcrumbList"
+      ],
+      "urls": 0
+    },
+    {
+      "path": "/anime/invalid_seo_id",
+      "status": 404,
+      "title": "Страница не найдена | AniMonster",
+      "h1": [],
+      "robots": [
+        "<meta name=\"robots\" content=\"noindex\"/>",
+        "<meta name=\"robots\" content=\"noindex, follow\"/>"
+      ],
+      "animeLinks": 0,
+      "schemaTypes": [],
+      "urls": 0
+    },
+    {
+      "path": "/anime/999999999",
+      "status": 404,
+      "title": "Страница не найдена | AniMonster",
+      "h1": [],
+      "robots": [
+        "<meta name=\"robots\" content=\"noindex\"/>",
+        "<meta name=\"robots\" content=\"noindex, follow\"/>"
+      ],
+      "animeLinks": 0,
+      "schemaTypes": [],
+      "urls": 0
+    },
+    {
+      "path": "/search?q=test",
+      "status": 200,
+      "title": "Поиск аниме | AniMonster",
+      "h1": [],
+      "robots": [
+        "<meta name=\"robots\" content=\"noindex, follow\"/>"
+      ],
+      "animeLinks": 0,
+      "schemaTypes": [],
+      "urls": 0
+    },
+    {
+      "path": "/recommendations",
+      "status": 200,
+      "title": "Рекомендации аниме | AniMonster",
+      "h1": [
+        "Рекомендации"
+      ],
+      "canonical": "<link rel=\"canonical\" href=\"https://animonster.su/recommendations\"/>",
+      "robots": [
+        "<meta name=\"robots\" content=\"index, follow\"/>"
+      ],
+      "animeLinks": 40,
+      "schemaTypes": [
+        "CollectionPage"
+      ],
+      "urls": 0
+    },
+    {
+      "path": "/robots.txt",
+      "status": 200,
+      "h1": [],
+      "robots": [],
+      "animeLinks": 0,
+      "schemaTypes": [],
+      "urls": 0
+    },
+    {
+      "path": "/sitemap.xml",
+      "status": 200,
+      "h1": [],
+      "robots": [],
+      "animeLinks": 0,
+      "schemaTypes": [],
+      "urls": 8816
+    }
+  ]
+}
