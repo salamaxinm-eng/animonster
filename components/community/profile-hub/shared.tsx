@@ -47,7 +47,8 @@ export type Cosmetic = {
   source: string;
 };
 export type Achievement = {
-  folder: 'one-piece' | 'anime' | 'other';
+  folder: string;
+  anime_id: number | null;
   id: string;
   name: string;
   description: string;

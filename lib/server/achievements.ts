@@ -10,6 +10,7 @@ type AchievementRow = {
   metric: 'completed_episodes' | 'anime_completed_episodes';
   threshold: number;
   anime_id: number | null;
+  anime_title?: string | null;
   sort_order: number;
 };
 
@@ -91,8 +92,11 @@ export async function userAchievementProgress(userId: string) {
   const rows = await db()
     .prepare(
       `SELECT a.id,a.slug,a.name,a.description,a.category,a.metric,a.threshold,a.anime_id,a.sort_order,
+       COALESCE(NULLIF(ac.data::jsonb->>'russian',''),NULLIF(ac.data::jsonb->>'name','')) AS anime_title,
        ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua
-       ON ua.achievement_id=a.id AND ua.user_id=? WHERE a.active=1 AND a.metric IN ('completed_episodes','anime_completed_episodes') ORDER BY a.sort_order,a.id`,
+       ON ua.achievement_id=a.id AND ua.user_id=?
+       LEFT JOIN anime_cache ac ON ac.id=a.anime_id
+       WHERE a.active=1 AND a.metric IN ('completed_episodes','anime_completed_episodes') ORDER BY a.sort_order,a.id`,
     )
     .bind(userId)
     .all<AchievementRow & { unlocked_at: number | null }>();

@@ -5677,3 +5677,15 @@ a.franchise-card:hover {
   .admin-workspace .admin-skip-form { grid-template-columns: minmax(0,1fr); }
   .admin-workspace .admin-skip-form button { grid-column: auto; }
 }
+
+.viewer-achievement-folder {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.viewer-achievement-folder > summary {
+  min-height: 32px;
+  cursor: pointer;
+  font-weight: 600;
+}

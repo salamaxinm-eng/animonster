@@ -7,12 +7,16 @@ import { statuses, type Entry } from '@/lib/community';
 import { api, CommunityHeader, useCommunity } from '../context';
 import { Comments } from '../comments';
 import { ProfileIdentity } from './profile-identity';
+import { ViewerAchievements } from '../viewer-achievements';
+import type {
+  AchievementFolder,
+  ViewerAchievement,
+} from '@/lib/achievement-folders';
 import {
   Art,
   Empty,
   FilterTabs,
   More,
-  Progress,
   ResourceState,
   SearchField,
   usePagedResource,
@@ -24,13 +28,10 @@ type Stats = {
   xp: number;
   level: number;
   seconds: number;
-  achievements: Array<{
-    id: string;
-    title: string;
-    current: number;
-    target: number;
-    unlocked: boolean;
-  }>;
+  achievements: ViewerAchievement[];
+  achievement_folders: AchievementFolder[];
+  achievement_summary: { total: number; completed: number };
+  visible: boolean;
 };
 export function PublicProfile({ id }: { id: string }) {
   const community = useCommunity();
@@ -115,38 +116,13 @@ export function PublicProfile({ id }: { id: string }) {
                     Часов аниме
                   </span>
                 </div>
-                <details className="hub-showcase-editor">
-                  <summary>
-                    Прогресс зрителя ·{' '}
-                    {
-                      stats.data.achievements.filter((item) => item.unlocked)
-                        .length
-                    }{' '}
-                    / {stats.data.achievements.length}
-                  </summary>
-                  <div className="hub-achievement-grid">
-                    {stats.data.achievements.map((item) => (
-                      <article
-                        className={`hub-achievement ${item.unlocked ? 'earned' : ''}`}
-                        key={item.id}
-                      >
-                        <div>
-                          <strong>{item.title}</strong>
-                          <p>
-                            {item.unlocked
-                              ? 'Получено'
-                              : `${Math.min(item.current, item.target)} / ${item.target}`}
-                          </p>
-                          <Progress
-                            value={item.current}
-                            total={item.target}
-                            label={item.title}
-                          />
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </details>
+                <ViewerAchievements
+                  className="hub-showcase-editor"
+                  achievements={stats.data.achievements}
+                  folders={stats.data.achievement_folders}
+                  summary={stats.data.achievement_summary}
+                  visible={stats.data.visible}
+                />
               </>
             )}
             {profile.data.passport_public && (

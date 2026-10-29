@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Award, Check, Folder, LockKeyhole } from 'lucide-react';
+import type { AchievementFolder } from '@/lib/achievement-folders';
 import {
   Art,
   Empty,
@@ -14,18 +15,11 @@ import {
   type Achievement,
 } from './shared';
 
-const folders = [
-  ['one-piece', 'Ван-Пис', 'Пиратский путь, арки и награды One Piece'],
-  ['anime', 'Другие аниме', 'Достижения за просмотр отдельных тайтлов'],
-  ['other', 'Прочее', 'Общий прогресс и количество просмотренных серий'],
-  ['all', 'Все достижения', 'Вся коллекция в одном списке'],
-] as const;
-
 export function AchievementsSection() {
   const params = useSearchParams();
-  const folder = folders.find(([id]) => id === params.get('folder'));
   const resource = useResource<{
     achievements: Achievement[];
+    folders: AchievementFolder[];
     completed_episodes: number;
     one_piece?: {
       count: number;
@@ -35,10 +29,18 @@ export function AchievementsSection() {
       total: number;
     };
   }>('/api/achievements');
+  const folders = resource.data?.folders || [];
+  // Old links keep working; the old aggregate "anime" URL opens the folder list.
+  const requested =
+    params.get('folder') === 'one-piece' ? 'anime-21' : params.get('folder');
+  const folder = folders.find((item) => item.id === requested);
   const [filter, setFilter] = useState('all');
+  useEffect(() => {
+    setFilter('all');
+  }, [folder?.id]);
   const allItems = resource.data?.achievements || [];
   const items = allItems.filter(
-    (item) => folder?.[0] === 'all' || item.folder === folder?.[0],
+    (item) => folder?.id === 'all' || item.folder === folder?.id,
   );
   const completed = items.filter((item) => item.completed).length;
   const filtered = items.filter(
@@ -60,31 +62,29 @@ export function AchievementsSection() {
                 className="hub-achievement-folders"
                 aria-label="Папки достижений"
               >
-                {folders.map(([id, title, description]) => {
-                  const group = allItems.filter(
-                    (item) => id === 'all' || item.folder === id,
-                  );
-                  const earned = group.filter((item) => item.completed).length;
-                  return (
-                    <Link
-                      className="hub-achievement-folder"
-                      key={id}
-                      href={`/profile?section=achievements&folder=${id}`}
-                    >
-                      <Folder size={30} aria-hidden="true" />
-                      <strong>{title}</strong>
-                      <span>{description}</span>
-                      <small>
-                        Получено {earned} из {group.length}
-                      </small>
-                      <Progress
-                        value={earned}
-                        total={group.length}
-                        label={`Прогресс папки ${title}`}
-                      />
-                    </Link>
-                  );
-                })}
+                {folders.map(
+                  ({ id, name, description, total, completed: earned }) => {
+                    return (
+                      <Link
+                        className="hub-achievement-folder"
+                        key={id}
+                        href={`/profile?section=achievements&folder=${id}`}
+                      >
+                        <Folder size={30} aria-hidden="true" />
+                        <strong>{name}</strong>
+                        <span>{description}</span>
+                        <small>
+                          Получено {earned} из {total}
+                        </small>
+                        <Progress
+                          value={earned}
+                          total={total}
+                          label={`Прогресс папки ${name}`}
+                        />
+                      </Link>
+                    );
+                  },
+                )}
               </nav>
             </>
           ) : (
@@ -95,8 +95,8 @@ export function AchievementsSection() {
               >
                 ← Все папки
               </Link>
-              <h2>{folder[1]}</h2>
-              {(folder[0] === 'one-piece' || folder[0] === 'all') && (
+              <h2>{folder.name}</h2>
+              {(folder.anime_id === 21 || folder.id === 'all') && (
                 <a
                   href="/achievements/one-piece"
                   className="hub-achievement-total"
@@ -105,7 +105,7 @@ export function AchievementsSection() {
                   {resource.data?.one_piece?.rank || 'Открыть путешествие'}
                   <span>
                     {resource.data?.one_piece?.unlocked || 0} /{' '}
-                    {resource.data?.one_piece?.total || 44} достижений → Карта
+                    {resource.data?.one_piece?.total ?? 0} достижений → Карта
                     Гранд Лайн
                   </span>
                 </a>

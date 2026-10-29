@@ -2,7 +2,12 @@
 import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Trophy, Play } from 'lucide-react';
+import { Play } from 'lucide-react';
+import { ViewerAchievements } from './viewer-achievements';
+import type {
+  AchievementFolder,
+  ViewerAchievement,
+} from '@/lib/achievement-folders';
 type Stats = {
   xp: number;
   level: number;
@@ -10,13 +15,9 @@ type Stats = {
   seconds: number;
   favorites: number;
   visible: boolean;
-  achievements: {
-    id: string;
-    title: string;
-    current: number;
-    target: number;
-    unlocked: boolean;
-  }[];
+  achievements: ViewerAchievement[];
+  achievement_folders: AchievementFolder[];
+  achievement_summary: { total: number; completed: number };
   history: {
     anime_id: number;
     episode: number;
@@ -52,9 +53,14 @@ export function ProfileJourney({
       alive = false;
     };
   }, [id, revision]);
-  if (error) return <p className="error-msg"><FeedbackMessage>{error}</FeedbackMessage></p>;
+  if (error)
+    return (
+      <p className="error-msg">
+        <FeedbackMessage>{error}</FeedbackMessage>
+      </p>
+    );
   if (!data) return <p role="status">Загружаем прогресс…</p>;
-  const unlocked = data.achievements.filter((a) => a.unlocked).length;
+  const { completed: unlocked, total } = data.achievement_summary;
   return (
     <section className="journey">
       <div className="journey-stats">
@@ -78,33 +84,20 @@ export function ProfileJourney({
           <span>ДОСТИЖЕНИЙ</span>
           <strong>
             {unlocked}
-            <small> / 20</small>
+            <small> / {total}</small>
           </strong>
-          <Progress value={(unlocked / 20) * 100} />
+          <Progress
+            value={total ? Math.min(100, (unlocked / total) * 100) : 0}
+          />
         </div>
       </div>
-      <details className="social-panel">
-        <summary>
-          <Trophy size={18} /> Достижения · {unlocked} из 20
-        </summary>
-        <div className="achievement-grid">
-          {data.achievements.map((a) => (
-            <div
-              className={'achievement ' + (a.unlocked ? 'unlocked' : '')}
-              key={a.id}
-            >
-              <Trophy size={20} />
-              <strong>{a.title}</strong>
-              <Progress value={Math.min(100, (a.current / a.target) * 100)} />
-              <small>
-                {a.unlocked
-                  ? 'Получено'
-                  : Math.min(a.current, a.target) + ' / ' + a.target}
-              </small>
-            </div>
-          ))}
-        </div>
-      </details>
+      <ViewerAchievements
+        className="social-panel"
+        achievements={data.achievements}
+        folders={data.achievement_folders}
+        summary={data.achievement_summary}
+        visible={data.visible}
+      />
       <details className="social-panel">
         <summary>
           <Play size={18} /> История и просмотренные аниме
