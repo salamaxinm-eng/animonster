@@ -1,5 +1,7 @@
 'use client';
 import { UserNickname } from '@/components/user-nickname';
+import { useOnePieceWatch } from '@/hooks/use-one-piece-watch';
+import { kodikOriginAllowed, kodikEpisodeFromMessage } from '@/lib/kodik-events';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -280,6 +282,12 @@ export function WatchPartyRoom({ code }: { code: string }) {
     ) ||
     videos.voiceovers[0];
   const isKodik = selectedVoiceover?.provider === 'kodik';
+  const pieceWatch = useOnePieceWatch(connected && snapshot?.playback_allowed ? community.user?.id : undefined,snapshot?.party.anime_id,snapshot?.party.episode,isKodik?'kodik':'aniliberty',selectedVoiceover?.id||'');
+  const pieceSample = useRef(pieceWatch.sample);
+  pieceSample.current=pieceWatch.sample;
+  const pieceDuration=useRef<number|undefined>(undefined);
+  const pieceEpisode=useRef<number|undefined>(undefined);
+  useEffect(()=>{pieceDuration.current=undefined;pieceEpisode.current=snapshot?.party.episode;},[snapshot?.party.anime_id,snapshot?.party.episode,selectedVoiceover?.id]);
   const stream = selectedEpisode
     ? (quality === '1080'
         ? selectedEpisode.hls_1080
@@ -360,6 +368,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
   useEffect(() => {
     const receive = (event: MessageEvent) => {
       if (event.source !== frame.current?.contentWindow) return;
+      if (!kodikOriginAllowed(event.origin)) return;
       let payload = event.data;
       if (typeof payload === 'string') {
         try {
@@ -368,12 +377,17 @@ export function WatchPartyRoom({ code }: { code: string }) {
           return;
         }
       }
+      const duration=Number(payload?.key==='kodik_player_duration_update'?payload.value:payload?.kodik_player_duration_update);
+      const reportedEpisode=kodikEpisodeFromMessage(payload);
+      if(reportedEpisode!==null)pieceEpisode.current=reportedEpisode;
+      if(Number.isFinite(duration)&&duration>=60&&duration<=86400)pieceDuration.current=duration;
       const time = Number(
         payload?.key === 'kodik_player_time_update'
           ? payload.value
           : payload?.kodik_player_time_update,
       );
       if (Number.isFinite(time) && time >= 0) {
+        if(pieceEpisode.current===snapshotRef.current?.party.episode)pieceSample.current(time,pieceDuration.current);
         if (time > kodikPosition.current && time - kodikPosition.current < 10) {
           const delta = time - kodikPosition.current;
           partySeconds.current += delta;
@@ -788,6 +802,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
                   ref={video}
                   controls={snapshot.me.host}
                   playsInline
+                  onTimeUpdate={event=>{const element=event.currentTarget;if(!element.paused&&!element.seeking&&element.readyState>=3)pieceSample.current(element.currentTime,element.duration,element.playbackRate);}}
                   onPlay={() => {
                     if (snapshot.me.host && !applyingRemote.current)
                       void command('play');
@@ -816,6 +831,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
                 </div>
               )}
 
+              {snapshot.party.anime_id===21&&pieceWatch.notice&&<p className="muted" role="status">{pieceWatch.notice}</p>}
               {snapshot.party.approximate_sync && connected && (
                 <span className="party-soft-sync">
                   Мягкая синхронизация Kodik

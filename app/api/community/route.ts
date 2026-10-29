@@ -248,7 +248,7 @@ export async function GET(r: Request) {
         (
           await db()
             .prepare(
-              'SELECT n.*,u.nick,u.legend_origin_at,u.nickname_style FROM notifications n JOIN users u ON u.id=n.actor_id WHERE n.user_id=? ORDER BY n.created_at DESC LIMIT 50',
+              'SELECT n.*,u.nick,u.legend_origin_at,u.nickname_style,a.name AS achievement_name,ua.xp_awarded AS achievement_xp FROM notifications n JOIN users u ON u.id=n.actor_id LEFT JOIN achievements a ON a.id=n.achievement_id LEFT JOIN user_achievements ua ON ua.user_id=n.user_id AND ua.achievement_id=n.achievement_id WHERE n.user_id=? ORDER BY n.created_at DESC LIMIT 50',
             )
             .bind(u.id)
             .all()

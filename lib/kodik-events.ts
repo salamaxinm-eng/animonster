@@ -1,4 +1,10 @@
 type MessageRecord = Record<string, unknown>;
+export function kodikOriginAllowed(origin: string) {
+  try {
+    const url=new URL(origin), allowed=['kodik.info','kodik.biz','kodikres.com','kodikplayer.com','kodikonline.com','kodik.cc','aniqit.com'];
+    return url.protocol==='https:' && allowed.some(host=>url.hostname===host||url.hostname.endsWith('.'+host));
+  } catch { return false; }
+}
 
 const record = (value: unknown): MessageRecord | null =>
   value != null && typeof value === 'object' ? (value as MessageRecord) : null;

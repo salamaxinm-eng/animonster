@@ -16,6 +16,7 @@ export function AchievementsSection() {
   const resource = useResource<{
     achievements: Achievement[];
     completed_episodes: number;
+    one_piece?: { count:number; xp:number; rank:string; unlocked:number; total:number };
   }>('/api/achievements');
   const [filter, setFilter] = useState('all');
   const items = resource.data?.achievements || [];
@@ -32,6 +33,7 @@ export function AchievementsSection() {
       <ResourceState {...resource} />
       {!resource.loading && !resource.error && (
         <>
+          <a href="/achievements/one-piece" className="hub-achievement-total">🏴‍☠️ Пиратский путь One Piece · {resource.data?.one_piece?.rank || 'Открыть путешествие'}<span>{resource.data?.one_piece?.unlocked || 0} / {resource.data?.one_piece?.total || 44} достижений → Карта Гранд Лайн</span></a>
           <div className="hub-achievement-total">
             Получено {completed} из {items.length}
             <Progress

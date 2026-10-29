@@ -1,0 +1,131 @@
+.op-toasts {
+  position: fixed;
+  left: 20px;
+  bottom: 24px;
+  z-index: 180;
+  display: grid;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.op-toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 20px;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #b28b4c88;
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 15px 50px #0007;
+  animation: op-reward-enter 0.35s ease-out;
+}
+.op-toast > svg {
+  color: #f1c77e;
+}
+.op-toast small {
+  display: block;
+  font-size: 9px;
+  color: #dfbf8e;
+  letter-spacing: 0.1em;
+}
+.op-toast strong {
+  display: block;
+  margin: 6px 0;
+  font-size: 16px;
+}
+.op-toast p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+.op-toast a {
+  display: block;
+  margin-top: 9px;
+  color: #f3cc81;
+  font-size: 12px;
+}
+.op-toast button {
+  align-self: start;
+  color: var(--muted-foreground);
+}
+.op-toast.op-rarity-legendary,
+.op-toast.op-rarity-mythic {
+  border-color: #ffd276;
+  box-shadow:
+    0 0 28px #f3b14f38,
+    0 15px 50px #0007;
+  animation: op-reward-enter 0.65s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.op-toast.op-rarity-mythic {
+  border-color: #ff976d;
+  background: linear-gradient(120deg, #a5352415, transparent), var(--card);
+}
+.profile-frame-one-piece-bronze > .user-avatar {
+  --frame-accent: #ce975e;
+  box-shadow:
+    0 0 0 3px #b77b42,
+    0 0 0 6px #6c4c2a,
+    0 0 20px #bd8b4533;
+}
+.profile-frame-one-piece-red > .user-avatar {
+  --frame-accent: #ff5d63;
+  box-shadow:
+    0 0 0 3px #df3b43,
+    0 0 0 6px #6e2029,
+    0 0 24px #e4364544;
+}
+.profile-frame-one-piece-bronze > .user-avatar::after,
+.profile-frame-one-piece-red > .user-avatar::after {
+  background: none;
+  border: 2px dashed var(--frame-accent);
+  inset: -9px;
+  animation: none;
+  filter: none;
+}
+.anime-pin[title^='Золотой пин'] img {
+  filter: sepia(1) saturate(1.8) brightness(1.15);
+}
+.user-tag-one-piece-wanted {
+  color: #f1ce94;
+  border-color: #b3854b;
+  background: #6d46282b;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.user-tag-one-piece-emperor {
+  color: #ffdc9a;
+  border-color: #f18a55;
+  background: linear-gradient(110deg, #76262b44, #c7953c22);
+  box-shadow: 0 0 12px #e1663222;
+  font-weight: 850;
+}
+@keyframes op-reward-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (max-width: 700px) {
+  .op-toasts {
+    left: 12px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    max-width: calc(100vw - 24px);
+  }
+  .op-toast {
+    padding: 14px;
+    gap: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .op-toast,
+  .op-toast.op-rarity-legendary,
+  .op-toast.op-rarity-mythic {
+    animation: none;
+  }
+}

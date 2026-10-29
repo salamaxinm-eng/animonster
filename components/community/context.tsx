@@ -308,6 +308,8 @@ export function Pin({ id }: { id: string | null }) {
   ) : null;
 }
 const tagLabels: Record<string, string> = {
+  'one-piece-wanted':'Разыскивается',
+  'one-piece-emperor':'Император морей',
   'eternal-nakama': 'Вечный накама',
   'founding-10': 'FOUNDING 10',
   'number-one': 'Номер 1',

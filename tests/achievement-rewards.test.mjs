@@ -58,7 +58,7 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
     for (const name of migrations.filter((name) => name < '0021'))
       await engine.exec(await readFile('migrations/postgres/' + name, 'utf8'));
     await engine.exec(`INSERT INTO users(id,identity,nick,created_at) VALUES ('veteran','test:veteran','veteran',1),('friend1','test:f1','f1',1),('friend2','test:f2','f2',1),('friend3','test:f3','f3',1);
-      INSERT INTO user_achievements VALUES ('veteran','achievement:one-piece-100',1);
+      INSERT INTO user_achievements(user_id,achievement_id,unlocked_at) VALUES ('veteran','achievement:one-piece-100',1);
       INSERT INTO history(user_id,anime_id,episode,duration,watched_seconds,completed,updated_at)
         SELECT 'veteran',269,n,1440,720,1,1 FROM generate_series(1,100) n;
       INSERT INTO referrals(id,referrer_id,referred_user_id,code,status,registered_at,qualified_at,created_at)
@@ -180,7 +180,7 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
     );
     await history(21, 100);
     await engine.exec(
-      `INSERT INTO user_achievements VALUES ('watcher','achievement:one-piece-100',1)`,
+      `INSERT INTO user_achievements(user_id,achievement_id,unlocked_at) VALUES ('watcher','achievement:one-piece-100',1)`,
     );
     await evaluateUserAchievements('watcher');
     assert.equal(
@@ -212,7 +212,7 @@ test('anime rewards use completed episodes, unlock retroactively once, and prese
     assert.equal(
       catalog.filter((c) => c.kind === 'pin' && c.access_type === 'achievement')
         .length,
-      12,
+      14,
     );
     assert.equal(catalog.find(c => c.slug === 'halloween-spirit-hunter-2026').unlocked, false, 'watch achievements do not grant the spirit-hunt badge');
     const { referralMilestones } = await import(

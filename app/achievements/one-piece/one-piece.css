@@ -1,0 +1,373 @@
+.op-journey {
+  max-width: 1180px;
+  margin: auto;
+  padding: 36px 24px 100px;
+  color: var(--foreground);
+}
+.op-heading {
+  max-width: 750px;
+  margin-bottom: 26px;
+}
+.op-heading .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #f4c681;
+}
+.op-heading h1 {
+  font-size: clamp(30px, 5vw, 48px);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  margin: 14px 0;
+}
+.op-heading p,
+.op-explanation {
+  color: var(--muted-foreground);
+  line-height: 1.7;
+}
+.op-heading a {
+  display: inline-block;
+  color: #f6c36d;
+  margin-top: 14px;
+  font-weight: 700;
+}
+.op-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid #e6b75b44;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #c6912b13, transparent), var(--card);
+}
+.op-stats small {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.op-stats strong {
+  font-size: 19px;
+}
+.op-route-total {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.op-route-total strong {
+  margin-left: auto;
+  font-size: 14px;
+}
+.op-journey progress {
+  display: block;
+  width: 100%;
+  height: 7px;
+  border: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  appearance: none;
+  background: var(--muted);
+  accent-color: #edb85c;
+}
+.op-journey progress::-webkit-progress-bar {
+  background: var(--muted);
+}
+.op-journey progress::-webkit-progress-value {
+  background: linear-gradient(90deg, #c48c35, #f6d18e);
+  border-radius: 20px;
+}
+.op-journey progress::-moz-progress-bar {
+  background: #edb85c;
+}
+.op-explanation {
+  font-size: 12px;
+  margin: 16px 0;
+}
+.op-callout,
+.op-island-detail {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  margin: 14px 0;
+}
+.op-callout button,
+.op-sync button {
+  color: #f6c36d;
+  font-weight: 700;
+}
+.op-switch,
+.op-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 14px;
+}
+.op-switch button,
+.op-categories button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 13px;
+  background: var(--card);
+}
+.op-switch [aria-pressed='true'],
+.op-categories [aria-pressed='true'] {
+  color: #ffda91;
+  border-color: #ddb45d88;
+  background: #d0a34319;
+}
+.op-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 18px 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.op-filter select {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  margin-left: 5px;
+  max-width: 100%;
+}
+.op-achievements {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.op-achievement {
+  --op-rarity: #9ba5b3;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  position: relative;
+  gap: 15px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--card);
+}
+.op-rarity-common {
+  --op-rarity: #a3afbd;
+}
+.op-rarity-rare {
+  --op-rarity: #72b5ff;
+}
+.op-rarity-epic {
+  --op-rarity: #c19aff;
+}
+.op-rarity-legendary {
+  --op-rarity: #ffd070;
+}
+.op-rarity-mythic {
+  --op-rarity: #ff986a;
+}
+.op-achievement.earned {
+  border-color: color-mix(in srgb, var(--op-rarity) 45%, transparent);
+  background:
+    linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--op-rarity) 7%, transparent),
+      transparent
+    ),
+    var(--card);
+}
+.op-medal {
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--op-rarity) 25%, transparent);
+  color: var(--op-rarity);
+  border-radius: 15px;
+  height: 48px;
+  background: color-mix(in srgb, var(--op-rarity) 7%, transparent);
+}
+.op-achievement h2 {
+  font-size: 17px;
+  font-weight: 750;
+  margin: 5px 22px 7px 0;
+  line-height: 1.35;
+}
+.op-achievement p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+  margin: 0 0 14px;
+}
+.op-rarity {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--op-rarity);
+}
+.op-achievement small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted-foreground);
+  margin-bottom: 8px;
+}
+.op-reward {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  color: #ebc77b;
+  font-size: 12px;
+}
+.op-reward span {
+  color: var(--muted-foreground);
+}
+.op-earned-check {
+  position: absolute;
+  right: 16px;
+  top: 18px;
+  color: var(--op-rarity);
+  width: 17px;
+}
+.op-sync {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding-top: 30px;
+}
+.op-sync small {
+  font-size: 11px;
+  color: var(--muted-foreground);
+}
+.op-islands {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  counter-reset: route;
+}
+.op-islands li {
+  min-width: 0;
+}
+.op-islands button {
+  width: 100%;
+  min-height: 175px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  padding: 18px 10px;
+  border: 1px dashed var(--border);
+  border-radius: 28px;
+  background: var(--card);
+  color: var(--muted-foreground);
+}
+.op-islands .earned button {
+  border-style: solid;
+  border-color: #ccab6255;
+  color: var(--foreground);
+}
+.op-islands .current button {
+  border: 1px solid #e7ba6d;
+  box-shadow: 0 0 22px #edb85c14;
+  color: #ffd48d;
+}
+.op-island-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #d5ab4212;
+}
+.op-islands small {
+  font-size: 9px;
+  text-align: center;
+}
+.op-islands strong {
+  font-size: 13px;
+  text-align: center;
+}
+.op-islands span,
+.op-islands em {
+  font-size: 11px;
+}
+.op-island-detail {
+  position: sticky;
+  bottom: 90px;
+  box-shadow: 0 12px 40px #0006;
+}
+.op-island-detail h2 {
+  font-weight: 750;
+  margin-bottom: 8px;
+}
+.op-island-detail p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+@media (max-width: 700px) {
+  .op-journey {
+    padding: 22px 15px 100px;
+  }
+  .op-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 18px;
+    gap: 20px 12px;
+    border-radius: 18px;
+  }
+  .op-stats strong {
+    font-size: 16px;
+  }
+  .op-achievements {
+    grid-template-columns: 1fr;
+  }
+  .op-achievement {
+    padding: 18px;
+    gap: 12px;
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+  .op-medal {
+    height: 40px;
+    border-radius: 12px;
+  }
+  .op-medal svg {
+    width: 23px;
+  }
+  .op-categories {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .op-categories button {
+    flex-shrink: 0;
+  }
+  .op-filter {
+    flex-wrap: wrap;
+  }
+  .op-islands {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 170px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: 12px;
+    gap: 12px;
+  }
+  .op-islands li {
+    scroll-snap-align: start;
+  }
+  .op-islands button {
+    min-height: 160px;
+  }
+  .op-route-total span {
+    max-width: 85%;
+  }
+}

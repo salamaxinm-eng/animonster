@@ -12,6 +12,39 @@ const progress = await import(
     Buffer.from(stripTypeScriptTypes(source)).toString('base64')
 );
 
+test('One Piece maps season 1 to canonical episodes and rejects overlapping specials or ambiguous maps', () => {
+  const payload = JSON.stringify({
+    seasons: {
+      0: { episodes: { 1: '//kodikplayer.com/special' } },
+      1: { episodes: { 1: '//kodikplayer.com/main' } },
+    },
+  });
+  assert.equal(
+    progress.onePieceSourceHasEpisode(
+      payload,
+      1,
+      'https://kodikplayer.com/main',
+    ),
+    true,
+  );
+  assert.equal(
+    progress.onePieceSourceHasEpisode(
+      payload,
+      1,
+      'https://kodikplayer.com/special',
+    ),
+    false,
+  );
+  assert.equal(
+    progress.onePieceSourceHasEpisode(
+      JSON.stringify({ seasons: { 0: { episodes: { 1: 'x' } } } }),
+      1,
+    ),
+    false,
+  );
+  assert.equal(progress.onePieceSourceHasEpisode('{}', 1), false);
+});
+
 test('Kodik episodes outside the AniLiberty cache remain trackable', () => {
   const cached = JSON.stringify([
     { ordinal: 1, duration: 1500 },

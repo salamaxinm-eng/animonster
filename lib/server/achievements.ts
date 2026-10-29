@@ -32,7 +32,7 @@ export async function evaluateUserAchievements(
   const rows = await db()
     .prepare(
       `SELECT id,slug,name,description,category,metric,threshold,anime_id,sort_order
-       FROM achievements WHERE active=1 AND (?=-1 OR anime_id IS NULL OR anime_id=?)
+       FROM achievements WHERE active=1 AND metric IN ('completed_episodes','anime_completed_episodes') AND (?=-1 OR anime_id IS NULL OR anime_id=?)
        ORDER BY sort_order,id`,
     )
     .bind(changedAnimeId || -1, changedAnimeId || -1)
@@ -92,7 +92,7 @@ export async function userAchievementProgress(userId: string) {
     .prepare(
       `SELECT a.id,a.slug,a.name,a.description,a.category,a.metric,a.threshold,a.anime_id,a.sort_order,
        ua.unlocked_at FROM achievements a LEFT JOIN user_achievements ua
-       ON ua.achievement_id=a.id AND ua.user_id=? WHERE a.active=1 ORDER BY a.sort_order,a.id`,
+       ON ua.achievement_id=a.id AND ua.user_id=? WHERE a.active=1 AND a.metric IN ('completed_episodes','anime_completed_episodes') ORDER BY a.sort_order,a.id`,
     )
     .bind(userId)
     .all<AchievementRow & { unlocked_at: number | null }>();

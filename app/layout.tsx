@@ -28,6 +28,8 @@ import './player-demo/player-demo.css';
 import { Suspense } from 'react';
 import YandexMetrika from '@/components/yandex-metrika';
 import { PwaRegistration } from '@/components/pwa-registration';
+import { OnePieceToasts } from '@/components/one-piece-toasts';
+import './one-piece-rewards.css';
 
 const SITE_URL = 'https://animonster.su';
 
@@ -102,6 +104,7 @@ export default function RootLayout({
       <body>
         <PwaRegistration />
         <CommunityProvider>
+          <OnePieceToasts />
           <HalloweenProvider>
             <HalloweenHuntProvider>
               <HalloweenCursor />

@@ -14,6 +14,7 @@ import {
 import { api, useCommunity } from '@/components/community/context';
 import { kodikEpisodeFromMessage } from '@/lib/kodik-events';
 import { usePassWatch } from '@/hooks/use-pass-watch';
+import { useOnePieceWatch } from '@/hooks/use-one-piece-watch';
 import { OfflineDownloadButton } from '@/components/offline-download-button';
 import type { PlaybackDiagnosticCode } from '@/lib/playback-diagnostics';
 
@@ -115,6 +116,11 @@ export function EpisodePlayer({
   const passWatch = usePassWatch(user?.id, animeId, episode?.ordinal, isKodik ? 'kodik' : 'aniliberty', voiceover?.id || 'aniliberty');
   const passSample = useRef(passWatch.sample);
   passSample.current = passWatch.sample;
+  const pieceWatch = useOnePieceWatch(user?.id, animeId, episode?.ordinal, isKodik ? 'kodik' : 'aniliberty', voiceover?.id || 'aniliberty');
+  const pieceSample = useRef(pieceWatch.sample);
+  pieceSample.current = pieceWatch.sample;
+  const actualKodikDuration = useRef<number | undefined>(undefined);
+  useEffect(() => { actualKodikDuration.current = undefined; }, [animeId, episode?.ordinal, voiceover?.id]);
   const reportKodikDiagnostic = useCallback(
     (
       code: PlaybackDiagnosticCode,
@@ -469,6 +475,7 @@ export function EpisodePlayer({
         reportedDuration <= 24 * 60 * 60
       ) {
         knownDuration = reportedDuration;
+        actualKodikDuration.current = reportedDuration;
         setKodikDuration(reportedDuration);
       }
       if (
@@ -479,6 +486,7 @@ export function EpisodePlayer({
         return;
       }
       const next = Number(timeValue);
+      if (Number.isFinite(next) && next >= 0) pieceSample.current(next, actualKodikDuration.current);
       if (payload?.key === 'kodik_player_time_update' && typeof payload.value === 'number') passSample.current(payload.value);
       const episodeNumber = kodikEpisodeFromMessage(payload);
       if (episodeNumber != null) {
@@ -787,7 +795,10 @@ export function EpisodePlayer({
             onPause={() => setPlayback(false)}
             onTimeUpdate={(event) => {
               setCurrentTime(event.currentTarget.currentTime);
-              if (!event.currentTarget.paused && !event.currentTarget.seeking && event.currentTarget.readyState >= 3) passSample.current(event.currentTarget.currentTime);
+              if (!event.currentTarget.paused && !event.currentTarget.seeking && event.currentTarget.readyState >= 3) {
+                passSample.current(event.currentTarget.currentTime);
+                pieceSample.current(event.currentTarget.currentTime, event.currentTarget.duration, event.currentTarget.playbackRate);
+              }
             }}
             onLoadedMetadata={() => {
               if (
@@ -850,6 +861,7 @@ export function EpisodePlayer({
         )}
       </div>
       {passWatch.notice && <p className="muted" role="status">{passWatch.notice}</p>}
+      {animeId === 21 && <p className="muted" role="status"><a href="/achievements/one-piece">Пиратский путь One Piece</a>{pieceWatch.notice ? ` · ${pieceWatch.notice}` : ''}</p>}
       {error && (
         <div className="playback-error" role="alert">
           {error}

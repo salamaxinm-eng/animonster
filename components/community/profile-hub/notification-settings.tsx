@@ -11,6 +11,8 @@ type Notification = {
   scope: string;
   seen: number;
   comment_id: string;
+  achievement_name?:string|null;
+  achievement_xp?:number;
 };
 type Telegram = {
   ready: boolean;
@@ -131,12 +133,12 @@ export function NotificationSettings() {
                   key={item.id}
                   className={!item.seen ? 'unread' : ''}
                   href={
-                    item.scope.startsWith('wall:')
+                    item.scope==='achievement:one-piece' ? '/achievements/one-piece' : item.scope.startsWith('wall:')
                       ? `/members/${item.scope.slice(5)}#comment-${item.comment_id}`
                       : `/anime/${item.scope.split(':')[1]}${item.scope.split(':')[2] === 'episode' ? `?episode=${item.scope.split(':')[3]}` : ''}#comment-${item.comment_id}`
                   }
                 >
-                  <strong><UserNickname user={item}/></strong> оставил сообщение в обсуждении
+                  {item.achievement_name ? <><strong>Достижение: {item.achievement_name}</strong> +{item.achievement_xp || 0} XP</> : <><strong><UserNickname user={item}/></strong> оставил сообщение в обсуждении</>}
                   {!item.seen && <small>Новое</small>}
                 </Link>
               ))}

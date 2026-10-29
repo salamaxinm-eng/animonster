@@ -205,6 +205,12 @@ export async function POST(r: Request) {
         .first();
       if (!claimed) return false;
 
+      // A genuinely accepted playback heartbeat for another anime interrupts
+      // "ten One Piece episodes in a row". Browsing pages does not.
+      if (a.user && delta > 0 && s.anime_id !== 21)
+        await transaction.prepare("UPDATE pass_watch_clock SET one_piece_state=jsonb_set(one_piece_state,'{sessionEpisodes}','[]'::jsonb) WHERE user_id=?")
+          .bind(a.user.id).run();
+
       await recordDailyWatch(
         transaction,
         a.key,

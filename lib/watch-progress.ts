@@ -7,6 +7,33 @@ type KodikPayload = {
   seasons?: Record<string, { episodes?: Record<string, unknown> }>;
 };
 
+// One Piece main-TV numbering is the provider's season 1. Season 0 can contain
+// specials with overlapping numbers; never flatten it into achievement progress.
+export function onePieceSourceHasEpisode(
+  payloadJson: string,
+  episode: number,
+  exactPlayer?: string,
+) {
+  try {
+    const payload = JSON.parse(payloadJson) as {
+      seasons?: Record<
+        string,
+        { episodes?: Record<string, string | { link?: string }> }
+      >;
+    };
+    const entry = payload.seasons?.['1']?.episodes?.[String(episode)];
+    const link = typeof entry === 'string' ? entry : entry?.link;
+    if (!link) return false;
+    if (!exactPlayer) return true;
+    return (
+      new URL(link, 'https://kodikplayer.com').pathname ===
+      new URL(exactPlayer, 'https://kodikplayer.com').pathname
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function cachedEpisodeDuration(episodesJson: string, episode: number) {
   try {
     const episodes = JSON.parse(episodesJson) as CachedEpisode[];

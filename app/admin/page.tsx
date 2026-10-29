@@ -43,6 +43,7 @@ export default async function Page() {
       <main className="title-page admin-page">
         <span className="eyebrow">ANIMONSTER / УПРАВЛЕНИЕ</span>
         <h1>Пульс сообщества</h1>
+        <a href="/admin/one-piece">Настройка 44 достижений One Piece →</a>
         <AdminWorkspace data={data}>
           <div className="dashboard-cards">
             {metrics.map(([label, value]) => (

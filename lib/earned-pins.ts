@@ -1,4 +1,6 @@
 export const earnedPins = [
+  { id:'one-piece-straw-hat',name:'Соломенная Шляпа',label:'За завершение саги Ист Блю',image:'/pins/achievement-one-piece.svg' },
+  { id:'one-piece-golden-pin',name:'Золотой пин',label:'За завершение Небесного острова',image:'/pins/achievement-one-piece.svg' },
   {
     id: 'achievement-one-piece',
     name: 'Сокровище Мугивары',
