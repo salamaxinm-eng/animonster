@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { api } from '../context';
 import { Empty, ResourceState, useResource } from './shared';
+import { VkNotificationSettings } from '../vk-notification-settings';
 
 type Notification = {
   id: string;
@@ -113,6 +114,7 @@ export function NotificationSettings() {
           </>
         )}
       </section>
+      <VkNotificationSettings />
       <section className="hub-settings">
         <div className="hub-section-title">
           <h2>Ответы и записи на стенке</h2>

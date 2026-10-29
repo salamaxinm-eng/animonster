@@ -6,6 +6,11 @@ export type Runtime = {
   DATABASE_URL?: string;
   VK_CLIENT_ID?: string;
   VK_CLIENT_SECRET?: string;
+  VK_BOT_ENABLED?: string;
+  VK_BOT_GROUP_ID?: string;
+  VK_BOT_TOKEN?: string;
+  VK_BOT_SECRET?: string;
+  VK_BOT_CONFIRMATION?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   TELEGRAM_LOGIN_CLIENT_ID?: string;

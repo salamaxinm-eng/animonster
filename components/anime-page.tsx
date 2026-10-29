@@ -12,6 +12,7 @@ import {
 } from '@/lib/anime';
 import { Button } from '@/components/ui/button';
 import { EpisodeNotifications } from '@/components/episode-notifications';
+import { VkEpisodeNotifications } from '@/components/vk-episode-notifications';
 import { AnimeThemes } from '@/components/anime-themes';
 import { AnimeDescription } from '@/components/anime-description';
 import { SeasonNavigation } from '@/components/season-navigation';
@@ -225,6 +226,7 @@ export function AnimePage({
             </AnimeThemes>
             <CollectionControl anime={anime} />
             <EpisodeNotifications animeId={anime.id} title={anime.russian} />
+            <VkEpisodeNotifications animeId={anime.id} />
           </div>
         </section>
         <SeasonNavigation

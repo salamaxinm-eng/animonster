@@ -1,0 +1,9 @@
+[Unit]
+Description=AniMonster VK community notification delivery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/bin/animonster-vk-worker

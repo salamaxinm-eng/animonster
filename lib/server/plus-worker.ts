@@ -30,11 +30,15 @@ export async function runPlusWorker(limit = 20) {
   const battlepass = await settlePasses(50);
   const partyCleanup = await cleanupWatchParties();
   if (!(await earlyAccessInitialized())) await bootstrapEpisodes();
+  const subscriptionSource =
+    runtime().VK_BOT_ENABLED === 'true'
+      ? '(SELECT anime_id FROM telegram_subscriptions UNION SELECT anime_id FROM vk_bot_subscriptions)'
+      : 'telegram_subscriptions';
   const [subscribedRows, recentRows] = await Promise.all([
     db()
       .prepare(
         `SELECT DISTINCT a.id,a.data FROM anime_cache a
-         JOIN telegram_subscriptions s ON s.anime_id=a.id ORDER BY a.id LIMIT ?`,
+         JOIN ${subscriptionSource} s ON s.anime_id=a.id ORDER BY a.id LIMIT ?`,
       )
       .bind(Math.max(limit, 100))
       .all(),
@@ -152,6 +156,10 @@ export async function runPlusWorker(limit = 20) {
       }
     }
   }
+  const vk =
+    runtime().VK_BOT_ENABLED === 'true'
+      ? await (await import('./vk-notifications')).runVkNotifications()
+      : { queued: 0, sent: 0, failed: 0 };
   return {
     ok: true,
     checked: cached.size,
@@ -159,6 +167,7 @@ export async function runPlusWorker(limit = 20) {
     scan_failed: scanFailed,
     sent,
     failed,
+    vk,
     watch_parties: partyCleanup,
     battlepass,
   };
