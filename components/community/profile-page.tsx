@@ -276,12 +276,12 @@ export function ProfilePage({
               : 'Профиль AniMonster'}
           </h1>
           <p>
-            {error ||
+            <FeedbackMessage>{error ||
               (!c.loaded
                 ? 'Загрузка…'
                 : !id && !c.user
                   ? 'Войди в аккаунт, чтобы собрать свою коллекцию и познакомиться с другими зрителями.'
-                  : 'Загрузка профиля…')}
+                  : 'Загрузка профиля…')}</FeedbackMessage>
           </p>
           {!id && !c.user && (
             <button className="vk-button" onClick={c.login}>

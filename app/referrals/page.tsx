@@ -188,7 +188,7 @@ export default function ReferralsPage() {
             <button onClick={community.login}>Войти</button>
           </section>
         ) : !data ? (
-          <p>{notice || 'Готовим твою ссылку…'}</p>
+          <p><FeedbackMessage>{notice || 'Готовим твою ссылку…'}</FeedbackMessage></p>
         ) : (
           <>
             <section className="referral-summary">

@@ -8,7 +8,7 @@ export const EMAIL_VERIFICATION_HREF = '/verify-email';
 export function FeedbackMessage({ children }: { children: ReactNode }) {
   if (
     typeof children === 'string' &&
-    /^(?:Подтвердите email(?:[,.]|$)|Сначала подтвердите email[.,])/.test(children)
+    /^(?:Подтвердите email(?:[,.]|$)|Сначала подтвердите email[.,]|Войдите в аккаунт и подтвердите email,)/.test(children)
   ) {
     return (
       <a className="email-verification-link" href={EMAIL_VERIFICATION_HREF}>

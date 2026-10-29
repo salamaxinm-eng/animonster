@@ -686,7 +686,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
         <main className="party-gate">
           <ShieldBan size={44} />
           <h1>Не удалось открыть комнату</h1>
-          <p>{error || 'Ссылка недействительна или комната уже завершена.'}</p>
+          <p><FeedbackMessage>{error || 'Ссылка недействительна или комната уже завершена.'}</FeedbackMessage></p>
           <Button variant="outline" onClick={() => (location.href = '/')}>
             На главную
           </Button>
