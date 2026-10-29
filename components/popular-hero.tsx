@@ -130,7 +130,11 @@ export function PopularHero({
                 <div className="eyebrow">
                   <span /> {label.toUpperCase()} · ТОП {i + 1}
                 </div>
-                <h1>{a.russian}</h1>
+                {i === 0 ? (
+                  <h1 className="hero-title">{a.russian}</h1>
+                ) : (
+                  <h2 className="hero-title">{a.russian}</h2>
+                )}
                 <div className="anime-meta">
                   <strong>★ {a.score}</strong>
                   <span>{a.aired_on.slice(0, 4)}</span>
@@ -140,13 +144,25 @@ export function PopularHero({
                 <p className="hero-description">
                   {a.description?.replace(/<[^>]*>/g, '').slice(0, 220)}
                 </p>
-                <button
+                <a
                   tabIndex={i === index ? 0 : -1}
-                  className="primary" data-hw-watch
-                  onClick={() => onOpen(a)}
+                  className="primary"
+                  data-hw-watch
+                  href={'/anime/' + a.id}
+                  onClick={(event) => {
+                    if (
+                      !event.ctrlKey &&
+                      !event.metaKey &&
+                      !event.shiftKey &&
+                      !event.altKey
+                    ) {
+                      event.preventDefault();
+                      onOpen(a);
+                    }
+                  }}
                 >
                   <Play size={18} fill="currentColor" /> Смотреть аниме
-                </button>
+                </a>
                 <button
                   tabIndex={i === index ? 0 : -1}
                   className={

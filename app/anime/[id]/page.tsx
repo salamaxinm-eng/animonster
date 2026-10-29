@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { titleBlocked } from '@/lib/server/title-restrictions';
 import { AnimePage } from '@/components/anime-page';
 import { getAnime, getAnimeByAlias } from '@/lib/server/library';
 import { posterUrl, type Anime } from '@/lib/anime';
-import ClientAnimePage from './client-page';
+import { db } from '@/lib/server/core';
+import { animeTitle } from '@/lib/seo';
+import { animeRelations } from '@/lib/server/anime-relations';
 
 const SITE_URL = 'https://animonster.su';
 
@@ -33,14 +35,27 @@ function seoDescription(anime: Anime) {
 }
 
 const loadAnime = cache(async (slug: string): Promise<Anime | null> => {
+  const match = /^(\d{1,9})(?:-[a-z0-9-]+)?$/.exec(slug);
+  if (!match && !/^[a-z0-9-]{2,100}$/.test(slug)) return null;
+  if (match) {
+    const cached = await db()
+      .prepare('SELECT data FROM anime_cache WHERE id=?')
+      .bind(Number(match[1]))
+      .first<{ data: string }>();
+    if (cached) {
+      const anime = JSON.parse(cached.data) as Anime;
+      if (anime.id === Number(match[1]) && (anime.russian || anime.name))
+        return anime;
+    }
+  }
   try {
-    const match = /^(\d{1,9})(?:-[a-z0-9-]+)?$/.exec(slug);
     const result = match
       ? await getAnime(Number(match[1]))
-      : await getAnimeByAlias(slug);
+      : await getAnimeByAlias(slug, true);
     return result?.anime || null;
-  } catch {
-    return null;
+  } catch (error) {
+    if ((error as { status?: number }).status === 404) return null;
+    throw error;
   }
 });
 
@@ -54,14 +69,16 @@ export async function generateMetadata({
   const { id: slug } = await params;
   const anime = await loadAnime(slug);
 
-  if (anime && await titleBlocked(await headers(), anime)) {
-    return { title: 'Тайтл заблокирован', robots: { index: false, follow: false } };
+  if (anime && (await titleBlocked(await headers(), anime))) {
+    return {
+      title: 'Тайтл заблокирован',
+      robots: { index: false, follow: false },
+    };
   }
 
   if (!anime) {
     return {
-      title: 'Аниме онлайн',
-      description: 'Смотреть аниме онлайн на AniMonster.',
+      title: 'Страница не найдена',
       robots: { index: false, follow: true },
     };
   }
@@ -71,7 +88,7 @@ export async function generateMetadata({
   const image = posterUrl(anime);
 
   return {
-    title: `${name} — смотреть аниме онлайн`,
+    title: animeTitle(anime),
     description,
     alternates: {
       canonical: `/anime/${anime.id}`,
@@ -104,9 +121,11 @@ export default async function Page({ params }: PageProps) {
   const { id: slug } = await params;
   const anime = await loadAnime(slug);
 
-  if (anime && await titleBlocked(await headers(), anime)) redirect('/title-blocked');
+  if (anime && (await titleBlocked(await headers(), anime)))
+    redirect('/title-blocked');
 
-  if (!anime) return <ClientAnimePage />;
+  if (!anime) notFound();
+  const relations = await animeRelations(anime.id).catch(() => undefined);
 
   const name = anime.russian || anime.name;
   const description = seoDescription(anime);
@@ -119,8 +138,11 @@ export default async function Page({ params }: PageProps) {
     description,
     image,
     genre: anime.genres,
-    datePublished: anime.aired_on || undefined,
-    numberOfEpisodes: anime.episodes || undefined,
+    datePublished: /^\d{4}-\d{2}-\d{2}$/.test(anime.aired_on || '')
+      ? anime.aired_on
+      : undefined,
+    numberOfEpisodes:
+      anime.kind !== 'movie' ? anime.episodes || undefined : undefined,
     url: `${SITE_URL}/anime/${anime.id}`,
   };
 
@@ -132,7 +154,30 @@ export default async function Page({ params }: PageProps) {
           __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
         }}
       />
-      <AnimePage anime={anime} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Каталог аниме',
+                item: SITE_URL + '/catalog',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name,
+                item: `${SITE_URL}/anime/${anime.id}`,
+              },
+            ],
+          }).replace(/</g, '\\u003c'),
+        }}
+      />
+      <AnimePage anime={anime} initialRelations={relations} />
     </>
   );
 }

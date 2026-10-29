@@ -32,18 +32,20 @@ const EMPTY: RelationResponse = { mainline: [], branches: [], related: [] };
 export function SeasonNavigation({
   animeId,
   onSeasonsChangeAction,
+  initialRelations,
 }: {
   animeId: number;
   onSeasonsChangeAction?: (seasons: Anime[]) => void;
+  initialRelations?: RelationResponse;
 }) {
-  const [relations, setRelations] = useState(EMPTY);
-  const [loading, setLoading] = useState(true);
+  const [relations, setRelations] = useState(initialRelations || EMPTY);
+  const [loading, setLoading] = useState(!initialRelations);
   const [failed, setFailed] = useState(false);
   const [retry, setRetry] = useState(0);
   const [updating, setUpdating] = useState(false);
   const callback = useRef(onSeasonsChangeAction);
   const saved = useRef<{ animeId: number; data: RelationResponse } | null>(
-    null,
+    initialRelations ? { animeId, data: initialRelations } : null,
   );
   callback.current = onSeasonsChangeAction;
   useEffect(() => {

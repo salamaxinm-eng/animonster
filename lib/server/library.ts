@@ -54,11 +54,22 @@ export async function sitemapAnime(
   const safeLimit = Math.max(1, Math.min(50000, Math.floor(limit)));
   const rows = await db()
     .prepare(
-      'SELECT id,updated_at FROM anime_cache ORDER BY updated_at DESC LIMIT ?',
+      `SELECT id,updated_at FROM anime_cache
+       WHERE id>0 AND data::jsonb->>'id'=id::text
+         AND COALESCE(NULLIF(data::jsonb->>'russian',''),NULLIF(data::jsonb->>'name','')) IS NOT NULL
+       ORDER BY id LIMIT ?`,
     )
     .bind(safeLimit)
     .all<SitemapAnimeEntry>();
   return rows.results;
+}
+
+export async function sitemapGenres(): Promise<string[]> {
+  const rows = await db().prepare(`SELECT DISTINCT genre AS name
+    FROM anime_cache CROSS JOIN LATERAL jsonb_array_elements_text(genres_index) AS genre
+    WHERE genre<>'' ORDER BY genre`).all<{ name: string }>();
+  const genres = await genreEntries(rows.results.map((row, id) => ({ id, name: row.name })));
+  return genres.map(genre => genre.name);
 }
 
 export async function cachedCatalog({
@@ -253,7 +264,7 @@ export async function getAnime(id: number) {
     ),
   };
 }
-export async function getAnimeByAlias(alias: string) {
+export async function getAnimeByAlias(alias: string, strict = false) {
   if (!/^[a-z0-9-]{2,100}$/.test(alias)) return null;
   try {
     const release: Release = await liberty(
@@ -271,7 +282,8 @@ export async function getAnimeByAlias(alias: string) {
         })) || [],
       ),
     };
-  } catch {
+  } catch (error) {
+    if (strict && (error as { status?: number }).status !== 404) throw error;
     return null;
   }
 }

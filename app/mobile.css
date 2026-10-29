@@ -221,7 +221,7 @@
     padding: 32px 18px 76px;
   }
 
-  .popular-hero .hero h1 {
+  .popular-hero .hero .hero-title {
     max-width: 100%;
     margin: 12px 0 10px;
     font-size: clamp(30px, 9vw, 42px);
@@ -1342,13 +1342,13 @@
     background: linear-gradient(transparent, var(--background) 38%);
   }
   .popular-hero .hero-copy > .eyebrow,
-  .popular-hero .hero-copy > h1,
+  .popular-hero .hero-copy > .hero-title,
   .popular-hero .hero-copy > .anime-meta,
   .popular-hero .hero-copy > .hero-description {
     grid-column: 1 / -1;
     margin: 0;
   }
-  .popular-hero .anime-hero h1 {
+  .popular-hero .anime-hero .hero-title {
     font-size: clamp(26px, 7.4vw, 34px);
     line-height: 1.12;
     min-height: 2.24em;

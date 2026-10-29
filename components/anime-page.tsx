@@ -15,6 +15,7 @@ import { EpisodeNotifications } from '@/components/episode-notifications';
 import { AnimeThemes } from '@/components/anime-themes';
 import { AnimeDescription } from '@/components/anime-description';
 import { SeasonNavigation } from '@/components/season-navigation';
+import type { AnimeRelationsResult } from '@/lib/server/anime-relations';
 import { UsersRound } from 'lucide-react';
 import { ADULT_CONSENT_COOKIE } from '@/lib/adult-consent';
 import {
@@ -23,7 +24,13 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-export function AnimePage({ anime }: { anime: Anime }) {
+export function AnimePage({
+  anime,
+  initialRelations,
+}: {
+  anime: Anime;
+  initialRelations?: AnimeRelationsResult;
+}) {
   const [episodes, setEpisodes] = useState<Episode[]>([]),
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
     [seasons, setSeasons] = useState<Anime[]>([]),
@@ -67,11 +74,14 @@ export function AnimePage({ anime }: { anime: Anime }) {
         signal: AbortSignal.timeout(3_000),
       })
         .then((response) => (response.ok ? response.json() : []))
-        .catch(() => [] as {
-          episode: number;
-          position: number;
-          voiceover?: string;
-        }[]);
+        .catch(
+          () =>
+            [] as {
+              episode: number;
+              position: number;
+              voiceover?: string;
+            }[],
+        );
       const r = await fetch(
         '/api/videos?id=' +
           anime.id +
@@ -182,25 +192,46 @@ export function AnimePage({ anime }: { anime: Anime }) {
             className="title-poster"
             src={posterUrl(anime, 960)}
             alt={anime.russian}
+            fetchPriority="high"
+            decoding="async"
           />
           <div>
             <span className="eyebrow">ANIMONSTER / АНИМЕ</span>
-            <h1>{anime.russian}</h1>
+            <h1>{anime.russian || anime.name}</h1>
             <p className="muted">{anime.name}</p>
             <div className="anime-meta">
               <strong>★ {anime.score}</strong>
               <span>{anime.aired_on.slice(0, 4)}</span>
               <span>{anime.episodes} серий</span>
+              <span>
+                {(
+                  {
+                    tv: 'Сериал',
+                    movie: 'Фильм',
+                    ova: 'OVA',
+                    ona: 'ONA',
+                    special: 'Спецвыпуск',
+                  } as Record<string, string>
+                )[anime.kind] || anime.kind}
+              </span>
               {anime.age_rating && <span>{anime.age_rating}</span>}
             </div>
-            <AnimeThemes key={anime.id} animeId={anime.id} genres={anime.genres}>
+            <AnimeThemes
+              key={anime.id}
+              animeId={anime.id}
+              genres={anime.genres}
+            >
               <AnimeDescription text={anime.description} />
             </AnimeThemes>
             <CollectionControl anime={anime} />
             <EpisodeNotifications animeId={anime.id} title={anime.russian} />
           </div>
         </section>
-        <SeasonNavigation animeId={anime.id} onSeasonsChangeAction={setSeasons} />
+        <SeasonNavigation
+          animeId={anime.id}
+          initialRelations={initialRelations}
+          onSeasonsChangeAction={setSeasons}
+        />
         <section id="watch" className="title-playback">
           <div className="title-playback-heading">
             <h2>Смотреть · серия {episode}</h2>

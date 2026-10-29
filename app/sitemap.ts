@@ -1,19 +1,9 @@
 import type { MetadataRoute } from 'next';
-import { sitemapAnime } from '@/lib/server/library';
+import { sitemapAnime, sitemapGenres } from '@/lib/server/library';
 
 export const dynamic = 'force-dynamic';
 
 const SITE_URL = 'https://animonster.su';
-
-// PostgreSQL bigint timestamps arrive as strings in production. Validate them
-// before Next serializes dates, which happens after this function returns.
-function lastModified(value: unknown): Date | undefined {
-  if (typeof value !== 'number' && typeof value !== 'string') return undefined;
-  const milliseconds = Number(value);
-  if (!Number.isFinite(milliseconds) || milliseconds <= 0 || milliseconds > 8.64e15)
-    return undefined;
-  return new Date(milliseconds);
-}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPages: MetadataRoute.Sitemap = [
@@ -40,12 +30,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const anime = await sitemapAnime(50000 - staticPages.length);
+    const genres = await sitemapGenres();
+    const genrePages = [...new Set(genres)].map((genre) => ({
+      url: `${SITE_URL}/genres/${encodeURIComponent(genre)}`,
+    }));
+    const anime = await sitemapAnime(
+      50000 - staticPages.length - genrePages.length,
+    );
     return [
       ...staticPages,
+      ...genrePages,
       ...anime.map((item) => ({
         url: `${SITE_URL}/anime/${item.id}`,
-        lastModified: lastModified(item.updated_at),
+        // updated_at is a cache refresh timestamp, not a content modification.
+        // Omit lastmod until the content has a dedicated modification timestamp.
         changeFrequency: 'weekly' as const,
         priority: 0.8,
       })),

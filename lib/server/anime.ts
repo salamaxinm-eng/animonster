@@ -42,6 +42,7 @@ export async function liberty(path: string) {
       signal: AbortSignal.timeout(LIBERTY_TIMEOUT),
       next: { revalidate: 300 },
     });
+    if (r.status === 404) throw Object.assign(new Error('Release not found'), { status: 404 });
     if (!r.ok) lastError = `HTTP ${r.status}`;
     else {
       const value = await r.json();
@@ -50,6 +51,7 @@ export async function liberty(path: string) {
       return value as any;
     }
   } catch (reason) {
+    if ((reason as { status?: number }).status === 404) throw reason;
     lastError = reason instanceof Error ? reason.message : lastError;
   }
   void providerHealth(
@@ -96,7 +98,8 @@ export async function findRelease(id: number): Promise<Release | undefined> {
   const response = await fetch('https://shikimori.one/api/animes/' + id, {
     signal: AbortSignal.timeout(8000),
   });
-  if (!response.ok) return;
+  if (response.status === 404) return;
+  if (!response.ok) throw new Error(`Anime lookup HTTP ${response.status}`);
   const anime = (await response.json()) as { name: string };
   const candidates: Release[] = await liberty(
     '/app/search/releases?query=' + encodeURIComponent(anime.name),
