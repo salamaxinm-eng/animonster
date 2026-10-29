@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { posterUrl, type Anime } from '@/lib/anime';
 import { horrorCandidates } from '@/lib/halloween';
@@ -37,7 +38,7 @@ export function HalloweenHorrorPrize() {
           <b>Смотреть ↗</b>
         </a>
       ) : error ? (
-        <p role="alert">{error}</p>
+        <p role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>
       ) : (
         <p role="status">Тыква выбирает аниме…</p>
       )}

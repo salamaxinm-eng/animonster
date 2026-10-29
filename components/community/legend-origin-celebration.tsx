@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useRef, useState } from 'react';
 import { Crown, Flame, Sparkles } from 'lucide-react';
 import {
@@ -138,7 +139,7 @@ export function LegendOriginCelebration({ user }: { user: Profile }) {
         </div>
         {error && (
           <p className="error-msg" role="alert">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
           </p>
         )}
         <button

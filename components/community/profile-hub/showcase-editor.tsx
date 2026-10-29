@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { api } from '../context';
 import { Art, type HubProfile } from './shared';
@@ -104,12 +105,12 @@ export function ShowcaseEditor({
           </fieldset>
           {error && (
             <p className="hub-error" role="alert">
-              {error}
+              <FeedbackMessage>{error}</FeedbackMessage>
             </p>
           )}
           {notice && (
             <p className="hub-notice" role="status">
-              {notice}
+              <FeedbackMessage>{notice}</FeedbackMessage>
             </p>
           )}
           <button

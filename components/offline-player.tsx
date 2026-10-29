@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useRef, useState } from 'react';
 import { getOfflineEpisode, putOfflineEpisode } from '@/lib/offline/db';
@@ -162,7 +163,7 @@ export function OfflinePlayer({ id }: { id: string }) {
         >
           Подтвердить подписку
         </button>
-        {error && <p role="alert">{error}</p>}
+        {error && <p role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}
       </div>
     );
   return (
@@ -240,7 +241,7 @@ export function OfflinePlayer({ id }: { id: string }) {
       )}
       {error && (
         <p className="playback-error" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
     </div>

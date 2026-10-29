@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Avatar, CommunityHeader, useCommunity } from '@/components/community/context';
 
@@ -74,7 +75,7 @@ export function CosmeticGenerator() {
         <button className="generator-primary" type="submit" disabled={busy || !configured}>{busy ? 'Создаётся…' : 'Сгенерировать'}</button>
       </form><p className="generator-hint">Стиль задают прикреплённые референсы коллекции AniMonster. Пин: PNG 512×512. Рамка: PNG 1024×1024 с прозрачным центром.</p>
     </section><section className="generator-results"><div className="generator-result-heading"><h2>История генераций</h2><button onClick={() => void load()} disabled={busy}>Обновить</button></div>
-      {message && <p className="generator-notice" role="status">{message}</p>}
+      {message && <p className="generator-notice" role="status"><FeedbackMessage>{message}</FeedbackMessage></p>}
       {!items.length && <p className="generator-empty">Пока нет генераций.</p>}
       <div className="generator-grid">{items.map((item) => <article key={item.id} className={`generator-card ${item.rarity}`}>
         <div className="generator-art">{item.kind === 'frame' ? <div className="generator-avatar"><Avatar avatar={user?.avatar || 'moon'} theme={user?.theme || 'eclipse'} large /><img className="generator-overlay" src={`/api/cosmetic-generator/assets/${item.id}`} alt="Примерка рамки" /></div> : <img className="generator-pin" src={`/api/cosmetic-generator/assets/${item.id}`} alt={item.concept} />}</div>

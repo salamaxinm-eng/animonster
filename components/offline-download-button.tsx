@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useState } from 'react';
 import { Download } from 'lucide-react';
@@ -196,7 +197,7 @@ export function OfflineDownloadButton({
               </button>
             </div>
           )}
-          {message && <p role="status">{message}</p>}
+          {message && <p role="status"><FeedbackMessage>{message}</FeedbackMessage></p>}
           <div className="offline-quality-list">
             {qualities.map((quality) => (
               <button

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { posterUrl, type Anime } from '@/lib/anime';
 import { Heart } from 'lucide-react';
 import { api, useCommunity } from '@/components/community/context';
@@ -97,7 +98,7 @@ export function AnimeGrid({
       )}
       {error && (
         <p className="error-msg" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
     </>

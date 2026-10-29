@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { CommunityHeader } from './community/context';
@@ -34,7 +35,7 @@ export function BattlepassAdmin() {
   }
   const s = data?.season, frozen = s?.status === 'published';
   return <div className="site-shell pass-site"><CommunityHeader /><main className="pass-admin"><a href="/admin">← Админка</a><h1>AniMonster Pass · управление</h1>
-    {error && <p className="pass-message error" role="alert">{error}</p>}{message && <p className="pass-message" role="status">{message}</p>}
+    {error && <p className="pass-message error" role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}{message && <p className="pass-message" role="status"><FeedbackMessage>{message}</FeedbackMessage></p>}
     <nav>{data?.seasons.map((v: any) => <button key={v.id} onClick={() => setSeason(v.id)} aria-pressed={season === v.id}>{v.title} · {v.status === 'draft' ? 'Черновик' : 'Опубликован'}</button>)}<button onClick={() => { setSeason('new-season'); setTasks(structuredClone(PASS_TASKS)); }}>+ Новый сезон</button></nav>
     {!data ? <p>Загрузка…</p> : <><div className="pass-admin-grid"><section><h2>Условия сезона</h2><form key={season + ':' + String(s?.published_at)} onSubmit={save}><fieldset disabled={busy || frozen} style={{ display: 'contents' }}>
       <label>Идентификатор<input name="id" required pattern="[a-z0-9-]{3,70}" defaultValue={s?.id || ''} placeholder="season-two" readOnly={!!s} /></label>

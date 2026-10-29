@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCommunity } from './community/context';
@@ -88,7 +89,7 @@ export function VkEpisodeNotifications({ animeId }: { animeId: number }) {
       >
         {active ? 'Не уведомлять ВК' : 'Уведомлять ВКонтакте'}
       </button>
-      {message && <small role="status">{message}</small>}
+      {message && <small role="status"><FeedbackMessage>{message}</FeedbackMessage></small>}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -119,12 +120,12 @@ export function SettingsSection({
       </nav>
       {error && (
         <p className="hub-error" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
       {notice && (
         <p className="hub-notice" role="status">
-          {notice}
+          <FeedbackMessage>{notice}</FeedbackMessage>
         </p>
       )}
       {tab === 'notifications' ? (
@@ -238,9 +239,11 @@ export function SettingsSection({
               </p>
               {account.data.email && (
                 <small>
-                  {user.email_verified
-                    ? 'Почта подтверждена'
-                    : 'Почта не подтверждена'}
+                  {user.email_verified ? 'Почта подтверждена' : (
+                    <Link className="email-verification-link" href="/verify-email">
+                      Почта не подтверждена — подтвердить email
+                    </Link>
+                  )}
                 </small>
               )}
               {account.data.has_password && account.data.email && (

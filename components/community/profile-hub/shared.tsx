@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useRef, useState } from 'react';
 import { ImageOff, Search } from 'lucide-react';
@@ -239,7 +240,7 @@ export function ResourceState({
   if (error)
     return (
       <div className="hub-error" role="alert">
-        <p>{error}</p>
+        <p><FeedbackMessage>{error}</FeedbackMessage></p>
         <button className="hub-button" onClick={retry}>
           Повторить
         </button>
@@ -262,7 +263,7 @@ export function More({
     <>
       {moreError && (
         <p className="hub-error" role="alert">
-          {moreError}
+          <FeedbackMessage>{moreError}</FeedbackMessage>
         </p>
       )}
       {hasMore && (

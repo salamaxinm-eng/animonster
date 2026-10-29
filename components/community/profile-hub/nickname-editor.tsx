@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -153,12 +154,12 @@ export function NicknameEditor({
       )}
       {error && (
         <p role="alert" className="hub-error">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
       {notice && (
         <p role="status" className="hub-notice">
-          {notice}
+          <FeedbackMessage>{notice}</FeedbackMessage>
         </p>
       )}
       <fieldset disabled={busy || paying}>

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Trophy, Play } from 'lucide-react';
@@ -51,7 +52,7 @@ export function ProfileJourney({
       alive = false;
     };
   }, [id, revision]);
-  if (error) return <p className="error-msg">{error}</p>;
+  if (error) return <p className="error-msg"><FeedbackMessage>{error}</FeedbackMessage></p>;
   if (!data) return <p role="status">Загружаем прогресс…</p>;
   const unlocked = data.achievements.filter((a) => a.unlocked).length;
   return (

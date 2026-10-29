@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { HalloweenPlayerEcho } from '@/components/halloween-extras';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PlayerSelect } from '@/components/player-select';
@@ -864,7 +865,7 @@ export function EpisodePlayer({
       {animeId === 21 && <p className="muted" role="status"><a href="/achievements/one-piece">Пиратский путь One Piece</a>{pieceWatch.notice ? ` · ${pieceWatch.notice}` : ''}</p>}
       {error && (
         <div className="playback-error" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
           <button
             onClick={() => {
               if (isKodik) {

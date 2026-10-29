@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -49,7 +50,7 @@ export default function ClientAnimePage() {
           <p role="status">Загружаем аниме…</p>
         ) : (
           <div role="alert" className="playback-error">
-            <p>{error}</p>
+            <p><FeedbackMessage>{error}</FeedbackMessage></p>
             <button
               className="primary"
               onClick={() => setAttempt((value) => value + 1)}

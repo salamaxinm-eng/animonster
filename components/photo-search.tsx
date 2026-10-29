@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import {
@@ -526,11 +527,11 @@ export default function PhotoSearch() {
       )}
       <div role="status" aria-live="polite" className="photo-search-status">
         {phase}
-        {notice && <p>{notice}</p>}
+        {notice && <p><FeedbackMessage>{notice}</FeedbackMessage></p>}
       </div>
       {error && (
         <p ref={errorSection} role="alert" className="photo-search-error">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
       {results !== null && (

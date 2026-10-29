@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useState, type ReactNode } from 'react';
 import { Heart } from 'lucide-react';
@@ -94,7 +95,7 @@ export function SupportDonation({
           {loading && <p role="status">Загружаем цели…</p>}
           {goalsError && (
             <p className="error-msg" role="alert">
-              {goalsError}
+              <FeedbackMessage>{goalsError}</FeedbackMessage>
             </p>
           )}
           <FundraisingChoice
@@ -153,7 +154,7 @@ export function SupportDonation({
           </label>
           {error && (
             <p className="error-msg" role="alert">
-              {error}
+              <FeedbackMessage>{error}</FeedbackMessage>
             </p>
           )}
           <button

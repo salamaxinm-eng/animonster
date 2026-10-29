@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -225,7 +226,7 @@ export default function ReferralsPage() {
             </section>
             {notice && (
               <p className="success-msg" role="status">
-                {notice}
+                <FeedbackMessage>{notice}</FeedbackMessage>
               </p>
             )}
           </>

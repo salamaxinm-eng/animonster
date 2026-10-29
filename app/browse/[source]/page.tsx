@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -71,7 +72,7 @@ export default function BrowsePage() {
         {loading ? (
           <p role="status">Загружаем аниме…</p>
         ) : error ? (
-          <p className="error-msg" role="alert">{error}</p>
+          <p className="error-msg" role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>
         ) : items.length ? (
           <AnimeGrid items={items} />
         ) : (

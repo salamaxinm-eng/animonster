@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useCallback, useEffect, useState } from 'react';
 import { CommunityHeader, useCommunity } from '@/components/community/context';
 import { Comments } from '@/components/community/comments';
@@ -248,7 +249,7 @@ export function AnimePage({
           </div>
           {partyError && (
             <p className="error-msg" role="alert">
-              {partyError}
+              <FeedbackMessage>{partyError}</FeedbackMessage>
             </p>
           )}
           {!ageConsentReady ? (
@@ -263,7 +264,7 @@ export function AnimePage({
             <p role="status">Загружаем серии…</p>
           ) : error ? (
             <div role="alert" className="playback-error">
-              {error}
+              <FeedbackMessage>{error}</FeedbackMessage>
               <Button onClick={() => load(true)}>Повторить</Button>
             </div>
           ) : (
@@ -305,7 +306,7 @@ export function AnimePage({
             </DialogDescription>
             {ageError && (
               <p role="alert" className="error-msg">
-                {ageError}
+                <FeedbackMessage>{ageError}</FeedbackMessage>
               </p>
             )}
             <div className="age-actions">

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { ProfileJourney } from './profile-journey';
 import { BuySubscription } from './buy-subscription';
@@ -646,12 +647,12 @@ export function ProfilePage({
               </Tabs>
               {error && (
                 <p className="error-msg" role="alert">
-                  {error}
+                  <FeedbackMessage>{error}</FeedbackMessage>
                 </p>
               )}
               {notice && (
                 <p className="success-msg" role="status">
-                  {notice}
+                  <FeedbackMessage>{notice}</FeedbackMessage>
                 </p>
               )}
               {tab === 'wall' && (

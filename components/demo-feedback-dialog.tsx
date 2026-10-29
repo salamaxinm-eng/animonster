@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useRef, useState } from 'react';
 import type { useDemoFeedback } from '@/hooks/use-demo-feedback';
 
@@ -143,7 +144,7 @@ export function DemoFeedbackDialog({
           </label>
           {error && (
             <p role="alert" className="demo-feedback-error">
-              {error}
+              <FeedbackMessage>{error}</FeedbackMessage>
             </p>
           )}
           <div className="demo-feedback-actions">

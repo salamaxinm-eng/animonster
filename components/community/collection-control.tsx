@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { NativeSelect } from '@/components/ui/native-select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -127,7 +128,7 @@ export function CollectionControl({
           </div>
         </details>
       )}
-      {error && <span className="error-msg">{error}</span>}
+      {error && <span className="error-msg"><FeedbackMessage>{error}</FeedbackMessage></span>}
     </div>
   );
 }

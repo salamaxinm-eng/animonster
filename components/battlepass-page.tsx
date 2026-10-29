@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Check, ArrowUpRight, Crown, Gift, Lock, RotateCcw, Sparkles } from 'lucide-react';
@@ -95,7 +96,7 @@ export function BattlepassPage() {
   }
   return <div className="site-shell pass-site"><CommunityHeader /><main className="pass-main">
     <div className="pass-heading"><span>ANIMONSTER PASS</span>{data?.canManage && <a href="/admin/battlepass">Управление сезонами</a>}</div>
-    {error && <p className="pass-message error" role="alert">{error}</p>}{notice && <p className="pass-message" role="status">{notice}</p>}
+    {error && <p className="pass-message error" role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}{notice && <p className="pass-message" role="status"><FeedbackMessage>{notice}</FeedbackMessage></p>}
     {!data ? <p role="status">Загружаем сезон…</p> : !season || !ready ? <section className="pass-empty"><Gift size={40} /><h1>Следующий сезон готовится</h1><p>Здесь появятся задания и коллекция AniMonster Pass.</p>{data?.canManage && <a href="/battlepass?season=oni-awakening&preview=1">Открыть черновик «Пробуждение Oni»</a>}</section> : <>
       {season.status === 'draft' && <p className="pass-message">Черновик · доступен только администратору. Участие и оплата ещё не открыты.</p>}
       <section className="pass-hero">

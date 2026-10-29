@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Download, HardDrive, Pause, Play, Trash2 } from 'lucide-react';
@@ -74,7 +75,7 @@ export default function DownloadsPage() {
             </button>
           </div>
         )}
-        {message && <p role="alert">{message}</p>}
+        {message && <p role="alert"><FeedbackMessage>{message}</FeedbackMessage></p>}
         {!items.length ? (
           <div className="empty">
             <Download size={32} />
@@ -113,7 +114,7 @@ export default function DownloadsPage() {
                       </p>
                     )}
                     {item.error && item.error !== 'deleted' && (
-                      <p className="error-msg">{item.error}</p>
+                      <p className="error-msg"><FeedbackMessage>{item.error}</FeedbackMessage></p>
                     )}
                     <div className="offline-card-actions">
                       {item.status === 'completed' ? (

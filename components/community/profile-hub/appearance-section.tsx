@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useHalloween } from '@/components/halloween';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -131,12 +132,12 @@ export function AppearanceSection({
       <ResourceState {...resource} />
       {error && (
         <p className="hub-error" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
       {notice && (
         <p className="hub-notice" role="status">
-          {notice}
+          <FeedbackMessage>{notice}</FeedbackMessage>
         </p>
       )}
       {!resource.loading && !resource.error && (

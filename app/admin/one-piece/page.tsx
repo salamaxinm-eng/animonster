@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { CommunityHeader } from '@/components/community/context';
 type Rule = {
@@ -79,7 +80,7 @@ export default function Page() {
           только администраторам. Эталонные списки арок версионируются в
           config/one-piece.
         </p>
-        {error && <p role="status">{error}</p>}
+        {error && <p role="status"><FeedbackMessage>{error}</FeedbackMessage></p>}
         <label>
           Достижение{' '}
           <select value={selected} onChange={(e) => choose(e.target.value)}>

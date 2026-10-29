@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useMemo, useState } from 'react';
 import { Heart, History, ListVideo } from 'lucide-react';
@@ -111,7 +112,7 @@ export default function BookmarksPage() {
           </section>
         ) : error ? (
           <p className="error-msg" role="alert">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
           </p>
         ) : tab === 'history' ? (
           <section className="bookmark-list">
@@ -223,7 +224,7 @@ function Empty({ message }: { message: string }) {
   return (
     <div className="bookmarks-empty">
       <ListVideo />
-      <p>{message}</p>
+      <p><FeedbackMessage>{message}</FeedbackMessage></p>
       <a className="primary" href="/catalog">
         Открыть каталог
       </a>

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { ShieldCheck, MonitorSmartphone } from 'lucide-react';
 import { useCommunity } from './context';
@@ -182,7 +183,7 @@ export function QrConfirmation() {
         )}
         {error && (
           <p className="error-msg" role="alert">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
           </p>
         )}
         <a href="/">На главную</a>

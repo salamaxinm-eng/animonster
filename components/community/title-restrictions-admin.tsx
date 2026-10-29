@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Button } from '@/components/ui/button';
@@ -111,8 +112,8 @@ export function TitleRestrictionsAdmin() {
         переходом в VPN через 7 секунд; плеер и ссылки на серии также
         закрываются.
       </p>
-      {error && <p role="alert">{error}</p>}
-      {message && <p role="status">{message}</p>}
+      {error && <p role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}
+      {message && <p role="status"><FeedbackMessage>{message}</FeedbackMessage></p>}
       {loading ? (
         <p role="status">Загружаем список…</p>
       ) : (

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useState } from 'react';
 import { api } from '../context';
 import type { HubProfile } from './shared';
@@ -58,7 +59,7 @@ export function CustomLists({
       <div>
         {error && (
           <p className="hub-error" role="alert">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
           </p>
         )}
         {profile.lists.map((list) => (

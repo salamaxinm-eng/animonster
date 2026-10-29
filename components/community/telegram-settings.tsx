@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useState } from 'react';
 
@@ -69,7 +70,7 @@ export function TelegramSettings() {
           </button>
         </>
       )}
-      {error && <p className="error-msg">{error}</p>}
+      {error && <p className="error-msg"><FeedbackMessage>{error}</FeedbackMessage></p>}
     </section>
   );
 }

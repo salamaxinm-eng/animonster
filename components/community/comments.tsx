@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { useEffect, useState } from 'react';
 import {
@@ -205,12 +206,12 @@ export function Comments({
       )}
       {error && (
         <p className="error-msg" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
       {notice && (
         <p className="success-msg" role="status">
-          {notice}
+          <FeedbackMessage>{notice}</FeedbackMessage>
         </p>
       )}
       {loading ? (

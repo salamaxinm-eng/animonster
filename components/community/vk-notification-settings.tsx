@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Empty, ResourceState, useResource } from './profile-hub/shared';
@@ -195,7 +196,7 @@ export function VkNotificationSettings() {
       )}
       {error && (
         <p className="hub-error" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
     </section>

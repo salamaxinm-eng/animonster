@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useRef, type FormEvent } from 'react';
 import { Button } from './ui/button';
@@ -42,7 +43,7 @@ export function BattlepassMemberActions({ season, user, premium, busy, error, me
       {!premium && <label>Причина выдачи<textarea name="reason" required minLength={5} maxLength={1000} disabled={busy} /></label>}
       <Button type="submit" disabled={busy || premium}>{premium ? 'Пропуск уже выдан' : 'Выдать платный пропуск'}</Button>
     </form>
-    {error && <p className="pass-message error" role="alert">{error}</p>}
-    {message && <p className="pass-message" role="status">{message}</p>}
+    {error && <p className="pass-message error" role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}
+    {message && <p className="pass-message" role="status"><FeedbackMessage>{message}</FeedbackMessage></p>}
   </div>;
 }

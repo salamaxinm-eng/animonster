@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, BellOff } from 'lucide-react';
@@ -72,7 +73,7 @@ export function EpisodeNotifications({
         {active ? <BellOff size={17} /> : <Bell size={17} />}
         {active ? 'Не уведомлять' : 'Уведомлять о новых сериях'}
       </button>
-      {message && <small role="status">{message}</small>}
+      {message && <small role="status"><FeedbackMessage>{message}</FeedbackMessage></small>}
     </div>
   );
 }

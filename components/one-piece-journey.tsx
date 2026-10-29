@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Anchor,
@@ -142,7 +143,7 @@ export function OnePieceJourney() {
         </header>
         {error && (
           <p className="error-msg" role="alert">
-            {error} <button onClick={() => void load()}>Повторить</button>
+            <FeedbackMessage>{error}</FeedbackMessage> <button onClick={() => void load()}>Повторить</button>
           </p>
         )}
         {!data && !error && <p role="status">Прокладываем маршрут…</p>}

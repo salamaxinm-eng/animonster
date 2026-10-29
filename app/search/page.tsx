@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useHalloween } from '@/components/halloween';
 import { HalloweenSearchTreat } from '@/components/halloween-extras';
@@ -439,7 +440,7 @@ export default function SearchPage() {
           <p role="status">Ищем аниме…</p>
         ) : error ? (
           <p className="error-msg" role="alert">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
           </p>
         ) : items.length || groups.length ? (
           <>

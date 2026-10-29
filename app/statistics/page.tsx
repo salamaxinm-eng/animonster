@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { HiddenHalloweenSpirit } from '@/components/halloween-hunt';
 import { UserNickname } from '@/components/user-nickname';
 
@@ -198,7 +199,7 @@ export default function StatisticsPage() {
 
         {error && (
           <p className="stats-error" role="alert">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
           </p>
         )}
         {!stats && !error && (

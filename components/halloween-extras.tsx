@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useHalloween } from '@/components/halloween';
@@ -115,7 +116,7 @@ export function HalloweenSearchTreat() {
       >
         {busy ? 'Выбираем…' : 'Случайное аниме'}
       </button>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}
     </div>
   );
 }
@@ -248,7 +249,7 @@ export function HalloweenFooterCandle() {
             {dark && <div className="hw-footer-darkness" aria-hidden="true" />}
             {notice && (
               <div className="hw-light-notice" role="status">
-                <p>{notice}</p>
+                <p><FeedbackMessage>{notice}</FeedbackMessage></p>
                 <button type="button" onClick={() => setNotice('')}>
                   Закрыть
                 </button>

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { HiddenHalloweenSpirit } from '@/components/halloween-hunt';
 import { useEffect, useState } from 'react';
 import { CommunityHeader, useCommunity } from '@/components/community/context';
@@ -58,7 +59,7 @@ export default function Page({ initialItems }: { initialItems: Anime[] }) {
           <p role="status">Подбираем аниме…</p>
         ) : error ? (
           <div role="alert">
-            <p>{error}</p>
+            <p><FeedbackMessage>{error}</FeedbackMessage></p>
             <Button onClick={() => setAttempt((x) => x + 1)}>Повторить</Button>
           </div>
         ) : (

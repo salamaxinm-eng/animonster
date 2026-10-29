@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- The custom media application needs a keyboard focus target. */
 
 import {
@@ -889,7 +890,7 @@ export function PlayerDemo({
                   Создать комнату
                 </button>
               )}
-              {room.error && <p role="alert">{room.error}</p>}
+              {room.error && <p role="alert"><FeedbackMessage>{room.error}</FeedbackMessage></p>}
             </section>
             <PlayerHalloweenVisitor disabled={fauxFullscreen} />
             {/* The player is a keyboard application; focus enables Space/arrow shortcuts without stealing page keys. */}
@@ -1158,7 +1159,7 @@ export function PlayerDemo({
               )}
               {error && (
                 <div className="demo-center demo-error" role="alert">
-                  <p>{error}</p>
+                  <p><FeedbackMessage>{error}</FeedbackMessage></p>
                   <button
                     onClick={() =>
                       switchSource(() => setRetry((old) => old + 1))
@@ -1170,7 +1171,7 @@ export function PlayerDemo({
               )}
               {notice && (
                 <div className="demo-notice" role="status">
-                  {notice}
+                  <FeedbackMessage>{notice}</FeedbackMessage>
                 </div>
               )}
               {segment && !preferences.autoSkip && !guest && (

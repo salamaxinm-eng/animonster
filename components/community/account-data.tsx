@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,7 @@ export function AccountData() {
       <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Удалить аккаунт безвозвратно?</AlertDialogTitle>
         <AlertDialogDescription>История и коллекция будут удалены, комментарии останутся от имени удалённого пользователя. Введите УДАЛИТЬ.</AlertDialogDescription></AlertDialogHeader>
         <Input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} aria-label="Подтверждение удаления" />
-        {error && <p className="error-msg">{error}</p>}
+        {error && <p className="error-msg"><FeedbackMessage>{error}</FeedbackMessage></p>}
         <AlertDialogFooter><AlertDialogCancel>Отмена</AlertDialogCancel><AlertDialogAction type="button" variant="destructive" disabled={confirmation !== 'УДАЛИТЬ'} onClick={async () => {
           const response = await fetch('/api/account', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ confirmation }) });
           const data = await response.json();

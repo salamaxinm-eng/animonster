@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useState } from 'react';
 import Link from 'next/link';
 import { Bell, Crown, Download, Library, Palette } from 'lucide-react';
@@ -138,12 +139,12 @@ export function SubscriptionSection({
       </div>
       {message && (
         <p className="hub-notice" role="status">
-          {message}
+          <FeedbackMessage>{message}</FeedbackMessage>
         </p>
       )}
       {error && (
         <p className="hub-error" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
       <ResourceState {...resource} />

@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useRef, useState } from 'react';
 import { QrCode } from 'lucide-react';
 import { qrRequest } from '@/lib/client/qr-login';
@@ -166,7 +167,7 @@ export function QrLogin({ onSuccess }: { onSuccess: () => Promise<void> }) {
           {error && (
             <>
               <p role="alert" className="error-msg">
-                {error}
+                <FeedbackMessage>{error}</FeedbackMessage>
               </p>
               <button
                 type="button"

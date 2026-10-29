@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowRight, ChevronRight, Download, FileDown, Monitor, ShieldAlert } from 'lucide-react';
@@ -173,7 +174,7 @@ export function VpnPage() {
                         onChange={(event) => { setPromoInput(event.target.value); setPromo(null); setPromoError(''); }} />
                         <button disabled={busy || promoBusy || !promoInput.trim()} onClick={() => void applyPromo()}>{promoBusy ? 'Проверяем…' : 'Применить'}</button></div>
                       {promo && <p role="status">Скидка {promo.percent}%. Код действует до {new Date(promo.expiresAt).toLocaleString('ru-RU')} и доступен один раз на аккаунт.</p>}
-                      {promoError && <p role="alert">{promoError}</p>}
+                      {promoError && <p role="alert"><FeedbackMessage>{promoError}</FeedbackMessage></p>}
                     </div>
                     <button className="vpn-buy" disabled={busy || promoBusy} onClick={() => void buyVpn('vpn')}>
                       {overview.active ? 'Продлить подписку' : 'Оформить подписку'} <ArrowRight size={18} aria-hidden="true" />
@@ -257,8 +258,8 @@ export function VpnPage() {
             </section>
           </>
         )}
-        {error && <p className="vpn-message vpn-error" role="alert">{error}</p>}
-        {notice && <p className="vpn-message" role="status">{notice}</p>}
+        {error && <p className="vpn-message vpn-error" role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}
+        {notice && <p className="vpn-message" role="status"><FeedbackMessage>{notice}</FeedbackMessage></p>}
       </main>
     </div>
   );

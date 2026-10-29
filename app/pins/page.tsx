@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import { Gem, Check, Lock } from 'lucide-react';
 import {
@@ -140,12 +141,12 @@ export default function PinsPage() {
             )}
             {error && (
               <p className="error-msg" role="alert">
-                {error}
+                <FeedbackMessage>{error}</FeedbackMessage>
               </p>
             )}
             {notice && (
               <p className="success-msg" role="status">
-                {notice}
+                <FeedbackMessage>{notice}</FeedbackMessage>
               </p>
             )}
           </div>

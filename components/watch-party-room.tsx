@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { useOnePieceWatch } from '@/hooks/use-one-piece-watch';
 import { kodikOriginAllowed, kodikEpisodeFromMessage } from '@/lib/kodik-events';
@@ -729,7 +730,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
 
         {error && (
           <div className="party-alert" role="alert">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
             <button onClick={() => setError('')}>
               <X size={16} />
             </button>
@@ -737,7 +738,7 @@ export function WatchPartyRoom({ code }: { code: string }) {
         )}
         {notice && (
           <div className="party-notice" role="status">
-            {notice}
+            <FeedbackMessage>{notice}</FeedbackMessage>
           </div>
         )}
 

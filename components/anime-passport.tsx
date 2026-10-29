@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -102,7 +103,7 @@ export function PassportPage({ id }: { id?: string }) {
           <button className="passport-primary" disabled={busy} onClick={save}>{busy ? 'Сохранение…' : 'Сохранить паспорт'}</button>
         </section>}
         <section className="passport-actions">{p.public && <button onClick={copy}><Copy size={16} /> Скопировать публичную ссылку</button>}<a href={base + '&format=portrait&download=1'}><Download size={16} /> PNG 1080×1350</a><a href={base + '&format=wide&download=1'}><Download size={16} /> PNG 1200×630</a></section>
-        {notice && <p className="passport-notice" role="status">{notice}</p>}{error && <p className="passport-error" role="alert">{error}</p>}
+        {notice && <p className="passport-notice" role="status"><FeedbackMessage>{notice}</FeedbackMessage></p>}{error && <p className="passport-error" role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>}
       </>}
     </main>
   </div>;

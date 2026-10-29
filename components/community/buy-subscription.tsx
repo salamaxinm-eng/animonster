@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 
 import { useEffect, useId, useRef, useState } from 'react';
@@ -86,7 +87,7 @@ function SupportHall() {
         {loading ? (
           <p role="status">Загружаем рейтинг…</p>
         ) : error ? (
-          <p role="alert">{error}</p>
+          <p role="alert"><FeedbackMessage>{error}</FeedbackMessage></p>
         ) : (
           <ol className="plus-hall-list">
             {leaders.map((leader, index) => (
@@ -229,7 +230,7 @@ export function BuySubscription({
               {goalsLoading && <p role="status">Загружаем цели поддержки…</p>}
               {goalsError && (
                 <p className="plus-purchase-error" role="alert">
-                  {goalsError}
+                  <FeedbackMessage>{goalsError}</FeedbackMessage>
                 </p>
               )}
               <div
@@ -472,7 +473,7 @@ export function BuySubscription({
           <footer className="plus-purchase-footer">
             {error && (
               <p className="plus-purchase-error" role="alert">
-                {error}
+                <FeedbackMessage>{error}</FeedbackMessage>
               </p>
             )}
             <div className="plus-purchase-total" aria-live="polite">

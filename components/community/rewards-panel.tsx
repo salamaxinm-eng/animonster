@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useState } from 'react';
 import { Avatar, UserTag, useCommunity } from './context';
@@ -125,7 +126,7 @@ export function RewardsPanel({
           role={failed ? 'alert' : 'status'}
           className={failed ? 'error-msg' : 'success-msg'}
         >
-          {notice}
+          <FeedbackMessage>{notice}</FeedbackMessage>
         </p>
       )}
       <h3>Достижения</h3>

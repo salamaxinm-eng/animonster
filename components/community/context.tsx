@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { SeasonalBrand } from '@/components/halloween';
 import { UserNickname } from '@/components/user-nickname';
 import { LegendOriginCelebration } from './legend-origin-celebration';
@@ -192,7 +193,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
       {me.recovery_mode && <p className="recovery-notice" role="status">Сайт восстановлен из резервной копии от 9 октября 2026 года. Более поздние изменения могут отсутствовать. Платежи временно отключены.</p>}
       <PassCosmeticsProvider>{children}</PassCosmeticsProvider>
       {me.user?.legend_origin_at && <LegendOriginCelebration key={me.user.id} user={me.user} />}
-      {authNotice && !showLogin && <div className="social-auth-notice" role={authFailed ? 'alert' : 'status'}><p>{authNotice}</p><button type="button" onClick={() => setAuthNotice('')}>Закрыть</button></div>}
+      {authNotice && !showLogin && <div className="social-auth-notice" role={authFailed ? 'alert' : 'status'}><p><FeedbackMessage>{authNotice}</FeedbackMessage></p><button type="button" onClick={() => setAuthNotice('')}>Закрыть</button></div>}
       <Dialog open={showLogin} onOpenChange={setShowLogin}>
         <DialogContent className="sign-dialog social-sign-dialog" overlayClassName="social-login-overlay">
           <Ghost size={40} color="var(--am-accent)" />
@@ -200,7 +201,7 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
           <DialogDescription>
             Сохраняй историю, собирай коллекцию и обсуждай серии.
           </DialogDescription>
-          {authNotice && <p className={authFailed ? 'error-msg' : 'success-msg'} role={authFailed ? 'alert' : 'status'}>{authNotice}</p>}
+          {authNotice && <p className={authFailed ? 'error-msg' : 'success-msg'} role={authFailed ? 'alert' : 'status'}><FeedbackMessage>{authNotice}</FeedbackMessage></p>}
           <QrLogin onSuccess={async () => { await refresh(); setShowLogin(false); setAuthNotice(''); setAuthFailed(false); }} />
           <SocialLogin googleReady={!!me.google_ready} telegramReady={!!me.telegram_login_ready} inviteRequired={me.invite_required} />
           {me.vk_ready ? (
@@ -523,7 +524,7 @@ export function AccountNav({ minimal = false }: { minimal?: boolean }) {
         <>
           <AccountMenu />
           {c.emailVerificationRequired && !c.user.email_verified && (
-            <span className="verify-email-label">Подтвердите email</span>
+            <a className="verify-email-label email-verification-link" href="/verify-email">Подтвердите email</a>
           )}
         </>
       ) : (

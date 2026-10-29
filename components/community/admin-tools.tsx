@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { FormEvent, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -182,7 +183,7 @@ export function AdminTools({
               Скопируйте сейчас: <strong>{code}</strong>
             </p>
           )}
-          {error && <p className="error-msg">{error}</p>}
+          {error && <p className="error-msg"><FeedbackMessage>{error}</FeedbackMessage></p>}
           <p className="muted">
             Коды хранятся только в виде хеша и работают один раз.
           </p>
@@ -909,12 +910,12 @@ export function AdminTools({
         </div>
         {message && (
           <p role="status" className="success-msg">
-            {message}
+            <FeedbackMessage>{message}</FeedbackMessage>
           </p>
         )}
         {error && (
           <p role="alert" className="error-msg">
-            {error}
+            <FeedbackMessage>{error}</FeedbackMessage>
           </p>
         )}
         <div className="admin-table-wrap">

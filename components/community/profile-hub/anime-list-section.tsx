@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Play, Star } from 'lucide-react';
@@ -110,7 +111,7 @@ export function AnimeListSection({
       </div>
       {error && (
         <p className="hub-error" role="alert">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
       <ResourceState {...resource} />

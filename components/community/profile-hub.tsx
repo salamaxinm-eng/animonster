@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CommunityHeader, useCommunity } from './context';
@@ -116,12 +117,12 @@ export function ProfileHub() {
         <HubNavigation section={section} moderator={community.moderator}>
           {paymentNotice && (
             <p className="hub-notice" role="status">
-              {paymentNotice}
+              <FeedbackMessage>{paymentNotice}</FeedbackMessage>
             </p>
           )}
           {paymentError && (
             <p className="hub-error" role="alert">
-              {paymentError}
+              <FeedbackMessage>{paymentError}</FeedbackMessage>
             </p>
           )}
           {!profile.data || profile.data.user.id !== community.user.id ? (

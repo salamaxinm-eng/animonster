@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { useEffect, useState } from 'react';
 import { Clock3, Flame, Grid2X2, LayoutGrid, Sparkles } from 'lucide-react';
@@ -103,7 +104,7 @@ export function HomeDiscovery() {
         </div>
       ) : error ? (
         <div className="home-discovery-error" role="alert">
-          <p>{error}</p>
+          <p><FeedbackMessage>{error}</FeedbackMessage></p>
           <button className="primary" onClick={() => setRetry((n) => n + 1)}>
             Повторить загрузку
           </button>

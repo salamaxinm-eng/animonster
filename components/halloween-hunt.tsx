@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import {
   createContext,
   useContext,
@@ -188,7 +189,7 @@ export function HalloweenHuntProvider({ children }: { children: ReactNode }) {
       {children}
       {active && message && (
         <div className="hw-hunt-toast" role="status">
-          <p>{message}</p>
+          <p><FeedbackMessage>{message}</FeedbackMessage></p>
           {!userId && (
             <button type="button" onClick={community.login}>
               Войти

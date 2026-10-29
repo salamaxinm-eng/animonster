@@ -4801,6 +4801,16 @@ a.franchise-card:hover {
 .auth-card {
   width: min(100%, 480px);
 }
+.email-verification-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.email-verification-link:focus-visible {
+  outline: 2px solid var(--am-accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
 .success-msg,
 .invite-result {
   color: var(--am-accent);

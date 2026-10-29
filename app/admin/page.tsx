@@ -1,3 +1,4 @@
+import { FeedbackMessage } from '@/components/feedback-message';
 import { UserNickname } from '@/components/user-nickname';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
@@ -222,7 +223,7 @@ export default async function Page() {
                           <td>{item.provider}</td>
                           <td>
                             {item.status}
-                            {item.error ? <small>{item.error}</small> : null}
+                            {item.error ? <small><FeedbackMessage>{item.error}</FeedbackMessage></small> : null}
                           </td>
                           <td>
                             {item.latency_ms == null

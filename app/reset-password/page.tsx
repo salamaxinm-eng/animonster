@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 
 import { FormEvent, Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -28,7 +29,7 @@ function ResetPasswordForm() {
       {done ? <><p>Пароль изменён. Все прежние сессии завершены.</p><Link href="/profile">Войти в аккаунт →</Link></> :
         <form className="email-form" onSubmit={submit}>
           <label>Пароль<Input name="password" type="password" required minLength={10} maxLength={72} autoComplete="new-password" /></label>
-          {error && <p role="alert" className="error-msg">{error}</p>}
+          {error && <p role="alert" className="error-msg"><FeedbackMessage>{error}</FeedbackMessage></p>}
           <Button disabled={busy || token.length < 40}>{busy ? 'Сохраняем…' : 'Сохранить пароль'}</Button>
         </form>}
     </section>

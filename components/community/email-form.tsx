@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -81,10 +82,10 @@ export function EmailForm({
       {register && <small>От 10 символов. Email используется для входа.</small>}
       {error && (
         <p role="alert" className="error-msg">
-          {error}
+          <FeedbackMessage>{error}</FeedbackMessage>
         </p>
       )}
-      {message && <p role="status" className="success-msg">{message}</p>}
+      {message && <p role="status" className="success-msg"><FeedbackMessage>{message}</FeedbackMessage></p>}
       <Button type="submit" disabled={busy}>
         {busy ? 'Подождите…' : forgot ? 'Отправить ссылку' : register ? 'Создать аккаунт' : 'Войти'}
       </Button>

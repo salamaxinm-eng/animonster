@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackMessage } from '@/components/feedback-message';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Shield } from 'lucide-react';
@@ -96,7 +97,7 @@ export function PublicProfile({ id }: { id: string }) {
             <ProfileIdentity user={profile.data.user} />
             {error && (
               <p className="hub-error" role="alert">
-                {error}
+                <FeedbackMessage>{error}</FeedbackMessage>
               </p>
             )}
             <ResourceState {...stats} />
