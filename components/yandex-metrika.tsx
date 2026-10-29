@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import Script from "next/script";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import Script from 'next/script';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { analyticsLocation } from '@/lib/seo-policy';
 
 const METRIKA_ID = 112871840;
 
@@ -18,36 +19,59 @@ export default function YandexMetrika() {
 
   const [ready, setReady] = useState(false);
 
-  const lastUrl = useRef("");
-  const previousUrl = useRef("");
+  const lastUrl = useRef('');
+  const previousUrl = useRef('');
+  const initialized = useRef(false);
+  const sensitive =
+    analyticsLocation(
+      pathname + (searchParams.size ? '?' + searchParams.toString() : ''),
+    ) === null;
 
   const sendHit = useCallback(() => {
-    if (!window.ym || window.location.pathname === "/auth/qr") return;
-
-    const url =
-      window.location.pathname +
-      window.location.search +
-      window.location.hash;
+    if (!window.ym) return;
+    const url = analyticsLocation(window.location.href);
+    if (url === null) return;
 
     // Чтобы случайно не отправить один просмотр дважды
     if (lastUrl.current === url) return;
 
-    window.ym(METRIKA_ID, "hit", url, {
+    window.ym(METRIKA_ID, 'hit', url, {
       title: document.title,
-      referer: previousUrl.current || document.referrer,
+      referer:
+        previousUrl.current || analyticsLocation(document.referrer) || '',
     });
 
-    previousUrl.current = window.location.href;
+    previousUrl.current = url;
     lastUrl.current = url;
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
-
+    if (sensitive) {
+      if (initialized.current && window.ym) window.ym(METRIKA_ID, 'destruct');
+      initialized.current = false;
+      previousUrl.current = '';
+      return;
+    }
+    if (!ready || !window.ym) return;
+    if (!initialized.current) {
+      window.ym(METRIKA_ID, 'init', {
+        defer: true,
+        ssr: true,
+        webvisor: false,
+        clickmap: true,
+        ecommerce: 'dataLayer',
+        accurateTrackBounce: true,
+        trackLinks: false,
+        url: analyticsLocation(window.location.href),
+        referrer: analyticsLocation(document.referrer) || '',
+      });
+      initialized.current = true;
+      lastUrl.current = '';
+    }
     sendHit();
-  }, [ready, pathname, searchParams, sendHit]);
+  }, [ready, pathname, searchParams, sensitive, sendHit]);
 
-  if (pathname === "/auth/qr") return null;
+  if (sensitive) return null;
 
   return (
     <>
@@ -76,15 +100,6 @@ export default function YandexMetrika() {
               'ym'
           );
 
-          ym(${METRIKA_ID}, 'init', {
-              defer: true,
-              ssr: true,
-              webvisor: true,
-              clickmap: true,
-              ecommerce: "dataLayer",
-              accurateTrackBounce: true,
-              trackLinks: true
-          });
         `}
       </Script>
 
@@ -93,8 +108,8 @@ export default function YandexMetrika() {
           <img
             src={`https://mc.yandex.ru/watch/${METRIKA_ID}`}
             style={{
-              position: "absolute",
-              left: "-9999px",
+              position: 'absolute',
+              left: '-9999px',
             }}
             alt=""
           />

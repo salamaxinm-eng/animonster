@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { PRIVATE_PAGE_SEGMENTS, SENSITIVE_QUERY_KEYS } from './lib/seo-policy';
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -25,6 +26,49 @@ const nextConfig: NextConfig = {
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         ],
       },
+      {
+        source: `/:section(${PRIVATE_PAGE_SEGMENTS.join('|')})/:path*`,
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      },
+      {
+        source: '/:section(members|browse)/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, follow' }],
+      },
+      {
+        source:
+          '/:section(auth|reset-password|verify-email|watch|passport)/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
+        source: '/api/auth/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      {
+        source: '/ref/:path*',
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      },
+      ...SENSITIVE_QUERY_KEYS.map((key) => ({
+        source: '/:path*',
+        has: [{ type: 'query' as const, key }],
+        headers: [
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+          { key: 'Cache-Control', value: 'private, no-store' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+        ],
+      })),
       {
         source: '/auth/qr',
         headers: [

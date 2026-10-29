@@ -1,17 +1,19 @@
 import { Sparkles } from 'lucide-react';
 import { CommunityHeader } from '@/components/community/context';
 import { MobileCatalogTabs } from '@/components/mobile-catalog-tabs';
-import { animeTaxonomy } from '@/lib/server/anime-taxonomy';
+import { themeLandings } from '@/lib/server/theme-landings';
+import { themeUrl } from '@/lib/anime-taxonomy';
 
 export const metadata = {
   title: 'Темы аниме — AniMonster',
   description:
     'Аниме по темам: исекай, путешествия во времени и другие истории.',
+  alternates: { canonical: '/themes' },
 };
 export const dynamic = 'force-dynamic';
 
 export default async function ThemesPage() {
-  const { themes } = await animeTaxonomy();
+  const themes = await themeLandings();
   return (
     <div className="site-shell">
       <CommunityHeader />
@@ -27,7 +29,7 @@ export default async function ThemesPage() {
             {themes.map((theme) => (
               <a
                 className="genre-tile theme-tile"
-                href={'/search?theme=' + encodeURIComponent(theme)}
+                href={themeUrl(theme)}
                 key={theme}
               >
                 <span className="genre-tile-content">

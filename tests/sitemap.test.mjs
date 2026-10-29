@@ -10,7 +10,9 @@ const library = url(
 );
 const source = stripTypeScriptTypes(
   await readFile('app/sitemap.ts', 'utf8'),
-).replace("'@/lib/server/library'", JSON.stringify(library));
+).replace("'@/lib/server/library'", JSON.stringify(library))
+  .replace("'@/lib/server/theme-landings'", JSON.stringify(url('export const themeLandings=async()=>globalThis.sitemapThemes||[];')))
+  .replace("'@/lib/anime-taxonomy'", JSON.stringify(url("export const themeUrl=x=>'/themes/'+encodeURIComponent(x);")));
 const { default: sitemap } = await import(url(source));
 test('cache refresh timestamps are not misrepresented as content lastmod', async () => {
   globalThis.sitemapRows = [
@@ -21,20 +23,20 @@ test('cache refresh timestamps are not misrepresented as content lastmod', async
   const xml = resolveSitemap(rows);
   assert.ok(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
   assert.doesNotMatch(xml, /<lastmod>/);
-  assert.equal(rows.length, 6);
-  assert.equal(rows[4].lastModified, undefined);
+  assert.equal(rows.length, 7);
+  assert.equal(rows[5].lastModified, undefined);
 });
 test('nonempty genres are encoded, deduplicated and count toward the URL budget', async () => {
   globalThis.sitemapGenres = ['Комедия', 'Комедия', 'Драма'];
   globalThis.sitemapRows = [];
   try {
     const rows = await sitemap();
-    assert.equal(rows.length, 6);
+    assert.equal(rows.length, 7);
     assert.equal(
-      rows[4].url,
+      rows[5].url,
       'https://animonster.su/genres/' + encodeURIComponent('Комедия'),
     );
-    assert.equal(globalThis.sitemapLimit, 49994);
+    assert.equal(globalThis.sitemapLimit, 49993);
   } finally {
     delete globalThis.sitemapGenres;
   }
@@ -60,20 +62,20 @@ test('one malformed timestamp does not break the remaining URLs or produce Inval
   }));
   const rows = await sitemap();
   const xml = resolveSitemap(rows);
-  assert.equal(rows.length, invalid.length + 4);
+  assert.equal(rows.length, invalid.length + 5);
   assert.doesNotMatch(xml, /<lastmod>|Invalid|NaN/);
-  assert.equal((xml.match(/<loc>/g) || []).length, invalid.length + 4);
+  assert.equal((xml.match(/<loc>/g) || []).length, invalid.length + 5);
 });
-test('the 50,000 URL limit includes static pages and database failure preserves those pages', async () => {
+test('the 50,000 URL limit includes static pages and database failure is propagated', async () => {
   globalThis.sitemapRows = Array.from({ length: 50000 }, (_, i) => ({
     id: i + 1,
     updated_at: '1792858485792',
   }));
   assert.equal((await sitemap()).length, 50000);
-  assert.equal(globalThis.sitemapLimit, 49996);
+  assert.equal(globalThis.sitemapLimit, 49995);
   globalThis.sitemapFailure = true;
   try {
-    assert.equal((await sitemap()).length, 4);
+    await assert.rejects(sitemap(), /Unavailable/);
   } finally {
     delete globalThis.sitemapFailure;
     delete globalThis.sitemapRows;

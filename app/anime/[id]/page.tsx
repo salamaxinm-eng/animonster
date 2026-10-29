@@ -9,6 +9,8 @@ import { posterUrl, type Anime } from '@/lib/anime';
 import { db } from '@/lib/server/core';
 import { animeTitle } from '@/lib/seo';
 import { animeRelations } from '@/lib/server/anime-relations';
+import { publicAnimeAvailability } from '@/lib/server/public-anime-availability';
+import { CachedAnimeAvailability } from '@/components/cached-anime-availability';
 
 const SITE_URL = 'https://animonster.su';
 
@@ -126,6 +128,7 @@ export default async function Page({ params }: PageProps) {
 
   if (!anime) notFound();
   const relations = await animeRelations(anime.id).catch(() => undefined);
+  const availability = await publicAnimeAvailability(anime, await headers());
 
   const name = anime.russian || anime.name;
   const description = seoDescription(anime);
@@ -177,7 +180,8 @@ export default async function Page({ params }: PageProps) {
           }).replace(/</g, '\\u003c'),
         }}
       />
-      <AnimePage anime={anime} initialRelations={relations} />
+      <AnimePage anime={anime} initialRelations={relations}
+        cachedAvailability={<CachedAnimeAvailability animeId={anime.id} data={availability} />} />
     </>
   );
 }

@@ -1,10 +1,11 @@
+import { NO_INDEX_ROBOTS } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { WatchPartyRoom } from '@/components/watch-party-room';
 
 export const metadata: Metadata = {
   title: 'Совместный просмотр — AniMonster',
   description: 'Приватная комната совместного просмотра AniMonster',
-  robots: { index: false, follow: false },
+  robots: NO_INDEX_ROBOTS,
 };
 
 export default async function WatchPartyPage({

@@ -94,6 +94,7 @@ const ruleSource = stripTypeScriptTypes(
   await readFile('lib/server/title-restrictions.ts', 'utf8'),
 )
   .replace("'./core'", JSON.stringify(coreUrl))
+  .replace("'../title-policy'", JSON.stringify(moduleUrl(stripTypeScriptTypes(await readFile('lib/title-policy.ts','utf8')))))
   .replace(
     "'geoip-country'",
     JSON.stringify(import.meta.resolve('geoip-country')),

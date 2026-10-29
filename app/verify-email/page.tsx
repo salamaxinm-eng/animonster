@@ -1,3 +1,4 @@
+import { NO_INDEX_ROBOTS } from '@/lib/seo';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { viewer, emailVerificationEnabled } from '@/lib/server/core';
@@ -5,7 +6,7 @@ import { VerifyEmailForm } from '@/components/community/verify-email-form';
 
 export const metadata: Metadata = {
   title: 'Подтверждение email — AniMonster',
-  robots: { index: false, follow: false },
+  robots: NO_INDEX_ROBOTS,
 };
 
 export default async function VerifyEmailPage() {

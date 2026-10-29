@@ -1,6 +1,6 @@
 'use client';
 import { FeedbackMessage } from '@/components/feedback-message';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { CommunityHeader, useCommunity } from '@/components/community/context';
 import { Comments } from '@/components/community/comments';
 import { CollectionControl } from '@/components/community/collection-control';
@@ -29,9 +29,11 @@ import {
 export function AnimePage({
   anime,
   initialRelations,
+  cachedAvailability,
 }: {
   anime: Anime;
   initialRelations?: AnimeRelationsResult;
+  cachedAvailability?: ReactNode;
 }) {
   const [episodes, setEpisodes] = useState<Episode[]>([]),
     [voiceovers, setVoiceovers] = useState<Voiceover[]>([]),
@@ -235,6 +237,7 @@ export function AnimePage({
           initialRelations={initialRelations}
           onSeasonsChangeAction={setSeasons}
         />
+        {cachedAvailability}
         <section id="watch" className="title-playback">
           <div className="title-playback-heading">
             <h2>Смотреть · серия {episode}</h2>

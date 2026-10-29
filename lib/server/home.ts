@@ -50,8 +50,10 @@ export async function cachedHomePopular(): Promise<Anime[]> {
         if (!items.some((item) => item.id === anime.id)) items.push(anime);
         if (items.length === 5) break;
       }
-    } catch {
-      // A missing database should not prevent the rest of the page from rendering.
+    } catch (error) {
+      // A stats outage can use the catalog; a catalog outage must not become a
+      // successful empty landing page. Previously loaded items remain usable.
+      if (!items.length) throw error;
     }
   }
 

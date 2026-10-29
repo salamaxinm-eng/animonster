@@ -1,6 +1,7 @@
 import { isIP } from 'node:net';
 import geoip from 'geoip-country';
 import { db } from './core';
+import { PERMANENTLY_UNAVAILABLE_IDS } from '../title-policy';
 
 export const TITLE_BLOCKED_MESSAGE = 'Тайтл заблокирован';
 
@@ -10,7 +11,7 @@ type TitleIdentity =
 type RequestHeaders = Pick<Headers, 'get'>;
 
 // Copyright complaint: disabled globally, independent of GeoIP or admin edits.
-const unavailableTitles = new Set([55825, 46569, 60460]);
+const unavailableTitles = new Set<number>(PERMANENTLY_UNAVAILABLE_IDS);
 export function permanentlyRestrictedTitle(title: TitleIdentity) {
   const ids = typeof title === 'number' ? [title] : [title.id, title.shikimori_id, title.mal_id];
   return ids.some((id) => typeof id === 'number' && unavailableTitles.has(id));

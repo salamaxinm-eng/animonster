@@ -3,7 +3,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 
-import { tagKey, uniqueTags, partitionTags } from '@/lib/anime-taxonomy';
+import { tagKey, uniqueTags, partitionTags, themeUrl } from '@/lib/anime-taxonomy';
 
 export function AnimeThemes({
   animeId,
@@ -72,7 +72,7 @@ export function AnimeThemes({
             <ul>
               {themes.map((theme) => (
                 <li key={tagKey(theme)}>
-                  <a href={'/search?theme=' + encodeURIComponent(theme)}>
+                  <a href={themeUrl(theme)}>
                     {theme}
                   </a>
                 </li>

@@ -2637,7 +2637,8 @@ button:disabled {
   max-width: none;
   z-index: 2;
 }
-.anime-hero h1 {
+.anime-hero h1,
+.anime-hero :where(h2.hero-title) {
   font-size: clamp(33px, 3.8vw, 57px);
   line-height: 1.12;
   max-width: 650px;
@@ -2886,7 +2887,8 @@ button:disabled {
   .anime-hero .hero-copy {
     padding: 33px 6% 155px;
   }
-  .anime-hero h1 {
+  .anime-hero h1,
+  .anime-hero :where(h2.hero-title) {
     font-size: 33px;
     line-height: 1.15;
     letter-spacing: -1px;
@@ -2951,7 +2953,8 @@ button:disabled {
   .pin-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .anime-hero h1 {
+  .anime-hero h1,
+  .anime-hero :where(h2.hero-title) {
     font-size: 29px;
   }
   .anime-meta > span:last-child {
@@ -4891,7 +4894,8 @@ a.franchise-card:hover {
     max-width: none;
   }
 
-  .anime-hero h1 {
+  .anime-hero h1,
+  .anime-hero :where(h2.hero-title) {
     font-size: clamp(34px, 3vw, 48px);
     font-weight: 700;
     line-height: 1.05;
@@ -4993,7 +4997,8 @@ a.franchise-card:hover {
     white-space: nowrap;
     scrollbar-width: none;
   }
-  .anime-hero h1 {
+  .anime-hero h1,
+  .anime-hero :where(h2.hero-title) {
     max-width: 100%;
   }
   .anime-hero p.hero-description {

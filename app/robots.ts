@@ -8,18 +8,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        // Image and other rendering resources under /api must remain crawlable.
-        // Private endpoints enforce authorization themselves.
-        disallow: [
-          '/admin',
-          '/profile',
-          '/bookmarks',
-          '/watch/',
-          '/auth/',
-          '/vpn',
-          '/downloads',
-          '/reset-password',
-        ],
+        // Bots must be allowed to read noindex on already-known technical URLs.
+        // Authorization, not robots.txt, protects private data. Rendering assets
+        // and media remain crawlable as well.
       },
     ],
     sitemap: `${SITE_URL}/sitemap.xml`,

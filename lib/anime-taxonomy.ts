@@ -10,6 +10,15 @@ export function themeAliases(value: string) {
   return tagKey(value) === 'исекай' ? ['Исекай', 'Исэкай'] : [value];
 }
 
+export function themeName(value: string) {
+  const key = tagKey(value);
+  return key.charAt(0).toLocaleUpperCase('ru-RU') + key.slice(1);
+}
+
+export function themeUrl(value: string) {
+  return '/themes/' + encodeURIComponent(themeName(value));
+}
+
 export function uniqueTags(values: string[]) {
   const seen = new Set<string>();
   return values

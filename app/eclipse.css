@@ -52,7 +52,7 @@ html:not([data-site-theme^='v2-']) :is(.header, .community-header) {
 .eyebrow, .anime-meta { color: var(--muted-foreground); }
 .anime-meta strong, .card .score { color: var(--am-accent-light); }
 .card .score { background: color-mix(in srgb, var(--background) 90%, transparent); backdrop-filter: none; }
-.hero h1 { color: var(--foreground); }
+.hero h1, .hero :where(h2.hero-title) { color: var(--foreground); }
 .primary { background: var(--am-button); border: 1px solid color-mix(in srgb, var(--am-accent-light) 65%, transparent); box-shadow: 0 4px 20px var(--am-glow); }
 .primary:hover { background: var(--am-button-hover); box-shadow: 0 6px 26px var(--am-glow); transform: translateY(-1px); }
 .home-section-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }

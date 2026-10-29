@@ -1,12 +1,17 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { cachedCatalogPage } from '@/lib/server/library';
-import { listingUrl, listingSchema, pageNumber } from '@/lib/seo';
+import {
+  listingUrl,
+  listingSchema,
+  pageNumber,
+  NO_INDEX_FOLLOW,
+} from '@/lib/seo';
 import { SeoJsonLd } from '@/components/seo-json-ld';
 import CatalogPage from './client-page';
 export const dynamic = 'force-dynamic';
 type Props = {
-  searchParams: Promise<{ tab?: string; page?: string; sort?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 export async function generateMetadata({
   searchParams,
@@ -25,7 +30,11 @@ export async function generateMetadata({
       title +
       '. Выбирайте аниме по рейтингу и находите новые тайтлы на AniMonster.',
     alternates: { canonical: listingUrl('/catalog', page, tab) },
-    robots: p.sort === 'fresh' ? { index: false, follow: true } : undefined,
+    robots:
+      Object.keys(p).some((key) => !['page', 'tab'].includes(key)) ||
+      (p.tab !== undefined && !['all', 'ongoing'].includes(String(p.tab)))
+        ? NO_INDEX_FOLLOW
+        : undefined,
     openGraph: {
       title,
       url: listingUrl('/catalog', page, tab),
@@ -51,7 +60,7 @@ export default async function Page({ searchParams }: Props) {
       <SeoJsonLd
         data={listingSchema(
           tab === 'ongoing' ? 'Онгоинги' : 'Каталог аниме',
-          listingUrl('/catalog', page, tab, sort),
+          listingUrl('/catalog', page, tab),
           catalog.items,
           page,
         )}

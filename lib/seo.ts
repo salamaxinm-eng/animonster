@@ -1,5 +1,15 @@
 import type { Anime } from './anime';
 export const SITE_URL = 'https://animonster.su';
+export const NO_INDEX_ROBOTS = {
+  index: false,
+  follow: false,
+  googleBot: { index: false, follow: false },
+} as const;
+export const NO_INDEX_FOLLOW = {
+  index: false,
+  follow: true,
+  googleBot: { index: false, follow: true },
+} as const;
 export function pageNumber(value?: string | string[]) {
   return typeof value === 'string' && /^[1-9]\d{0,5}$/.test(value)
     ? Number(value)

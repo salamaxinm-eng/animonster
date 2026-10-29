@@ -21,6 +21,20 @@ export const titleRestrictionsUrl =
     )
       .replace("'./core'", JSON.stringify(fixtureCoreUrl))
       .replace(
+        "'../title-policy'",
+        JSON.stringify(
+          'data:text/javascript;base64,' +
+            Buffer.from(
+              stripTypeScriptTypes(
+                await readFile(
+                  new URL('../../lib/title-policy.ts', import.meta.url),
+                  'utf8',
+                ),
+              ),
+            ).toString('base64'),
+        ),
+      )
+      .replace(
         "'geoip-country'",
         JSON.stringify(import.meta.resolve('geoip-country')),
       ),

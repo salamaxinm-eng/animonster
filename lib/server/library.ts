@@ -13,8 +13,12 @@ import {
   ensureSearchMetadata,
 } from './search-metadata';
 import { ensureRelationState } from './anime-relations';
+import { THEME_MATCH_SQL } from './theme-landings';
+import { tagKey } from '@/lib/anime-taxonomy';
+import { PERMANENTLY_UNAVAILABLE_IDS } from '../title-policy';
 type CachedCatalogOptions = {
   genre?: string;
+  theme?: string;
   kind?: string;
   status?: string;
   sort?: 'rating' | 'fresh' | 'year';
@@ -54,12 +58,16 @@ export async function sitemapAnime(
   const safeLimit = Math.max(1, Math.min(50000, Math.floor(limit)));
   const rows = await db()
     .prepare(
-      `SELECT id,updated_at FROM anime_cache
-       WHERE id>0 AND data::jsonb->>'id'=id::text
-         AND COALESCE(NULLIF(data::jsonb->>'russian',''),NULLIF(data::jsonb->>'name','')) IS NOT NULL
-       ORDER BY id LIMIT ?`,
+      `SELECT a.id,a.updated_at FROM anime_cache a
+       WHERE a.id>0 AND a.data::jsonb->>'id'=a.id::text
+         AND COALESCE(NULLIF(a.data::jsonb->>'russian',''),NULLIF(a.data::jsonb->>'name','')) IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(?::text::jsonb) excluded(id)
+           WHERE excluded.id IN (a.id::text,a.data::jsonb->>'shikimori_id',a.data::jsonb->>'mal_id'))
+         AND NOT EXISTS (SELECT 1 FROM title_region_restrictions r
+           WHERE r.anime_id::text IN (a.id::text,a.data::jsonb->>'shikimori_id',a.data::jsonb->>'mal_id'))
+       ORDER BY a.id LIMIT ?`,
     )
-    .bind(safeLimit)
+    .bind(JSON.stringify(PERMANENTLY_UNAVAILABLE_IDS), safeLimit)
     .all<SitemapAnimeEntry>();
   return rows.results;
 }
@@ -84,6 +92,7 @@ export async function cachedCatalog({
 
 export async function cachedCatalogPage({
   genre = '',
+  theme = '',
   kind = '',
   status = '',
   sort = 'rating',
@@ -93,6 +102,10 @@ export async function cachedCatalogPage({
 }: CachedCatalogOptions = {}): Promise<CachedCatalogPage> {
   const where: string[] = [];
   const values: unknown[] = [];
+  if (theme) {
+    where.push(THEME_MATCH_SQL);
+    values.push(tagKey(theme), tagKey(theme) === 'исекай' ? 'исэкай' : tagKey(theme));
+  }
   if (genre) {
     where.push('genres_index @> ?::text::jsonb');
     values.push(JSON.stringify([genre]));
@@ -121,12 +134,12 @@ export async function cachedCatalogPage({
   const [rows, count] = await Promise.all([
     db()
       .prepare(
-        `SELECT data FROM anime_cache${filter} ORDER BY ${ordering} LIMIT ? OFFSET ?`,
+        `SELECT data FROM anime_cache a${filter} ORDER BY ${ordering} LIMIT ? OFFSET ?`,
       )
       .bind(...values, safeLimit, safeOffset)
       .all<{ data: string }>(),
     db()
-      .prepare(`SELECT count(*) AS total FROM anime_cache${filter}`)
+      .prepare(`SELECT count(*) AS total FROM anime_cache a${filter}`)
       .bind(...values)
       .first<{ total: number }>(),
   ]);

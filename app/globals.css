@@ -1192,3 +1192,26 @@ footer > span {
   .offline-card-body h2 { font-size: 16px; }
   .offline-bulk-actions { justify-content: flex-start; flex-wrap: wrap; }
 }
+
+.home-page-heading {
+  margin: 18px 0 14px;
+  font-size: clamp(18px, 2.1vw, 25px);
+  line-height: 1.3;
+}
+.cached-anime-availability {
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
+.cached-anime-availability h2 { margin-top: 0; }
+.cached-episode-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 8px 24px;
+  padding-left: 24px;
+  max-height: 28rem;
+  overflow: auto;
+}
+.cached-episode-list a { text-decoration: underline; text-underline-offset: 3px; }

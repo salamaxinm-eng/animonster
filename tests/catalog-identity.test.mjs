@@ -68,6 +68,9 @@ const metadata = await load('../lib/server/search-metadata.ts', {
 });
 globalThis.__identityTest.canonicalize = metadata.canonicalizeAnimeIdentities;
 const library = await load('../lib/server/library.ts', {
+  './theme-landings': moduleUrl('export const THEME_MATCH_SQL="true";'),
+  '@/lib/anime-taxonomy': moduleUrl('export const tagKey=x=>x;'),
+  '../title-policy': moduleUrl('export const PERMANENTLY_UNAVAILABLE_IDS=[55825,46569,60460];'),
   './anime-taxonomy': moduleUrl('export const genreEntries=async items=>items;'),
   './core': core,
   './anime': moduleUrl(

@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { sitemapAnime, sitemapGenres } from '@/lib/server/library';
+import { themeLandings } from '@/lib/server/theme-landings';
+import { themeUrl } from '@/lib/anime-taxonomy';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
+    { url: `${SITE_URL}/themes`, changeFrequency: 'weekly', priority: 0.8 },
     {
       url: `${SITE_URL}/recommendations`,
       changeFrequency: 'daily',
@@ -29,26 +32,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  try {
-    const genres = await sitemapGenres();
-    const genrePages = [...new Set(genres)].map((genre) => ({
-      url: `${SITE_URL}/genres/${encodeURIComponent(genre)}`,
-    }));
-    const anime = await sitemapAnime(
-      50000 - staticPages.length - genrePages.length,
-    );
-    return [
-      ...staticPages,
-      ...genrePages,
-      ...anime.map((item) => ({
-        url: `${SITE_URL}/anime/${item.id}`,
-        // updated_at is a cache refresh timestamp, not a content modification.
-        // Omit lastmod until the content has a dedicated modification timestamp.
-        changeFrequency: 'weekly' as const,
-        priority: 0.8,
-      })),
-    ];
-  } catch {
-    return staticPages;
-  }
+  const [genres, themes] = await Promise.all([
+    sitemapGenres(),
+    themeLandings(),
+  ]);
+  const genrePages = [...new Set(genres)].map((genre) => ({
+    url: `${SITE_URL}/genres/${encodeURIComponent(genre)}`,
+  }));
+  const themePages = themes.map((theme) => ({
+    url: SITE_URL + themeUrl(theme),
+  }));
+  const anime = await sitemapAnime(
+    50000 - staticPages.length - genrePages.length - themePages.length,
+  );
+  return [
+    ...staticPages,
+    ...genrePages,
+    ...themePages,
+    ...anime.map((item) => ({
+      url: `${SITE_URL}/anime/${item.id}`,
+      // updated_at is a cache refresh timestamp, not a content modification.
+      // Omit lastmod until the content has a dedicated modification timestamp.
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    })),
+  ];
 }
