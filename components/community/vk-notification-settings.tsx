@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Empty, ResourceState, useResource } from './profile-hub/shared';
 
@@ -16,7 +16,8 @@ export function VkNotificationSettings() {
   );
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
-    [copied, setCopied] = useState(false);
+    [copied, setCopied] = useState(false),
+    [waiting, setWaiting] = useState(false);
   async function action(value: string, anime?: number) {
     setBusy(true);
     setError('');
@@ -31,6 +32,7 @@ export function VkNotificationSettings() {
       if (!response.ok)
         throw new Error(result.error || 'Не удалось изменить уведомления ВК');
       setLink(result.url ? result : null);
+      if (value === 'disconnect') setWaiting(false);
       status.retry();
     } catch (cause) {
       setError(
@@ -42,6 +44,27 @@ export function VkNotificationSettings() {
   }
   const connected =
     !!status.data?.account?.vk_user_id && !status.data.account.disabled_at;
+  const retry = useRef(status.retry);
+  retry.current = status.retry;
+  useEffect(() => {
+    if (!waiting || connected) return;
+    const expires = Date.now() + 15 * 60000;
+    const refresh = () => {
+      if (Date.now() >= expires) {
+        setWaiting(false);
+        return;
+      }
+      if (!document.hidden) retry.current();
+    };
+    const timer = setInterval(refresh, 5000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [waiting, connected]);
   return (
     <section id="vk-notifications" className="hub-settings">
       <h2>Уведомления ВКонтакте</h2>
@@ -98,20 +121,48 @@ export function VkNotificationSettings() {
                 ? 'Сообщество не может отправлять вам сообщения. Разрешите сообщения ВК и подключите бота заново.'
                 : 'Подключите бота, затем включайте уведомления на страницах аниме.'}
             </p>
-            <button
-              className="hub-primary"
-              disabled={busy}
-              onClick={() => void action('link')}
+            <form
+              action="/api/vk-notifications/connect"
+              method="post"
+              target="_blank"
+              rel="noopener"
+              onSubmit={() => {
+                setWaiting(true);
+                setLink(null);
+                setError('');
+              }}
             >
-              Подключить ВК
-            </button>
+              <button type="submit" className="hub-primary" disabled={busy}>
+                Подключить ВК
+              </button>
+            </form>
+            <p>
+              Откроется диалог ВК. Нажмите «Начать» или отправьте любое
+              сообщение — код передастся автоматически.
+            </p>
+            {waiting && (
+              <p role="status">
+                Ожидаем подключение в ВК. Статус обновится автоматически.
+              </p>
+            )}
+            <details>
+              <summary>Не получается подключиться?</summary>
+              <button
+                className="hub-button"
+                type="button"
+                disabled={busy}
+                onClick={() => void action('link')}
+              >
+                Показать резервную команду
+              </button>
+            </details>
           </>
         ))}
       {link && !connected && (
         <div>
           <p>
-            Откройте сообщения сообщества и отправьте эту команду. Она действует
-            15 минут:
+            Если быстрый переход не сработал, отправьте эту команду сообществу.
+            Она действует 15 минут:
           </p>
           <p style={{ overflowWrap: 'anywhere' }}>
             <code>{link.command}</code>

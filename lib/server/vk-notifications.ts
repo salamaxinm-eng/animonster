@@ -10,6 +10,25 @@ export function vkBotReady() {
     !!env.VK_BOT_CONFIRMATION
   );
 }
+export async function createVkConnection(userId: string) {
+  if (!vkBotReady()) throw new ApiError('Бот ВК пока недоступен', 503);
+  const token = Buffer.from(
+    crypto.getRandomValues(new Uint8Array(24)),
+  ).toString('base64url');
+  await db()
+    .prepare(`INSERT INTO vk_bot_accounts(user_id,link_token_hash,link_expires_at) VALUES(?,?,?)
+    ON CONFLICT(user_id) DO UPDATE SET link_token_hash=excluded.link_token_hash,link_expires_at=excluded.link_expires_at`)
+    .bind(userId, await hash(token), now() + 15 * 60000)
+    .run();
+  const query = new URLSearchParams({
+    ref: token,
+    ref_source: 'animonster_connect',
+  });
+  return {
+    url: `https://vk.ru/write-${runtime().VK_BOT_GROUP_ID}?${query}`,
+    command: `Подключить ${token}`,
+  };
+}
 export class VkBotError extends Error {
   constructor(public code: number) {
     super(`VK API error ${code}`);
@@ -62,12 +81,13 @@ export async function vkBotCallback(update: Record<string, any>) {
     /^\s*(?:подключить|\/start)\s+([A-Za-z0-9_-]{20,80})\s*$/iu.exec(
       String(message?.text || ''),
     );
+  // A private message following the explicit site connection link carries the
+  // one-time ref even for users who have already started the community dialog.
+  const ref =
+    update.type === 'message_allow' ? update.object?.key : message?.ref;
   const token =
     command?.[1] ||
-    (/^\s*начать\s*$/iu.test(String(message?.text || '')) &&
-    /^[A-Za-z0-9_-]{20,80}$/.test(message?.ref || '')
-      ? message.ref
-      : '');
+    (typeof ref === 'string' && /^[A-Za-z0-9_-]{20,80}$/.test(ref) ? ref : '');
   if (update.type === 'message_new' && !token) return 'ok';
   if (update.type !== 'message_deny') {
     const permission = await vkBotApi('messages.isMessagesFromGroupAllowed', {
@@ -104,7 +124,7 @@ export async function vkBotCallback(update: Record<string, any>) {
         )
         .bind(person)
         .run();
-      return;
+      if (!token) return;
     }
     const tokenHash = await hash(token);
     const account = await tx

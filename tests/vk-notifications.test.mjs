@@ -89,6 +89,12 @@ const callback = await import(
     '@/lib/server/vk-notifications': serviceUrl,
   })
 );
+const connect = await import(
+  await moduleUrl('app/api/vk-notifications/connect/route.ts', {
+    '@/lib/server/core': core,
+    '@/lib/server/vk-notifications': serviceUrl,
+  })
+);
 const a = '11111111-1111-4111-8111-111111111111',
   b = '22222222-2222-4222-8222-222222222222';
 const query = (s, v = []) => engine.query(s, v);
@@ -184,6 +190,69 @@ beforeEach(async () => {
     );
 });
 after(() => engine.close());
+test('native connection form redirects directly to VK with an opaque ref and enforces login and origin', async () => {
+  const request = (who = a, origin = 'https://animonster.su') =>
+    new Request('https://animonster.su/api/vk-notifications/connect', {
+      method: 'POST',
+      headers: {
+        origin,
+        ...(who ? { 'x-test-user': who } : {}),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: '',
+    });
+  assert.equal((await connect.POST(request(null))).status, 401);
+  assert.equal(
+    (await connect.POST(request(a, 'https://evil.test'))).status,
+    403,
+  );
+  const response = await connect.POST(request());
+  assert.equal(response.status, 303);
+  const target = new URL(response.headers.get('location'));
+  assert.equal(target.origin, 'https://vk.ru');
+  assert.equal(target.pathname, '/write-241950462');
+  assert.match(target.searchParams.get('ref'), /^[A-Za-z0-9_-]{32}$/);
+  assert.equal(target.searchParams.get('ref_source'), 'animonster_connect');
+  assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+});
+test('a normal private message with the connection ref binds without typing the command', async (t) => {
+  transport(t);
+  const data = await (await post({ action: 'link' })).json();
+  const ref = new URL(data.url).searchParams.get('ref');
+  const value = incoming('Привет');
+  value.object.message.ref = ref;
+  assert.equal((await receive(value)).status, 200);
+  assert.equal(
+    Number(
+      (await rows('SELECT vk_user_id FROM vk_bot_accounts'))[0].vk_user_id,
+    ),
+    123,
+  );
+  assert.equal((await rows('SELECT * FROM vk_bot_outbox')).length, 1);
+  const replay = incoming('Ещё сообщение');
+  replay.object.message.ref = ref;
+  await receive(replay);
+  assert.equal((await rows('SELECT * FROM vk_bot_outbox')).length, 1);
+});
+test('a permission event can bind its one-time key and malformed refs cannot bind', async (t) => {
+  transport(t);
+  const data = await (await post({ action: 'link' })).json();
+  const ref = new URL(data.url).searchParams.get('ref');
+  const bad = incoming('Привет');
+  bad.object.message.ref = { token: ref };
+  await receive(bad);
+  assert.equal(
+    (await rows('SELECT vk_user_id FROM vk_bot_accounts'))[0].vk_user_id,
+    null,
+  );
+  await receive(event('message_allow', { user_id: 123, key: ref }));
+  assert.equal(
+    Number(
+      (await rows('SELECT vk_user_id FROM vk_bot_accounts'))[0].vk_user_id,
+    ),
+    123,
+  );
+});
 test('overlapping workers claim a queued message once', async (t) => {
   const sent = transport(t);
   await link();

@@ -3,15 +3,13 @@ import {
   body,
   db,
   fail,
-  hash,
   json,
   now,
   premium,
   requireUser,
-  runtime,
   sameOrigin,
 } from '@/lib/server/core';
-import { vkBotReady } from '@/lib/server/vk-notifications';
+import { createVkConnection, vkBotReady } from '@/lib/server/vk-notifications';
 export async function GET(request: Request) {
   try {
     const user = await requireUser(request);
@@ -49,18 +47,7 @@ export async function POST(request: Request) {
       data = await body(request);
     if (!vkBotReady()) throw new ApiError('Бот ВК пока недоступен', 503);
     if (data.action === 'link') {
-      const token = Buffer.from(
-        crypto.getRandomValues(new Uint8Array(24)),
-      ).toString('base64url');
-      await db()
-        .prepare(`INSERT INTO vk_bot_accounts(user_id,link_token_hash,link_expires_at) VALUES(?,?,?)
-        ON CONFLICT(user_id) DO UPDATE SET link_token_hash=excluded.link_token_hash,link_expires_at=excluded.link_expires_at`)
-        .bind(user.id, await hash(token), now() + 15 * 60000)
-        .run();
-      return json({
-        url: `https://vk.ru/write-${runtime().VK_BOT_GROUP_ID}?ref=${token}`,
-        command: `Подключить ${token}`,
-      });
+      return json(await createVkConnection(user.id));
     }
     if (data.action === 'disconnect') {
       await db().transaction(async (tx) => {
