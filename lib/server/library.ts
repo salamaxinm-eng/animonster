@@ -163,14 +163,18 @@ export async function saveAnime(
     .prepare(
       `INSERT INTO anime_cache(id,data,episodes,updated_at,primary_provider,search_text,kind_index,status_index,year_index,score_index,genres_index)
        VALUES (?,?,?,?,?,?,?,?,?,?,?::text::jsonb)
-       ON CONFLICT(id) DO UPDATE SET data=CASE
+       ON CONFLICT(id) DO UPDATE SET data=((CASE
          WHEN anime_cache.data::jsonb->>'aired_on_source'='shikimori'
            AND COALESCE(excluded.data::jsonb->>'aired_on_source','')<>'shikimori'
          THEN (excluded.data::jsonb || jsonb_build_object(
            'aired_on',anime_cache.data::jsonb->'aired_on',
            'aired_on_source','shikimori',
            'identity_checked_at',anime_cache.data::jsonb->'identity_checked_at'))::text
-         ELSE excluded.data END,
+         ELSE excluded.data END)::jsonb || CASE
+         WHEN length(regexp_replace(COALESCE(excluded.data::jsonb->>'description',''),
+           '<[^>]*>|[[:space:]]|&nbsp;|&#160;|&#xa0;| ','','gi'))=0
+         THEN jsonb_build_object('description',COALESCE(anime_cache.data::jsonb->'description','""'::jsonb))
+         ELSE '{}'::jsonb END)::text,
        episodes=CASE WHEN excluded.episodes='[]' THEN anime_cache.episodes ELSE excluded.episodes END,
        updated_at=excluded.updated_at,primary_provider=excluded.primary_provider,
        search_text=excluded.search_text,kind_index=excluded.kind_index,status_index=excluded.status_index,
@@ -212,6 +216,12 @@ export async function cacheAnime(anime: Anime, episodes?: Episode[]) {
       merged = {
         ...anime,
         ...current,
+        description: current.description?.replace(
+          /<[^>]*>|&nbsp;|&#160;|&#xa0;|\s/gi,
+          '',
+        )
+          ? current.description
+          : anime.description,
         release_id: anime.release_id || current.release_id,
         mal_id: anime.mal_id || current.mal_id,
         providers: [

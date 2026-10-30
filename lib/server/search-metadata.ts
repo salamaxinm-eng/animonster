@@ -83,9 +83,14 @@ function canonicalIdentity(
 async function saveCanonicalIdentity(anime: Anime) {
   await db()
     .prepare(
-      'UPDATE anime_cache SET data=?,search_text=?,year_index=?,kind_index=? WHERE id=?',
+      `UPDATE anime_cache SET data=(?::text::jsonb || CASE
+       WHEN length(regexp_replace(COALESCE(?::text::jsonb->>'description',''),
+         '<[^>]*>|[[:space:]]|&nbsp;|&#160;|&#xa0;| ','','gi'))=0
+       THEN jsonb_build_object('description',COALESCE(data::jsonb->'description','""'::jsonb))
+       ELSE '{}'::jsonb END)::text,search_text=?,year_index=?,kind_index=? WHERE id=?`,
     )
     .bind(
+      JSON.stringify(anime),
       JSON.stringify(anime),
       `${anime.russian} ${anime.name}`.toLocaleLowerCase('ru-RU'),
       Number(String(anime.aired_on || '').slice(0, 4)) || 0,

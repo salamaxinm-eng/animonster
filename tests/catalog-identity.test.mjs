@@ -70,8 +70,12 @@ globalThis.__identityTest.canonicalize = metadata.canonicalizeAnimeIdentities;
 const library = await load('../lib/server/library.ts', {
   './theme-landings': moduleUrl('export const THEME_MATCH_SQL="true";'),
   '@/lib/anime-taxonomy': moduleUrl('export const tagKey=x=>x;'),
-  '../title-policy': moduleUrl('export const PERMANENTLY_UNAVAILABLE_IDS=[55825,46569,60460];'),
-  './anime-taxonomy': moduleUrl('export const genreEntries=async items=>items;'),
+  '../title-policy': moduleUrl(
+    'export const PERMANENTLY_UNAVAILABLE_IDS=[55825,46569,60460];',
+  ),
+  './anime-taxonomy': moduleUrl(
+    'export const genreEntries=async items=>items;',
+  ),
   './core': core,
   './anime': moduleUrl(
     'export const findRelease=()=>{}; export const liberty=()=>{}; export const available=()=>true; export const normalize=x=>x;',
@@ -280,5 +284,78 @@ await test('background metadata refresh revisits previously completed rows and s
   );
   assert.equal((await metadata.refreshSearchMetadata()).processed, 0);
 });
+await test('partial catalog updates preserve descriptions, canonical years and episode metadata', async () => {
+  const item = {
+    ...anime(700),
+    description: 'Сохранённое описание сюжета.',
+    aired_on_source: 'shikimori',
+  };
+  await library.saveAnime(item, [{ ordinal: 1, duration: 1440 }]);
+  for (const description of [
+    undefined,
+    null,
+    '',
+    ' \n\t',
+    '<p> &nbsp; &#160; &#xA0; </p>',
+  ]) {
+    await library.saveAnime({
+      ...anime(700, '2020'),
+      description,
+      episodes: 24,
+    });
+    assert.equal((await readAnime(700)).description, item.description);
+    assert.equal((await readAnime(700)).aired_on, item.aired_on);
+    assert.equal((await readAnime(700)).episodes, 24);
+    assert.deepEqual(
+      JSON.parse(
+        (await engine.query('SELECT episodes FROM anime_cache WHERE id=700'))
+          .rows[0].episodes,
+      ),
+      [{ ordinal: 1, duration: 1440 }],
+    );
+  }
+  await library.saveAnime({
+    ...anime(700),
+    description: 'Обновлённое описание.',
+  });
+  assert.equal((await readAnime(700)).description, 'Обновлённое описание.');
+});
+
+await test('AniLiberty can fill a missing Kodik description without replacing provider identity', async () => {
+  await library.saveAnime({
+    ...anime(701),
+    description: '',
+    primary_provider: 'kodik',
+  });
+  await library.cacheAnime({
+    ...anime(701),
+    description: 'Описание из второго источника.',
+    primary_provider: 'aniliberty',
+  });
+  assert.equal(
+    (await readAnime(701)).description,
+    'Описание из второго источника.',
+  );
+  assert.equal((await readAnime(701)).primary_provider, 'kodik');
+});
+
+await test('an identity refresh cannot erase a description filled while its request was pending', async (t) => {
+  const stale = anime(702);
+  await library.saveAnime(stale);
+  t.mock.method(globalThis, 'fetch', async () => {
+    await library.saveAnime({
+      ...stale,
+      description: 'Описание, восстановленное во время запроса.',
+    });
+    return Response.json({ data: { animes: [canonical(702)] } });
+  });
+  await metadata.canonicalizeAnimeIdentities([stale]);
+  assert.equal(
+    (await readAnime(702)).description,
+    'Описание, восстановленное во время запроса.',
+  );
+  assert.equal((await readAnime(702)).aired_on, '2026-04-08');
+});
+
 await engine.close();
 delete globalThis.__identityTest;
