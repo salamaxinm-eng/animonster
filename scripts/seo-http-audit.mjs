@@ -211,7 +211,11 @@ for (const path of paths) {
         theme + '?page=2',
       ].includes(path)
     ) {
-      check(row.h1.length === 1, path, 'Expected one H1 in source HTML');
+      check(
+        row.h1.length === (path === '/' && emptyHome ? 0 : 1),
+        path,
+        'Expected the first anime title as H1, or no H1 for an empty home',
+      );
       check(
         row.canonical &&
           new URL(row.canonical).href === new URL(site + path).href,
@@ -223,9 +227,9 @@ for (const path of paths) {
     }
     if (path === '/')
       check(
-        row.h1[0] === 'Смотреть аниме онлайн на AniMonster',
+        !row.h1.includes('Смотреть аниме онлайн на AniMonster'),
         path,
-        'Home H1 must be stable',
+        'Home must not contain the removed promotional heading',
       );
     if (path === theme && !emptyHome)
       check(row.nextLinks > 0, path, 'Theme needs ordinary pagination links');

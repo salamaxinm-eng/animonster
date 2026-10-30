@@ -130,7 +130,11 @@ export function PopularHero({
                 <div className="eyebrow">
                   <span /> {label.toUpperCase()} · ТОП {i + 1}
                 </div>
-                <h2 className="hero-title">{a.russian}</h2>
+                {i === 0 ? (
+                  <h1 className="hero-title">{a.russian}</h1>
+                ) : (
+                  <h2 className="hero-title">{a.russian}</h2>
+                )}
                 <div className="anime-meta">
                   <strong>★ {a.score}</strong>
                   <span>{a.aired_on.slice(0, 4)}</span>

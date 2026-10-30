@@ -152,7 +152,6 @@ export function HomePageClient({ initialPopular }: { initialPopular: Anime[] }) 
         }}
       />
       <main>
-        <h1 className="home-page-heading">Смотреть аниме онлайн на AniMonster</h1>
         <PopularHero initial={initialPopular} onOpen={open} />
         <PlayerDemoPromo />
         <HomeDiscovery />

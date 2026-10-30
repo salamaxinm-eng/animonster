@@ -382,12 +382,11 @@ test('technical layouts override robots and googlebot; crawler can read noindex'
   assert.match(metrika, /analyticsLocation\(document.referrer\)/);
 });
 
-test('home has a permanent H1 even without hero items and all slides use H2', async () => {
+test('home has no extra promotional heading and the first anime title is H1', async () => {
   const home = await readFile('components/home-page-client.tsx', 'utf8');
-  assert.equal((home.match(/<h1\b/g) || []).length, 1);
-  assert.match(home, /<h1[^>]*>Смотреть аниме онлайн на AniMonster<\/h1>/);
+  assert.doesNotMatch(home, /home-page-heading|Смотреть аниме онлайн на AniMonster|<h1\b/);
   const hero = await readFile('components/popular-hero.tsx', 'utf8');
-  assert.doesNotMatch(hero, /<h1\b/);
+  assert.match(hero, /i === 0 \? \(\s*<h1 className="hero-title">/);
   assert.match(hero, /<h2 className="hero-title">/);
   const heroStyles = await readFile('app/community.css', 'utf8');
   assert.match(heroStyles, /\.anime-hero :where\(h2\.hero-title\)/);
