@@ -12,6 +12,19 @@ import {
   api as communityApi,
   useCommunity,
 } from '@/components/community/context';
+
+function heroImage(anime: Anime) {
+  const large = posterUrl(anime, 960);
+  const small = posterUrl(anime, 480);
+  // Both layers use the same responsive resource: the sharp foreground must
+  // not stretch a separate 480px thumbnail, or download a second poster.
+  return {
+    src: large,
+    srcSet: small === large ? undefined : `${small} 480w, ${large} 960w`,
+    sizes: '100vw',
+  };
+}
+
 export function PopularHero({
   initial,
   onOpen,
@@ -112,7 +125,7 @@ export function PopularHero({
             <section className="hero anime-hero" aria-hidden={i !== index}>
               <img
                 className="hero-backdrop"
-                src={posterUrl(a, 960)}
+                {...heroImage(a)}
                 alt=""
                 loading={i === 0 ? 'eager' : 'lazy'}
                 fetchPriority={i === 0 ? 'high' : 'auto'}
@@ -120,9 +133,10 @@ export function PopularHero({
               />
               <img
                 className="hero-feature-poster"
-                src={posterUrl(a)}
+                {...heroImage(a)}
                 alt={a.russian}
                 loading={i === 0 ? 'eager' : 'lazy'}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
                 decoding="async"
               />
               <div className="hero-shade" />
