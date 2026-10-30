@@ -119,6 +119,8 @@
     transform: translateY(calc(100% + 40px + env(safe-area-inset-bottom)));
     opacity: 0;
     pointer-events: none;
+    transition-duration: 550ms, 500ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.6, 1), ease-in;
   }
 
   .mobile-nav-active-pill {
