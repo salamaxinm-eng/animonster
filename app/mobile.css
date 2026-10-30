@@ -17,6 +17,8 @@
   :root {
     --mobile-topbar-height: 64px;
     --mobile-nav-height: 68px;
+    --mobile-nav-bottom: calc(14px + env(safe-area-inset-bottom));
+    --mobile-nav-clearance: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom));
   }
 
   html,
@@ -91,19 +93,49 @@
   .mobile-bottom-nav {
     position: fixed;
     z-index: 100;
-    inset: auto 0 0;
-    min-height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom));
-    padding: 6px 8px env(safe-area-inset-bottom);
+    left: max(16px, env(safe-area-inset-left));
+    right: max(16px, env(safe-area-inset-right));
+    bottom: var(--mobile-nav-bottom);
+    height: var(--mobile-nav-height);
+    padding: 5px 6px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    background: color-mix(in srgb, var(--card) 96.86%, transparent);
-    border-top: 1px solid var(--border);
-    backdrop-filter: blur(20px);
+    grid-template-columns: repeat(var(--nav-items, 4), minmax(0, 1fr));
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid #ffffff24;
+    border-radius: 999px;
+    background:
+      linear-gradient(135deg, #ffffff0c, #ffffff00 48%, #ffffff05),
+      color-mix(in srgb, var(--card) 65%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: 0 10px 30px #0005, inset 0 1px 0 #ffffff10;
+    transform: translateY(0);
+    opacity: 1;
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 220ms ease;
   }
 
-  .mobile-bottom-nav-pass {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+  .mobile-bottom-nav[data-hidden='true'] {
+    transform: translateY(calc(100% + 40px + env(safe-area-inset-bottom)));
+    opacity: 0;
+    pointer-events: none;
   }
+
+  .mobile-nav-active-pill {
+    position: absolute;
+    z-index: 0;
+    inset: 5px auto 5px 6px;
+    width: calc((100% - 12px) / var(--nav-items, 4));
+    border: 1px solid #ffffff0d;
+    border-radius: 999px;
+    background: linear-gradient(160deg, #ffffff21, #ffffff10);
+    box-shadow: inset 0 1px 0 #ffffff0a;
+    pointer-events: none;
+    transform: translateX(calc(var(--nav-active-index, 0) * 100%));
+    transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+  }
+
+  .mobile-nav-active-pill[data-visible='false'] { opacity: 0; }
 
   .mobile-bottom-nav-pass a[href="/battlepass"] {
     color: #d49a68;
@@ -113,27 +145,41 @@
     color: #f0bd8b;
   }
 
-  .mobile-bottom-nav a,
-  .mobile-bottom-nav button {
+  .mobile-bottom-nav > :is(a, button) {
+    position: relative;
+    z-index: 1;
     min-width: 0;
     min-height: 56px;
+    padding: 0 2px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
     gap: 3px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
     color: var(--muted-foreground);
     font-size: 10px;
     font-weight: 650;
+    white-space: nowrap;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 180ms ease;
   }
 
   .mobile-bottom-nav svg {
     width: 23px;
     height: 23px;
+    transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  .mobile-bottom-nav .active {
-    color: var(--am-accent);
+  .mobile-bottom-nav .active { color: var(--am-accent-light); }
+  .mobile-bottom-nav .active svg { transform: translateY(-1px) scale(1.06); }
+  .mobile-bottom-nav > :is(a, button):focus-visible {
+    outline: 2px solid var(--am-accent-light);
+    outline-offset: -3px;
   }
 
   .mobile-bottom-nav .mobile-account-menu-trigger {
@@ -1564,3 +1610,20 @@
 .mobile-profile-dropdown [data-slot='dropdown-menu-separator'] { background: var(--border); margin: 8px 0; }
 @media (prefers-reduced-motion: reduce) { .mobile-profile-dropdown { animation: none; transition: none; } }
 
+
+@media (max-width: 767px) {
+  .profile-hub .hub-save,
+  .profile-save-bar,
+  body .party-mobile-chat,
+  body .op-toasts { bottom: calc(var(--mobile-nav-clearance) + 12px); }
+}
+@media (max-width: 700px) {
+  body .access-notice { bottom: calc(var(--mobile-nav-clearance) + 12px); }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .mobile-bottom-nav,
+  .mobile-bottom-nav .mobile-nav-active-pill,
+  .mobile-bottom-nav > :is(a, button),
+  .mobile-bottom-nav svg { transition: none; }
+}

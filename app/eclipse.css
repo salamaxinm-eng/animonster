@@ -109,10 +109,8 @@ html:not([data-site-theme^='v2-']) :is(.header, .community-header) {
 }
 @media (max-width: 767px) {
   .mobile-topbar { background: var(--background); backdrop-filter: none; border-color: var(--border); }
-  .mobile-bottom-nav { background: var(--card); backdrop-filter: none; border-color: var(--border); }
   .mobile-bottom-nav-pass a[href='/battlepass'] { color: var(--muted-foreground); }
   .mobile-bottom-nav .active, .mobile-bottom-nav-pass a[href='/battlepass'].active { color: var(--am-accent-light); }
-  .mobile-bottom-nav .active svg { filter: drop-shadow(0 0 5px var(--am-glow)); }
   .popular-hero { border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
   .popular-hero .anime-hero .hero-shade { background: linear-gradient(180deg, transparent 15%, color-mix(in srgb, var(--background) 30%, transparent) 35%, var(--background) 75%); }
   .popular-hero .anime-hero .hero-copy { background: linear-gradient(transparent, var(--background) 38%); }

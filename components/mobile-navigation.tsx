@@ -1,8 +1,18 @@
 'use client';
 
-import { HalloweenNavIcon, type HalloweenNavKind } from '@/components/halloween-nav-icon';
+import {
+  HalloweenNavIcon,
+  type HalloweenNavKind,
+} from '@/components/halloween-nav-icon';
 import { SeasonalBrand } from '@/components/halloween';
-import { Suspense, useEffect, useState } from 'react';
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
+import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { PhotoSearchButton } from '@/components/photo-search-button';
 import {
@@ -17,6 +27,7 @@ import { MobileProfileMenu } from '@/components/community/mobile-profile-menu';
 import { BuySubscription } from '@/components/community/buy-subscription';
 import { useCommunity } from '@/components/community/context';
 import { usePassAccess } from '@/components/pass-cosmetics';
+import { useMobileNavigationVisibility } from '@/hooks/use-mobile-navigation-visibility';
 
 type MobileNavItem = {
   href: string;
@@ -44,6 +55,7 @@ const items: MobileNavItem[] = [
       path === '/genres' ||
       path === '/themes' ||
       path.startsWith('/genres/') ||
+      path.startsWith('/themes/') ||
       path.startsWith('/anime/') ||
       path.startsWith('/browse/') ||
       path === '/catalog' ||
@@ -95,6 +107,17 @@ function MobileNavigationContent() {
   const community = useCommunity();
   const passVisible = usePassAccess();
   const [hash, setHash] = useState('');
+  const nav = useRef<HTMLElement>(null);
+  const hidden = useMobileNavigationVisibility(
+    pathname + '?' + params.toString() + hash,
+    nav,
+  );
+  const visibleItems = items.filter(
+    (item) => item.href !== '/battlepass' || passVisible,
+  );
+  const activeIndex = visibleItems.findIndex((item) =>
+    item.active(activePath, hash),
+  );
   const sectionTitle =
     pathname === '/bookmarks'
       ? 'Закладки'
@@ -104,7 +127,9 @@ function MobileNavigationContent() {
           ? 'Статистика'
           : pathname.startsWith('/downloads')
             ? 'Загрузки'
-            : pathname === '/catalog' || pathname === '/genres' || pathname === '/themes'
+            : pathname === '/catalog' ||
+                pathname === '/genres' ||
+                pathname === '/themes'
               ? 'Каталог'
               : '';
 
@@ -154,8 +179,26 @@ function MobileNavigationContent() {
           <a href="/legal/requisites">Реквизиты</a>
         </nav>
       )}
-      <nav className={`mobile-bottom-nav${passVisible ? ' mobile-bottom-nav-pass' : ''}`} aria-label="Навигация">
-        {items.filter((item) => item.href !== '/battlepass' || passVisible).map((item) => {
+      <nav
+        ref={nav}
+        className={`mobile-bottom-nav${passVisible ? ' mobile-bottom-nav-pass' : ''}`}
+        aria-label="Навигация"
+        data-hidden={hidden}
+        aria-hidden={hidden || undefined}
+        inert={hidden}
+        style={
+          {
+            '--nav-items': visibleItems.length,
+            '--nav-active-index': Math.max(0, activeIndex),
+          } as CSSProperties
+        }
+      >
+        <span
+          className="mobile-nav-active-pill"
+          data-visible={activeIndex >= 0}
+          aria-hidden="true"
+        />
+        {visibleItems.map((item) => {
           const Icon = item.icon;
           const active =
             item.active(activePath, hash) &&
@@ -166,8 +209,11 @@ function MobileNavigationContent() {
                 key={item.label}
                 onClick={community.login}
                 aria-label={item.label}
+                className={active ? 'active' : ''}
               >
-                <HalloweenNavIcon kind={item.halloweenIcon}><Icon aria-hidden="true" /></HalloweenNavIcon>
+                <HalloweenNavIcon kind={item.halloweenIcon}>
+                  <Icon aria-hidden="true" />
+                </HalloweenNavIcon>
                 <span>{item.label}</span>
               </button>
             );
@@ -175,15 +221,18 @@ function MobileNavigationContent() {
           if (item.account)
             return <MobileProfileMenu key={item.label} active={active} />;
           return (
-            <a
+            <Link
               key={item.label}
               href={item.href}
               className={active ? 'active' : ''}
               aria-current={active ? 'page' : undefined}
+              prefetch={false}
             >
-              <HalloweenNavIcon kind={item.halloweenIcon}><Icon aria-hidden="true" /></HalloweenNavIcon>
+              <HalloweenNavIcon kind={item.halloweenIcon}>
+                <Icon aria-hidden="true" />
+              </HalloweenNavIcon>
               <span>{item.label}</span>
-            </a>
+            </Link>
           );
         })}
       </nav>
