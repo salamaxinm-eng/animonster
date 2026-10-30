@@ -168,7 +168,7 @@ const animePage = await load('app/anime/[id]/page.tsx', {
     'export const titleBlocked=async()=>false',
   ),
   '@/components/anime-page': url(
-    `import {createElement as h,Fragment} from ${JSON.stringify(import.meta.resolve('react'))};export const AnimePage=({anime,initialRelations,cachedAvailability})=>h(Fragment,null,h('h1',null,anime.russian),cachedAvailability);`,
+    `import {createElement as h} from ${JSON.stringify(import.meta.resolve('react'))};export const AnimePage=({anime})=>h('h1',null,anime.russian);`,
   ),
   '@/lib/server/library': url(
     `export const getAnime=async()=>{if(globalThis.seoUpstreamError)throw globalThis.seoUpstreamError;return null};export const getAnimeByAlias=getAnime;`,
@@ -181,12 +181,7 @@ const animePage = await load('app/anime/[id]/page.tsx', {
   '@/lib/server/anime-relations': url(
     'export const animeRelations=async()=>({mainline:[],branches:[],related:[]})',
   ),
-  '@/lib/server/public-anime-availability': url(
-    "export const publicAnimeAvailability=async()=>({status:'cached',total:0,episodes:[],voiceovers:[]})",
-  ),
-  '@/components/cached-anime-availability': (
-    await load('components/cached-anime-availability.tsx')
-  ).moduleUrl,
+
 });
 test('anime source HTML includes real facts and Movie schema omits series-only fields', async () => {
   globalThis.seoAnime = {
@@ -204,6 +199,8 @@ test('anime source HTML includes real facts and Movie schema omits series-only f
     assert.equal(meta.alternates.canonical, '/anime/1');
     const html = renderToStaticMarkup(await animePage.default(p));
     assert.match(html, /<h1>Фильм<\/h1>/);
+    assert.doesNotMatch(await readFile('app/anime/[id]/page.tsx', 'utf8'), /cachedAvailability|publicAnimeAvailability/);
+    assert.doesNotMatch(await readFile('components/anime-page.tsx', 'utf8'), /cachedAvailability|Подтверждённые серии/);
     const data = JSON.parse(
       html.match(/application\/ld\+json">(.*?)<\/script>/)[1],
     );
@@ -429,21 +426,6 @@ const themesData = await load('lib/server/theme-landings.ts', {
   './core': dataCore,
   '@/lib/anime-taxonomy': taxonomy.moduleUrl,
 });
-const restrictions = url(
-  'export const titleBlocked=async()=>!!globalThis.seoRegionBlocked;export const visitorCountry=()=>globalThis.seoCountry||null',
-);
-const kodik = await load('lib/server/kodik.ts', {
-  '@/lib/server/core': dataCore,
-  '@/lib/anime': url(
-    "export const kodikPlayerPath=(id,translation)=>'/api/kodik/player?anime='+id+'&translation='+translation",
-  ),
-});
-const availability = await load('lib/server/public-anime-availability.ts', {
-  './core': dataCore,
-  './kodik': kodik.moduleUrl,
-  './title-restrictions': restrictions,
-});
-const publicView = await load('components/cached-anime-availability.tsx');
 const purePolicy = await load('lib/title-policy.ts');
 const dataLibrary = await load('lib/server/library.ts', {
   './core': dataCore,
@@ -547,115 +529,6 @@ test('theme SQL deduplicates synonyms, includes legacy thematic tags and exclude
   globalThis.seoDbBroken = true;
   try {
     await assert.rejects(themesData.themeLandings(), /Database offline/);
-  } finally {
-    delete globalThis.seoDbBroken;
-  }
-});
-
-test('SSR availability uses exact sparse episode maps, preserves Plus and serializes no media URLs', async (t) => {
-  t.mock.method(globalThis, 'fetch', () => {
-    throw Error('Provider must not run on SSR');
-  });
-  const payload = {
-    id: 'source',
-    type: 'anime-serial',
-    shikimori_id: 21,
-    title: 'Test',
-    link: 'https://kodik.info/serial/1/private/',
-    episodes_count: 999,
-    translation: { id: 7, title: 'Студия <test>', type: 'voice' },
-    seasons: {
-      1: {
-        episodes: {
-          1: 'https://kodik.info/video/1/private/',
-          3: 'https://kodik.info/video/3/private/',
-        },
-      },
-    },
-  };
-  await engine.query(
-    "INSERT INTO anime_sources(provider,source_id,anime_id,payload,last_seen_at) VALUES('kodik','source',21,$1,$2)",
-    [JSON.stringify(payload), fixtureTime],
-  );
-  // A stale per-episode link must not fill a hole in the current exact map.
-  await engine.query(
-    "INSERT INTO kodik_episode_links VALUES(21,7,2,'https://kodik.info/video/stale/private/',$1)",
-    [fixtureTime - 1000],
-  );
-  await engine.query(
-    'INSERT INTO anime_episode_availability VALUES(21,1,$1,$1),(21,3,$1,$2)',
-    [fixtureTime - 1000, fixtureTime + 86400000],
-  );
-  const data = await availability.publicAnimeAvailability(
-    sourceAnime,
-    new Headers(),
-  );
-  assert.deepEqual(data.episodes, [
-    { ordinal: 1, access: 'free' },
-    { ordinal: 3, access: 'plus' },
-  ]);
-  assert.equal(data.total, 2);
-  assert.equal(data.voiceovers[0].title, 'Студия <test>');
-  const html = renderToStaticMarkup(
-    createElement(publicView.CachedAnimeAvailability, { animeId: 21, data }),
-  );
-  assert.match(html, /Серия 3/);
-  assert.doesNotMatch(
-    html,
-    /Серия 2<|Серия 999|kodik\.info|private\/|player_url|access_token/,
-  );
-  assert.match(html, /ранний доступ Plus/);
-  assert.match(html, /Студия &lt;test&gt;/);
-  assert.match(html, /href="\/anime\/21\?episode=3#watch"/);
-  assert.deepEqual(
-    (
-      await availability.publicAnimeAvailability(
-        { ...sourceAnime, is_adult: true },
-        new Headers(),
-      )
-    ).episodes,
-    [],
-  );
-  assert.deepEqual(
-    (
-      await availability.publicAnimeAvailability(
-        { ...sourceAnime, status: 'anons' },
-        new Headers(),
-      )
-    ).episodes,
-    [],
-  );
-  globalThis.seoRegionBlocked = true;
-  try {
-    assert.equal(
-      (await availability.publicAnimeAvailability(sourceAnime, new Headers()))
-        .status,
-      'region-restricted',
-    );
-  } finally {
-    delete globalThis.seoRegionBlocked;
-  }
-  await engine.query(
-    "UPDATE anime_sources SET payload=$1 WHERE source_id='source'",
-    [JSON.stringify({ ...payload, seasons: {}, episodes_count: 999 })],
-  );
-  const stored = await availability.publicAnimeAvailability(
-    sourceAnime,
-    new Headers(),
-  );
-  assert.deepEqual(stored.episodes, [{ ordinal: 2, access: 'unknown' }]);
-  await engine.query('DELETE FROM kodik_episode_links WHERE anime_id=21');
-  assert.equal(
-    (await availability.publicAnimeAvailability(sourceAnime, new Headers()))
-      .total,
-    0,
-  );
-  globalThis.seoDbBroken = true;
-  try {
-    await assert.rejects(
-      availability.publicAnimeAvailability(sourceAnime, new Headers()),
-      /Database offline/,
-    );
   } finally {
     delete globalThis.seoDbBroken;
   }

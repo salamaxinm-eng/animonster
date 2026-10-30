@@ -1193,20 +1193,3 @@ footer > span {
   .offline-bulk-actions { justify-content: flex-start; flex-wrap: wrap; }
 }
 
-.cached-anime-availability {
-  margin: 24px 0;
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--card);
-}
-.cached-anime-availability h2 { margin-top: 0; }
-.cached-episode-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
-  gap: 8px 24px;
-  padding-left: 24px;
-  max-height: 28rem;
-  overflow: auto;
-}
-.cached-episode-list a { text-decoration: underline; text-underline-offset: 3px; }

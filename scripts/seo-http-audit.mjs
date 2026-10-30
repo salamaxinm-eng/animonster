@@ -98,10 +98,6 @@ async function request(path) {
       [...html.matchAll(/<link\b[^>]*>/gi)].find((x) =>
         /rel=["']canonical["']/.test(x[0]),
       )?.[0] || '';
-    const availability =
-      visible.match(
-        /<section[^>]*class="cached-anime-availability"[\s\S]*?<\/section>/,
-      )?.[0] || '';
     const row = {
       path,
       status: response.status,
@@ -122,13 +118,7 @@ async function request(path) {
       referrer: response.headers.get('referrer-policy'),
       animeLinks: (visible.match(/href="\/anime\//g) || []).length,
       nextLinks: (visible.match(/rel="next"/g) || []).length,
-      serverEpisodes: [...availability.matchAll(/\?episode=(\d+)#watch/g)].map(
-        (m) => Number(m[1]),
-      ),
-      hasServerVoiceovers: /Озвучки и субтитры/.test(availability),
-      privateMediaInSummary: /kodik\.info|player_url|access_token/.test(
-        availability,
-      ),
+      hasCachedAvailability: /cached-anime-availability|Подтверждённые серии и озвучки/.test(visible),
       metrika: /mc\.yandex\.ru/.test(html),
       jsonLd: [
         ...html.matchAll(
@@ -255,23 +245,7 @@ for (const path of paths) {
         path,
         'Episode variant must canonicalize to the title',
       );
-      check(
-        !row.privateMediaInSummary,
-        path,
-        'Private media URL in public SSR summary',
-      );
-      if (fixture) {
-        check(
-          JSON.stringify(row.serverEpisodes) === '[1,3]',
-          path,
-          'Only confirmed fixture episodes may appear',
-        );
-        check(
-          row.hasServerVoiceovers && html.includes('SEO Studio'),
-          path,
-          'Missing cached voiceover names',
-        );
-      }
+      check(!row.hasCachedAvailability, path, 'Removed cached availability block must not appear');
     }
     if (path === '/robots.txt')
       check(
