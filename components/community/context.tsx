@@ -568,6 +568,7 @@ export function CommunityHeader({
         <a href="/genres">Жанры</a>
         <a href="/recommendations">Рекомендации</a>
         <a href="/statistics">Статистика</a>
+        <a href="/vpn">VPN</a>
         <a href="/?tab=movies#catalog" onClick={onMoviesAction ? (event) => {
           event.preventDefault();
           onMoviesAction();

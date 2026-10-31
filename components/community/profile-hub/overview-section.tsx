@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { Award, Bookmark, ChevronRight, Play } from 'lucide-react';
+import { ArrowRight, Award, Bookmark, ChevronRight, Play, ShieldCheck } from 'lucide-react';
+import { VPN_PLAN } from '@/lib/vpn-plan';
 import type { HubProfile, HistoryItem } from './shared';
 import {
   Art,
@@ -40,6 +41,16 @@ export function OverviewSection({
   return (
     <>
       <ProfileIdentity user={user} own />
+      <section className="hub-plus-panel" aria-label="AniMonster VPN">
+        <ShieldCheck size={32} aria-hidden="true" />
+        <div>
+          <h2>AniMonster VPN</h2>
+          <p>{Number(VPN_PLAN.price)} ₽ / {VPN_PLAN.days} дней · до 5 устройств</p>
+        </div>
+        <Link className="hub-primary" href="/vpn">
+          Открыть VPN <ArrowRight size={17} aria-hidden="true" />
+        </Link>
+      </section>
       <BattlepassProgress />
       <ResourceState {...resource} />
       {resource.data && (

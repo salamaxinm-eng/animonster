@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { HalloweenNavIcon } from '@/components/halloween-nav-icon';
-import { UserRound } from 'lucide-react';
+import { ShieldCheck, UserRound } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -54,6 +54,18 @@ export function MobileProfileMenu({ active }: { active: boolean }) {
         aria-label="Разделы профиля"
       >
         <DropdownMenuGroup>
+          <DropdownMenuItem
+            render={<Link href="/vpn" />}
+            onClick={() => setOpen(false)}
+            className={pathname === '/vpn' ? 'selected' : ''}
+            aria-current={pathname === '/vpn' ? 'page' : undefined}
+          >
+            <ShieldCheck aria-hidden="true" />
+            VPN
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
           <DropdownMenuLabel>Разделы профиля</DropdownMenuLabel>
           {sections.map(([id, label, Icon], index) => (
             <DropdownMenuItem
@@ -71,7 +83,7 @@ export function MobileProfileMenu({ active }: { active: boolean }) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuLabel>Другие возможности</DropdownMenuLabel>
-          {shortcuts.map(([href, label]) => (
+          {shortcuts.filter(([href]) => href !== '/vpn').map(([href, label]) => (
             <DropdownMenuItem
               key={href}
               render={<Link href={href} />}
